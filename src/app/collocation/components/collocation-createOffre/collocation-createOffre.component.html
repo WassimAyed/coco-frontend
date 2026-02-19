@@ -42,7 +42,8 @@
 
 .form-group input[type="text"],
 .form-group input[type="number"],
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 12px 15px;
   border: 2px solid #dfe6e9;
@@ -54,7 +55,8 @@
 
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   border-color: #3498db;
   outline: none;
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
@@ -350,6 +352,13 @@
   border: 1px solid #c8e6c9;
 }
 
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  margin-top: 10px;
+}
+
 /* Form validation */
 .error {
   color: #e74c3c;
@@ -465,6 +474,31 @@
     justify-content: center;
   }
 }
+
+.map-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid #dfe6e9;
+  margin-top: 8px;
+  z-index: 1;
+}
+
+.coordinates {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #2c3e50;
+  background: #ecf0f1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Ensure map tiles load properly */
+.leaflet-container {
+  border-radius: 8px;
+}
+
 </style>
 
 <form [formGroup]="offerForm" (ngSubmit)="submit()" enctype="multipart/form-data" class="offer-form">
@@ -495,23 +529,15 @@
   </div>
 
   <div class="form-group">
-  <label>Ville *</label>
-
-  <select formControlName="ville">
-    <option value="" disabled selected>-- Sélectionner une ville --</option>
-    <option *ngFor="let v of tunisianVilles" [value]="v">
-      {{ v }}
-    </option>
-  </select>
-
-  <div
-    *ngIf="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched"
-    class="error"
-  >
-    Ville est obligatoire
+    <label>Ville *</label>
+    <select formControlName="ville">
+      <option value="" disabled selected>-- Sélectionner une ville --</option>
+      <option *ngFor="let v of tunisianVilles" [value]="v">{{ v }}</option>
+    </select>
+    <div *ngIf="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched" class="error">
+      Ville est obligatoire
+    </div>
   </div>
-</div>
-
 
   <div class="form-group">
     <label>Nombre de chambre(s) *</label>
@@ -526,6 +552,17 @@
     <label for="meublee">Meublee</label>
   </div>
 
+  <!-- Map -->
+  <div class="form-group">
+    <label>Localisation sur la carte *</label>
+    <div #mapContainer class="map-container"></div>
+    <p class="hint">Cliquez sur la carte ou déplacez le marqueur pour définir l'emplacement exact</p>
+    <div class="coordinates" *ngIf="offerForm.get('latitude')?.value">
+      Lat: {{ offerForm.get('latitude')?.value | number:'1.4-4' }}, Lng: {{ offerForm.get('longitude')?.value | number:'1.4-4' }}
+    </div>
+  </div>
+
+  <!-- File input -->
   <div class="form-group">
     <label>Images *</label>
     <div class="file-input-container">
@@ -533,16 +570,20 @@
         type="file"
         (change)="onFileChange($event)"
         multiple
-        accept="image/*"
+        accept=".jpg,.jpeg,.png"
         #fileInput
         class="file-input"
       />
       <button type="button" (click)="fileInput.click()" class="browse-btn">
         📁 Choisir Images
       </button>
-      <span class="file-info">Max 5MB per image</span>
+      <span class="file-info">Max 5MB per image (JPG/PNG only)</span>
     </div>
-    <p class="hint">Vous pouvez choisir plusieur images</p>
+    <p class="hint">Vous pouvez choisir plusieurs images. Formats acceptés : JPG, JPEG, PNG.</p>
+    <!-- Type warning message -->
+    <div *ngIf="typeWarning" class="alert alert-warning">
+      ⚠️ {{ typeWarning }}
+    </div>
   </div>
 
   <!-- Image preview and delete section -->
@@ -637,4 +678,3 @@
     </button>
   </div>
 </form>
-

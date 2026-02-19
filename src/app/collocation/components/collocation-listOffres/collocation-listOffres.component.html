@@ -1,6 +1,157 @@
-<h2>All Collocation Offers</h2>
-<ul>
-  <li *ngFor="let offer of offers">
-    <strong>{{ offer.titre }}</strong> - {{ offer.description }} - {{ offer.prixLoc }} DT - {{ offer.ville }}
-  </li>
-</ul>
+<!-- ===== STATIC HEADER ===== -->
+<header class="app-header">
+  <div class="header-container">
+    <div class="logo">
+      <span class="logo-icon">🏠</span>
+      <span class="logo-text">Coloc<span class="red">'Study</span></span>
+    </div>
+    <nav class="main-nav">
+      <a href="/" class="nav-link active">Accueil</a>
+      <a href="/offers" class="nav-link">Offres</a>
+      <a href="/map" class="nav-link">Carte</a>
+      <a href="/contact" class="nav-link">Contact</a>
+    </nav>
+    <div class="user-area">
+      <button class="btn-login">Connexion</button>
+      <button class="btn-signup red-bg">Inscription</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main-content">
+  <div class="container">
+    <!-- Split grid: left list, right map -->
+    <div class="split-grid">
+      <!-- Left column: list -->
+      <div class="list-column">
+        <!-- Search Bar -->
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Recherche par titre, ville, prix..."
+            [(ngModel)]="searchTerm"
+            (input)="filterOffers()"
+          />
+          <button class="search-btn red-bg">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+
+        <!-- Loading / Error / No Results -->
+        <div *ngIf="loading" class="loading">
+          <div class="spinner"></div>
+          Chargement des offres...
+        </div>
+        <div *ngIf="error" class="error-message">
+          <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+        <div *ngIf="!loading && filteredOffers.length === 0" class="no-results">
+          <i class="fas fa-box-open"></i> Aucune offre trouvée.
+        </div>
+
+        <!-- Offers Grid -->
+        <div *ngIf="!loading && filteredOffers.length > 0" class="offers-grid">
+          <div class="offer-card" *ngFor="let offer of filteredOffers" (click)="centerOnOffer(offer)">
+            <!-- Image -->
+            <div class="card-image">
+              <img
+                *ngIf="offer.imagesColoc && offer.imagesColoc.length > 0"
+                [src]="offer.imagesColoc[0].url"
+                [alt]="offer.imagesColoc[0].filename || 'Offer image'"
+              />
+              <div *ngIf="!offer.imagesColoc || offer.imagesColoc.length === 0" class="no-image-placeholder">
+                <i class="fas fa-camera"></i>
+              </div>
+            </div>
+
+            <!-- Details -->
+            <div class="card-content">
+              <h3 class="offer-title">{{ offer.titre }}</h3>
+              <p class="offer-price">{{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}</p>
+              <p class="offer-location">
+                <i class="fas fa-map-marker-alt"></i> {{ offer.ville }}
+              </p>
+              <p class="offer-description">{{ offer.description | slice:0:80 }}...</p>
+              <div class="offer-meta">
+                <span class="badge">{{ offer.chambres }} chambre(s)</span>
+                <span class="badge" [class.furnished]="offer.meublee">
+                  {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+                </span>
+              </div>
+
+              <!-- Action Buttons (Favorite, Send Request, Details) with descriptive titles -->
+              <div class="action-buttons">
+                <button
+                  class="btn-icon favorite"
+                  (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
+                  [class.favorited]="favoriteIds.has(offer.id)"
+                  [title]="favoriteIds.has(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                >
+                  <i [class.fas]="favoriteIds.has(offer.id)" [class.far]="!favoriteIds.has(offer.id)" class="fa-heart"></i>
+                </button>
+
+                <button
+                  class="btn-icon details"
+                  (click)="$event.stopPropagation(); viewDetails(offer.id)"
+                  title="Voir les détails"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                     <button
+                  class="btn-icon send"
+                  (click)="$event.stopPropagation(); sendRequest(offer.id)"
+                  title="Envoyer une demande"
+                >
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: map -->
+      <div class="map-column">
+        <div id="map" class="map-container"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== STATIC FOOTER ===== -->
+<footer class="app-footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h4>Coloc'Study</h4>
+      <p>Trouvez la colocation idéale entre étudiants.</p>
+    </div>
+    <div class="footer-section">
+      <h4>Liens rapides</h4>
+      <ul>
+        <li><a href="/">Accueil</a></li>
+        <li><a href="/offers">Offres</a></li>
+        <li><a href="/map">Carte</a></li>
+        <li><a href="/contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h4>Légal</h4>
+      <ul>
+        <li><a href="/terms">CGU</a></li>
+        <li><a href="/privacy">Confidentialité</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h4>Suivez-nous</h4>
+      <div class="social-icons">
+        <a href="#"><i class="fab fa-facebook"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 Coloc'Study – Tous droits réservés.</p>
+  </div>
+</footer>

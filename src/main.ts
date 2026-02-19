@@ -7,6 +7,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
@@ -14,3 +17,5 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(BrowserAnimationsModule)
   ]
 });
+
+registerLocaleData(localeFr);

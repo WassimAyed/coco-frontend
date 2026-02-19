@@ -1,77 +1,153 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
+import * as L from 'leaflet';
+
+// Fix marker icons
+const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
+const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
+const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
+const iconDefault = L.icon({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
   selector: 'app-collocation-create-offre',
-  templateUrl: './collocation-createOffre.component.html'
+  templateUrl: './collocation-createOffre.component.html',
+  styleUrls: ['./collocation-createOffre.component.css']
 })
-export class CollocationCreateOffreComponent {
+export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('mapContainer') mapContainer!: ElementRef;
+
   offerForm: FormGroup;
   selectedFiles: File[] = [];
+  private fileUrls: Map<File, string> = new Map(); // cache blob URLs
+
   selectedImageIndices: Set<number> = new Set();
   allSelected: boolean = false;
   submitting = false;
   errorMessage = '';
   successMessage = '';
+
+  // Allowed image types
+  allowedImageTypes = ['image/jpeg', 'image/png'];
+  typeWarning = ''; // to show messages about skipped files
+
   tunisianVilles: string[] = [
-  'Ariana',
-  'Béja',
-  'Ben Arous',
-  'Bizerte',
-  'Gabès',
-  'Gafsa',
-  'Jendouba',
-  'Kairouan',
-  'Kasserine',
-  'Kébili',
-  'Le Kef',
-  'Mahdia',
-  'La Manouba',
-  'Médenine',
-  'Monastir',
-  'Nabeul',
-  'Sfax',
-  'Sidi Bouzid',
-  'Siliana',
-  'Sousse',
-  'Tataouine',
-  'Tozeur',
-  'Tunis',
-  'Zaghouan'
-];
+    'Ariana', 'Béja', 'Ben Arous', 'Bizerte', 'Gabès', 'Gafsa', 'Jendouba',
+    'Kairouan', 'Kasserine', 'Kébili', 'Le Kef', 'Mahdia', 'La Manouba',
+    'Médenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid', 'Siliana',
+    'Sousse', 'Tataouine', 'Tozeur', 'Tunis', 'Zaghouan'
+  ];
 
+  private map!: L.Map;
+  private marker!: L.Marker;
+  private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815]; // Tunis
 
-  constructor(private fb: FormBuilder, private collocationService: CollocationService) {
+  constructor(
+    private fb: FormBuilder,
+    private collocationService: CollocationService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {
     this.offerForm = this.fb.group({
       titre: ['', Validators.required],
       description: ['', Validators.required],
-      prixLoc: [null, Validators.required],
+      prixLoc: [null, [Validators.required, Validators.min(0)]],
       ville: ['', Validators.required],
-      chambres: [null, Validators.required],
+      chambres: [null, [Validators.required, Validators.min(1)]],
       meublee: [false],
-      imagesColoc: [null] // optional, files handled separately
+      latitude: [null],
+      longitude: [null]
     });
   }
 
-  // File input handler with proper type casting
-  onFileChange(event: any) {
-    if (event.target.files && event.target.files.length > 0) {
-      // Convert FileList to Array and cast to File[]
-      const newFiles = Array.from(event.target.files) as File[];
-      this.selectedFiles = [...this.selectedFiles, ...newFiles];
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
 
-      // Reset file input to allow selecting same files again
+  ngOnDestroy(): void {
+    if (this.map) this.map.remove();
+    this.fileUrls.forEach(url => URL.revokeObjectURL(url));
+    this.fileUrls.clear();
+  }
+
+  private initMap(): void {
+    this.map = L.map(this.mapContainer.nativeElement).setView(this.defaultCenter, 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(this.map);
+
+    this.marker = L.marker(this.defaultCenter, { draggable: true }).addTo(this.map);
+
+    this.marker.on('moveend', (e: any) => {
+      const latLng = e.target.getLatLng();
+      this.offerForm.patchValue({ latitude: latLng.lat, longitude: latLng.lng });
+      this.cdr.detectChanges();
+    });
+
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      this.marker.setLatLng(e.latlng);
+      this.offerForm.patchValue({ latitude: e.latlng.lat, longitude: e.latlng.lng });
+      this.cdr.detectChanges();
+    });
+
+    this.offerForm.patchValue({ latitude: this.defaultCenter[0], longitude: this.defaultCenter[1] });
+    this.cdr.detectChanges();
+  }
+
+  onFileChange(event: any): void {
+    this.typeWarning = ''; // clear previous warning
+
+    if (event.target.files && event.target.files.length > 0) {
+      const newFiles = Array.from(event.target.files) as File[];
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+
+      newFiles.forEach(file => {
+        if (this.allowedImageTypes.includes(file.type)) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file.name);
+        }
+      });
+
+      if (invalidFiles.length > 0) {
+        this.typeWarning = `Les fichiers suivants ne sont pas au format JPG/PNG et ont été ignorés : ${invalidFiles.join(', ')}`;
+      }
+
+      if (validFiles.length > 0) {
+        this.selectedFiles = [...this.selectedFiles, ...validFiles];
+        validFiles.forEach(file => {
+          if (!this.fileUrls.has(file)) {
+            this.fileUrls.set(file, URL.createObjectURL(file));
+          }
+        });
+      }
+
       event.target.value = '';
+      this.cdr.detectChanges();
     }
   }
 
-  // Get image URL for preview
   getImageUrl(file: File): string {
-    return URL.createObjectURL(file);
+    let url = this.fileUrls.get(file);
+    if (!url) {
+      url = URL.createObjectURL(file);
+      this.fileUrls.set(file, url);
+    }
+    return url;
   }
 
-  // Format file size for display
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -80,186 +156,180 @@ export class CollocationCreateOffreComponent {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // Truncate filename for display (replaces the pipe)
   truncateFileName(filename: string, maxLength: number = 15): string {
     if (filename.length <= maxLength) return filename;
     return filename.substring(0, maxLength) + '...';
   }
 
-  // Toggle selection for individual image
   toggleImageSelection(index: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-
+    if (event) event.stopPropagation();
     if (this.selectedImageIndices.has(index)) {
       this.selectedImageIndices.delete(index);
     } else {
       this.selectedImageIndices.add(index);
     }
-
     this.allSelected = this.selectedImageIndices.size === this.selectedFiles.length;
   }
 
-  // Select all images
   selectAllImages(): void {
     if (this.allSelected) {
       this.selectedImageIndices.clear();
     } else {
-      this.selectedImageIndices = new Set(
-        Array.from({ length: this.selectedFiles.length }, (_, i) => i)
-      );
+      this.selectedImageIndices = new Set(Array.from({ length: this.selectedFiles.length }, (_, i) => i));
     }
     this.allSelected = !this.allSelected;
   }
 
-  // Check if image is selected
   isImageSelected(index: number): boolean {
     return this.selectedImageIndices.has(index);
   }
 
-  // Check if any images are selected
   hasSelectedImages(): boolean {
     return this.selectedImageIndices.size > 0;
   }
 
-  // Get count of selected images
   getSelectedCount(): number {
     return this.selectedImageIndices.size;
   }
 
-  // Delete single image
   deleteImage(index: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
+    if (event) event.stopPropagation();
+
+    const file = this.selectedFiles[index];
+    const url = this.fileUrls.get(file);
+    if (url) {
+      URL.revokeObjectURL(url);
+      this.fileUrls.delete(file);
     }
 
-    // Revoke the object URL to prevent memory leaks
-    const file = this.selectedFiles[index];
-    const url = this.getImageUrl(file);
-    URL.revokeObjectURL(url);
-
-    // Remove the file from selectedFiles array
     this.selectedFiles.splice(index, 1);
 
-    // Update selected indices
     const newSelectedIndices = new Set<number>();
     this.selectedImageIndices.forEach(idx => {
-      if (idx > index) {
-        newSelectedIndices.add(idx - 1);
-      } else if (idx < index) {
-        newSelectedIndices.add(idx);
-      }
+      if (idx > index) newSelectedIndices.add(idx - 1);
+      else if (idx < index) newSelectedIndices.add(idx);
     });
     this.selectedImageIndices = newSelectedIndices;
-
-    // Update allSelected status
     this.allSelected = this.selectedImageIndices.size === this.selectedFiles.length && this.selectedFiles.length > 0;
+    this.cdr.detectChanges();
   }
 
-  // Delete all selected images
   deleteSelectedImages(): void {
     if (!this.hasSelectedImages()) return;
-
-    // Sort indices in descending order to avoid index shifting issues
     const indicesToDelete = Array.from(this.selectedImageIndices).sort((a, b) => b - a);
-
-    // Revoke URLs for selected files
     indicesToDelete.forEach(index => {
       const file = this.selectedFiles[index];
-      const url = this.getImageUrl(file);
-      URL.revokeObjectURL(url);
+      const url = this.fileUrls.get(file);
+      if (url) {
+        URL.revokeObjectURL(url);
+        this.fileUrls.delete(file);
+      }
     });
-
-    indicesToDelete.forEach(index => {
-      this.selectedFiles.splice(index, 1);
-    });
-
-    // Clear selection
+    indicesToDelete.forEach(index => this.selectedFiles.splice(index, 1));
     this.selectedImageIndices.clear();
     this.allSelected = false;
+    this.cdr.detectChanges();
   }
 
-  // Clear all images
   clearAllImages(): void {
-    // Revoke all object URLs
-    this.selectedFiles.forEach(file => {
-      const url = this.getImageUrl(file);
-      URL.revokeObjectURL(url);
-    });
-
+    this.fileUrls.forEach(url => URL.revokeObjectURL(url));
+    this.fileUrls.clear();
     this.selectedFiles = [];
     this.selectedImageIndices.clear();
     this.allSelected = false;
+    this.cdr.detectChanges();
   }
 
-  // Cleanup when component is destroyed
-  ngOnDestroy(): void {
-    this.clearAllImages();
-  }
-
-  submit() {
-    // Clear previous messages
+  submit(): void {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Validate form
     if (this.offerForm.invalid) {
       this.errorMessage = 'Please fill all required fields correctly';
       this.offerForm.markAllAsTouched();
       return;
     }
 
-    // Validate images
     if (this.selectedFiles.length === 0) {
       this.errorMessage = 'Please select at least one image';
       return;
     }
 
-    // Validate image sizes (optional - example: max 5MB per image)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Size validation
+    const maxSize = 5 * 1024 * 1024;
     const oversizedFiles = this.selectedFiles.filter(file => file.size > maxSize);
     if (oversizedFiles.length > 0) {
       this.errorMessage = `Some images exceed 5MB limit: ${oversizedFiles.map(f => this.truncateFileName(f.name, 10)).join(', ')}`;
       return;
     }
 
-    // Build the offer object (excluding files)
+    // Type validation (double‑check)
+    const invalidTypeFiles = this.selectedFiles.filter(f => !this.allowedImageTypes.includes(f.type));
+    if (invalidTypeFiles.length > 0) {
+      this.errorMessage = `Certains fichiers ne sont pas au format JPG/PNG : ${invalidTypeFiles.map(f => this.truncateFileName(f.name, 10)).join(', ')}`;
+      return;
+    }
+
+    if (!this.offerForm.get('latitude')?.value || !this.offerForm.get('longitude')?.value) {
+      this.errorMessage = 'Please select a location on the map';
+      return;
+    }
+
+    // Format expiry date as YYYY-MM-DD (common for backend)
+    const expiryDate = this.calculateExpiryDate().toISOString().split('T')[0];
+
     const offer = {
       titre: this.offerForm.get('titre')?.value,
       description: this.offerForm.get('description')?.value,
       prixLoc: this.offerForm.get('prixLoc')?.value,
       ville: this.offerForm.get('ville')?.value,
       chambres: this.offerForm.get('chambres')?.value,
-      meublee: this.offerForm.get('meublee')?.value
+      meublee: this.offerForm.get('meublee')?.value,
+      latitude: this.offerForm.get('latitude')?.value,
+      longitude: this.offerForm.get('longitude')?.value,
+      expiryDate: expiryDate
     };
 
     this.submitting = true;
 
-    // Call the service with the offer object and selected files
+    // Log the offer being sent (for debugging)
+    console.log('Submitting offer:', offer);
+
     this.collocationService.createOffer(offer, this.selectedFiles).subscribe({
       next: (res: any) => {
         console.log('Offer created:', res);
         this.successMessage = 'Offer created successfully!';
-        this.offerForm.reset();
+        this.offerForm.reset({ meublee: false, latitude: this.defaultCenter[0], longitude: this.defaultCenter[1] });
         this.clearAllImages();
         this.submitting = false;
+        //this.router.navigateByUrl('/collocation/offres');
       },
       error: (err: any) => {
         console.error('Error creating offer:', err);
+        // Log the full error response for debugging
+        if (err.error) {
+          console.error('Error details:', typeof err.error === 'string' ? err.error : JSON.stringify(err.error));
+        }
         this.errorMessage = err.error?.message || 'Failed to create offer. Please try again.';
         this.submitting = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // Reset form and clear all data
+  private calculateExpiryDate(): Date {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 30);
+    return expiry;
+  }
+
   resetForm(): void {
-    this.offerForm.reset({
-      meublee: false
-    });
+    this.offerForm.reset({ meublee: false, latitude: this.defaultCenter[0], longitude: this.defaultCenter[1] });
+    if (this.marker) this.marker.setLatLng(this.defaultCenter);
     this.clearAllImages();
     this.errorMessage = '';
     this.successMessage = '';
+    this.typeWarning = '';
+    this.cdr.detectChanges();
   }
 }
