@@ -2,20 +2,14 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { importProvidersFrom } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http'; // <-- new way
+import { provideHttpClient } from '@angular/common/http';
 
 import { AppComponent } from './app/app.component';
+import { routes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideRouter([
-      {
-        path: 'collocation',
-        loadChildren: () => import('./app/collocation/collocation.module').then(m => m.CollocationModule)
-      },
-      { path: '', redirectTo: 'collocation/create-offer', pathMatch: 'full' },
-      { path: '**', redirectTo: 'collocation/create-offer' }
-    ]),
+    provideRouter(routes),
     provideHttpClient(),
     importProvidersFrom(BrowserAnimationsModule)
   ]

@@ -4,8 +4,8 @@ import { Component } from '@angular/core';
   selector: 'app-collocation-detail',
   standalone: true,
   imports: [],
-  templateUrl: './collocation-detail.component.html',
-  styleUrl: './collocation-detail.component.scss'
+  templateUrl: './collocation-detailOffre.component.html',
+  styleUrl: './collocation-detailOffre.component.scss'
 })
 export class CollocationDetailComponent {
 
