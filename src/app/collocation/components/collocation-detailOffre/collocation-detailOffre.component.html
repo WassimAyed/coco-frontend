@@ -1,1 +1,108 @@
-<p>collocation-detail works!</p>
+<main class="main-content" role="main">
+  <div class="layout">
+
+    <!-- Loading & error states with accessibility -->
+    <div *ngIf="loading" class="status-card loading" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <span>Chargement de l'annonce...</span>
+    </div>
+
+    <div *ngIf="error" class="status-card error" role="alert" aria-live="assertive">
+      <span class="error-icon" aria-hidden="true">⚠️</span>
+      <span>{{ error }}</span>
+    </div>
+
+    <div class="offer-details" *ngIf="!loading && offer">
+
+      <!-- LEFT COLUMN : main content -->
+      <div class="left-column">
+
+        <!-- Title & price -->
+        <div class="title-section">
+          <div>
+            <h1 class="offer-title">{{ offer.titre }}</h1>
+            <p class="offer-location">
+              <span aria-hidden="true">📍</span> {{ offer.ville }}
+            </p>
+          </div>
+          <div class="price-badge" aria-label="Prix mensuel">
+            {{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}
+          </div>
+        </div>
+
+        <!-- Feature badges -->
+        <div class="features" role="list" aria-label="Caractéristiques">
+          <span class="feature" role="listitem">{{ offer.chambres }} chambre(s)</span>
+          <span class="feature" role="listitem">{{ offer.meublee ? 'Meublé' : 'Non meublé' }}</span>
+        </div>
+
+        <!-- Gallery section with semantic structure -->
+        <section class="gallery-section" aria-label="Galerie photos">
+          <figure class="gallery-main">
+            <img *ngIf="offer.imagesColoc?.length"
+                 [src]="offer.imagesColoc?.[selectedImageIndex]?.url"
+                 [alt]="'Photo ' + (selectedImageIndex + 1) + ' : ' + offer.titre"
+                 loading="eager"
+                 class="gallery-main-image">
+            <div *ngIf="!offer.imagesColoc?.length" class="no-image" role="img" aria-label="Aucune image disponible">
+              <span aria-hidden="true">📷</span> Aucune image
+            </div>
+            <figcaption class="visually-hidden">Galerie de l'annonce</figcaption>
+          </figure>
+
+          <!-- Thumbnails navigation -->
+          <div class="gallery-thumbnails" *ngIf="(offer.imagesColoc?.length ?? 0) > 1"
+               role="list" aria-label="Miniatures des photos">
+            <button *ngFor="let img of offer.imagesColoc; let i = index"
+                    class="thumbnail"
+                    [class.active]="i === selectedImageIndex"
+                    (click)="selectImage(i)"
+                    [attr.aria-label]="'Voir la photo ' + (i+1)"
+                    [attr.aria-current]="i === selectedImageIndex ? 'true' : null">
+              <img [src]="img?.url" [alt]="'Miniature ' + (i+1)" loading="lazy">
+            </button>
+          </div>
+        </section>
+
+        <!-- Description card -->
+        <article class="description-card">
+          <h2 >Description</h2>
+          <p class="description">{{ offer.description }}</p>
+        </article>
+
+      </div>
+
+      <!-- RIGHT COLUMN : map & owner (sticky on desktop) -->
+      <div class="right-column sticky-column">
+
+        <!-- Map card (glassmorphic) -->
+        <section class="map-card glass-card" aria-label="Localisation">
+          <h3 class="card-title">
+            <span aria-hidden="true">📍</span> Localisation
+          </h3>
+          <div id="offer-map" class="map-container" role="application" aria-label="Carte interactive"></div>
+        </section>
+
+        <!-- Owner card (glassmorphic) -->
+        <section class="owner-card glass-card" *ngIf="offer.ownerId" aria-label="Propriétaire">
+          <div class="owner-header">
+            <img src="https://i.pravatar.cc/80?u={{ offer.ownerId }}"
+                 class="owner-avatar"
+                 alt="Photo de profil du propriétaire"
+                 loading="lazy">
+            <div>
+              <h4 class="owner-name"> offer.owner?.nom offer.owner?.prenom </h4>
+              <p class="owner-email"> offer.owner?.email </p>
+            </div>
+          </div>
+
+          <button class="contact-btn" aria-label="Contacter le propriétaire">
+            Contacter le propriétaire
+          </button>
+        </section>
+
+      </div>
+
+    </div>
+  </div>
+</main>

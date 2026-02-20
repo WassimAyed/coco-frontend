@@ -10,18 +10,23 @@ import { RouterModule } from '@angular/router';
 import { CollocationCreateOffreComponent } from './components/collocation-createOffre/collocation-createOffre.component';
 import { CollocationListComponent } from './components/collocation-listOffres/collocation-listOffres.component'; // adjust path if needed
 import { LOCALE_ID } from '@angular/core';
+import { CollocationDetailComponent } from './components/collocation-detailOffre/collocation-detailOffre.component';
 
 
 @NgModule({
   declarations: [
     CollocationCreateOffreComponent,
-    CollocationListComponent   ],
+    CollocationListComponent ,
+    CollocationDetailComponent
+    ],
   imports: [
     CommonModule,                   // provides currency, slice, ngIf, ngFor
     FormsModule,                    // provides ngModel
     ReactiveFormsModule,
     HttpClientModule,
-    CollocationRoutingModule
+    CollocationRoutingModule,
+
+
   ],
   providers: [
   { provide: LOCALE_ID, useValue: 'fr-FR' }

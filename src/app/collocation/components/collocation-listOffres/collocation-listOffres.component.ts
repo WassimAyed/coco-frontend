@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { Router } from '@angular/router'; // for navigation
+import { Router , ActivatedRoute} from '@angular/router'; // for navigation
+
 import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
@@ -41,7 +42,9 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
   constructor(
     private collocationService: CollocationService,
-    private router: Router
+    private router: Router ,
+      private route: ActivatedRoute
+
   ) {}
 
   ngOnInit(): void {
@@ -109,9 +112,13 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
   // Action: View offer details
-  viewDetails(offerId: number): void {
-    this.router.navigate(['/collocation', offerId]); // adjust route as needed
-  }
+ viewDetails(offerId: number): void {
+
+  console.log('Current URL:', this.router.url);
+  console.log('Offer ID:', offerId);
+
+  this.router.navigate(['/collocation/offres', offerId]);
+}
 
   // Center map on a clicked offer
   centerOnOffer(offer: CollocationOffer): void {
@@ -164,4 +171,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
       ${offer.chambres} chambre(s) - ${offer.meublee ? 'Meublé' : 'Non meublé'}
     `;
   }
+
+
+
+
 }

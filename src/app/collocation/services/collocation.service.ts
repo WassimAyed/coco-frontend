@@ -29,4 +29,11 @@ export class CollocationService {
   getAllOffers(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/offresCollocGetAll`);
   }
+
+
+  // Get a single offer by ID
+getOfferById(id: number): Observable<any> {
+  return this.http.get<any>(`${this.apiUrl}/offresColloc/${id}`);
+}
+
 }

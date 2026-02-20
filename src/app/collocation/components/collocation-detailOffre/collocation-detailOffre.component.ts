@@ -1,12 +1,238 @@
-import { Component } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  OnDestroy,
+  HostListener,
+  ChangeDetectorRef
+} from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { CollocationService } from '../../services/collocation.service';
+import { CollocationOffer } from '../../models/collocationOffre.model';
+import * as L from 'leaflet';
+import 'leaflet-defaulticon-compatibility';
+import { FormBuilder, Validators } from '@angular/forms';
+import {
+  trigger,
+  transition,
+  style,
+  animate,
+  query,
+  stagger
+} from '@angular/animations';
+import { Subscription, timer } from 'rxjs';
+
+
+// ---------------- Leaflet fix ----------------
+const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
+const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
+const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
+
+const iconDefault = L.icon({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = iconDefault;
+// ---------------------------------------------
+
 
 @Component({
   selector: 'app-collocation-detail',
-  standalone: true,
-  imports: [],
   templateUrl: './collocation-detailOffre.component.html',
-  styleUrl: './collocation-detailOffre.component.scss'
+  styleUrls: ['./collocation-detailOffre.component.scss'],
+
+  animations: [
+
+    trigger('fadeSlideIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('450ms cubic-bezier(.16,.8,.32,1)',
+          style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+
+    trigger('staggerCards', [
+      transition(':enter', [
+        query('.glass-card, .title-section, .gallery-main, .description-card', [
+          style({ opacity: 0, transform: 'translateY(25px)' }),
+          stagger(120, [
+            animate('500ms cubic-bezier(.16,.8,.32,1)',
+              style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ])
+      ])
+    ])
+  ]
 })
-export class CollocationDetailComponent {
+export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  offer: CollocationOffer | null = null;
+  loading = true;
+  error = '';
+
+  private map?: L.Map;
+  private subs: Subscription[] = [];
+
+  // ---------- UI STATES ----------
+  selectedImageIndex = 0;
+  lightboxOpen = false;
+  isFavorite = false;
+  sendingMessage = false;
+  messageSent = false;
+
+  // ---------- CONTACT FORM ----------
+ contactForm!: ReturnType<FormBuilder['group']>;
+
+  constructor(
+    private route: ActivatedRoute,
+    private collocationService: CollocationService,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  // ---------------- INIT ----------------
+  ngOnInit(): void {
+   this.contactForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
+    message: ['', [Validators.required, Validators.minLength(6)]]
+  });
+
+  this.route.paramMap.subscribe(params => {
+    const id = params.get('id');
+    if (id) this.loadOffer(+id);
+  });
+  }
+
+  ngAfterViewInit(): void {}
+
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
+    if (this.map) this.map.remove();
+  }
+
+  // ---------------- DATA LOAD ----------------
+  private loadOffer(id: number): void {
+    this.loading = true;
+
+    this.collocationService.getOfferById(id).subscribe({
+      next: (data) => {
+        this.offer = data;
+        this.loading = false;
+        this.selectedImageIndex = 0;
+
+        if (data.latitude && data.longitude) {
+          setTimeout(() => this.initMap(data.latitude, data.longitude), 0);
+        }
+      },
+      error: () => {
+        this.error = 'Impossible de charger l’offre.';
+        this.loading = false;
+      }
+    });
+  }
+
+  // ---------------- MAP ----------------
+  private initMap(lat: number, lng: number): void {
+
+    if (this.map) this.map.remove();
+
+    this.map = L.map('offer-map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+      .addTo(this.map);
+
+    L.marker([lat, lng])
+      .addTo(this.map)
+      .bindPopup(this.offer?.titre || 'Colocation')
+      .openPopup();
+  }
+
+  // ---------------- GALLERY ----------------
+  selectImage(index: number): void {
+    this.selectedImageIndex = index;
+  }
+
+  nextImage(): void {
+    if (!this.offer?.imagesColoc?.length) return;
+    const len = this.offer.imagesColoc.length;
+    this.selectedImageIndex = (this.selectedImageIndex + 1) % len;
+    this.cdr.markForCheck();
+  }
+
+  prevImage(): void {
+    if (!this.offer?.imagesColoc?.length) return;
+    const len = this.offer.imagesColoc.length;
+    this.selectedImageIndex = (this.selectedImageIndex - 1 + len) % len;
+    this.cdr.markForCheck();
+  }
+
+  // keyboard nav
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboard(e: KeyboardEvent) {
+    if (this.lightboxOpen) {
+      if (e.key === 'Escape') this.closeLightbox();
+      if (e.key === 'ArrowRight') this.nextImage();
+      if (e.key === 'ArrowLeft') this.prevImage();
+    }
+  }
+
+  // ---------------- LIGHTBOX ----------------
+ openLightbox(index: number) {
+  this.selectedImageIndex = index;
+  this.lightboxOpen = true;
+}
+
+  closeLightbox(): void {
+    this.lightboxOpen = false;
+    this.subs.forEach(s => s.unsubscribe());
+    this.subs = [];
+  }
+
+  // ---------------- FAVORITE ----------------
+  toggleFavorite(): void {
+    this.isFavorite = !this.isFavorite;
+  }
+
+  // ---------------- SHARE ----------------
+  async shareOffer() {
+
+    const url = window.location.href;
+    const text = this.offer?.titre || 'Annonce';
+
+    if (navigator.share) {
+      await navigator.share({ title: text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
+  }
+
+  // ---------------- CONTACT ----------------
+  sendMessage(): void {
+
+    if (this.contactForm.invalid) {
+      this.contactForm.markAllAsTouched();
+      return;
+    }
+
+    this.sendingMessage = true;
+
+    setTimeout(() => {
+      this.sendingMessage = false;
+      this.messageSent = true;
+      this.contactForm.reset();
+      this.cdr.markForCheck();
+      setTimeout(() => this.messageSent = false, 3000);
+    }, 1200);
+  }
 
 }
