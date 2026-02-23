@@ -6,6 +6,9 @@ import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 
+
+//
+
 // Fix for default marker icons (Leaflet’s default assets are missing in Angular)
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
 const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
@@ -22,6 +25,8 @@ const iconDefault = L.icon({
 });
 L.Marker.prototype.options.icon = iconDefault;
 
+
+
 @Component({
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
@@ -34,11 +39,18 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   loading = false;
   error = '';
 
-  // For favorite toggling (example: store IDs of favorited offers)
-  favoriteIds: Set<number> = new Set<number>();
+
 
   private map: L.Map | undefined;
   private markers: L.Marker[] = [];
+
+  filterMeublee: string = ''; // "true" | "false" | ""
+filterVille: string = ''; // selected city
+filterPrixMin: number | null = null;
+filterPrixMax: number | null = null;
+
+// dynamically populate available cities
+availableVilles: string[] = [];
 
   constructor(
     private collocationService: CollocationService,
@@ -50,29 +62,52 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadOffers();
     // Optionally load user's favorite IDs from a service
-    // this.loadFavorites();
+    this.loadFavorites();
   }
 
   ngAfterViewInit(): void {
     this.initMap();
   }
 
-  loadOffers(): void {
-    this.loading = true;
-    this.collocationService.getAllOffers().subscribe({
-      next: (data) => {
-        this.offers = data;
-        this.filteredOffers = data;
-        this.loading = false;
-        this.updateMarkers();  // add markers after data loads
-      },
-      error: (err) => {
-        this.error = 'Failed to load offers. Please try again.';
-        this.loading = false;
-        console.error(err);
-      }
-    });
-  }
+ loadOffers(): void {
+  this.loading = true;
+  this.collocationService.getAllOffers().subscribe({
+    next: (data) => {
+      this.offers = data;
+      this.filteredOffers = data;
+
+      // populate available cities
+      this.availableVilles = Array.from(new Set(data.map(o => o.ville))).sort();
+
+      this.loading = false;
+      this.updateMarkers();
+    },
+    error: (err) => {
+      this.error = 'Failed to load offers. Please try again.';
+      this.loading = false;
+      console.error(err);
+    }
+  });
+}
+
+applyFilters(): void {
+  this.filteredOffers = this.offers.filter(offer => {
+    // Filter by meublée
+    if (this.filterMeublee === 'true' && !offer.meublee) return false;
+    if (this.filterMeublee === 'false' && offer.meublee) return false;
+
+    // Filter by city
+    if (this.filterVille && offer.ville !== this.filterVille) return false;
+
+    // Filter by price
+    if (this.filterPrixMin !== null && offer.prixLoc < this.filterPrixMin) return false;
+    if (this.filterPrixMax !== null && offer.prixLoc > this.filterPrixMax) return false;
+
+    return true;
+  });
+
+  this.updateMarkers(); // update map markers
+}
 
   filterOffers(): void {
     const term = this.searchTerm.toLowerCase().trim();
@@ -89,18 +124,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.updateMarkers();  // update markers to show only filtered offers
   }
 
-  // Action: Toggle favorite status
-  toggleFavorite(offerId: number): void {
-    if (this.favoriteIds.has(offerId)) {
-      this.favoriteIds.delete(offerId);
-      // Call service to remove from wishlist
-      // this.wishlistService.remove(offerId).subscribe(...);
-    } else {
-      this.favoriteIds.add(offerId);
-      // Call service to add to wishlist
-      // this.wishlistService.add(offerId).subscribe(...);
-    }
-  }
+
 
   // Action: Send a request for this offer
   sendRequest(offerId: number): void {
@@ -172,7 +196,46 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     `;
   }
 
+   createOffer() :void {
+  this.router.navigate(['/collocation/create-offre']);
+  }
 
+  // Store favorite offer IDs as a reactive array
+favoriteIds: number[] = [];
+
+loadFavorites(): void {
+  const userId = +localStorage.getItem("ownerId")!;
+  this.collocationService.getFavorites(userId).subscribe({
+    next: (data: any[]) => {
+      // Map favorite offers to IDs
+      this.favoriteIds = data.map(f => f.offre.id);
+    },
+    error: (err) => console.error(err)
+  });
+}
+
+toggleFavorite(offerId: number): void {
+  const userId = +localStorage.getItem("ownerId")!;
+
+  if (this.favoriteIds.includes(offerId)) {
+    // Remove favorite and force full page reload
+    this.collocationService.removeFavorite(userId, offerId).subscribe({
+      next: () => {
+        // Force full page reload
+        window.location.href = window.location.href;
+      },
+      error: err => console.error(err)
+    });
+  } else {
+    // Add favorite normally
+    this.collocationService.addFavorite(userId, offerId).subscribe({
+      next: () => {
+        this.favoriteIds = [...this.favoriteIds, offerId];
+      },
+      error: err => console.error(err)
+    });
+  }
+}
 
 
 }

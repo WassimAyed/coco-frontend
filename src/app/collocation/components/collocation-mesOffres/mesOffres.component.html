@@ -1,0 +1,203 @@
+<div class="container my-5">
+  <h1 class="mes-title text-center mb-4">Mes Offres de collocation</h1>
+
+  <!-- Empty State -->
+  <div *ngIf="myOffers.length === 0" class="alert alert-info text-center py-4">
+    <i class="fas fa-inbox fa-2x mb-3"></i>
+    <h5>Vous n'avez aucune annonce pour le moment.</h5>
+    <p class="mb-0">Créez votre première annonce dès maintenant !</p>
+  </div>
+
+  <!-- Offers Table & Cards -->
+  <div *ngIf="myOffers.length > 0">
+    <!-- Desktop Table -->
+    <div class="d-none d-md-block table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-success">
+          <tr>
+            <th>Image</th>
+            <th>Titre</th>
+            <th>Ville</th>
+            <th>Prix</th>
+            <th>Chambres</th>
+            <th>Meublé</th>
+            <th>Expiration</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let offer of paginatedOffers">
+            <td>
+              <img
+                *ngIf="offer.imagesColoc?.length"
+                [src]="offer.imagesColoc[0].url"
+                class="img-thumbnail shadow-sm"
+                style="width: 80px; height: 80px; object-fit: cover;"
+              />
+              <span *ngIf="!offer.imagesColoc?.length" class="text-muted">
+                <i class="fas fa-image fa-2x"></i>
+              </span>
+            </td>
+            <td class="fw-semibold">{{ offer.titre }}</td>
+            <td>{{ offer.ville }}</td>
+            <td>{{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}</td>
+            <td>{{ offer.chambres }}</td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="offer.meublee ? 'bg-success' : 'bg-secondary'">
+                <i class="fas" [ngClass]="offer.meublee ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+              </span>
+            </td>
+            <td>{{ offer.expiryDate | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="offer.expired ? 'bg-danger' : 'bg-success'">
+                <i class="fas" [ngClass]="offer.expired ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+                {{ offer.expired ? 'Expirée' : 'Active' }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" (click)="openUpdateModal(offer)">
+                  <i class="fas fa-edit"></i> Modifier
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="openDeleteModal(offer.id)">
+                  <i class="fas fa-trash-alt"></i> Supprimer
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="d-md-none">
+      <div class="row g-3">
+        <div class="col-12" *ngFor="let offer of paginatedOffers">
+          <div class="card offer-card shadow-sm h-100">
+            <div class="row g-0">
+              <div class="col-4">
+                <img
+                  *ngIf="offer.imagesColoc?.length"
+                  [src]="offer.imagesColoc[0].url"
+                  class="img-fluid rounded-start h-100"
+                  style="object-fit: cover;"
+                />
+                <div *ngIf="!offer.imagesColoc?.length" class="bg-light d-flex align-items-center justify-content-center h-100">
+                  <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="card-body">
+                  <h5 class="card-title">{{ offer.titre }}</h5>
+                  <p class="card-text mb-1"><i class="fas fa-map-marker-alt me-2 text-success"></i>{{ offer.ville }}</p>
+                  <p class="card-text mb-1"><i class="fas fa-tag me-2 text-success"></i>{{ offer.prixLoc }} TND</p>
+                  <p class="card-text mb-1"><i class="fas fa-bed me-2 text-success"></i>{{ offer.chambres }} chambre(s)</p>
+                  <p class="card-text mb-1">
+                    <span class="badge rounded-pill" [ngClass]="offer.meublee ? 'bg-success' : 'bg-secondary'">
+                      <i class="fas" [ngClass]="offer.meublee ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                      {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+                    </span>
+                  </p>
+                  <p class="card-text mb-1"><small class="text-muted">Expire le {{ offer.expiryDate | date:'dd/MM/yyyy' }}</small></p>
+                  <p class="card-text">
+                    <span class="badge rounded-pill" [ngClass]="offer.expired ? 'bg-danger' : 'bg-success'">
+                      <i class="fas" [ngClass]="offer.expired ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+                      {{ offer.expired ? 'Expirée' : 'Active' }}
+                    </span>
+                  </p>
+                  <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-outline-primary flex-fill" (click)="openUpdateModal(offer)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger flex-fill" (click)="openDeleteModal(offer.id)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="d-flex justify-content-center align-items-center mt-4 gap-3">
+    <button class="btn btn-outline-success rounded-pill px-4" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1">
+      <i class="fas fa-chevron-left me-2"></i>Précédent
+    </button>
+    <span class="fw-semibold">Page {{ currentPage }} / {{ totalPages }}</span>
+    <button class="btn btn-outline-success rounded-pill px-4" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+      Suivant<i class="fas fa-chevron-right ms-2"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade show" *ngIf="showDeleteModal" style="display: block;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeDeleteModal()"></button>
+      </div>
+      <div class="modal-body py-4">
+        <p class="fs-5">Êtes-vous sûr de vouloir supprimer cette annonce ?</p>
+        <p class="text-muted small">Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary px-4" (click)="closeDeleteModal()">Annuler</button>
+        <button type="button" class="btn btn-danger px-4" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showDeleteModal"></div>
+
+<!-- Update Modal -->
+<div class="modal fade show" *ngIf="showUpdateModal" style="display: block;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier l'annonce</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeUpdateModal()"></button>
+      </div>
+      <form [formGroup]="updateForm" (ngSubmit)="submitUpdate()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Titre</label>
+            <input type="text" formControlName="titre" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ville</label>
+            <input type="text" formControlName="ville" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Prix (TND)</label>
+            <input type="number" formControlName="prixLoc" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Chambres</label>
+            <input type="number" formControlName="chambres" class="form-control">
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" formControlName="meublee" id="meubleeCheck">
+            <label class="form-check-label" for="meubleeCheck">Meublé</label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" formControlName="description" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeUpdateModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showUpdateModal"></div>

@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
 import * as L from 'leaflet';
 
+//  http://localhost:4200/collocation/create-offre
+
 // Fix marker icons
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
 const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';

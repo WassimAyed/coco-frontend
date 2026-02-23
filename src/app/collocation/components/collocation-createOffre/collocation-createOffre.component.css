@@ -1,0 +1,19 @@
+/* Ajustements pour la carte Leaflet */
+.map-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  z-index: 1;
+}
+
+.leaflet-container {
+  border-radius: 8px;
+}
+
+/* Uniformisation de la hauteur des images dans les cards */
+.card-img-top {
+  height: 140px;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(0,0,0,0.125);
+}

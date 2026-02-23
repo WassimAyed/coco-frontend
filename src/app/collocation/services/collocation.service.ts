@@ -36,4 +36,31 @@ getOfferById(id: number): Observable<any> {
   return this.http.get<any>(`${this.apiUrl}/offresColloc/${id}`);
 }
 
+getMyOffers(ownerId:number){
+  return this.http.get<any[]>(`${this.apiUrl}/myOffresColloc/${ownerId}`);
+}
+
+deleteOffer(id:number){
+  return this.http.delete(`${this.apiUrl}/deleteOffreColloc/${id}`,{responseType:'text'});
+}
+
+updateOffer(id: number, data: any) {
+  return this.http.put(`${this.apiUrl}/updateOffreColloc/${id}`, data);
+}
+
+// Get user's favorites
+getFavorites(userId: number) {
+  return this.http.get<number[]>(`${this.apiUrl}/favorites/${userId}`);
+}
+
+// Add favorite
+addFavorite(userId: number, offerId: number) {
+  return this.http.post(`${this.apiUrl}/favorites/${userId}/${offerId}`, {});
+}
+
+// Remove favorite
+removeFavorite(userId: number, offerId: number) {
+  return this.http.delete(`${this.apiUrl}/favorites/${userId}/${offerId}`);
+}
+
 }

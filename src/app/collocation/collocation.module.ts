@@ -11,13 +11,15 @@ import { CollocationCreateOffreComponent } from './components/collocation-create
 import { CollocationListComponent } from './components/collocation-listOffres/collocation-listOffres.component'; // adjust path if needed
 import { LOCALE_ID } from '@angular/core';
 import { CollocationDetailComponent } from './components/collocation-detailOffre/collocation-detailOffre.component';
+import { MesOffresComponent } from './components/collocation-mesOffres/mesOffres.component';
 
 
 @NgModule({
   declarations: [
     CollocationCreateOffreComponent,
     CollocationListComponent ,
-    CollocationDetailComponent
+    CollocationDetailComponent,
+    MesOffresComponent
     ],
   imports: [
     CommonModule,                   // provides currency, slice, ngIf, ngFor

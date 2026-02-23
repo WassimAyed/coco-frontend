@@ -1,81 +1,87 @@
-<main class="main-content" role="main">
-  <div class="layout">
+<main class="container my-4">
 
-    <!-- Loading & error states with accessibility -->
-    <div *ngIf="loading" class="status-card loading" role="status" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <span>Chargement de l'annonce...</span>
-    </div>
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-danger mb-3" role="status"></div>
+    <p class="text-secondary">Chargement de l'annonce...</p>
+  </div>
 
-    <div *ngIf="error" class="status-card error" role="alert" aria-live="assertive">
-      <span class="error-icon" aria-hidden="true">⚠️</span>
-      <span>{{ error }}</span>
-    </div>
+  <div *ngIf="error" class="alert alert-danger d-flex align-items-center">
+    <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
+  </div>
 
-    <div class="offer-details" *ngIf="!loading && offer">
+  <div class="row g-4" *ngIf="!loading && offer">
 
-      <!-- LEFT COLUMN : main content -->
-      <div class="left-column">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+      <div class="d-flex flex-column gap-4">
 
-        <!-- Title & price -->
-        <div class="title-section">
-          <div>
-            <h1 class="offer-title">{{ offer.titre }}</h1>
-            <p class="offer-location">
-              <span aria-hidden="true">📍</span> {{ offer.ville }}
-            </p>
-          </div>
-          <div class="price-badge" aria-label="Prix mensuel">
-            {{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}
-          </div>
-        </div>
-
-        <!-- Feature badges -->
-        <div class="features" role="list" aria-label="Caractéristiques">
-          <span class="feature" role="listitem">{{ offer.chambres }} chambre(s)</span>
-          <span class="feature" role="listitem">{{ offer.meublee ? 'Meublé' : 'Non meublé' }}</span>
-        </div>
-
-        <!-- Gallery section with semantic structure -->
-        <section class="gallery-section" aria-label="Galerie photos">
-          <figure class="gallery-main">
-            <img *ngIf="offer.imagesColoc?.length"
-                 [src]="offer.imagesColoc?.[selectedImageIndex]?.url"
-                 [alt]="'Photo ' + (selectedImageIndex + 1) + ' : ' + offer.titre"
-                 loading="eager"
-                 class="gallery-main-image">
-            <div *ngIf="!offer.imagesColoc?.length" class="no-image" role="img" aria-label="Aucune image disponible">
-              <span aria-hidden="true">📷</span> Aucune image
+        <!-- Title & Price -->
+        <div class="card glass-card border-0">
+          <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <h1 class="card-title h2 fw-bold">{{ offer.titre }}</h1>
+              <p class="text-secondary mb-0">
+                <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ offer.ville }}
+              </p>
             </div>
-            <figcaption class="visually-hidden">Galerie de l'annonce</figcaption>
-          </figure>
-
-          <!-- Thumbnails navigation -->
-          <div class="gallery-thumbnails" *ngIf="(offer.imagesColoc?.length ?? 0) > 1"
-               role="list" aria-label="Miniatures des photos">
-            <button *ngFor="let img of offer.imagesColoc; let i = index"
-                    class="thumbnail"
-                    [class.active]="i === selectedImageIndex"
-                    (click)="selectImage(i)"
-                    [attr.aria-label]="'Voir la photo ' + (i+1)"
-                    [attr.aria-current]="i === selectedImageIndex ? 'true' : null">
-              <img [src]="img?.url" [alt]="'Miniature ' + (i+1)" loading="lazy">
-            </button>
+            <span class="badge bg-danger fs-5 py-2 px-3 rounded-pill shadow price-badge-float">
+              {{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}
+            </span>
           </div>
-        </section>
+        </div>
 
-        <!-- Description card -->
-        <article class="description-card">
-          <h2 >Description</h2>
-          <p class="description">{{ offer.description }}</p>
-        </article>
+        <!-- Features -->
+        <div class="d-flex gap-2 flex-wrap">
+          <span class="badge bg-light text-dark rounded-pill px-3 py-2">
+            <i class="fas fa-bed me-1"></i>{{ offer.chambres }} chambre(s)
+          </span>
+          <span class="badge rounded-pill px-3 py-2" [ngClass]="offer.meublee ? 'bg-danger' : 'bg-light text-dark'">
+            <i class="fas" [ngClass]="offer.meublee ? 'fa-couch' : 'fa-times-circle'"></i>
+            {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+          </span>
+        </div>
+
+        <!-- Gallery -->
+        <div class="card glass-card border-0" *ngIf="offer.imagesColoc?.[selectedImageIndex] && offer.imagesColoc && offer.imagesColoc.length > 0">
+          <div class="card-body p-0">
+            <img
+              [src]="offer.imagesColoc[selectedImageIndex].url"
+              class="w-100 rounded-top"
+              style="aspect-ratio:16/9;object-fit:cover;"
+            />
+            <div class="p-3">
+              <div class="d-flex gap-2 overflow-auto py-1" *ngIf="offer.imagesColoc.length > 1">
+                <button
+                  *ngFor="let img of offer.imagesColoc; let i=index"
+                  class="btn p-0 border-0 rounded-3 overflow-hidden flex-shrink-0"
+                  style="width:80px;height:60px"
+                  [class.active-thumb]="i===selectedImageIndex"
+                  (click)="selectImage(i)"
+                >
+                  <img [src]="img.url" class="w-100 h-100 object-fit-cover" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="card glass-card border-0">
+          <div class="card-body">
+            <h5 class="card-title h5">Description</h5>
+            <p class="card-text">{{ offer.description }}</p>
+          </div>
+        </div>
 
       </div>
+    </div>
 
-      <!-- RIGHT COLUMN : map & owner (sticky on desktop) -->
-      <div class="right-column sticky-column">
+    <!-- Right Column -->
+    <div class="col-lg-4">
+      <div class="position-sticky top-0" style="top:1.5rem;">
+        <div class="d-flex flex-column gap-4">
 
-        <!-- Map card (glassmorphic) -->
+          <!-- Map -->
         <section class="map-card glass-card" aria-label="Localisation">
           <h3 class="card-title">
             <span aria-hidden="true">📍</span> Localisation
@@ -83,26 +89,25 @@
           <div id="offer-map" class="map-container" role="application" aria-label="Carte interactive"></div>
         </section>
 
-        <!-- Owner card (glassmorphic) -->
-        <section class="owner-card glass-card" *ngIf="offer.ownerId" aria-label="Propriétaire">
-          <div class="owner-header">
-            <img src="https://i.pravatar.cc/80?u={{ offer.ownerId }}"
-                 class="owner-avatar"
-                 alt="Photo de profil du propriétaire"
-                 loading="lazy">
-            <div>
-              <h4 class="owner-name"> offer.owner?.nom offer.owner?.prenom </h4>
-              <p class="owner-email"> offer.owner?.email </p>
+          <!-- Owner -->
+          <div class="card glass-card border-0" *ngIf="offer.ownerId">
+            <div class="card-body">
+              <div class="d-flex gap-3 align-items-center mb-3">
+                <img src="https://i.pravatar.cc/80?u={{offer.ownerId}}" class="rounded-circle border border-2 border-danger" width="70" height="70" />
+                <div>
+                  <h6 class="fw-bold mb-0"> offer.owner?.nom  offer.owner?.prenom </h6>
+                  <small class="text-secondary"> offer.owner?.email </small>
+                </div>
+              </div>
+              <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold">
+                <i class="fas fa-envelope me-2"></i>Contacter le propriétaire
+              </button>
             </div>
           </div>
 
-          <button class="contact-btn" aria-label="Contacter le propriétaire">
-            Contacter le propriétaire
-          </button>
-        </section>
-
+        </div>
       </div>
-
     </div>
+
   </div>
 </main>

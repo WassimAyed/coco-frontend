@@ -20,10 +20,9 @@ import {
   query,
   stagger
 } from '@angular/animations';
-import { Subscription, timer } from 'rxjs';
+import { Subscription } from 'rxjs';
 
-
-// ---------------- Leaflet fix ----------------
+// -------- Leaflet default icon fix --------
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
 const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
@@ -39,16 +38,13 @@ const iconDefault = L.icon({
   shadowSize: [41, 41]
 });
 L.Marker.prototype.options.icon = iconDefault;
-// ---------------------------------------------
-
+// -----------------------------------------
 
 @Component({
   selector: 'app-collocation-detail',
   templateUrl: './collocation-detailOffre.component.html',
-  styleUrls: ['./collocation-detailOffre.component.scss'],
-
+  styleUrls: ['./collocation-detailOffre.component.css'],
   animations: [
-
     trigger('fadeSlideIn', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(20px)' }),
@@ -56,7 +52,6 @@ L.Marker.prototype.options.icon = iconDefault;
           style({ opacity: 1, transform: 'translateY(0)' }))
       ])
     ]),
-
     trigger('staggerCards', [
       transition(':enter', [
         query('.glass-card, .title-section, .gallery-main, .description-card', [
@@ -79,15 +74,13 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
   private map?: L.Map;
   private subs: Subscription[] = [];
 
-  // ---------- UI STATES ----------
   selectedImageIndex = 0;
   lightboxOpen = false;
   isFavorite = false;
   sendingMessage = false;
   messageSent = false;
 
-  // ---------- CONTACT FORM ----------
- contactForm!: ReturnType<FormBuilder['group']>;
+  contactForm!: ReturnType<FormBuilder['group']>;
 
   constructor(
     private route: ActivatedRoute,
@@ -96,18 +89,17 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
     private cdr: ChangeDetectorRef
   ) {}
 
-  // ---------------- INIT ----------------
   ngOnInit(): void {
-   this.contactForm = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]],
-    message: ['', [Validators.required, Validators.minLength(6)]]
-  });
+    this.contactForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      message: ['', [Validators.required, Validators.minLength(6)]]
+    });
 
-  this.route.paramMap.subscribe(params => {
-    const id = params.get('id');
-    if (id) this.loadOffer(+id);
-  });
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) this.loadOffer(+id);
+    });
   }
 
   ngAfterViewInit(): void {}
@@ -117,39 +109,41 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
     if (this.map) this.map.remove();
   }
 
-  // ---------------- DATA LOAD ----------------
-  private loadOffer(id: number): void {
-    this.loading = true;
+ private loadOffer(id: number): void {
+  this.loading = true;
 
-    this.collocationService.getOfferById(id).subscribe({
-      next: (data) => {
-        this.offer = data;
-        this.loading = false;
-        this.selectedImageIndex = 0;
+  this.collocationService.getOfferById(id).subscribe({
+    next: (data) => {
+      this.offer = data;
+      this.selectedImageIndex = 0;
 
-        if (data.latitude && data.longitude) {
-          setTimeout(() => this.initMap(data.latitude, data.longitude), 0);
-        }
-      },
-      error: () => {
-        this.error = 'Impossible de charger l’offre.';
-        this.loading = false;
+      // Force Angular to update the DOM immediately
+      this.cdr.detectChanges();
+
+      if (data.latitude && data.longitude) {
+        // Wait one tick to ensure DOM is ready, then initialize map
+        setTimeout(() => this.initMap(data.latitude!, data.longitude!), 0);
       }
-    });
-  }
+      this.loading = false;
+    },
+    error: () => {
+      this.error = 'Impossible de charger l’offre.';
+      this.loading = false;
+    }
+  });
+}
 
-  // ---------------- MAP ----------------
   private initMap(lat: number, lng: number): void {
-
     if (this.map) this.map.remove();
 
     this.map = L.map('offer-map', {
-      zoomControl: false,
-      attributionControl: false
+      zoomControl: true,
+      attributionControl: true
     }).setView([lat, lng], 15);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-      .addTo(this.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.map);
 
     L.marker([lat, lng])
       .addTo(this.map)
@@ -157,18 +151,13 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
       .openPopup();
   }
 
-  // ---------------- GALLERY ----------------
-  selectImage(index: number): void {
-    this.selectedImageIndex = index;
-  }
-
+  selectImage(index: number): void { this.selectedImageIndex = index; }
   nextImage(): void {
     if (!this.offer?.imagesColoc?.length) return;
     const len = this.offer.imagesColoc.length;
     this.selectedImageIndex = (this.selectedImageIndex + 1) % len;
     this.cdr.markForCheck();
   }
-
   prevImage(): void {
     if (!this.offer?.imagesColoc?.length) return;
     const len = this.offer.imagesColoc.length;
@@ -176,7 +165,6 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
     this.cdr.markForCheck();
   }
 
-  // keyboard nav
   @HostListener('window:keydown', ['$event'])
   handleKeyboard(e: KeyboardEvent) {
     if (this.lightboxOpen) {
@@ -186,44 +174,23 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
     }
   }
 
-  // ---------------- LIGHTBOX ----------------
- openLightbox(index: number) {
-  this.selectedImageIndex = index;
-  this.lightboxOpen = true;
-}
+  openLightbox(index: number) { this.selectedImageIndex = index; this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; this.subs.forEach(s => s.unsubscribe()); this.subs = []; }
 
-  closeLightbox(): void {
-    this.lightboxOpen = false;
-    this.subs.forEach(s => s.unsubscribe());
-    this.subs = [];
-  }
+  toggleFavorite(): void { this.isFavorite = !this.isFavorite; }
 
-  // ---------------- FAVORITE ----------------
-  toggleFavorite(): void {
-    this.isFavorite = !this.isFavorite;
-  }
-
-  // ---------------- SHARE ----------------
   async shareOffer() {
-
     const url = window.location.href;
     const text = this.offer?.titre || 'Annonce';
-
-    if (navigator.share) {
-      await navigator.share({ title: text, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-    }
+    if (navigator.share) await navigator.share({ title: text, url });
+    else await navigator.clipboard.writeText(url);
   }
 
-  // ---------------- CONTACT ----------------
   sendMessage(): void {
-
     if (this.contactForm.invalid) {
       this.contactForm.markAllAsTouched();
       return;
     }
-
     this.sendingMessage = true;
 
     setTimeout(() => {
@@ -234,5 +201,4 @@ export class CollocationDetailComponent implements OnInit, AfterViewInit, OnDest
       setTimeout(() => this.messageSent = false, 3000);
     }, 1200);
   }
-
 }

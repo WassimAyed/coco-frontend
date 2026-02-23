@@ -1,0 +1,89 @@
+/* Title with gradient */
+.mes-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0b4e2e, #1e8b4c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+/* Table styling */
+.table thead th {
+  background-color: #1e8b4c;
+  color: white;
+  font-weight: 600;
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(30, 139, 76, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.img-thumbnail {
+  border-radius: 8px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Card styling for mobile */
+.offer-card {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.offer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px rgba(0,0,0,0.1) !important;
+}
+
+.offer-card .card-body {
+  padding: 1rem;
+}
+
+.offer-card .badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+}
+
+/* Pagination buttons */
+.btn-outline-success {
+  border-color: #1e8b4c;
+  color: #1e8b4c;
+}
+
+.btn-outline-success:hover {
+  background-color: #1e8b4c;
+  color: white;
+}
+
+.btn-outline-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal improvements */
+.modal-content {
+  border-radius: 20px;
+}
+
+.modal-header {
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.modal-backdrop {
+  background-color: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .mes-title {
+    font-size: 2rem;
+  }
+}
