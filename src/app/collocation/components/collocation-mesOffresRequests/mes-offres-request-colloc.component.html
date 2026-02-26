@@ -97,11 +97,10 @@
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
-
-                  <button class="btn btn-sm btn-outline-secondary rounded-pill"
-                          (click)="deleteRequest(req.id)">
-                    <i class="fas fa-trash-alt"></i>
-                  </button>
+<button class="btn btn-sm btn-outline-secondary rounded-pill"
+        (click)="openDeleteModal(req.id)">
+  <i class="fas fa-trash-alt"></i>
+</button>
 
                   <span *ngIf="req.status !== 'ENCOURS'"
                         class="text-muted small fst-italic">
@@ -207,3 +206,26 @@
     </div>
   </div>
 </div>
+
+
+<!-- Modal suppression -->
+<div class="modal fade" id="deleteRequestModal" tabindex="-1" aria-labelledby="deleteRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteRequestModalLabel">Confirmer la suppression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        Voulez-vous vraiment supprimer cette demande ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;"></div>

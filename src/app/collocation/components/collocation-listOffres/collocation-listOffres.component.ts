@@ -5,29 +5,8 @@ import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 
-/* ===============================
-   Fix Leaflet default marker icons
-================================ */
-const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
-const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
-const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
+declare var bootstrap: any; // pour le modal
 
-const iconDefault = L.icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-});
-
-L.Marker.prototype.options.icon = iconDefault;
-
-/* ===============================
-   COMPONENT
-================================ */
 @Component({
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
@@ -37,7 +16,6 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
   offers: CollocationOffer[] = [];
   filteredOffers: CollocationOffer[] = [];
-
   searchTerm: string = '';
   loading = false;
   error = '';
@@ -51,7 +29,6 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   filterPrixMin: number | null = null;
   filterPrixMax: number | null = null;
   filterRadius: number | null = null;
-
   availableVilles: string[] = [];
 
   // GPS
@@ -61,16 +38,19 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   // Favorites
   favoriteIds: number[] = [];
 
+  // Modal request
+  selectedOfferId!: number;
+  requestMessage: string = '';
+   currentUserId!: number;
+
   constructor(
     private collocationService: CollocationService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
-  /* ===============================
-     LIFECYCLE
-  ================================= */
   ngOnInit(): void {
+     this.currentUserId = Number(localStorage.getItem('userId'));
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
@@ -85,16 +65,11 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   ================================= */
   loadOffers(): void {
     this.loading = true;
-
     this.collocationService.getAllOffers().subscribe({
       next: (data) => {
         this.offers = data;
         this.filteredOffers = data;
-
-        this.availableVilles = Array.from(
-          new Set(data.map(o => o.ville))
-        ).sort();
-
+        this.availableVilles = Array.from(new Set(data.map(o => o.ville))).sort();
         this.loading = false;
         this.updateMarkers();
       },
@@ -107,66 +82,43 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
   /* ===============================
-     CLASSIC FILTERS
+     FILTERS
   ================================= */
   applyFilters(): void {
     this.filteredOffers = this.offers.filter(offer => {
-
       if (this.filterMeublee === 'true' && !offer.meublee) return false;
       if (this.filterMeublee === 'false' && offer.meublee) return false;
-
       if (this.filterVille && offer.ville !== this.filterVille) return false;
-
       if (this.filterPrixMin !== null && offer.prixLoc < this.filterPrixMin) return false;
       if (this.filterPrixMax !== null && offer.prixLoc > this.filterPrixMax) return false;
-
       return true;
     });
-
     this.updateMarkers();
   }
 
   filterOffers(): void {
     const term = this.searchTerm.toLowerCase().trim();
-
-    if (!term) {
-      this.filteredOffers = this.offers;
-    } else {
-      this.filteredOffers = this.offers.filter(offer =>
-        offer.titre.toLowerCase().includes(term) ||
-        offer.description.toLowerCase().includes(term) ||
-        offer.ville.toLowerCase().includes(term) ||
-        offer.prixLoc.toString().includes(term)
-      );
-    }
-
+    this.filteredOffers = !term ? this.offers : this.offers.filter(offer =>
+      offer.titre.toLowerCase().includes(term) ||
+      offer.description.toLowerCase().includes(term) ||
+      offer.ville.toLowerCase().includes(term) ||
+      offer.prixLoc.toString().includes(term)
+    );
     this.updateMarkers();
   }
 
-  /* ===============================
-     PROXIMITY FILTER
-  ================================= */
   applyProximityFilter(): void {
-
-    // Reset if radius cleared
     if (!this.filterRadius) {
       this.filteredOffers = this.offers;
       this.updateMarkers();
       return;
     }
-
     if (!this.userLat || !this.userLng) {
       alert("Location not ready yet.");
       return;
     }
-
     this.loading = true;
-
-    this.collocationService.getNearbyOffers(
-      this.userLat,
-      this.userLng,
-      this.filterRadius
-    ).subscribe({
+    this.collocationService.getNearbyOffers(this.userLat, this.userLng, this.filterRadius).subscribe({
       next: (data) => {
         this.filteredOffers = data;
         this.loading = false;
@@ -185,30 +137,23 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private initMap(): void {
     const defaultLat = 36.8065;
     const defaultLng = 10.1815;
-
     this.map = L.map('map').setView([defaultLat, defaultLng], 12);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
   }
 
   private updateMarkers(): void {
-    if (!this.map) return;
-
     this.markers.forEach(marker => marker.remove());
     this.markers = [];
-
     this.filteredOffers.forEach(offer => {
       if (offer.latitude && offer.longitude) {
         const marker = L.marker([offer.latitude, offer.longitude])
           .addTo(this.map)
           .bindPopup(this.buildPopupContent(offer));
-
         this.markers.push(marker);
       }
     });
-
     if (this.markers.length > 0) {
       const group = L.featureGroup(this.markers);
       this.map.fitBounds(group.getBounds(), { padding: [50, 50] });
@@ -216,38 +161,18 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
   private buildPopupContent(offer: CollocationOffer): string {
-    return `
-      <b>${offer.titre}</b><br>
-      ${offer.prixLoc} TND<br>
-      ${offer.ville}<br>
-      ${offer.chambres} chambre(s) - ${offer.meublee ? 'Meublé' : 'Non meublé'}
-    `;
+    return `<b>${offer.titre}</b><br>${offer.prixLoc} TND<br>${offer.ville}<br>${offer.chambres} chambre(s) - ${offer.meublee ? 'Meublé' : 'Non meublé'}`;
   }
 
   centerOnOffer(offer: CollocationOffer): void {
-    if (offer.latitude && offer.longitude) {
-      this.map.setView([offer.latitude, offer.longitude], 15);
-    }
+    if (offer.latitude && offer.longitude) this.map.setView([offer.latitude, offer.longitude], 15);
   }
 
-  /* ===============================
-     GPS
-  ================================= */
   getUserLocation(): void {
-    if (!navigator.geolocation) {
-      console.warn("Geolocation not supported");
-      return;
-    }
-
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.userLat = position.coords.latitude;
-        this.userLng = position.coords.longitude;
-        console.log("User location:", this.userLat, this.userLng);
-      },
-      (error) => {
-        console.error("Location error:", error);
-      }
+      (pos) => { this.userLat = pos.coords.latitude; this.userLng = pos.coords.longitude; },
+      (err) => console.error(err)
     );
   }
 
@@ -257,11 +182,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   loadFavorites(): void {
     const userId = +localStorage.getItem("ownerId")!;
     if (!userId) return;
-
     this.collocationService.getFavorites(userId).subscribe({
-      next: (data: any[]) => {
-        this.favoriteIds = data.map(f => f.offre.id);
-      },
+      next: (data: any[]) => { this.favoriteIds = data.map(f => f.offre.id); },
       error: err => console.error(err)
     });
   }
@@ -269,7 +191,6 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   toggleFavorite(offerId: number): void {
     const userId = +localStorage.getItem("ownerId")!;
     if (!userId) return;
-
     if (this.favoriteIds.includes(offerId)) {
       this.collocationService.removeFavorite(userId, offerId).subscribe(() => {
         this.favoriteIds = this.favoriteIds.filter(id => id !== offerId);
@@ -281,9 +202,6 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     }
   }
 
-  /* ===============================
-     NAVIGATION
-  ================================= */
   viewDetails(offerId: number): void {
     this.router.navigate(['/collocation/offres', offerId]);
   }
@@ -292,7 +210,99 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/collocation/create-offre']);
   }
 
-  sendRequest(offerId: number): void {
-    alert(`Demande envoyée pour l'offre ${offerId} (simulation)`);
+  /* ===============================
+     REQUEST MODAL
+  ================================= */
+  openRequestModal(offerId: number): void {
+    this.selectedOfferId = offerId;
+    const modalEl = document.getElementById('requestModal');
+    if (modalEl) {
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
   }
+
+submitRequest(): void {
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) {
+        this.showToast('Vous devez être connecté pour envoyer une demande.', 'danger');
+        return;
+    }
+
+    if (!this.selectedOfferId) {
+        this.showToast("Sélectionnez une offre avant d'envoyer la demande.", 'warning');
+        return;
+    }
+
+    const payload = {
+        offer: { id: this.selectedOfferId }, // juste l'ID
+        message: this.requestMessage
+    };
+
+    this.collocationService.createRequest(payload, +studentId).subscribe({
+        next: (res: string) => {
+            console.log(res); // "Request sent"
+            this.showToast('Demande envoyée avec succès !', 'success');
+            this.requestMessage = '';
+
+            const modalEl = document.getElementById('requestModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal?.hide();
+            }
+        },
+        error: (err) => {
+            console.error(err);
+            this.showToast('Erreur lors de l’envoi de la demande.', 'danger');
+        }
+    });
+}
+
+/**
+ * Crée et affiche un toast Bootstrap
+ * @param message Message à afficher
+ * @param type 'success' | 'danger' | 'warning' | 'info'
+ */
+showToast(message: string, type: 'success' | 'danger' | 'warning' | 'info' = 'info') {
+    // Crée le conteneur des toasts s'il n'existe pas
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.position = 'fixed';
+        container.style.top = '1rem';
+        container.style.right = '1rem';
+        container.style.zIndex = '1080';
+        document.body.appendChild(container);
+    }
+
+    // Crée le toast
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+    toastEl.style.minWidth = '200px';
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    container.appendChild(toastEl);
+
+    // Initialise et affiche le toast
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+
+    // Supprime le toast du DOM après disparition
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+
+canSendRequest(offer: any): boolean {
+  return offer.ownerId !== this.currentUserId;
+}
+
 }
