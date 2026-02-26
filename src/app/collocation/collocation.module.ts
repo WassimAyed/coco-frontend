@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';   // <-- add FormsModule
 import { HttpClientModule } from '@angular/common/http';
 import { CollocationRoutingModule } from './collocation-routing.module';
-import { RouterModule } from '@angular/router';
 
 
 // Import your components
@@ -12,6 +11,7 @@ import { CollocationListComponent } from './components/collocation-listOffres/co
 import { LOCALE_ID } from '@angular/core';
 import { CollocationDetailComponent } from './components/collocation-detailOffre/collocation-detailOffre.component';
 import { MesOffresComponent } from './components/collocation-mesOffres/mesOffres.component';
+import { MesOffresRequestsComponent } from './components/collocation-mesOffresRequests/mes-offres-request-colloc.component';
 
 
 @NgModule({
@@ -19,7 +19,8 @@ import { MesOffresComponent } from './components/collocation-mesOffres/mesOffres
     CollocationCreateOffreComponent,
     CollocationListComponent ,
     CollocationDetailComponent,
-    MesOffresComponent
+    MesOffresComponent,
+    MesOffresRequestsComponent
     ],
   imports: [
     CommonModule,                   // provides currency, slice, ngIf, ngFor

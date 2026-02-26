@@ -1,8 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
-
-// http://localhost:4200/collocation/mesOffres
 
 @Component({
   selector: 'app-mes-offres',
@@ -10,55 +8,50 @@ import { CollocationService } from '../../services/collocation.service';
   styleUrls: ['./mesOffres.component.css']
 })
 export class MesOffresComponent implements OnInit {
+
   myOffers: any[] = [];
   paginatedOffers: any[] = [];
   currentPage = 1;
-  totalPages = 1;
+  itemsPerPage = 7;                    // ✅ Now 7 items per page
+  totalPages = 0;
 
-  // DELETE modal
+  selectedOffer: any = {};
+  selectedOfferId: number | null = null;
+
   showDeleteModal = false;
-  selectedOfferId!: number;
-
-  // UPDATE modal
   showUpdateModal = false;
-  updateForm!: FormGroup;
+  isUpdating = false;
 
-  constructor(private collocationService: CollocationService, private fb: FormBuilder) {}
+  @ViewChild('updateForm') updateForm!: NgForm;
+
+  constructor(private collocationService: CollocationService) {}
 
   ngOnInit(): void {
     this.loadMyOffers();
-
-    // Initialize the update form
-    this.updateForm = this.fb.group({
-      titre: ['', Validators.required],
-      ville: ['', Validators.required],
-      prixLoc: [0, Validators.required],
-      chambres: [1, Validators.required],
-      meublee: [false],
-      description: ['']
-    });
   }
 
-  // Load offers
   loadMyOffers() {
-    this.collocationService.getAllOffers().subscribe((data: any[]) => {
-      this.myOffers = data;
-      this.setPage(this.currentPage);
+    const ownerId = Number(localStorage.getItem('ownerId'));
+    if (!ownerId) return;
+
+    this.collocationService.getMyOffers(ownerId).subscribe({
+      next: data => {
+        this.myOffers = data || [];
+        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
+        this.setPage(1);
+      },
+      error: err => console.error(err)
     });
   }
 
-  // Pagination
   setPage(page: number) {
     if (page < 1 || page > this.totalPages) return;
-
     this.currentPage = page;
-    const pageSize = 5;
-    this.totalPages = Math.ceil(this.myOffers.length / pageSize);
-    const start = (this.currentPage - 1) * pageSize;
-    this.paginatedOffers = this.myOffers.slice(start, start + pageSize);
+    const start = (page - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.paginatedOffers = this.myOffers.slice(start, end);
   }
 
-  // ------------------ DELETE MODAL ------------------
   openDeleteModal(id: number) {
     this.selectedOfferId = id;
     this.showDeleteModal = true;
@@ -71,47 +64,57 @@ export class MesOffresComponent implements OnInit {
   confirmDelete() {
     if (!this.selectedOfferId) return;
 
-    this.collocationService.deleteOffer(this.selectedOfferId).subscribe(() => {
-      this.closeDeleteModal();
-      this.loadMyOffers();
+    this.collocationService.deleteOffer(this.selectedOfferId).subscribe({
+      next: () => {
+        this.myOffers = this.myOffers.filter(o => o.id !== this.selectedOfferId);
+        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
+        if (this.currentPage > this.totalPages) this.currentPage = this.totalPages || 1;
+        this.setPage(this.currentPage);
+        this.showDeleteModal = false;
+      },
+      error: err => console.error(err)
     });
   }
 
-  // ------------------ UPDATE MODAL ------------------
   openUpdateModal(offer: any) {
-    this.selectedOfferId = offer.id;
-    this.updateForm.patchValue({
-      titre: offer.titre,
-      ville: offer.ville,
-      prixLoc: offer.prixLoc,
-      chambres: offer.chambres,
-      meublee: offer.meublee,
-      description: offer.description
-    });
+    this.selectedOffer = { ...offer };
+    setTimeout(() => this.updateForm?.resetForm(this.selectedOffer));
     this.showUpdateModal = true;
   }
 
   closeUpdateModal() {
     this.showUpdateModal = false;
+    this.isUpdating = false;
   }
 
-  submitUpdate() {
-  if (this.updateForm.invalid) return;
+  confirmUpdate() {
+    if (this.updateForm.invalid) {
+      Object.keys(this.updateForm.controls).forEach(field => {
+        const control = this.updateForm.controls[field];
+        control.markAsTouched({ onlySelf: true });
+      });
+      return;
+    }
 
-  const updatedData = this.updateForm.value;
+    if (!this.selectedOffer?.id) return;
 
-  // ---------------- Add expiration logic ----------------
-  const today = new Date();
-  const expiryDate = new Date(today);
-  expiryDate.setMonth(expiryDate.getMonth() + 1); // +1 month
+    this.isUpdating = true;
 
-  // Format to yyyy-MM-dd for backend
-  const formattedExpiry = expiryDate.toISOString().split('T')[0];
-  updatedData.expiryDate = formattedExpiry;
-
-  this.collocationService.updateOffer(this.selectedOfferId, updatedData).subscribe(() => {
-    this.closeUpdateModal();
-    this.loadMyOffers();
-  });
-}
+    this.collocationService.updateOffer(this.selectedOffer.id, this.selectedOffer)
+      .subscribe({
+        next: () => {
+          const index = this.myOffers.findIndex(o => o.id === this.selectedOffer.id);
+          if (index !== -1) {
+            this.myOffers[index] = { ...this.selectedOffer };
+          }
+          this.setPage(this.currentPage);
+          this.isUpdating = false;
+          this.showUpdateModal = false;
+        },
+        error: err => {
+          console.error('Erreur mise à jour', err);
+          this.isUpdating = false;
+        }
+      });
+  }
 }

@@ -45,3 +45,12 @@
     overflow-y: visible;
   }
 }
+
+
+.form-control {
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.form-control:focus {
+  border-color: #f83441; /* matches the coin icon color */
+  box-shadow: 0 0 0 0.2rem rgba(247, 99, 102, 0.25);
+}

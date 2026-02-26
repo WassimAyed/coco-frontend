@@ -56,21 +56,112 @@
     <option *ngFor="let ville of availableVilles" [value]="ville">{{ ville }}</option>
   </select>
 
-  <!-- Filter: Prix range -->
-  <input
-    type="number"
-    class="form-control w-auto"
-    placeholder="Prix min"
-    [(ngModel)]="filterPrixMin"
-    (input)="applyFilters()"
-  />
-  <input
-    type="number"
-    class="form-control w-auto"
-    placeholder="Prix max"
-    [(ngModel)]="filterPrixMax"
-    (input)="applyFilters()"
-  />
+ <!-- Price Range Filter – Floating Labels Variant -->
+<div class="filter-card bg-white p-3 rounded-4 shadow-sm border">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+
+    <!-- Label with icon -->
+    <span class="fw-bold text-dark">
+      <i class="fas fa-coins text-warning me-1"></i>
+      Prix
+    </span>
+
+    <!-- Min & Max with floating labels and dash connector -->
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+
+      <!-- Minimum price floating input -->
+      <div class="form-floating" style="width: 140px;">
+        <input
+          type="number"
+          class="form-control"
+          id="minPrice"
+          placeholder="Min"
+          [(ngModel)]="filterPrixMin"
+          (input)="applyFilters()"
+        />
+        <label for="minPrice">
+          <i class="fas fa-arrow-down text-success me-1"></i> Min (dt)
+        </label>
+      </div>
+
+      <!-- Dash separator -->
+      <span class="fw-bold text-muted">—</span>
+
+      <!-- Maximum price floating input -->
+      <div class="form-floating" style="width: 140px;">
+        <input
+          type="number"
+          class="form-control"
+          id="maxPrice"
+          placeholder="Max"
+          [(ngModel)]="filterPrixMax"
+          (input)="applyFilters()"
+        />
+        <label for="maxPrice">
+          <i class="fas fa-arrow-up text-danger me-1"></i> Max (dt)
+        </label>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <!-- Filter: Radius -->
+<!-- Radius Filter – Enhanced with Bootstrap & Icons -->
+<div class="filter-card bg-white p-3 rounded-4 shadow-sm border">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+
+    <!-- Label with icon -->
+    <span class="fw-bold text-dark">
+      <i class="fas fa-location-dot text-danger me-1"></i>
+      Rayon de recherche
+    </span>
+
+    <!-- Radio button group as pill toggles -->
+    <div class="btn-group d-flex flex-wrap gap-2" role="group" aria-label="Distance radius options">
+
+      <!-- All (no filter) -->
+      <input type="radio" class="btn-check" name="radius" id="radiusAll" [value]="null"
+             [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+      <label class="btn btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1 px-3 transition-all"
+             for="radiusAll">
+        <i class="fas fa-globe"></i> Tous
+      </label>
+
+      <!-- 2 km -->
+      <input type="radio" class="btn-check" name="radius" id="radius2" [value]="2"
+             [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+      <label class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1 px-3 transition-all"
+             for="radius2">
+        <i class="fas fa-person-walking"></i> 2 km
+      </label>
+
+      <!-- 5 km -->
+      <input type="radio" class="btn-check" name="radius" id="radius5" [value]="5"
+             [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+      <label class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1 px-3 transition-all"
+             for="radius5">
+        <i class="fas fa-bicycle"></i> 5 km
+      </label>
+
+      <!-- 10 km -->
+      <input type="radio" class="btn-check" name="radius" id="radius10" [value]="10"
+             [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+      <label class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1 px-3 transition-all"
+             for="radius10">
+        <i class="fas fa-car"></i> 10 km
+      </label>
+
+      <!-- 20 km -->
+      <input type="radio" class="btn-check" name="radius" id="radius20" [value]="20"
+             [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+      <label class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1 px-3 transition-all"
+             for="radius20">
+        <i class="fas fa-rocket"></i> 20 km
+      </label>
+
+    </div>
+  </div>
+</div>
 </div>
       <div class="bg-white rounded-4 shadow p-4" style="max-height: 800px; overflow-y: auto;">
         <!-- Search Bar -->

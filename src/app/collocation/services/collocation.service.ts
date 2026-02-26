@@ -63,4 +63,68 @@ removeFavorite(userId: number, offerId: number) {
   return this.http.delete(`${this.apiUrl}/favorites/${userId}/${offerId}`);
 }
 
+getNearbyOffers(lat: number, lng: number, radius: number) {
+  return this.http.get<any[]>(
+    `${this.apiUrl}/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
+  );
+}
+
+
+getMyRequests() {
+  const userId = localStorage.getItem("ownerId");
+
+  return this.http.get<any[]>(`${this.apiUrl}/requests/my`, {
+    headers: {
+      userId: userId!
+    }
+  });
+
+}
+
+updateRequestStatus(id: number, status: string) {
+  const userId = localStorage.getItem("ownerId");
+
+  return this.http.put(`${this.apiUrl}/requests/${id}/status`,
+    { status },
+    {
+      headers: {
+        userId: userId!
+      }
+    }
+  );
+}
+
+// Create a new request
+createRequest(cor: any): Observable<any> {
+  const userId = localStorage.getItem("ownerId");
+  return this.http.post(`${this.apiUrl}/requests`, cor, {
+    headers: { userId: userId! }
+  });
+}
+
+// Add method to fetch requests for offers owned by current user
+getRequestsForMyOffers(): Observable<any[]> {
+  const userId = localStorage.getItem("ownerId");
+  return this.http.get<any[]>(`${this.apiUrl}/requests/forOwner`, {
+    headers: { userId: userId! }
+  });
+}
+
+// Add method to delete request
+deleteRequest(id: number) {
+  return this.http.delete(`${this.apiUrl}/requests/${id}`, {
+    headers: { userId: localStorage.getItem("ownerId")! }
+  });
+}
+
+// Get requests by multiple offer IDs
+getRequestsByOfferIds(offerIds: number[]): Observable<any[]> {
+  return this.http.post<any[]>(`${this.apiUrl}/requests/byOfferIds`, offerIds, {
+    headers: {
+      'Content-Type': 'application/json',
+      'userId': localStorage.getItem('ownerId')!
+    }
+  });
+}
+
 }

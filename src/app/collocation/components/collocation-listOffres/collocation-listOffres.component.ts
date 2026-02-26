@@ -1,18 +1,17 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { Router , ActivatedRoute} from '@angular/router'; // for navigation
-
+import { Router, ActivatedRoute } from '@angular/router';
 import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 
-
-//
-
-// Fix for default marker icons (Leaflet’s default assets are missing in Angular)
+/* ===============================
+   Fix Leaflet default marker icons
+================================ */
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
 const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
+
 const iconDefault = L.icon({
   iconRetinaUrl,
   iconUrl,
@@ -23,94 +22,113 @@ const iconDefault = L.icon({
   tooltipAnchor: [16, -28],
   shadowSize: [41, 41]
 });
+
 L.Marker.prototype.options.icon = iconDefault;
 
-
-
+/* ===============================
+   COMPONENT
+================================ */
 @Component({
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
   styleUrls: ['./collocation-listOffres.component.css']
 })
 export class CollocationListComponent implements OnInit, AfterViewInit {
+
   offers: CollocationOffer[] = [];
   filteredOffers: CollocationOffer[] = [];
+
   searchTerm: string = '';
   loading = false;
   error = '';
 
-
-
-  private map: L.Map | undefined;
+  private map!: L.Map;
   private markers: L.Marker[] = [];
 
-  filterMeublee: string = ''; // "true" | "false" | ""
-filterVille: string = ''; // selected city
-filterPrixMin: number | null = null;
-filterPrixMax: number | null = null;
+  // Filters
+  filterMeublee: string = '';
+  filterVille: string = '';
+  filterPrixMin: number | null = null;
+  filterPrixMax: number | null = null;
+  filterRadius: number | null = null;
 
-// dynamically populate available cities
-availableVilles: string[] = [];
+  availableVilles: string[] = [];
+
+  // GPS
+  userLat: number | null = null;
+  userLng: number | null = null;
+
+  // Favorites
+  favoriteIds: number[] = [];
 
   constructor(
     private collocationService: CollocationService,
-    private router: Router ,
-      private route: ActivatedRoute
-
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
+  /* ===============================
+     LIFECYCLE
+  ================================= */
   ngOnInit(): void {
     this.loadOffers();
-    // Optionally load user's favorite IDs from a service
     this.loadFavorites();
+    this.getUserLocation();
   }
 
   ngAfterViewInit(): void {
     this.initMap();
   }
 
- loadOffers(): void {
-  this.loading = true;
-  this.collocationService.getAllOffers().subscribe({
-    next: (data) => {
-      this.offers = data;
-      this.filteredOffers = data;
+  /* ===============================
+     LOAD OFFERS
+  ================================= */
+  loadOffers(): void {
+    this.loading = true;
 
-      // populate available cities
-      this.availableVilles = Array.from(new Set(data.map(o => o.ville))).sort();
+    this.collocationService.getAllOffers().subscribe({
+      next: (data) => {
+        this.offers = data;
+        this.filteredOffers = data;
 
-      this.loading = false;
-      this.updateMarkers();
-    },
-    error: (err) => {
-      this.error = 'Failed to load offers. Please try again.';
-      this.loading = false;
-      console.error(err);
-    }
-  });
-}
+        this.availableVilles = Array.from(
+          new Set(data.map(o => o.ville))
+        ).sort();
 
-applyFilters(): void {
-  this.filteredOffers = this.offers.filter(offer => {
-    // Filter by meublée
-    if (this.filterMeublee === 'true' && !offer.meublee) return false;
-    if (this.filterMeublee === 'false' && offer.meublee) return false;
+        this.loading = false;
+        this.updateMarkers();
+      },
+      error: (err) => {
+        this.error = 'Failed to load offers.';
+        this.loading = false;
+        console.error(err);
+      }
+    });
+  }
 
-    // Filter by city
-    if (this.filterVille && offer.ville !== this.filterVille) return false;
+  /* ===============================
+     CLASSIC FILTERS
+  ================================= */
+  applyFilters(): void {
+    this.filteredOffers = this.offers.filter(offer => {
 
-    // Filter by price
-    if (this.filterPrixMin !== null && offer.prixLoc < this.filterPrixMin) return false;
-    if (this.filterPrixMax !== null && offer.prixLoc > this.filterPrixMax) return false;
+      if (this.filterMeublee === 'true' && !offer.meublee) return false;
+      if (this.filterMeublee === 'false' && offer.meublee) return false;
 
-    return true;
-  });
+      if (this.filterVille && offer.ville !== this.filterVille) return false;
 
-  this.updateMarkers(); // update map markers
-}
+      if (this.filterPrixMin !== null && offer.prixLoc < this.filterPrixMin) return false;
+      if (this.filterPrixMax !== null && offer.prixLoc > this.filterPrixMax) return false;
+
+      return true;
+    });
+
+    this.updateMarkers();
+  }
 
   filterOffers(): void {
     const term = this.searchTerm.toLowerCase().trim();
+
     if (!term) {
       this.filteredOffers = this.offers;
     } else {
@@ -121,66 +139,76 @@ applyFilters(): void {
         offer.prixLoc.toString().includes(term)
       );
     }
-    this.updateMarkers();  // update markers to show only filtered offers
+
+    this.updateMarkers();
   }
 
+  /* ===============================
+     PROXIMITY FILTER
+  ================================= */
+  applyProximityFilter(): void {
 
-
-  // Action: Send a request for this offer
-  sendRequest(offerId: number): void {
-    // Example: open a modal or navigate to a request form
-    console.log('Send request for offer', offerId);
-    // You might open a modal or navigate to /request/offerId
-    // For now, just an alert
-    alert(`Demande envoyée pour l'offre ${offerId} (simulation)`);
-  }
-
-  // Action: View offer details
- viewDetails(offerId: number): void {
-
-  console.log('Current URL:', this.router.url);
-  console.log('Offer ID:', offerId);
-
-  this.router.navigate(['/collocation/offres', offerId]);
-}
-
-  // Center map on a clicked offer
-  centerOnOffer(offer: CollocationOffer): void {
-    if (offer.latitude && offer.longitude && this.map) {
-      this.map.setView([offer.latitude, offer.longitude], 15);
+    // Reset if radius cleared
+    if (!this.filterRadius) {
+      this.filteredOffers = this.offers;
+      this.updateMarkers();
+      return;
     }
+
+    if (!this.userLat || !this.userLng) {
+      alert("Location not ready yet.");
+      return;
+    }
+
+    this.loading = true;
+
+    this.collocationService.getNearbyOffers(
+      this.userLat,
+      this.userLng,
+      this.filterRadius
+    ).subscribe({
+      next: (data) => {
+        this.filteredOffers = data;
+        this.loading = false;
+        this.updateMarkers();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error(err);
+      }
+    });
   }
 
+  /* ===============================
+     MAP
+  ================================= */
   private initMap(): void {
-    // Default center (Tunis)
     const defaultLat = 36.8065;
     const defaultLng = 10.1815;
 
     this.map = L.map('map').setView([defaultLat, defaultLng], 12);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
   }
 
   private updateMarkers(): void {
     if (!this.map) return;
 
-    // Remove existing markers
     this.markers.forEach(marker => marker.remove());
     this.markers = [];
 
-    // Add markers for filtered offers that have coordinates
     this.filteredOffers.forEach(offer => {
       if (offer.latitude && offer.longitude) {
         const marker = L.marker([offer.latitude, offer.longitude])
-          .addTo(this.map!)
+          .addTo(this.map)
           .bindPopup(this.buildPopupContent(offer));
+
         this.markers.push(marker);
       }
     });
 
-    // Optionally fit the map bounds to the markers
     if (this.markers.length > 0) {
       const group = L.featureGroup(this.markers);
       this.map.fitBounds(group.getBounds(), { padding: [50, 50] });
@@ -196,46 +224,75 @@ applyFilters(): void {
     `;
   }
 
-   createOffer() :void {
-  this.router.navigate(['/collocation/create-offre']);
+  centerOnOffer(offer: CollocationOffer): void {
+    if (offer.latitude && offer.longitude) {
+      this.map.setView([offer.latitude, offer.longitude], 15);
+    }
   }
 
-  // Store favorite offer IDs as a reactive array
-favoriteIds: number[] = [];
+  /* ===============================
+     GPS
+  ================================= */
+  getUserLocation(): void {
+    if (!navigator.geolocation) {
+      console.warn("Geolocation not supported");
+      return;
+    }
 
-loadFavorites(): void {
-  const userId = +localStorage.getItem("ownerId")!;
-  this.collocationService.getFavorites(userId).subscribe({
-    next: (data: any[]) => {
-      // Map favorite offers to IDs
-      this.favoriteIds = data.map(f => f.offre.id);
-    },
-    error: (err) => console.error(err)
-  });
-}
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.userLat = position.coords.latitude;
+        this.userLng = position.coords.longitude;
+        console.log("User location:", this.userLat, this.userLng);
+      },
+      (error) => {
+        console.error("Location error:", error);
+      }
+    );
+  }
 
-toggleFavorite(offerId: number): void {
-  const userId = +localStorage.getItem("ownerId")!;
+  /* ===============================
+     FAVORITES
+  ================================= */
+  loadFavorites(): void {
+    const userId = +localStorage.getItem("ownerId")!;
+    if (!userId) return;
 
-  if (this.favoriteIds.includes(offerId)) {
-    // Remove favorite and force full page reload
-    this.collocationService.removeFavorite(userId, offerId).subscribe({
-      next: () => {
-        // Force full page reload
-        window.location.href = window.location.href;
+    this.collocationService.getFavorites(userId).subscribe({
+      next: (data: any[]) => {
+        this.favoriteIds = data.map(f => f.offre.id);
       },
       error: err => console.error(err)
     });
-  } else {
-    // Add favorite normally
-    this.collocationService.addFavorite(userId, offerId).subscribe({
-      next: () => {
-        this.favoriteIds = [...this.favoriteIds, offerId];
-      },
-      error: err => console.error(err)
-    });
   }
-}
 
+  toggleFavorite(offerId: number): void {
+    const userId = +localStorage.getItem("ownerId")!;
+    if (!userId) return;
 
+    if (this.favoriteIds.includes(offerId)) {
+      this.collocationService.removeFavorite(userId, offerId).subscribe(() => {
+        this.favoriteIds = this.favoriteIds.filter(id => id !== offerId);
+      });
+    } else {
+      this.collocationService.addFavorite(userId, offerId).subscribe(() => {
+        this.favoriteIds.push(offerId);
+      });
+    }
+  }
+
+  /* ===============================
+     NAVIGATION
+  ================================= */
+  viewDetails(offerId: number): void {
+    this.router.navigate(['/collocation/offres', offerId]);
+  }
+
+  createOffer(): void {
+    this.router.navigate(['/collocation/create-offre']);
+  }
+
+  sendRequest(offerId: number): void {
+    alert(`Demande envoyée pour l'offre ${offerId} (simulation)`);
+  }
 }
