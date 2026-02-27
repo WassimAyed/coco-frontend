@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SubscriptionPlan, UserSubscription } from '../models/subscription.model';
+import { SubscriptionPlan, UserSubscription, Payment } from '../models/subscription.model';
 
 @Injectable({
   providedIn: 'root'
@@ -53,6 +53,22 @@ export class SubsService {
     return this.http.post(`${this.apiUrl}/payments`, null, {
       params: { userId, planId },
       responseType: 'text'
+    });
+  }
+
+  getUserPayments(userId: number): Observable<Payment[]> {
+    return this.http.get<Payment[]>(`${this.apiUrl}/payments/user/${userId}`);
+  }
+
+  downloadInvoice(paymentId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/payments/${paymentId}/invoice`, {
+      responseType: 'blob'
+    });
+  }
+
+  addBonusPosts(userId: number, amount: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/admin/bonus/${userId}`, null, {
+      params: { amount }
     });
   }
 }

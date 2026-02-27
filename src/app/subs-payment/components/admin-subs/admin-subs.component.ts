@@ -4,10 +4,10 @@ import { SubsService } from '../../services/subs.service';
 import { UserSubscription } from '../../models/subscription.model';
 
 @Component({
-    selector: 'app-admin-subs',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-admin-subs',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="admin-page">
       <div class="mesh-gradient"></div>
       <div class="noise-overlay"></div>
@@ -20,6 +20,14 @@ import { UserSubscription } from '../../models/subscription.model';
           </div>
         </div>
 
+        <!-- Section Analytics -->
+        <div class="card chart-card">
+          <h3>Revenus Estimés (Abonnements Actifs)</h3>
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+
         <div class="table-card">
           <table class="admin-table">
             <thead>
@@ -27,9 +35,9 @@ import { UserSubscription } from '../../models/subscription.model';
                 <th>Utilisateur (ID)</th>
                 <th>Plan</th>
                 <th>Status</th>
-                <th>Début</th>
-                <th>Fin</th>
+                <th>Dates</th>
                 <th>Quota</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -45,9 +53,21 @@ import { UserSubscription } from '../../models/subscription.model';
                     {{ sub.status }}
                   </span>
                 </td>
-                <td>{{ sub.startDate | date:'dd/MM/yyyy' }}</td>
-                <td>{{ sub.endDate | date:'dd/MM/yyyy' }}</td>
-                <td>{{ sub.remainingPosts ?? '∞' }} posts</td>
+                <td>
+                  <div class="date-range">
+                    <span>{{ sub.startDate | date:'dd/MM/yy' }}</span>
+                    <i class="bi bi-arrow-right"></i>
+                    <span>{{ sub.endDate | date:'dd/MM/yy' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="quota-text">{{ sub.remainingPosts ?? '∞' }} posts</span>
+                </td>
+                <td>
+                  <button class="bonus-btn" (click)="addBonus(sub.userId)">
+                    <i class="bi bi-plus-circle"></i> Bonus
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -55,7 +75,7 @@ import { UserSubscription } from '../../models/subscription.model';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .admin-page {
       min-height: 100vh;
       background-color: #f5f5f3;
@@ -115,16 +135,95 @@ import { UserSubscription } from '../../models/subscription.model';
       &.EXPIRED { background: #fff5f5; color: #fa5252; }
     }
 
+    .chart-card {
+      margin-bottom: 3rem; background: white; border-radius: 24px; padding: 2rem; border: 1px solid #e8e8e8;
+      h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; margin-bottom: 1.5rem; }
+    }
+
+    .chart-container { height: 300px; width: 100%; position: relative; }
+
+    .bonus-btn {
+      background: #f8f9fa; border: 1px solid #e8e8e8; padding: 6px 12px; border-radius: 8px;
+      cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.8rem;
+      &:hover { background: #e63030; color: white; border-color: #e63030; }
+    }
+
+    .date-range {
+      display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #555;
+      i { color: #888; font-size: 0.7rem; }
+    }
+
+    .quota-text { font-weight: 600; color: #0a0a0a; }
+
     .fade-in { animation: fadeIn 0.5s ease-out both; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   `]
 })
 export class AdminSubsComponent implements OnInit {
-    subscriptions: UserSubscription[] = [];
+  subscriptions: UserSubscription[] = [];
+  chart: any;
 
-    constructor(private subsService: SubsService) { }
+  constructor(private subsService: SubsService) { }
 
-    ngOnInit() {
-        this.subsService.getAllUserSubscriptions().subscribe(data => this.subscriptions = data);
+  ngOnInit() {
+    this.loadData();
+  }
+
+  loadData() {
+    this.subsService.getAllUserSubscriptions().subscribe(data => {
+      this.subscriptions = data;
+      setTimeout(() => this.initChart(), 0);
+    });
+  }
+
+  initChart() {
+    const ctx = document.getElementById('revenueChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    // @ts-ignore
+    const ChartClass = window['Chart'];
+    if (!ChartClass) {
+      console.warn('Chart.js not yet loaded...');
+      return;
     }
+
+    const stats = this.subscriptions.reduce((acc: any, sub) => {
+      acc[sub.plan.name] = (acc[sub.plan.name] || 0) + sub.plan.price;
+      return acc;
+    }, {});
+
+    if (this.chart) this.chart.destroy();
+
+    this.chart = new ChartClass(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(stats),
+        datasets: [{
+          label: 'Revenus (TND)',
+          data: Object.values(stats),
+          backgroundColor: ['#e63030', '#0a0a0a', '#888'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { display: false } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  addBonus(userId: number) {
+    const amount = prompt("Nombre de posts bonus à ajouter ?", "10");
+    if (amount) {
+      this.subsService.addBonusPosts(userId, parseInt(amount)).subscribe(() => {
+        this.loadData();
+        alert("Bonus ajouté avec succès !");
+      });
+    }
+  }
 }
