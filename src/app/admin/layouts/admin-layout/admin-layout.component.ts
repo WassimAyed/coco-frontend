@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+
 import {
   AlertTriangle,
   BarChart3,
@@ -18,8 +19,6 @@ import {
   Filter,
   Home,
   LogOut,
-  LucideAngularModule,
-  LucideIconData,
   MoreVertical,
   Search,
   Settings,
@@ -30,8 +29,11 @@ import {
   User,
   Users,
   XCircle,
-  MessageCircle
+  MessageCircle,
+  LucideIconData,
+  LucideAngularModule
 } from 'lucide-angular';
+
 import { LogoComponent } from '../../../shared/components/logo/logo.component';
 
 interface DashboardModule {
@@ -43,7 +45,12 @@ interface DashboardModule {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoComponent, LucideAngularModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    LogoComponent,
+    LucideAngularModule
+  ],
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
