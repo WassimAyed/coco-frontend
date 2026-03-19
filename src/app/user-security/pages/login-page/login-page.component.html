@@ -1,0 +1,53 @@
+<div class="surface-card w-full max-w-md p-8">
+  <div class="text-center">
+    <h1 class="text-3xl font-black text-slate-950">Welcome Back</h1>
+    <p class="mt-2 text-slate-500">Sign in to your ESPRIT Life account</p>
+  </div>
+
+  @if (form.touched && (emailError || form.controls.password.invalid)) {
+    <div class="mt-6 rounded-2xl border border-destructive/20 bg-red-50 px-4 py-3 text-sm text-destructive">
+      Please fill all required fields with your valid ESPRIT email.
+    </div>
+  }
+
+  <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()">
+    <div>
+      <label for="email" class="mb-2 block text-sm font-semibold text-slate-700">ESPRIT Email</label>
+      <input id="email" type="email" class="form-input" placeholder="student@esprit.tn" formControlName="email" />
+      @if (emailError) {
+        <p class="mt-2 text-xs font-medium text-destructive">{{ emailError }}</p>
+      }
+    </div>
+
+    <div>
+      <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+      <div class="relative">
+        <input
+          id="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          class="form-input pr-20"
+          placeholder="Enter your password"
+          formControlName="password"
+        />
+        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500" (click)="togglePassword()">
+          {{ showPassword() ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between text-sm">
+      <label class="flex items-center gap-2 text-slate-600">
+        <input type="checkbox" formControlName="rememberMe" class="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+        Remember me
+      </label>
+      <a routerLink="/register" class="font-semibold text-primary">Need an account?</a>
+    </div>
+
+    <button type="submit" class="btn-primary w-full">Sign In</button>
+  </form>
+
+  <div class="mt-8 rounded-2xl bg-slate-50 p-4 text-center">
+    <div class="text-sm font-semibold text-slate-800">ESPRIT students only</div>
+    <p class="mt-2 text-sm leading-6 text-slate-500">Only verified &#64;esprit.tn accounts can access the platform.</p>
+  </div>
+</div>
