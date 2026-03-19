@@ -1,0 +1,31 @@
+<div class="min-h-screen bg-background">
+  <header class="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur">
+    <div class="section-shell flex h-20 items-center justify-between">
+      <app-logo />
+
+      <nav class="hidden items-center gap-8 md:flex">
+        <a routerLink="/" fragment="features" class="text-sm font-medium text-slate-600 transition hover:text-primary">Features</a>
+        <a routerLink="/" fragment="how-it-works" class="text-sm font-medium text-slate-600 transition hover:text-primary">How It Works</a>
+        <a routerLink="/" fragment="faq" class="text-sm font-medium text-slate-600 transition hover:text-primary">FAQ</a>
+        <a routerLink="/login" class="btn-secondary !px-4 !py-2.5">Login</a>
+        <a routerLink="/register" class="btn-primary !px-4 !py-2.5">Get Started</a>
+      </nav>
+
+      <button type="button" class="md:hidden" (click)="toggleMenu()">
+        <lucide-icon [img]="mobileMenuOpen() ? XIcon : MenuIcon" [size]="24"></lucide-icon>
+      </button>
+    </div>
+
+    @if (mobileMenuOpen()) {
+      <div class="section-shell space-y-3 border-t border-border py-4 md:hidden">
+        <a routerLink="/" fragment="features" class="block rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" (click)="closeMenu()">Features</a>
+        <a routerLink="/" fragment="how-it-works" class="block rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" (click)="closeMenu()">How It Works</a>
+        <a routerLink="/" fragment="faq" class="block rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" (click)="closeMenu()">FAQ</a>
+        <a routerLink="/login" class="block rounded-2xl border border-border px-3 py-3 text-center text-sm font-semibold" (click)="closeMenu()">Login</a>
+        <a routerLink="/register" class="block rounded-2xl bg-primary px-3 py-3 text-center text-sm font-semibold text-white" (click)="closeMenu()">Get Started</a>
+      </div>
+    }
+  </header>
+
+  <router-outlet />
+</div>
