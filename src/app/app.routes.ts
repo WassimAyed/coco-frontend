@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './user-security/guards/auth.guard';
+import { guestGuard } from './user-security/guards/guest.guard';
 
 export const routes: Routes = [
   {
@@ -10,6 +12,12 @@ export const routes: Routes = [
         path: '',
         loadComponent: () =>
           import('./shared/pages/landing-page/landing-page.component').then((m) => m.LandingPageComponent)
+      },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./user-security/pages/user-profile-page/user-profile-page.component').then((m) => m.UserProfilePageComponent)
       }
     ]
   },
@@ -20,11 +28,13 @@ export const routes: Routes = [
     children: [
       {
         path: 'login',
+        canActivate: [guestGuard],
         loadComponent: () =>
           import('./user-security/pages/login-page/login-page.component').then((m) => m.LoginPageComponent)
       },
       {
         path: 'register',
+        canActivate: [guestGuard],
         loadComponent: () =>
           import('./user-security/pages/register-page/register-page.component').then((m) => m.RegisterPageComponent)
       }

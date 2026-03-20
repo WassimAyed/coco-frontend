@@ -1,12 +1,12 @@
 @if (submitted()) {
   <div class="surface-card w-full max-w-xl p-8 text-center">
     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">OK</div>
-    <h1 class="mt-6 text-3xl font-black text-slate-950">Registration submitted</h1>
-    <p class="mt-4 leading-7 text-slate-500">
+    <h1 class="mt-6 text-3xl font-black text-foreground">Registration submitted</h1>
+    <p class="mt-4 leading-7 text-muted-foreground">
       Your account is pending admin verification. You will receive confirmation on
-      <span class="font-semibold text-slate-800">{{ form.controls.email.value }}</span>.
+      <span class="font-semibold text-secondary-foreground">{{ form.controls.email.value }}</span>.
     </p>
-    <div class="mt-8 rounded-3xl bg-slate-50 p-5 text-left text-sm leading-7 text-slate-500">
+    <div class="mt-8 rounded-3xl bg-secondary p-5 text-left text-sm leading-7 text-muted-foreground">
       Admin review usually takes between 24 and 48 hours. Once validated, the account can access the full platform.
     </div>
     <a routerLink="/" class="btn-primary mt-8">Return to home</a>
@@ -14,28 +14,28 @@
 } @else {
   <div class="surface-card w-full max-w-xl p-8">
     <div class="text-center">
-      <h1 class="text-3xl font-black text-slate-950">Join ESPRIT Life</h1>
-      <p class="mt-2 text-slate-500">Create your verified student account</p>
+      <h1 class="text-3xl font-black text-foreground">Join ESPRIT Life</h1>
+      <p class="mt-2 text-muted-foreground">Create your verified student account</p>
     </div>
 
-    <div class="mt-6 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm leading-6 text-slate-700">
+    <div class="mt-6 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm leading-6 text-secondary-foreground">
       Only users with an <span class="font-semibold text-primary">&#64;esprit.tn</span> email can register, and every account goes through admin approval.
     </div>
 
     <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()">
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700">First Name</label>
+          <label class="mb-2 block text-sm font-semibold text-secondary-foreground">First Name</label>
           <input class="form-input" formControlName="firstName" placeholder="John" />
         </div>
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700">Last Name</label>
+          <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Last Name</label>
           <input class="form-input" formControlName="lastName" placeholder="Doe" />
         </div>
       </div>
 
       <div>
-        <label class="mb-2 block text-sm font-semibold text-slate-700">ESPRIT Email</label>
+        <label class="mb-2 block text-sm font-semibold text-secondary-foreground">ESPRIT Email</label>
         <input class="form-input" formControlName="email" placeholder="student@esprit.tn" />
         @if (form.controls.email.touched && !form.controls.email.value.endsWith('@esprit.tn')) {
           <p class="mt-2 text-xs font-medium text-destructive">Use your ESPRIT email address.</p>
@@ -43,20 +43,20 @@
       </div>
 
       <div>
-        <label class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+        <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Password</label>
         <div class="relative">
           <input class="form-input pr-20" [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="Minimum 8 characters" />
-          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500" (click)="togglePassword()">
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground" (click)="togglePassword()">
             {{ showPassword() ? 'Hide' : 'Show' }}
           </button>
         </div>
       </div>
 
       <div>
-        <label class="mb-2 block text-sm font-semibold text-slate-700">Confirm Password</label>
+        <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Confirm Password</label>
         <div class="relative">
           <input class="form-input pr-20" [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Repeat your password" />
-          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500" (click)="toggleConfirmPassword()">
+          <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground" (click)="toggleConfirmPassword()">
             {{ showConfirmPassword() ? 'Hide' : 'Show' }}
           </button>
         </div>
@@ -65,7 +65,7 @@
         }
       </div>
 
-      <label class="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+      <label class="flex items-start gap-3 rounded-2xl bg-secondary px-4 py-4 text-sm leading-6 text-muted-foreground">
         <input type="checkbox" class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary" formControlName="agreeToTerms" />
         <span>I agree to the Terms and Conditions and Privacy Policy of the ESPRIT Life platform.</span>
       </label>
@@ -73,9 +73,9 @@
       <button type="submit" class="btn-primary w-full">Create Account</button>
     </form>
 
-    <div class="mt-8 rounded-2xl bg-slate-50 p-4">
-      <div class="text-sm font-semibold text-slate-800">Password requirements</div>
-      <ul class="mt-3 space-y-2 text-sm text-slate-500">
+    <div class="mt-8 rounded-2xl bg-secondary p-4">
+      <div class="text-sm font-semibold text-secondary-foreground">Password requirements</div>
+      <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
         <li>At least 8 characters</li>
         <li>One uppercase letter recommended</li>
         <li>One number recommended</li>
