@@ -1,0 +1,23 @@
+<div
+  class="flex flex-col items-center justify-center gap-4 text-center transition-all duration-500"
+  [class.translate-y-3]="!mounted()"
+  [class.opacity-0]="!mounted()"
+  [class.opacity-100]="mounted()"
+  [class.translate-y-0]="mounted()"
+>
+  <div class="loader-frame" [style.--loader-size]="size">
+    <div class="loader-box-wrap">
+      <div class="loader-box one"></div>
+      <div class="loader-box two"></div>
+      <div class="loader-box three"></div>
+      <div class="loader-box four"></div>
+      <div class="loader-box five"></div>
+      <div class="loader-box six"></div>
+    </div>
+  </div>
+
+  <div class="space-y-1">
+    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-primary">{{ label }}</p>
+    <p class="text-sm text-muted-foreground">{{ caption }}</p>
+  </div>
+</div>

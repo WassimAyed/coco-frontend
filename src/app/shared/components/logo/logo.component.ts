@@ -18,7 +18,7 @@ import { RouterModule } from '@angular/router';
       </span>
       <span class="flex flex-col">
         <span class="text-lg font-bold leading-none tracking-tight text-foreground">ESPRIT</span>
-        <span class="-mt-0.5 text-[0.7rem] uppercase tracking-[0.22em] text-slate-500">{{ title }}</span>
+        <span class="-mt-0.5 text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">{{ title }}</span>
       </span>
     </a>
   `
