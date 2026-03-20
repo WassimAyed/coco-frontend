@@ -8,7 +8,7 @@ describe('CollocationListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CollocationListComponent]
+      declarations: [CollocationListComponent]
     })
     .compileComponents();
 

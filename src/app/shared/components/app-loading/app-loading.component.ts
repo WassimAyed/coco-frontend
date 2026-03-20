@@ -1,10 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, signal } from '@angular/core';
 
 @Component({
   selector: 'app-loading',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './app-loading.component.html'
 })
 export class AppLoadingComponent implements OnInit {

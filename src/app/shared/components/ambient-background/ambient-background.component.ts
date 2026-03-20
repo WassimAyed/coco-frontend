@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -41,8 +40,6 @@ interface SplashRing {
 
 @Component({
   selector: 'app-ambient-background',
-  standalone: true,
-  imports: [CommonModule],
   template: `
     <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <div class="absolute inset-0 bg-gradient-to-br from-background via-secondary to-background"></div>
