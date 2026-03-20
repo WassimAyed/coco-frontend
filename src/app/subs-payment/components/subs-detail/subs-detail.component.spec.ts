@@ -8,7 +8,7 @@ describe('SubsDetailComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SubsDetailComponent]
+      declarations: [SubsDetailComponent]
     })
     .compileComponents();
 

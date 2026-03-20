@@ -1,13 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { FormBuilder, Validators } from '@angular/forms';
 import {
   Bell,
   BookOpen,
   Clock3,
   DatabaseZap,
-  LucideAngularModule,
   MessageCircleMore,
   Save,
   Send,
@@ -16,7 +13,6 @@ import {
   Sparkles,
   UserRound
 } from 'lucide-angular';
-import { AppLoadingComponent } from '../../../shared/components/app-loading/app-loading.component';
 import {
   createConversations,
   DEFAULT_PREFERENCES,
@@ -30,8 +26,6 @@ import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-profile-page',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, LucideAngularModule, AppLoadingComponent],
   templateUrl: './user-profile-page.component.html'
 })
 export class UserProfilePageComponent {

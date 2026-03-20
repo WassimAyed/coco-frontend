@@ -1,11 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-logo',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
   template: `
     <a [routerLink]="link" class="inline-flex items-center gap-2">
       <span class="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-primary">

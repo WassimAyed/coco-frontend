@@ -1,13 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-import { ChevronDown, LogOut, LucideAngularModule, UserRound } from 'lucide-angular';
+import { Router } from '@angular/router';
+import { ChevronDown, LogOut, UserRound } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-user-menu',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
   templateUrl: './user-menu.component.html'
 })
 export class UserMenuComponent {

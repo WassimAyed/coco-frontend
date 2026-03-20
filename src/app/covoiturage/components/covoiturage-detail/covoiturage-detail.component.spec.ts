@@ -8,7 +8,7 @@ describe('CovoiturageDetailComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CovoiturageDetailComponent]
+      declarations: [CovoiturageDetailComponent]
     })
     .compileComponents();
 

@@ -1,49 +1,49 @@
 import { Routes } from '@angular/router';
+import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AuthLayoutComponent } from './shared/layouts/auth-layout/auth-layout.component';
+import { PublicLayoutComponent } from './shared/layouts/public-layout/public-layout.component';
+import { LandingPageComponent } from './shared/pages/landing-page/landing-page.component';
 import { authGuard } from './user-security/guards/auth.guard';
 import { guestGuard } from './user-security/guards/guest.guard';
+import { LoginPageComponent } from './user-security/pages/login-page/login-page.component';
+import { RegisterPageComponent } from './user-security/pages/register-page/register-page.component';
+import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./shared/layouts/public-layout/public-layout.component').then((m) => m.PublicLayoutComponent),
+    component: PublicLayoutComponent,
     children: [
       {
         path: '',
-        loadComponent: () =>
-          import('./shared/pages/landing-page/landing-page.component').then((m) => m.LandingPageComponent)
+        component: LandingPageComponent
       },
       {
         path: 'profile',
         canActivate: [authGuard],
-        loadComponent: () =>
-          import('./user-security/pages/user-profile-page/user-profile-page.component').then((m) => m.UserProfilePageComponent)
+        component: UserProfilePageComponent
       }
     ]
   },
   {
     path: '',
-    loadComponent: () =>
-      import('./shared/layouts/auth-layout/auth-layout.component').then((m) => m.AuthLayoutComponent),
+    component: AuthLayoutComponent,
     children: [
       {
         path: 'login',
         canActivate: [guestGuard],
-        loadComponent: () =>
-          import('./user-security/pages/login-page/login-page.component').then((m) => m.LoginPageComponent)
+        component: LoginPageComponent
       },
       {
         path: 'register',
         canActivate: [guestGuard],
-        loadComponent: () =>
-          import('./user-security/pages/register-page/register-page.component').then((m) => m.RegisterPageComponent)
+        component: RegisterPageComponent
       }
     ]
   },
   {
     path: 'admin',
-    loadComponent: () =>
-      import('./admin/layouts/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent)
+    component: AdminLayoutComponent
   },
   { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then(m => m.CollocationModule) },
   { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then(m => m.CovoiturageModule) },

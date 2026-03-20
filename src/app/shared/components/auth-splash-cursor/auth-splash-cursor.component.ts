@@ -1,10 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-auth-splash-cursor',
-  standalone: true,
-  imports: [CommonModule],
   template: `
     <canvas
       #fluidCanvas
