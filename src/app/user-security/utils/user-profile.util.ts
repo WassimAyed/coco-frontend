@@ -1,4 +1,4 @@
-import { AuthSession } from '../models/user.model';
+import { AuthSession, UserProfile, UserStat } from '../models/user.model';
 import { createAvatarDataUrl } from '../../shared/utils/avatar.util';
 
 const DEPARTMENTS = ['Software Engineering', 'Data Science', 'Business Computing', 'Networks & Security'];
@@ -30,54 +30,153 @@ function formatNames(email: string): { firstName: string; lastName: string } {
   return { firstName, lastName };
 }
 
-export function buildAuthSession(email: string, rememberMe: boolean): AuthSession {
-  const normalizedEmail = email.trim().toLowerCase();
+function resolveUserRole(email: string): UserProfile['role'] {
+  const [localPart] = email.split('@');
+  return localPart.includes('admin') ? 'admin' : 'student';
+}
+
+function normalizeRole(value: unknown, email: string): UserProfile['role'] {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'admin') {
+      return 'admin';
+    }
+    if (normalized === 'student' || normalized === 'user') {
+      return 'student';
+    }
+  }
+
+  return resolveUserRole(email);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
+function decodeJwtPayload(token: string | undefined): Record<string, unknown> | null {
+  if (!token) {
+    return null;
+  }
+
+  const parts = token.split('.');
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalized = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=');
+    const decoded = typeof atob === 'function'
+      ? atob(normalized)
+      : '';
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function readString(record: Record<string, unknown> | null, keys: string[]): string | null {
+  if (!record) {
+    return null;
+  }
+
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function buildDefaultStats(seed: number, role: UserProfile['role']): UserStat[] {
+  const isAdmin = role === 'admin';
+
+  return [
+    {
+      label: isAdmin ? 'Pending approvals' : 'Rides shared',
+      value: `${8 + (seed % 12)}`
+    },
+    {
+      label: isAdmin ? 'Resolved reports' : 'Trusted matches',
+      value: `${12 + (seed % 18)}`
+    },
+    {
+      label: isAdmin ? 'Managed events' : 'Campus events',
+      value: `${4 + (seed % 7)}`
+    },
+    {
+      label: isAdmin ? 'Platform audits' : 'Saved deals',
+      value: `${5 + (seed % 9)}`
+    },
+    {
+      label: isAdmin ? 'Moderated chats' : 'Open chats',
+      value: `${6 + (seed % 5)}`
+    },
+    {
+      label: isAdmin ? 'Security reviews' : 'Service requests',
+      value: `${2 + (seed % 4)}`
+    }
+  ];
+}
+
+export function buildAuthSessionFromApiResponse(response: unknown, rememberMe: boolean, emailHint: string): AuthSession {
+  const root = asRecord(response);
+  const data = asRecord(root?.['data']);
+  const token =
+    readString(root, ['token', 'accessToken', 'jwt']) ??
+    readString(data, ['token', 'accessToken', 'jwt']) ??
+    undefined;
+  const refreshToken =
+    readString(root, ['refreshToken']) ??
+    readString(data, ['refreshToken']) ??
+    undefined;
+  const tokenPayload = decodeJwtPayload(token);
+  const user = asRecord(root?.['user']) ?? asRecord(data?.['user']) ?? tokenPayload ?? data ?? root;
+
+  const normalizedEmail = (readString(user, ['email', 'mail', 'username', 'sub']) ?? emailHint).trim().toLowerCase();
   const seed = hashValue(normalizedEmail);
-  const department = DEPARTMENTS[seed % DEPARTMENTS.length];
-  const academicLevel = LEVELS[seed % LEVELS.length];
-  const { firstName, lastName } = formatNames(normalizedEmail);
+  const department = readString(user, ['department']) ?? DEPARTMENTS[seed % DEPARTMENTS.length];
+  const academicLevel = readString(user, ['academicLevel', 'level']) ?? LEVELS[seed % LEVELS.length];
+  const fallbackNames = formatNames(normalizedEmail);
+  const firstName = readString(user, ['firstName', 'firstname', 'givenName']) ?? fallbackNames.firstName;
+  const lastName = readString(user, ['lastName', 'lastname', 'familyName']) ?? fallbackNames.lastName;
+  const role = normalizeRole(
+    readString(user, ['role']) ?? readString(root, ['role']) ?? readString(data, ['role']),
+    normalizedEmail
+  );
+  const isAdmin = role === 'admin';
+  const highlights = Array.isArray(user?.['highlights']) && user['highlights'].every((entry) => typeof entry === 'string')
+    ? user['highlights'] as string[]
+    : isAdmin
+      ? ['Verified ESPRIT administrator', 'Access to moderation and approvals', 'Oversees secure student operations']
+      : HIGHLIGHTS;
 
   return {
-    authenticatedAt: new Date().toISOString(),
+    accessToken: token,
+    authenticatedAt: readString(root, ['authenticatedAt']) ?? new Date().toISOString(),
     rememberMe,
+    refreshToken,
     user: {
       academicLevel,
-      avatarUrl: createAvatarDataUrl(`${firstName} ${lastName}`),
-      bio: `Focused on collaborative campus life, ${department.toLowerCase()}, and making daily student routines smoother through trusted connections.`,
-      campus: 'ESPRIT Ariana',
+      avatarUrl: readString(user, ['avatarUrl', 'avatar', 'imageUrl', 'photoUrl']) ?? createAvatarDataUrl(`${firstName} ${lastName}`),
+      bio: readString(user, ['bio']) ?? (
+        isAdmin
+          ? 'Managing platform operations, approvals, and trust workflows for the ESPRIT community.'
+          : `Focused on collaborative campus life, ${department.toLowerCase()}, and making daily student routines smoother through trusted connections.`
+      ),
+      campus: readString(user, ['campus']) ?? 'ESPRIT Ariana',
       department,
       email: normalizedEmail,
       firstName,
-      highlights: HIGHLIGHTS,
-      id: `student-${seed}`,
+      highlights,
+      id: readString(user, ['id', 'userId']) ?? `${role}-${seed}`,
       lastName,
-      role: 'student',
-      stats: [
-        {
-          label: 'Rides shared',
-          value: `${8 + (seed % 12)}`
-        },
-        {
-          label: 'Trusted matches',
-          value: `${12 + (seed % 18)}`
-        },
-        {
-          label: 'Campus events',
-          value: `${4 + (seed % 7)}`
-        },
-        {
-          label: 'Saved deals',
-          value: `${5 + (seed % 9)}`
-        },
-        {
-          label: 'Open chats',
-          value: `${6 + (seed % 5)}`
-        },
-        {
-          label: 'Service requests',
-          value: `${2 + (seed % 4)}`
-        }
-      ]
+      role,
+      stats: buildDefaultStats(seed, role)
     }
   };
 }

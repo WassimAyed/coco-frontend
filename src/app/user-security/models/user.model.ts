@@ -25,7 +25,9 @@ export interface LoginCredentials {
 }
 
 export interface AuthSession {
+  accessToken?: string;
   user: UserProfile;
   rememberMe: boolean;
+  refreshToken?: string;
   authenticatedAt: string;
 }

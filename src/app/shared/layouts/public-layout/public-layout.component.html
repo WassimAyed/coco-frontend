@@ -30,7 +30,7 @@
         <a routerLink="/" fragment="faq" class="block rounded-2xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary" (click)="closeMenu()">FAQ</a>
 
         @if (isAuthenticated()) {
-          <a routerLink="/profile" class="block rounded-2xl border border-border px-3 py-3 text-center text-sm font-semibold text-foreground" (click)="closeMenu()">Display Profile</a>
+          <a [routerLink]="homeRoute()" class="block rounded-2xl border border-border px-3 py-3 text-center text-sm font-semibold text-foreground" (click)="closeMenu()">{{ homeLabel() }}</a>
         } @else {
           <a routerLink="/login" class="block rounded-2xl border border-border px-3 py-3 text-center text-sm font-semibold" (click)="closeMenu()">Login</a>
           <a routerLink="/register" class="block rounded-2xl bg-primary px-3 py-3 text-center text-sm font-semibold text-primary-foreground" (click)="closeMenu()">Get Started</a>

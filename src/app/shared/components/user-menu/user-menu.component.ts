@@ -16,6 +16,8 @@ export class UserMenuComponent {
   readonly LogOutIcon = LogOut;
   readonly menuOpen = signal(false);
   readonly user = computed(() => this.userService.currentUser());
+  readonly homeRoute = this.userService.homeRoute;
+  readonly homeLabel = computed(() => (this.user()?.role === 'admin' ? 'Admin Dashboard' : 'Display Profile'));
 
   toggleMenu(): void {
     this.menuOpen.update((value) => !value);

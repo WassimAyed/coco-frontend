@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   AlertTriangle,
   BarChart3,
@@ -29,6 +30,7 @@ import {
   XCircle,
   MessageCircle
 } from 'lucide-angular';
+import { UserService } from '../../../user-security/services/user.service';
 
 interface DashboardModule {
   id: string;
@@ -41,6 +43,9 @@ interface DashboardModule {
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
+  private readonly router = inject(Router);
+  private readonly userService = inject(UserService);
+
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
 
@@ -149,5 +154,10 @@ export class AdminLayoutComponent {
 
   get mobileModules(): DashboardModule[] {
     return this.modules.slice(0, 5);
+  }
+
+  async logout(): Promise<void> {
+    this.userService.logout();
+    await this.router.navigate(['/']);
   }
 }

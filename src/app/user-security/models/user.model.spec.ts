@@ -16,7 +16,7 @@ describe('AuthSession model', () => {
         highlights: ['Verified student access'],
         id: 'student-session',
         lastName: 'Demo',
-        role: 'student',
+        role: 'admin',
         stats: [
           {
             label: 'Rides shared',

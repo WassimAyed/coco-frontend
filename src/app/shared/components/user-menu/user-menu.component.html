@@ -24,12 +24,12 @@
 
         <div class="mt-2 space-y-1">
           <a
-            routerLink="/profile"
+            [routerLink]="homeRoute()"
             class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
             (click)="closeMenu()"
           >
             <lucide-icon [img]="UserRoundIcon" [size]="18"></lucide-icon>
-            Display profile
+            {{ homeLabel() }}
           </a>
 
           <button

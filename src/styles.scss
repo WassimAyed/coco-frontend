@@ -195,6 +195,103 @@
     transform: translate(-50%, -50%) scale(0.15);
     animation: cursorSplashParticle 900ms ease-out forwards;
   }
+
+  .app-toast {
+    @apply relative overflow-hidden rounded-[1.2rem] border bg-card px-4 py-3 text-card-foreground shadow-float;
+    border-color: color-mix(in srgb, var(--border) 88%, white 12%);
+    animation: toastSlideIn 220ms ease-out;
+    backdrop-filter: blur(10px);
+  }
+
+  .app-toast[data-variant='success'] {
+    border-color: color-mix(in srgb, var(--primary) 16%, var(--border));
+    box-shadow: 0 18px 36px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+
+  .app-toast[data-variant='error'] {
+    border-color: color-mix(in srgb, var(--destructive) 18%, var(--border));
+    box-shadow: 0 18px 36px color-mix(in srgb, var(--destructive) 10%, transparent);
+  }
+
+  .app-toast[data-variant='warning'] {
+    border-color: color-mix(in srgb, #f59e0b 18%, var(--border));
+  }
+
+  .app-toast[data-variant='info'] {
+    border-color: color-mix(in srgb, var(--sidebar) 12%, var(--border));
+  }
+
+  .app-toast__icon-wrap {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border;
+    border-color: color-mix(in srgb, var(--border) 75%, white 25%);
+    background: color-mix(in srgb, var(--secondary) 70%, white 30%);
+    color: var(--primary);
+  }
+
+  .app-toast[data-variant='success'] .app-toast__icon-wrap {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, white);
+    border-color: color-mix(in srgb, var(--primary) 12%, var(--border));
+  }
+
+  .app-toast[data-variant='error'] .app-toast__icon-wrap {
+    background: color-mix(in srgb, var(--destructive) 8%, white);
+    color: var(--destructive);
+    border-color: color-mix(in srgb, var(--destructive) 14%, var(--border));
+  }
+
+  .app-toast[data-variant='warning'] .app-toast__icon-wrap {
+    background: color-mix(in srgb, #f59e0b 8%, white);
+    color: #b45309;
+    border-color: color-mix(in srgb, #f59e0b 14%, var(--border));
+  }
+
+  .app-toast[data-variant='info'] .app-toast__icon-wrap {
+    background: color-mix(in srgb, var(--sidebar) 5%, white);
+    color: var(--sidebar);
+    border-color: color-mix(in srgb, var(--sidebar) 10%, var(--border));
+  }
+
+  .app-toast__title {
+    @apply m-0 text-[0.95rem] font-bold leading-none text-foreground;
+  }
+
+  .app-toast__variant {
+    @apply rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.14em];
+    background: color-mix(in srgb, var(--secondary) 86%, white 14%);
+    color: var(--muted-foreground);
+  }
+
+  .app-toast__message {
+    @apply mt-1.5 m-0 text-sm leading-6 text-muted-foreground;
+  }
+
+  .app-toast__close {
+    @apply -mr-1 -mt-1 flex h-8 w-8 items-center justify-center rounded-xl border-0 bg-transparent text-muted-foreground transition hover:bg-secondary hover:text-foreground;
+  }
+
+  .app-toast__progress {
+    @apply absolute bottom-0 left-0 h-[3px] rounded-full;
+    width: 100%;
+    transform-origin: left center;
+    animation: toastProgress 4.2s linear forwards;
+  }
+
+  .app-toast__progress[data-variant='success'] {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 88%, white 12%), color-mix(in srgb, var(--primary) 48%, white 52%));
+  }
+
+  .app-toast__progress[data-variant='error'] {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--destructive) 88%, white 12%), color-mix(in srgb, var(--destructive) 48%, white 52%));
+  }
+
+  .app-toast__progress[data-variant='warning'] {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+  }
+
+  .app-toast__progress[data-variant='info'] {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--sidebar) 90%, white 10%), color-mix(in srgb, var(--sidebar) 45%, white 55%));
+  }
 }
 
 @keyframes moveGradient {
@@ -372,5 +469,27 @@
   100% {
     opacity: 0;
     transform: translate(calc(-50% + var(--cursor-dx)), calc(-50% + var(--cursor-dy))) scale(1.8);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
   }
 }
