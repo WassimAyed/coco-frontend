@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { computed } from '@angular/core';
 import { Menu, X } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 
@@ -13,6 +14,8 @@ export class PublicLayoutComponent {
   readonly XIcon = X;
   readonly mobileMenuOpen = signal(false);
   readonly isAuthenticated = this.userService.isAuthenticated;
+  readonly homeRoute = this.userService.homeRoute;
+  readonly homeLabel = computed(() => (this.userService.currentUser()?.role === 'admin' ? 'Admin Dashboard' : 'Display Profile'));
 
   toggleMenu(): void {
     this.mobileMenuOpen.update((value) => !value);

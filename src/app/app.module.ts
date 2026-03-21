@@ -1,6 +1,7 @@
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppComponent } from './app.component';
@@ -13,7 +14,7 @@ import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.
 @NgModule({
   bootstrap: [AppComponent],
   declarations: [AppComponent, AdminLayoutComponent],
-  imports: [BrowserModule, CommonModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
+  imports: [BrowserModule, CommonModule, HttpClientModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
   providers: [
     {
       deps: [UserService],
