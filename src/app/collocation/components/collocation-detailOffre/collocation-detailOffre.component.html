@@ -92,20 +92,33 @@
 </section>
 
           <!-- Owner -->
-          <div class="card glass-card border-0" *ngIf="offer.ownerId">
-            <div class="card-body">
-              <div class="d-flex gap-3 align-items-center mb-3">
-                <img src="https://i.pravatar.cc/80?u={{offer.ownerId}}" class="rounded-circle border border-2 border-danger" width="70" height="70" />
-                <div>
-                  <h6 class="fw-bold mb-0"> offer.owner?.nom  offer.owner?.prenom </h6>
-                  <small class="text-secondary"> offer.owner?.email </small>
-                </div>
-              </div>
-              <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold">
-                <i class="fas fa-envelope me-2"></i>Contacter le propriétaire
-              </button>
-            </div>
-          </div>
+       <!-- Owner -->
+<div class="card glass-card border-0" *ngIf="ownerId">
+  <div class="card-body">
+    <div class="d-flex gap-3 align-items-center mb-3">
+
+      <!-- Avatar -->
+      <img
+        [src]="ownerAvatar || 'https://i.pravatar.cc/80'"
+        class="rounded-circle border border-2 border-danger"
+        width="70"
+        height="70"
+      />
+
+      <!-- Info -->
+      <div>
+        <h6 class="fw-bold mb-0">{{ ownerName }}</h6>
+        <small class="text-secondary">{{ ownerEmail }}</small>
+      </div>
+
+    </div>
+
+    <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold">
+      <i class="fas fa-envelope me-2"></i>
+      Contacter
+    </button>
+  </div>
+</div>
 
         </div>
       </div>
