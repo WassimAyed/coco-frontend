@@ -28,9 +28,7 @@ import {
   User,
   Users,
   XCircle,
-  MessageCircle,
-  LucideIconData,
-  LucideAngularModule
+  MessageCircle
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 
