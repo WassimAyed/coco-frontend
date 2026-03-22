@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { HomeUserComponent } from './home-user/home-user.component';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
 import { AuthLayoutComponent } from './shared/layouts/auth-layout/auth-layout.component';
 import { PublicLayoutComponent } from './shared/layouts/public-layout/public-layout.component';
@@ -14,6 +15,7 @@ import { TwoFactorPageComponent } from './user-security/pages/two-factor-page/tw
 import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'home-user', pathMatch: 'full' },
   {
     path: '',
     component: PublicLayoutComponent,

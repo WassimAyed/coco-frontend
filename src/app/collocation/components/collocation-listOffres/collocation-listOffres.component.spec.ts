@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CollocationListComponent } from './collocation-list.component';
+import { CollocationListComponent } from './collocation-listOffres.component';
 
 describe('CollocationListComponent', () => {
   let component: CollocationListComponent;

@@ -1,0 +1,255 @@
+<!-- ===== HEADER ===== -->
+<header class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold fs-3" href="/">
+      <span class="logo-icon me-2">🏠</span>
+      Coloc<span class="text-danger">'Study</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto">
+        <li class="nav-item"><a class="nav-link active" href="/">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="/offers">Offres</a></li>
+        <li class="nav-item"><a class="nav-link" href="/map">Carte</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+      </ul>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary rounded-pill px-4">Connexion</button>
+        <button class="btn btn-danger rounded-pill px-4">Inscription</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="container my-4">
+  <div class="row g-4">
+
+    <!-- Left column: list & filters -->
+    <div class="col-lg-6">
+
+      <!-- ===== FILTERS & CREATE BUTTON ===== -->
+      <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+        <button class="btn btn-danger rounded-pill px-4" (click)="createOffer()">
+          <i class="fas fa-plus me-2"></i> Créer offre coloc
+        </button>
+
+        <!-- Filter: Meublée / Non Meublée -->
+        <select class="form-select w-auto" [(ngModel)]="filterMeublee" (change)="applyFilters()">
+          <option value="">Toutes</option>
+          <option value="true">Meublé</option>
+          <option value="false">Non meublé</option>
+        </select>
+
+        <!-- Filter: Ville -->
+        <select class="form-select w-auto" [(ngModel)]="filterVille" (change)="applyFilters()">
+          <option value="">Toutes les villes</option>
+          <option *ngFor="let ville of availableVilles" [value]="ville">{{ ville }}</option>
+        </select>
+      </div>
+
+      <!-- Price Range Filter -->
+      <div class="filter-card bg-white p-3 rounded-4 shadow-sm border mb-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="fw-bold text-dark">
+            <i class="fas fa-coins text-warning me-1"></i> Prix
+          </span>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="form-floating" style="width: 140px;">
+              <input type="number" class="form-control" id="minPrice" placeholder="Min"
+                     [(ngModel)]="filterPrixMin" (input)="applyFilters()">
+              <label for="minPrice"><i class="fas fa-arrow-down text-success me-1"></i> Min (dt)</label>
+            </div>
+            <span class="fw-bold text-muted">—</span>
+            <div class="form-floating" style="width: 140px;">
+              <input type="number" class="form-control" id="maxPrice" placeholder="Max"
+                     [(ngModel)]="filterPrixMax" (input)="applyFilters()">
+              <label for="maxPrice"><i class="fas fa-arrow-up text-danger me-1"></i> Max (dt)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radius Filter -->
+      <div class="filter-card bg-white p-3 rounded-4 shadow-sm border mb-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="fw-bold text-dark"><i class="fas fa-location-dot text-danger me-1"></i> Rayon de recherche</span>
+          <div class="btn-group d-flex flex-wrap gap-2" role="group">
+            <input type="radio" class="btn-check" name="radius" id="radiusAll" [value]="null"
+                   [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+            <label class="btn btn-outline-secondary rounded-pill px-3" for="radiusAll"><i class="fas fa-globe"></i> Tous</label>
+
+            <input type="radio" class="btn-check" name="radius" id="radius2" [value]="2"
+                   [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+            <label class="btn btn-outline-danger rounded-pill px-3" for="radius2"><i class="fas fa-person-walking"></i> 2 km</label>
+
+            <input type="radio" class="btn-check" name="radius" id="radius5" [value]="5"
+                   [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+            <label class="btn btn-outline-danger rounded-pill px-3" for="radius5"><i class="fas fa-bicycle"></i> 5 km</label>
+
+            <input type="radio" class="btn-check" name="radius" id="radius10" [value]="10"
+                   [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+            <label class="btn btn-outline-danger rounded-pill px-3" for="radius10"><i class="fas fa-car"></i> 10 km</label>
+
+            <input type="radio" class="btn-check" name="radius" id="radius20" [value]="20"
+                   [(ngModel)]="filterRadius" (change)="applyProximityFilter()">
+            <label class="btn btn-outline-danger rounded-pill px-3" for="radius20"><i class="fas fa-rocket"></i> 20 km</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="bg-white rounded-4 shadow p-4" style="max-height: 800px; overflow-y: auto;">
+        <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden">
+          <input type="text" class="form-control border-0 bg-light" placeholder="Recherche par titre, ville, prix..."
+                 [(ngModel)]="searchTerm" (input)="filterOffers()">
+          <button class="btn btn-danger" type="button"><i class="fas fa-search"></i></button>
+        </div>
+
+        <!-- Loading / Error / Empty -->
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-danger mb-3" role="status"><span class="visually-hidden">Chargement...</span></div>
+          <p class="text-muted">Chargement des offres...</p>
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger d-flex align-items-center"><i class="fas fa-exclamation-triangle me-2"></i> {{ error }}</div>
+
+        <div *ngIf="!loading && filteredOffers.length === 0" class="text-center py-5 text-muted">
+          <i class="fas fa-box-open fa-4x mb-3"></i>
+          <p class="fs-5">Aucune offre trouvée.</p>
+        </div>
+
+        <!-- Offers List -->
+        <div *ngIf="!loading && filteredOffers.length > 0" class="d-flex flex-column gap-3">
+          <div class="card offer-card border-0 shadow-sm" *ngFor="let offer of filteredOffers" (click)="centerOnOffer(offer)">
+            <div class="row g-0">
+              <div class="col-md-4">
+               <img
+  *ngIf="offer.imagesColoc && offer.imagesColoc.length > 0"
+  [src]="offer.imagesColoc[0].url"
+  [alt]="offer.imagesColoc[0].filename || 'Offer image'"
+  class="img-fluid rounded-start h-100"
+  style="object-fit: cover;"
+/>
+                <div *ngIf="!offer.imagesColoc?.length" class="bg-light d-flex align-items-center justify-content-center h-100">
+                  <i class="fas fa-camera fa-3x text-secondary"></i>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h5 class="card-title fw-bold">{{ offer.titre }}</h5>
+                  <p class="card-text text-danger fw-bold fs-4">{{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}</p>
+                  <p class="card-text"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ offer.ville }}</p>
+                  <p class="card-text text-truncate">{{ offer.description }}</p>
+                  <div class="d-flex gap-2 mb-3">
+                    <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ offer.chambres }} chambre(s)</span>
+                    <span class="badge rounded-pill px-3 py-2" [ngClass]="offer.meublee ? 'bg-danger' : 'bg-light text-dark'">
+                      {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+                    </span>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger btn-sm rounded-circle"
+                            (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
+                            [class.btn-danger]="favoriteIds.includes(offer.id)"
+                            [class.text-white]="favoriteIds.includes(offer.id)"
+                            [title]="favoriteIds.includes(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                      <i [class.fas]="favoriteIds.includes(offer.id)" [class.far]="!favoriteIds.includes(offer.id)" class="fa-heart"></i>
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle"
+                            (click)="$event.stopPropagation(); viewDetails(offer.id)"
+                            title="Voir les détails"><i class="fas fa-eye"></i></button>
+
+                   <button *ngIf="canSendRequest(offer)"
+        class="btn btn-outline-success btn-sm rounded-circle"
+        (click)="$event.stopPropagation(); openRequestModal(offer.id)"
+        title="Envoyer une demande">
+  <i class="fas fa-paper-plane"></i>
+</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right column: map -->
+    <div class="col-lg-6">
+      <div class="sticky-top" style="top: 100px;">
+        <div id="map" class="map-container rounded-4 shadow" style="height: 600px;"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-dark text-white mt-5 py-5">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <h5 class="fw-bold">Coloc'Study</h5>
+        <p class="text-secondary">Trouvez la colocation idéale entre étudiants.</p>
+      </div>
+      <div class="col-md-2">
+        <h6 class="fw-bold">Liens rapides</h6>
+        <ul class="list-unstyled">
+          <li><a href="/" class="text-secondary text-decoration-none">Accueil</a></li>
+          <li><a href="/offers" class="text-secondary text-decoration-none">Offres</a></li>
+          <li><a href="/map" class="text-secondary text-decoration-none">Carte</a></li>
+          <li><a href="/contact" class="text-secondary text-decoration-none">Contact</a></li>
+        </ul>
+      </div>
+      <div class="col-md-2">
+        <h6 class="fw-bold">Légal</h6>
+        <ul class="list-unstyled">
+          <li><a href="/terms" class="text-secondary text-decoration-none">CGU</a></li>
+          <li><a href="/privacy" class="text-secondary text-decoration-none">Confidentialité</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h6 class="fw-bold">Suivez-nous</h6>
+        <div class="d-flex gap-3">
+          <a href="#" class="text-secondary fs-4"><i class="fab fa-facebook"></i></a>
+          <a href="#" class="text-secondary fs-4"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="text-secondary fs-4"><i class="fab fa-linkedin"></i></a>
+        </div>
+      </div>
+    </div>
+    <hr class="border-secondary mt-4">
+    <p class="text-secondary text-center mb-0">&copy; 2025 Coloc'Study – Tous droits réservés.</p>
+  </div>
+</footer>
+
+<!-- ===== MODAL DEMANDE ===== -->
+<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form (ngSubmit)="submitRequest()">
+        <div class="modal-header">
+          <h5 class="modal-title" id="requestModalLabel">Envoyer une demande</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea id="message" class="form-control" rows="4" [(ngModel)]="requestMessage" name="message"
+                      placeholder="Écris un message à l'auteur de l'offre..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-success">Envoyer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

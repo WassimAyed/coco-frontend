@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Co&Co · ESPRIT student life</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="logo-text">Co&Co <span>for ESPRIT students</span></div>
+        </div>
+        <div class="user-profile">
+            <div class="user-badge">
+                <i class="fas fa-user-astronaut"></i>
+                <span class="user-name">Ahmed B.</span>
+                <span class="user-type"><i class="fa-regular fa-id-card"></i> 3rd year</span>
+            </div>
+            <div class="notification-icon">
+                <i class="fa-regular fa-bell"></i>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Make ESPRIT life easier</h1>
+        <p>Collocations, covoiturage, events, payments — all in one place, built for students.</p>
+        <div class="student-tag"><i class="fa-regular fa-star"></i> 1000+ active students</div>
+    </section>
+
+    <main>
+        <div class="section-header">
+            <h2><i class="fas fa-th-large" style="margin-right: 12px;"></i>Student modules</h2>
+            <div class="date-badge"><i class="fa-regular fa-calendar"></i> April 2025 · active</div>
+        </div>
+
+        <div class="module-grid">
+            <!-- 1 · User & Security (with student‑friendly desc) -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-shield-halved"></i></div>
+                    <span class="module-number">#1</span>
+                </div>
+                <div class="module-title">Secure access</div>
+                <div class="module-desc">Your data, your control. SSO, privacy settings, and role‑based access for group projects.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/user-security">Open <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-fingerprint"></i>
+                </div>
+            </div>
+
+            <!-- 2 · Collocation Management -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-people-roof"></i></div>
+                    <span class="module-number">#2</span>
+                </div>
+                <div class="module-title">Collocation</div>
+                <div class="module-desc">Find roommates, split bills, manage chores. Your future home starts here.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/collocation/offres">Browse <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-house-chimney"></i>
+                </div>
+            </div>
+
+            <!-- 3 · Covoiturage Management -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-car-side"></i></div>
+                    <span class="module-number">#3</span>
+                </div>
+                <div class="module-title">Covoiturage</div>
+                <div class="module-desc">Share rides to campus or weekends away. Save money, meet people, reduce CO₂.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/covoiturage">Find a ride <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-map"></i>
+                </div>
+            </div>
+
+            <!-- 4 · Sales Real Estate (student housing focus) -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-building"></i></div>
+                    <span class="module-number">#4</span>
+                </div>
+                <div class="module-title">Student housing</div>
+                <div class="module-desc">Apartments, studios, sublets near ESPRIT. Deals and commissions for students.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/real-estate">View listings <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-key"></i>
+                </div>
+            </div>
+
+            <!-- 5 · Payments Management -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-coins"></i></div>
+                    <span class="module-number">#5</span>
+                </div>
+                <div class="module-title">Payments</div>
+                <div class="module-desc">Split group expenses, pay rent, track subscriptions – all in one dashboard.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/subs-payment">Manage <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-credit-card"></i>
+                </div>
+            </div>
+
+            <!-- 6 · Event Management -->
+            <div class="module-card">
+                <div class="card-header">
+                    <div class="module-icon"><i class="fas fa-calendar-check"></i></div>
+                    <span class="module-number">#6</span>
+                </div>
+                <div class="module-title">Campus events</div>
+                <div class="module-desc">Parties, workshops, sport days – never miss what’s happening at ESPRIT.</div>
+                <div class="card-footer-link">
+                    <a class="enter-btn" routerLink="/event">Discover <i class="fa-solid fa-arrow-right"></i></a>
+                    <i class="fa-regular fa-bell-concierge"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-note">
+            <i class="fa-regular fa-circle-check"></i> Connected as Member 1 · all systems ready
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-copyright">
+            <i class="fa-regular fa-copyright"></i> 2025 Co&Co · making student life easier
+        </div>
+        <div class="footer-links">
+            <a href="#"><i class="fa-regular fa-circle-question"></i> Guide</a>
+            <a href="#"><i class="fa-regular fa-comment"></i> Discord</a>
+            <a href="#"><i class="fa-regular fa-gear"></i> Settings</a>
+            <a href="#"><i class="fa-regular fa-right-from-bracket"></i> Sign out</a>
+        </div>
+    </footer>
+</body>
+</html>
