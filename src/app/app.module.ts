@@ -1,0 +1,27 @@
+import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
+import { LucideAngularModule } from 'lucide-angular';
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+import { SharedModule } from './shared/shared.module';
+import { UserSecurityModule } from './user-security/user-security.module';
+import { UserService } from './user-security/services/user.service';
+import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+
+@NgModule({
+  bootstrap: [AppComponent],
+  declarations: [AppComponent, AdminLayoutComponent],
+  imports: [BrowserModule, CommonModule, HttpClientModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
+  providers: [
+    {
+      deps: [UserService],
+      multi: true,
+      provide: APP_INITIALIZER,
+      useFactory: (userService: UserService) => () => userService.restoreSession()
+    }
+  ]
+})
+export class AppModule {}

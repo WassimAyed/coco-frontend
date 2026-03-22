@@ -211,32 +211,7 @@
     </div>
   </section>
 
-  <section class="bg-white py-20 lg:py-32">
-    <div class="section-shell">
-      <div class="mb-16 text-center">
-        <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">Student Success Stories</span>
-        <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">What Students Say</h2>
-        <p class="mx-auto max-w-3xl text-xl text-slate-500">Join thousands of satisfied ESPRIT students</p>
-      </div>
-
-      <div class="grid gap-8 md:grid-cols-3">
-        @for (testimonial of testimonials; track testimonial.name) {
-          <article class="rounded-2xl bg-white p-8 shadow-lg transition-shadow hover:shadow-xl">
-            <div class="mb-4 flex gap-1">
-              @for (star of ratingStars(testimonial.rating); track star) {
-                <lucide-icon [img]="StarIcon" class="fill-primary text-primary" [size]="20"></lucide-icon>
-              }
-            </div>
-            <p class="mb-6 italic text-foreground">"{{ testimonial.content }}"</p>
-            <div>
-              <div class="font-bold text-foreground">{{ testimonial.name }}</div>
-              <div class="text-sm text-slate-500">{{ testimonial.role }}</div>
-            </div>
-          </article>
-        }
-      </div>
-    </div>
-  </section>
+ 
 
   <section id="faq" class="bg-gray-50 py-20 lg:py-32">
     <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

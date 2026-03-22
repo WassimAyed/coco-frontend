@@ -8,7 +8,7 @@ describe('PropertyDetailComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PropertyDetailComponent]
+      declarations: [PropertyDetailComponent]
     })
     .compileComponents();
 

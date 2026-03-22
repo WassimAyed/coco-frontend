@@ -23,10 +23,10 @@
         <lucide-icon [img]="SettingsIcon" [size]="20"></lucide-icon>
         <span class="text-sm font-medium">Settings</span>
       </button>
-      <a routerLink="/" class="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent">
+      <button type="button" (click)="logout()" class="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent">
         <lucide-icon [img]="LogOutIcon" [size]="20"></lucide-icon>
         <span class="text-sm font-medium">Logout</span>
-      </a>
+      </button>
     </div>
   </aside>
 

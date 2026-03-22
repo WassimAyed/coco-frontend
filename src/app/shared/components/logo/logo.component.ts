@@ -1,11 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-logo',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
   template: `
     <a [routerLink]="link" class="inline-flex items-center gap-2">
       <span class="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-primary">
@@ -18,7 +14,7 @@ import { RouterModule } from '@angular/router';
       </span>
       <span class="flex flex-col">
         <span class="text-lg font-bold leading-none tracking-tight text-foreground">ESPRIT</span>
-        <span class="-mt-0.5 text-[0.7rem] uppercase tracking-[0.22em] text-slate-500">{{ title }}</span>
+        <span class="-mt-0.5 text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">{{ title }}</span>
       </span>
     </a>
   `

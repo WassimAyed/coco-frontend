@@ -1,41 +1,71 @@
 import { Routes } from '@angular/router';
 import { HomeUserComponent } from './home-user/home-user.component';
+import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AuthLayoutComponent } from './shared/layouts/auth-layout/auth-layout.component';
+import { PublicLayoutComponent } from './shared/layouts/public-layout/public-layout.component';
+import { LandingPageComponent } from './shared/pages/landing-page/landing-page.component';
+import { adminGuard } from './user-security/guards/admin.guard';
+import { guestGuard } from './user-security/guards/guest.guard';
+import { EmailVerificationPageComponent } from './user-security/pages/email-verification-page/email-verification-page.component';
+import { profileGuard } from './user-security/guards/profile.guard';
+import { LoginPageComponent } from './user-security/pages/login-page/login-page.component';
+import { OauthCallbackPageComponent } from './user-security/pages/oauth-callback-page/oauth-callback-page.component';
+import { RegisterPageComponent } from './user-security/pages/register-page/register-page.component';
+import { TwoFactorPageComponent } from './user-security/pages/two-factor-page/two-factor-page.component';
+import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home-user', pathMatch: 'full' },
   {
     path: '',
-    loadComponent: () =>
-      import('./shared/layouts/public-layout/public-layout.component').then((m) => m.PublicLayoutComponent),
+    component: PublicLayoutComponent,
     children: [
       {
         path: '',
-        loadComponent: () =>
-          import('./shared/pages/landing-page/landing-page.component').then((m) => m.LandingPageComponent)
+        component: LandingPageComponent
+      },
+      {
+        path: 'profile',
+        canActivate: [profileGuard],
+        component: UserProfilePageComponent
       }
     ]
   },
   {
     path: '',
-    loadComponent: () =>
-      import('./shared/layouts/auth-layout/auth-layout.component').then((m) => m.AuthLayoutComponent),
+    component: AuthLayoutComponent,
     children: [
       {
+        path: 'login/2fa',
+        canActivate: [guestGuard],
+        component: TwoFactorPageComponent
+      },
+      {
         path: 'login',
-        loadComponent: () =>
-          import('./user-security/pages/login-page/login-page.component').then((m) => m.LoginPageComponent)
+        canActivate: [guestGuard],
+        component: LoginPageComponent
       },
       {
         path: 'register',
-        loadComponent: () =>
-          import('./user-security/pages/register-page/register-page.component').then((m) => m.RegisterPageComponent)
+        canActivate: [guestGuard],
+        component: RegisterPageComponent
+      },
+      {
+        path: 'verify-email',
+        canActivate: [guestGuard],
+        component: EmailVerificationPageComponent
+      },
+      {
+        path: 'oauth2/callback',
+        canActivate: [guestGuard],
+        component: OauthCallbackPageComponent
       }
     ]
   },
   {
     path: 'admin',
-    loadComponent: () =>
-      import('./admin/layouts/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent)
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent
   },
   { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then(m => m.CollocationModule) },
   { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then(m => m.CovoiturageModule) },

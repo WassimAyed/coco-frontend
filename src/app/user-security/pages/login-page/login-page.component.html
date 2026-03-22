@@ -1,26 +1,39 @@
 <div class="surface-card w-full max-w-md p-8">
   <div class="text-center">
-    <h1 class="text-3xl font-black text-slate-950">Welcome Back</h1>
-    <p class="mt-2 text-slate-500">Sign in to your ESPRIT Life account</p>
+    <h1 class="text-3xl font-black text-foreground">Welcome Back</h1>
+    <p class="mt-2 text-muted-foreground">Sign in to your account</p>
   </div>
 
   @if (form.touched && (emailError || form.controls.password.invalid)) {
-    <div class="mt-6 rounded-2xl border border-destructive/20 bg-red-50 px-4 py-3 text-sm text-destructive">
-      Please fill all required fields with your valid ESPRIT email.
+    <div class="mt-6 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+      Please fill all required fields with valid credentials.
+    </div>
+  }
+
+  @if (authError()) {
+    <div class="mt-6 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+      {{ authError() }}
     </div>
   }
 
   <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()">
     <div>
-      <label for="email" class="mb-2 block text-sm font-semibold text-slate-700">ESPRIT Email</label>
-      <input id="email" type="email" class="form-input" placeholder="student@esprit.tn" formControlName="email" />
+      <label for="email" class="mb-2 block text-sm font-semibold text-secondary-foreground">Email</label>
+      <input
+        id="email"
+        type="email"
+        class="form-input"
+        placeholder="you@example.com"
+        formControlName="email"
+        [disabled]="isLoading()"
+      />
       @if (emailError) {
         <p class="mt-2 text-xs font-medium text-destructive">{{ emailError }}</p>
       }
     </div>
 
     <div>
-      <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+      <label for="password" class="mb-2 block text-sm font-semibold text-secondary-foreground">Password</label>
       <div class="relative">
         <input
           id="password"
@@ -28,26 +41,57 @@
           class="form-input pr-20"
           placeholder="Enter your password"
           formControlName="password"
+          [disabled]="isLoading()"
         />
-        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500" (click)="togglePassword()">
+        <button
+          type="button"
+          class="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground"
+          (click)="togglePassword()"
+          [disabled]="isLoading()"
+        >
           {{ showPassword() ? 'Hide' : 'Show' }}
         </button>
       </div>
     </div>
 
     <div class="flex items-center justify-between text-sm">
-      <label class="flex items-center gap-2 text-slate-600">
+      <label class="flex items-center gap-2 text-muted-foreground">
         <input type="checkbox" formControlName="rememberMe" class="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
         Remember me
       </label>
       <a routerLink="/register" class="font-semibold text-primary">Need an account?</a>
     </div>
 
-    <button type="submit" class="btn-primary w-full">Sign In</button>
+    @if (isLoading()) {
+      <div class="rounded-[1.75rem] border border-border bg-secondary/70 px-6 py-8">
+        <app-loading size="7rem" label="Authenticating" caption="Checking your secure student session..." />
+      </div>
+    }
+
+    <button type="submit" class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isLoading()">
+      {{ isLoading() ? 'Signing In...' : 'Sign In' }}
+    </button>
   </form>
 
-  <div class="mt-8 rounded-2xl bg-slate-50 p-4 text-center">
-    <div class="text-sm font-semibold text-slate-800">ESPRIT students only</div>
-    <p class="mt-2 text-sm leading-6 text-slate-500">Only verified &#64;esprit.tn accounts can access the platform.</p>
+  <div class="mt-5">
+    <button
+      type="button"
+      class="btn-secondary w-full gap-3 disabled:cursor-not-allowed disabled:opacity-70"
+      [disabled]="isLoading()"
+      (click)="startGoogleLogin()"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5">
+        <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.6 12 2.6A9.4 9.4 0 0 0 2.6 12 9.4 9.4 0 0 0 12 21.4c5.4 0 9-3.8 9-9.1 0-.6-.1-1.1-.2-1.6H12Z"/>
+        <path fill="#34A853" d="M3.7 7.6 6.9 10c.9-2.7 3.2-4.7 5.1-4.7 1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.6 12 2.6 8.3 2.6 5 4.7 3.7 7.6Z"/>
+        <path fill="#FBBC05" d="M2.6 12c0 1.5.4 2.9 1.1 4.1l3.7-2.9c-.2-.4-.2-.8-.2-1.2s.1-.8.2-1.2L3.7 7.6A9.3 9.3 0 0 0 2.6 12Z"/>
+        <path fill="#4285F4" d="M12 21.4c2.4 0 4.5-.8 6-2.3l-2.9-2.3c-.8.6-1.9 1.1-3.1 1.1-2.3 0-4.3-1.6-5-3.7l-3.6 2.8c1.3 2.9 4.7 4.4 8.6 4.4Z"/>
+      </svg>
+      Continue with Google
+    </button>
+  </div>
+
+  <div class="mt-8 rounded-2xl bg-secondary p-4 text-center">
+    <div class="text-sm font-semibold text-secondary-foreground">Secure access</div>
+    <p class="mt-2 text-sm leading-6 text-muted-foreground">Use your registered account credentials to access the platform.</p>
   </div>
 </div>
