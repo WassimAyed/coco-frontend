@@ -82,12 +82,14 @@
         <div class="d-flex flex-column gap-4">
 
           <!-- Map -->
-        <section class="map-card glass-card" aria-label="Localisation">
-          <h3 class="card-title">
-            <span aria-hidden="true">📍</span> Localisation
-          </h3>
-          <div id="offer-map" class="map-container" role="application" aria-label="Carte interactive"></div>
-        </section>
+       <section class="map-card glass-card" aria-label="Localisation">
+  <h3 class="card-title">
+    <span aria-hidden="true">📍</span> Localisation
+  </h3>
+
+  <!-- IMPORTANT CHANGE -->
+  <div #mapContainer class="map-container"></div>
+</section>
 
           <!-- Owner -->
           <div class="card glass-card border-0" *ngIf="offer.ownerId">
