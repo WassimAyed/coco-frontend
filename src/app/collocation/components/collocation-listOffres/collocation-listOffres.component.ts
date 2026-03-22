@@ -1,3 +1,4 @@
+import { UserService } from './../../../user-security/services/user.service';
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CollocationService } from '../../services/collocation.service';
@@ -16,6 +17,7 @@ declare var bootstrap: any; // pour le modal
   styleUrls: ['./collocation-listOffres.component.css']
 })
 export class CollocationListComponent implements OnInit, AfterViewInit {
+
 
   offers: CollocationOffer[] = [];
   filteredOffers: CollocationOffer[] = [];
@@ -49,10 +51,17 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   constructor(
     private collocationService: CollocationService,
     private router: Router,
+    private userService: UserService,
     private route: ActivatedRoute
   ) {}
 
+
+
+
+
+
   ngOnInit(): void {
+
      this.currentUserId = Number(localStorage.getItem('userId'));
     this.loadOffers();
     this.loadFavorites();

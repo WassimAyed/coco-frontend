@@ -118,4 +118,29 @@ export class UserService {
   clearError(): void {
     authStore.getState().clearError();
   }
+
+
+  private readonly USER_KEY = 'currentUser';
+
+storeUser(user: any): void {
+  try {
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  } catch (e) {
+    console.error('Failed to store user', e);
+  }
+}
+
+getStoredUser(): any | null {
+  try {
+    const data = localStorage.getItem(this.USER_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+clearStoredUser(): void {
+  localStorage.removeItem(this.USER_KEY);
+}
+
 }
