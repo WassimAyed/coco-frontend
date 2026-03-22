@@ -235,7 +235,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
 submitRequest(): void {
-    const studentId = localStorage.getItem('studentId');
+    const studentId = localStorage.getItem('userId');
     if (!studentId) {
         this.showToast('Vous devez être connecté pour envoyer une demande.', 'danger');
         return;
