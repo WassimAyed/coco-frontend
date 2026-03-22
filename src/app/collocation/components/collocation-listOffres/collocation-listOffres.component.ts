@@ -5,6 +5,9 @@ import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 
+
+
+
 declare var bootstrap: any; // pour le modal
 
 @Component({

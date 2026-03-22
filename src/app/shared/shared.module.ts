@@ -11,6 +11,7 @@ import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { PublicLayoutComponent } from './layouts/public-layout/public-layout.component';
 import { LandingPageComponent } from './pages/landing-page/landing-page.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { LandingPageComponent } from './pages/landing-page/landing-page.componen
     LandingPageComponent,
     LogoComponent,
     PublicLayoutComponent,
-    UserMenuComponent
+    UserMenuComponent,
+    NavbarComponent
   ],
   exports: [
     AmbientBackgroundComponent,
