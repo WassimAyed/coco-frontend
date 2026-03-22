@@ -1,12 +1,5 @@
-<<<<<<< HEAD
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-
-=======
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
->>>>>>> 83834cf6570881a7b1d0326726388449a6f3d499
 import {
   AlertTriangle,
   BarChart3,
@@ -24,10 +17,7 @@ import {
   Filter,
   Home,
   LogOut,
-<<<<<<< HEAD
-=======
   LucideIconData,
->>>>>>> 83834cf6570881a7b1d0326726388449a6f3d499
   MoreVertical,
   Search,
   Settings,
@@ -42,12 +32,7 @@ import {
   LucideIconData,
   LucideAngularModule
 } from 'lucide-angular';
-<<<<<<< HEAD
-
-import { LogoComponent } from '../../../shared/components/logo/logo.component';
-=======
 import { UserService } from '../../../user-security/services/user.service';
->>>>>>> 83834cf6570881a7b1d0326726388449a6f3d499
 
 interface DashboardModule {
   id: string;
@@ -57,16 +42,6 @@ interface DashboardModule {
 
 @Component({
   selector: 'app-admin-layout',
-<<<<<<< HEAD
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    LogoComponent,
-    LucideAngularModule
-  ],
-=======
->>>>>>> 83834cf6570881a7b1d0326726388449a6f3d499
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
