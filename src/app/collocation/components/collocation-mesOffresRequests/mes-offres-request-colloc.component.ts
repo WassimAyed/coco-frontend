@@ -118,7 +118,7 @@ export class MesOffresRequestsComponent implements OnInit {
 
   // Charger les demandes
   loadRequestsForMyOffers() {
-    const ownerId = Number(localStorage.getItem('ownerId'));
+    const ownerId = Number(localStorage.getItem('userId'));
     if (!ownerId) return;
 
     this.collocationService.getMyOffers(ownerId).subscribe(offers => {

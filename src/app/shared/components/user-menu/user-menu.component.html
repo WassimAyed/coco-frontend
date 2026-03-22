@@ -23,14 +23,37 @@
         </div>
 
         <div class="mt-2 space-y-1">
-          <a
-            [routerLink]="homeRoute()"
-            class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-            (click)="closeMenu()"
-          >
-            <lucide-icon [img]="UserRoundIcon" [size]="18"></lucide-icon>
-            {{ homeLabel() }}
-          </a>
+     <!-- Home (already correct) -->
+<a
+  [routerLink]="homeRoute()"
+  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+  (click)="closeMenu()"
+>
+  <lucide-icon [img]="HomeIcon" [size]="18"></lucide-icon>
+  {{ homeLabel() }}
+</a>
+
+<!-- Mes Offres de Collocation -->
+<a
+  [routerLink]="mesOffresRoute"
+  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+  (click)="closeMenu()"
+>
+  <lucide-icon [img]="BriefcaseIcon" [size]="18"></lucide-icon>
+  Mes Offres de Collocation
+</a>
+
+<!-- Mes Demandes de collocation -->
+<a
+  [routerLink]="mesOffresRequestRoute"
+  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+  (click)="closeMenu()"
+>
+  <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+  Mes Demandes de collocation
+</a>
+
+
 
           <button
             type="button"
