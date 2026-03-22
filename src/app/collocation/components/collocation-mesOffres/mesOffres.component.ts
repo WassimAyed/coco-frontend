@@ -12,7 +12,7 @@ export class MesOffresComponent implements OnInit {
   myOffers: any[] = [];
   paginatedOffers: any[] = [];
   currentPage = 1;
-  itemsPerPage = 7;                    // ✅ Now 7 items per page
+  itemsPerPage = 7;
   totalPages = 0;
 
   selectedOffer: any = {};
@@ -31,7 +31,7 @@ export class MesOffresComponent implements OnInit {
   }
 
   loadMyOffers() {
-    const ownerId = Number(localStorage.getItem('ownerId'));
+    const ownerId = Number(localStorage.getItem('userId'));
     if (!ownerId) return;
 
     this.collocationService.getMyOffers(ownerId).subscribe({
