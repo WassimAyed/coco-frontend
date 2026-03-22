@@ -45,6 +45,12 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
 
   contactForm!: ReturnType<FormBuilder['group']>;
 
+  // ✅ ADD THESE PROPERTIES (VERY IMPORTANT)
+  ownerId!: number;
+  ownerEmail!: string;
+  ownerName!: string;
+  ownerAvatar!: string;
+
   constructor(
     private route: ActivatedRoute,
     private collocationService: CollocationService,
@@ -78,13 +84,21 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
         this.offer = data;
         this.loading = false;
 
-        // Force DOM render
+        // ✅ Get current user from localStorage
+        const currentUser = JSON.parse(localStorage.getItem('currentUser')!);
+
+        this.ownerId = currentUser.id;
+        this.ownerEmail = currentUser.email;
+        this.ownerName = currentUser.firstName + ' ' + currentUser.lastName;
+        this.ownerAvatar = currentUser.avatarUrl;
+
+        // Map logic
         this.cdr.detectChanges();
 
         if (data.latitude && data.longitude) {
           setTimeout(() => {
             this.initMap(data.latitude!, data.longitude!);
-          }, 100); // small delay ensures DOM exists
+          }, 100);
         }
       },
       error: () => {
@@ -97,7 +111,6 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
   private initMap(lat: number, lng: number): void {
     if (!this.mapContainer) return;
 
-    // Destroy old map
     if (this.map) {
       this.map.remove();
     }
@@ -113,7 +126,6 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
       .bindPopup(this.offer?.titre || 'Colocation')
       .openPopup();
 
-    // 🔥 FIX: force map to render correctly
     setTimeout(() => {
       this.map?.invalidateSize();
     }, 300);

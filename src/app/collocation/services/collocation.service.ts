@@ -11,19 +11,29 @@
 
     constructor(private http: HttpClient) { }
 
-    // Create a new collocation offer with files
-  createOffer(offer: any, selectedFiles: File[]): Observable<any> {
-    const formData = new FormData();
-    formData.append('offre', new Blob([JSON.stringify(offer)], { type: 'application/json' }));
+ createOffer(offer: any, selectedFiles: File[]): Observable<any> {
+  const formData = new FormData();
 
-    selectedFiles.forEach(file => {
-      formData.append('imagesColloc', file);
-    });
+  // JSON offer
+  formData.append(
+    'offre',
+    new Blob([JSON.stringify(offer)], { type: 'application/json' })
+  );
 
-    // Set responseType to 'text'
-    return this.http.post(`${this.apiUrl}/offresCollocCreate`, formData, { responseType: 'text' });
+  // Images
+  selectedFiles.forEach(file => {
+    formData.append('imagesColloc', file);
+  });
+
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    formData.append('userId', userId);
   }
 
+  return this.http.post(`${this.apiUrl}/offresCollocCreate`, formData, {
+    responseType: 'text'
+  });
+}
 
     // Get all collocation offers
     getAllOffers(): Observable<any[]> {
