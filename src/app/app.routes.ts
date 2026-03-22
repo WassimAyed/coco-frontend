@@ -15,64 +15,48 @@ import { TwoFactorPageComponent } from './user-security/pages/two-factor-page/tw
 import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home-user', pathMatch: 'full' },
+  // Redirect from root to landing page (which is inside PublicLayout)
+  { path: '', redirectTo: 'landing', pathMatch: 'full' },
+
+  // Public routes – all these will display the navbar (PublicLayout)
   {
     path: '',
     component: PublicLayoutComponent,
     children: [
-      {
-        path: '',
-        component: LandingPageComponent
-      },
-      {
-        path: 'profile',
-        canActivate: [profileGuard],
-        component: UserProfilePageComponent
-      }
+      { path: 'landing', component: LandingPageComponent },
+      { path: 'profile', canActivate: [profileGuard], component: UserProfilePageComponent },
+      // Lazy‑loaded modules (they will also inherit the navbar)
+      { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then(m => m.CollocationModule) },
+      { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then(m => m.CovoiturageModule) },
+      { path: 'event', loadChildren: () => import('./event/event.module').then(m => m.EventModule) },
+      { path: 'real-estate', loadChildren: () => import('./real-estate/real-estate.module').then(m => m.RealEstateModule) },
+      { path: 'subs-payment', loadChildren: () => import('./subs-payment/subs-payment.module').then(m => m.SubsPaymentModule) },
+      { path: 'user-security', loadChildren: () => import('./user-security/user-security.module').then(m => m.UserSecurityModule) }
     ]
   },
+
+  // Auth routes – these will use AuthLayout (no navbar)
   {
-    path: '',
+    path: 'auth',
     component: AuthLayoutComponent,
     children: [
-      {
-        path: 'login/2fa',
-        canActivate: [guestGuard],
-        component: TwoFactorPageComponent
-      },
-      {
-        path: 'login',
-        canActivate: [guestGuard],
-        component: LoginPageComponent
-      },
-      {
-        path: 'register',
-        canActivate: [guestGuard],
-        component: RegisterPageComponent
-      },
-      {
-        path: 'verify-email',
-        canActivate: [guestGuard],
-        component: EmailVerificationPageComponent
-      },
-      {
-        path: 'oauth2/callback',
-        canActivate: [guestGuard],
-        component: OauthCallbackPageComponent
-      }
+      { path: 'login/2fa', canActivate: [guestGuard], component: TwoFactorPageComponent },
+      { path: 'login', canActivate: [guestGuard], component: LoginPageComponent },
+      { path: 'register', canActivate: [guestGuard], component: RegisterPageComponent },
+      { path: 'verify-email', canActivate: [guestGuard], component: EmailVerificationPageComponent },
+      { path: 'oauth2/callback', canActivate: [guestGuard], component: OauthCallbackPageComponent },
+      // Optional: default redirect within auth
+      { path: '', redirectTo: 'login', pathMatch: 'full' }
     ]
   },
+
+  // Admin routes
   {
     path: 'admin',
     canActivate: [adminGuard],
     component: AdminLayoutComponent
   },
-  { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then(m => m.CollocationModule) },
-  { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then(m => m.CovoiturageModule) },
-  { path: 'event', loadChildren: () => import('./event/event.module').then(m => m.EventModule) },
-  { path: 'real-estate', loadChildren: () => import('./real-estate/real-estate.module').then(m => m.RealEstateModule) },
-  { path: 'subs-payment', loadChildren: () => import('./subs-payment/subs-payment.module').then(m => m.SubsPaymentModule) },
-  { path: 'user-security', loadChildren: () => import('./user-security/user-security.module').then(m => m.UserSecurityModule) },
-  { path: '**', redirectTo: '' }
-];
 
+  // Wildcard – redirect to landing (or any 404 page you prefer)
+  { path: '**', redirectTo: 'landing' }
+];
