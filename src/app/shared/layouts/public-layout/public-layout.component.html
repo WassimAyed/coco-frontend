@@ -77,10 +77,10 @@
         @if (isAuthenticated()) {
           <app-user-menu />
         } @else {
-          <a routerLink="/login" class="btn-secondary !px-4 !py-2.5">
+          <a routerLink="/auth/login" class="btn-secondary !px-4 !py-2.5">
             Login
           </a>
-          <a routerLink="/register" class="btn-primary !px-4 !py-2.5">
+          <a routerLink="/auth/register" class="btn-primary !px-4 !py-2.5">
             Get Started
           </a>
         }
