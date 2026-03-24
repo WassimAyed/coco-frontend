@@ -2,35 +2,35 @@
 	<section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
 		<div class="section-shell space-y-6">
 			<a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
-				← Retour à la liste
+				← Back to events
 			</a>
 
-			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Chargement...</div>
+			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
 			<div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
 			<div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
 
 			<article *ngIf="event" class="rounded-2xl border border-border bg-white p-6 shadow-sm">
 				<div class="space-y-6">
 					<div class="relative overflow-hidden rounded-2xl border border-border">
-						<img [src]="getDisplayedImage()" [alt]="event.name || 'Événement'" class="h-80 w-full object-cover lg:h-[26rem]" />
+						<img [src]="getDisplayedImage()" [alt]="event.name || 'Event'" class="h-80 w-full object-cover lg:h-[26rem]" />
 						<div class="event-card-overlay"></div>
 						<span class="absolute left-4 top-4" [ngClass]="getStatusBadgeClass(event.status)">
-							{{ event.status || 'PLANIFIE' }}
+							{{ event.status || 'PLANNED' }}
 						</span>
-						<button type="button" class="gallery-next-btn" (click)="scrollGallery('right')">→ Galerie</button>
+						<button type="button" class="gallery-next-btn" (click)="scrollGallery('right')">→ Gallery</button>
 					</div>
 
 					<div class="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
 						<div class="space-y-3 text-sm text-slate-700">
-							<h1 class="text-2xl font-bold text-foreground">{{ event.name || 'Événement' }}</h1>
+							<h1 class="text-2xl font-bold text-foreground">{{ event.name || 'Event' }}</h1>
 							<p><strong>Description:</strong> {{ event.description || 'N/A' }}</p>
-							<p><strong>Lieu:</strong> {{ event.location || 'N/A' }}</p>
+							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
 							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
 							<p><strong>End:</strong> {{ formatDate(event.endDate) }}</p>
-							<p><strong>Capacité max:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</p>
+							<p><strong>Max capacity:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</p>
 							<p><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</p>
-							<p><strong>Places restantes:</strong> {{ getAvailablePlaces() }}</p>
-							<p><strong>Catégorie:</strong> {{ event.categoryName || ('#' + (event.categoryId ?? 'N/A')) }}</p>
+							<p><strong>Available seats:</strong> {{ getAvailablePlaces() }}</p>
+							<p><strong>Category:</strong> {{ event.categoryName || ('#' + (event.categoryId ?? 'N/A')) }}</p>
 						</div>
 
 						<div class="space-y-3">
@@ -42,16 +42,93 @@
 								referrerpolicy="no-referrer-when-downgrade"
 								title="Event location map"
 							></iframe>
-							<p *ngIf="!mapUrl" class="text-sm text-slate-500">Coordonnées absentes pour afficher la carte.</p>
+							<p *ngIf="!mapUrl" class="text-sm text-slate-500">Coordinates are not available for map view.</p>
 							<a *ngIf="mapOpenUrl" [href]="mapOpenUrl" target="_blank" rel="noreferrer" class="inline-flex text-sm font-medium text-primary hover:underline">
-								Ouvrir sur OpenStreetMap
+								Open in OpenStreetMap
 							</a>
+						</div>
+					</div>
+
+					<div class="rounded-2xl border border-border bg-gray-50 p-4">
+						<h3 class="text-lg font-semibold text-foreground">Reactions</h3>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<button
+								type="button"
+								*ngFor="let reactionType of reactionTypes"
+								class="reaction-btn"
+								[class.reaction-btn-active]="isReactionActive(reactionType)"
+								(click)="react(reactionType)"
+							>
+								<span class="text-lg">{{ reactionEmoji[reactionType] }}</span>
+								<span class="text-xs font-semibold">{{ getReactionCount(reactionType) }}</span>
+							</button>
+						</div>
+						<p class="mt-2 text-xs text-slate-500">
+							Facebook mode: click once to react, click same emoji again to remove your reaction.
+						</p>
+					</div>
+
+					<div class="grid gap-6 lg:grid-cols-2">
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<h3 class="text-lg font-semibold text-foreground">Comments ({{ commentCount }})</h3>
+							<div class="mt-3 space-y-2">
+								<textarea
+									class="form-input"
+									rows="3"
+									placeholder="Write a comment..."
+									[(ngModel)]="commentDraft"
+								></textarea>
+								<button type="button" class="btn-primary !px-4 !py-2" (click)="addComment()">Post comment</button>
+							</div>
+
+							<div class="mt-4 space-y-3" *ngIf="comments.length > 0; else emptyComments">
+								<div *ngFor="let comment of comments" class="rounded-xl border border-border bg-white p-3">
+									<div class="flex items-center justify-between gap-2">
+										<p class="text-xs font-semibold text-slate-600">{{ comment.authorName }}</p>
+										<p class="text-xs text-slate-500">{{ formatShortDate(comment.createdAt) }}</p>
+									</div>
+
+									<p class="mt-2 text-sm text-slate-700" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+
+									<div *ngIf="editingCommentId === comment.id" class="mt-2 space-y-2">
+										<textarea class="form-input" rows="3" [(ngModel)]="editingCommentContent"></textarea>
+										<div class="flex gap-2">
+											<button type="button" class="btn-primary !px-3 !py-2" (click)="saveComment(comment)">Save</button>
+											<button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEditComment()">Cancel</button>
+										</div>
+									</div>
+
+									<div class="mt-2 flex gap-2" *ngIf="canManageComment(comment) && editingCommentId !== comment.id">
+										<button type="button" class="btn-secondary !px-3 !py-2" (click)="startEditComment(comment)">Edit</button>
+										<button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteComment(comment.id)">Delete</button>
+									</div>
+								</div>
+							</div>
+
+							<ng-template #emptyComments>
+								<p class="mt-4 text-sm text-slate-500">No comments yet.</p>
+							</ng-template>
+						</div>
+
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<h3 class="text-lg font-semibold text-foreground">Participants ({{ participants.length }})</h3>
+							<div class="mt-4 space-y-2" *ngIf="participants.length > 0; else emptyParticipants">
+								<div *ngFor="let participant of participants" class="rounded-xl border border-border bg-white p-3">
+									<p class="text-sm font-semibold text-slate-700">{{ participant.fullName }}</p>
+									<p class="text-xs text-slate-500">{{ participant.email }}</p>
+									<p class="text-xs text-slate-500" *ngIf="participant.registrationDate">{{ formatShortDate(participant.registrationDate) }}</p>
+								</div>
+							</div>
+
+							<ng-template #emptyParticipants>
+								<p class="text-sm text-slate-500">No participants yet.</p>
+							</ng-template>
 						</div>
 					</div>
 
 					<div class="space-y-3">
 						<div class="flex items-center justify-between gap-3">
-							<h3 class="text-lg font-semibold text-foreground">Galerie</h3>
+							<h3 class="text-lg font-semibold text-foreground">Gallery</h3>
 							<div class="flex gap-2">
 								<button type="button" class="btn-secondary !px-3 !py-2" (click)="scrollGallery('left')">←</button>
 								<button type="button" class="btn-secondary !px-3 !py-2" (click)="scrollGallery('right')">→</button>
@@ -65,12 +142,12 @@
 								class="gallery-thumb"
 								(click)="setActiveImage(getGalleryImage(image))"
 							>
-								<img [src]="getGalleryImage(image)" alt="Image galerie" class="h-full w-full object-cover" />
+								<img [src]="getGalleryImage(image)" alt="Gallery image" class="h-full w-full object-cover" />
 							</button>
 						</div>
 
 						<ng-template #emptyGallery>
-							<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">Aucune image dans la galerie.</p>
+							<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">No gallery images available.</p>
 						</ng-template>
 					</div>
 				</div>

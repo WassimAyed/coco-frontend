@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } fr
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import { CategoryDto } from '../../models/category.model';
+import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
 import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
 
@@ -42,6 +43,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   nearbyLongitude: number | null = null;
   nearbyRadiusKm = 5;
   selectedCoordinates = '';
+  currentUserId: number | null = null;
 
   private map?: L.Map;
   private marker?: L.Marker;
@@ -63,11 +65,15 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly statuses: EventStatus[] = ['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE'];
 
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly ownershipService: EventOwnershipService
+  ) {}
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
 
   ngOnInit(): void {
+    this.currentUserId = Number(localStorage.getItem('userId')) || null;
     this.loadCategories();
     this.loadAll();
   }
@@ -87,58 +93,63 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
 
+    if (!this.currentUserId) {
+      this.errorMessage = 'You must be logged in to create an event.';
+      return;
+    }
+
     if (!name) {
-      this.errorMessage = 'Le nom de l\'événement est obligatoire.';
+      this.errorMessage = 'Event name is required.';
       return;
     }
 
     if (name.length < 3 || name.length > 100) {
-      this.errorMessage = 'Le nom doit contenir entre 3 et 100 caractères.';
+      this.errorMessage = 'Event name must be between 3 and 100 characters.';
       return;
     }
 
     if (!location) {
-      this.errorMessage = 'La localisation est obligatoire.';
+      this.errorMessage = 'Location is required.';
       return;
     }
 
     if (!startDate || !endDate) {
-      this.errorMessage = 'La date de début et de fin sont obligatoires.';
+      this.errorMessage = 'Start and end dates are required.';
       return;
     }
 
     if (startDate.getTime() <= Date.now()) {
-      this.errorMessage = 'La date de début doit être dans le futur.';
+      this.errorMessage = 'Start date must be in the future.';
       return;
     }
 
     if (endDate.getTime() <= startDate.getTime()) {
-      this.errorMessage = 'La date de fin doit être après la date de début.';
+      this.errorMessage = 'End date must be after start date.';
       return;
     }
 
     if (description && description.length > 500) {
-      this.errorMessage = 'La description ne doit pas dépasser 500 caractères.';
+      this.errorMessage = 'Description must not exceed 500 characters.';
       return;
     }
 
     if (!this.createModel.categoryId || this.createModel.categoryId <= 0) {
-      this.errorMessage = 'La catégorie est obligatoire.';
+      this.errorMessage = 'Category is required.';
       return;
     }
 
     if (!this.createModel.status) {
-      this.errorMessage = 'Le statut est obligatoire.';
+      this.errorMessage = 'Status is required.';
       return;
     }
 
     if (!this.createModel.maxCapacity || this.createModel.maxCapacity <= 0) {
-      this.errorMessage = 'La capacité maximale doit être supérieure à 0.';
+      this.errorMessage = 'Maximum capacity must be greater than 0.';
       return;
     }
 
     if (!this.hasMapCoordinates()) {
-      this.errorMessage = 'Veuillez choisir l\'emplacement sur la carte.';
+      this.errorMessage = 'Please select location on the map.';
       return;
     }
 
@@ -156,19 +167,23 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
+      userId: this.currentUserId,
       maxCapacity: Number(this.createModel.maxCapacity),
       currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants)
     };
 
     this.eventService.create(payload).subscribe({
-      next: () => {
-        this.successMessage = 'Événement créé avec succès.';
+      next: created => {
+        if (created.id && this.currentUserId) {
+          this.ownershipService.addOwnedEvent(created.id, this.currentUserId);
+        }
+        this.successMessage = 'Event created successfully.';
         this.resetCreateForm();
         this.initCreateMarker();
         this.loadAll();
       },
       error: () => {
-        this.errorMessage = 'Erreur lors de la création de l\'événement.';
+        this.errorMessage = 'Error while creating event.';
         this.isLoading = false;
       }
     });
@@ -186,7 +201,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Impossible de charger les événements.';
+        this.errorMessage = 'Unable to load events.';
         this.isLoading = false;
       }
     });
@@ -210,7 +225,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur pendant la recherche.';
+        this.errorMessage = 'Search failed.';
         this.isLoading = false;
       }
     });
@@ -233,7 +248,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du filtrage par statut.';
+        this.errorMessage = 'Status filtering failed.';
         this.isLoading = false;
       }
     });
@@ -242,13 +257,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   filterByCategory(): void {
     const name = this.cleanString(this.categoryFilterName);
     if (!name) {
-      this.errorMessage = 'Veuillez choisir une catégorie.';
+      this.errorMessage = 'Please choose a category.';
       return;
     }
 
     const categoryId = this.findCategoryIdByName(name);
     if (!categoryId) {
-      this.errorMessage = 'Catégorie introuvable.';
+      this.errorMessage = 'Category not found.';
       return;
     }
 
@@ -263,7 +278,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du filtrage par catégorie.';
+        this.errorMessage = 'Category filtering failed.';
         this.isLoading = false;
       }
     });
@@ -271,7 +286,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   filterByDateRange(): void {
     if (!this.dateStart || !this.dateEnd) {
-      this.errorMessage = 'Veuillez renseigner la date de début et de fin.';
+      this.errorMessage = 'Please select start and end dates.';
       return;
     }
 
@@ -289,7 +304,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du filtrage par plage de dates.';
+        this.errorMessage = 'Date range filtering failed.';
         this.isLoading = false;
       }
     });
@@ -297,7 +312,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   filterNearby(): void {
     if (this.nearbyLatitude === null || this.nearbyLongitude === null) {
-      this.errorMessage = 'Veuillez renseigner latitude et longitude.';
+      this.errorMessage = 'Please set latitude and longitude.';
       return;
     }
 
@@ -316,7 +331,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors de la recherche à proximité.';
+        this.errorMessage = 'Nearby search failed.';
         this.isLoading = false;
       }
     });
@@ -334,7 +349,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du chargement des événements disponibles.';
+        this.errorMessage = 'Unable to load available events.';
         this.isLoading = false;
       }
     });
@@ -363,6 +378,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       endDate: '',
       status: 'PLANIFIE',
       categoryId: this.categories[0]?.id || 0,
+      userId: this.currentUserId || undefined,
       maxCapacity: 1,
       currentParticipants: 0
     };
@@ -378,7 +394,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       error: () => {
-        this.errorMessage = 'Impossible de charger les catégories.';
+        this.errorMessage = 'Unable to load categories.';
       }
     });
   }
@@ -503,7 +519,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     const date = new Date(value);
     return Number.isNaN(date.getTime())
       ? value
-      : new Intl.DateTimeFormat('fr-FR', {
+      : new Intl.DateTimeFormat('en-US', {
           dateStyle: 'medium',
           timeStyle: 'short'
         }).format(date);

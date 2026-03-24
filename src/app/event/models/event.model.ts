@@ -13,6 +13,7 @@ export interface EventDto {
 	status?: EventStatus;
 	categoryId?: number;
 	categoryName?: string;
+	userId?: number;
 	maxCapacity?: number;
 	currentParticipants?: number;
 	capacity?: number;
@@ -35,6 +36,7 @@ export interface CreateEventRequest {
 	endDate?: string;
 	status?: EventStatus;
 	categoryId: number;
+	userId?: number;
 	maxCapacity: number;
 	currentParticipants?: number;
 }
@@ -50,6 +52,7 @@ export interface UpdateEventRequest {
 	endDate?: string;
 	status?: EventStatus;
 	categoryId?: number;
+	userId?: number;
 	maxCapacity?: number;
 	currentParticipants?: number;
 }

@@ -50,6 +50,27 @@
 	transform: translateY(-2px);
 }
 
+.reaction-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 0.45rem 0.8rem;
+	background: white;
+	transition: all 0.2s ease;
+}
+
+.reaction-btn:hover {
+	transform: translateY(-1px);
+	border-color: rgba(59, 130, 246, 0.35);
+}
+
+.reaction-btn-active {
+	background: rgba(59, 130, 246, 0.08);
+	border-color: rgba(59, 130, 246, 0.6);
+}
+
 .status-badge {
 	display: inline-flex;
 	align-items: center;

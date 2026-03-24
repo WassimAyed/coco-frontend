@@ -53,6 +53,15 @@
   Mes Demandes de collocation
 </a>
 
+<a
+  [routerLink]="myEventsRoute"
+  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+  (click)="closeMenu()"
+>
+  <lucide-icon [img]="CalendarDaysIcon" [size]="18"></lucide-icon>
+  Mes événements
+</a>
+
 
 
           <button

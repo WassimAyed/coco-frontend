@@ -1,0 +1,51 @@
+<div class="min-h-screen bg-background">
+  <section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
+    <div class="section-shell space-y-6">
+      <a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
+        ← Back to events
+      </a>
+
+      <div class="space-y-2">
+        <h1 class="text-3xl font-bold text-foreground">My Events</h1>
+        <p class="text-slate-500">Manage events created from your account.</p>
+      </div>
+
+      <div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
+      <div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <article *ngFor="let event of myEvents" class="rounded-2xl border border-border bg-white p-4 shadow-sm">
+          <img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-44 w-full rounded-xl border border-border object-cover" />
+
+          <div class="mt-4 space-y-2" *ngIf="editingEventId !== event.id; else editBlock">
+            <h3 class="text-lg font-bold text-foreground">{{ event.name || 'Untitled event' }}</h3>
+            <p class="text-sm text-slate-600">{{ event.description || 'No description' }}</p>
+            <p class="text-sm text-slate-600"><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
+            <div class="flex gap-2 pt-2">
+              <button type="button" class="btn-secondary !px-3 !py-2" (click)="startEdit(event)">Edit</button>
+              <button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteEvent(event.id!)">Delete</button>
+            </div>
+          </div>
+
+          <ng-template #editBlock>
+            <div class="mt-4 grid gap-2">
+              <input class="form-input" placeholder="Name" [(ngModel)]="editModel.name" maxlength="100" />
+              <input class="form-input" placeholder="Location" [(ngModel)]="editModel.location" />
+              <textarea class="form-input" placeholder="Description" [(ngModel)]="editModel.description" maxlength="500"></textarea>
+              <input class="form-input" type="number" min="1" placeholder="Max Capacity" [(ngModel)]="editModel.maxCapacity" />
+              <div class="flex gap-2">
+                <button type="button" class="btn-primary !px-3 !py-2" (click)="saveEdit(event.id!)">Save</button>
+                <button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEdit()">Cancel</button>
+              </div>
+            </div>
+          </ng-template>
+        </article>
+      </div>
+
+      <p *ngIf="!isLoading && myEvents.length === 0" class="rounded-2xl border border-border bg-white p-4 text-slate-500">
+        No events found for your account.
+      </p>
+    </div>
+  </section>
+</div>

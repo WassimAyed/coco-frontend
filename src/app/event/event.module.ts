@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventDetailComponent } from './components/event-detail/event-detail.component';
 import { EventListComponent } from './components/event-list/event-list.component';
+import { MyEventsComponent } from './components/my-events/my-events.component';
 import { EventRoutingModule } from './event-routing.module';
 
 @NgModule({
-  declarations: [EventDetailComponent, EventListComponent],
+  declarations: [EventDetailComponent, EventListComponent, MyEventsComponent],
   imports: [
     CommonModule,
     FormsModule,
