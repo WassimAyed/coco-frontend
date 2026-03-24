@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { CategoryDto } from '../models/category.model';
 import { EventImageDto } from '../models/event-image.model';
 import { DateRangeQuery, EventListQuery, NearbyQuery } from '../models/event-query.model';
 import { CreateEventRequest, EventDto, EventStatus, UpdateEventRequest } from '../models/event.model';
@@ -11,6 +12,7 @@ import { CreateEventRequest, EventDto, EventStatus, UpdateEventRequest } from '.
 })
 export class EventService {
   private readonly baseUrl = environment.eventApiBaseUrl;
+  private readonly categoryUrl = `${this.baseUrl.replace(/\/api\/events$/, '')}/api/categories`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -66,6 +68,10 @@ export class EventService {
 
   getByCategory(categoryId: number, query?: EventListQuery): Observable<EventDto[]> {
     return this.http.get<EventDto[]>(`${this.baseUrl}/category/${categoryId}`, { params: this.toParams(query) });
+  }
+
+  getCategories(): Observable<CategoryDto[]> {
+    return this.http.get<CategoryDto[]>(this.categoryUrl);
   }
 
   getAvailable(query?: EventListQuery): Observable<EventDto[]> {

@@ -6,6 +6,14 @@
 	border-color: color-mix(in srgb, var(--border) 84%, white 16%);
 }
 
+.event-create-map {
+	height: 280px;
+	width: 100%;
+	border-radius: 0.75rem;
+	border: 1px solid var(--border);
+	overflow: hidden;
+}
+
 .event-card-overlay {
 	position: absolute;
 	inset: 0;

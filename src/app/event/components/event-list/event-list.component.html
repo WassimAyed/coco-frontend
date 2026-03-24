@@ -5,9 +5,11 @@
 				<span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
 					Event Service
 				</span>
-				<h1 class="text-3xl font-bold text-foreground sm:text-4xl">Campus Events · ESPRIT</h1>
-				<p class="max-w-3xl text-slate-500">
-					UI connectée au microservice Event (CRUD, filtres, recherche, nearby OpenStreetMap, disponibilité et galerie d'images).
+				<h1 class="text-3xl font-bold text-foreground sm:text-4xl">
+					Tous les événements
+				</h1>
+				<p class="text-lg text-slate-500">
+					Explorez les événements à venir, participez et créez les vôtres !
 				</p>
 			</div>
 
@@ -15,18 +17,30 @@
 				<article class="event-panel rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h2 class="mb-4 text-xl font-bold text-foreground">Créer un événement</h2>
 					<div class="grid gap-3 md:grid-cols-2">
-						<input class="form-input" placeholder="Nom*" [(ngModel)]="createModel.name" />
+						<input class="form-input" placeholder="Nom* (3-100 caractères)" [(ngModel)]="createModel.name" maxlength="100" />
 						<select class="form-input" [(ngModel)]="createModel.status">
 							<option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
 						</select>
-						<input class="form-input md:col-span-2" placeholder="Description" [(ngModel)]="createModel.description" />
-						<input class="form-input" placeholder="Lieu" [(ngModel)]="createModel.location" />
-						<input class="form-input" type="number" placeholder="Catégorie ID" [(ngModel)]="createModel.categoryId" />
-						<input class="form-input" type="number" placeholder="Latitude" [(ngModel)]="createModel.latitude" />
-						<input class="form-input" type="number" placeholder="Longitude" [(ngModel)]="createModel.longitude" />
+						<input class="form-input md:col-span-2" placeholder="Description (max 500)" [(ngModel)]="createModel.description" maxlength="500" />
+						<input class="form-input md:col-span-2" placeholder="Lieu*" [(ngModel)]="createModel.location" />
+
+						<select class="form-input" [ngModel]="createModel.categoryId" (ngModelChange)="createModel.categoryId = $event">
+							<option [ngValue]="0">Choisir une catégorie*</option>
+							<option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+						</select>
+
 						<input class="form-input" type="datetime-local" [(ngModel)]="createModel.startDate" />
 						<input class="form-input" type="datetime-local" [(ngModel)]="createModel.endDate" />
-						<input class="form-input" type="number" placeholder="Capacité max" [(ngModel)]="createModel.maxCapacity" />
+						<input class="form-input" type="number" min="1" placeholder="Capacité max*" [(ngModel)]="createModel.maxCapacity" />
+
+						<div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
+							<p class="mb-2 text-sm font-medium text-slate-700">Position (OpenStreetMap) *</p>
+							<div #createMapContainer class="event-create-map"></div>
+							<p class="mt-2 text-xs text-slate-500">
+								Cliquez ou glissez le marqueur pour choisir la position.
+								<span class="font-semibold text-slate-700" *ngIf="selectedCoordinates">{{ selectedCoordinates }}</span>
+							</p>
+						</div>
 					</div>
 					<div class="mt-4">
 						<button type="button" class="btn-primary" (click)="createEvent()">Créer</button>
@@ -51,7 +65,10 @@
 						</div>
 
 						<div class="flex gap-2">
-							<input class="form-input" type="number" placeholder="categoryId" [(ngModel)]="categoryId" />
+							<select class="form-input" [(ngModel)]="categoryFilterName">
+								<option value="">Catégorie (nom)</option>
+								<option *ngFor="let category of categories" [value]="category.name">{{ category.name }}</option>
+							</select>
 							<button type="button" class="btn-secondary" (click)="filterByCategory()">Filtrer catégorie</button>
 						</div>
 
@@ -61,12 +78,7 @@
 							<button type="button" class="btn-secondary" (click)="filterByDateRange()">GET /date-range</button>
 						</div>
 
-						<div class="grid gap-2 md:grid-cols-4">
-							<input class="form-input" type="number" placeholder="latitude" [(ngModel)]="nearbyLatitude" />
-							<input class="form-input" type="number" placeholder="longitude" [(ngModel)]="nearbyLongitude" />
-							<input class="form-input" type="number" placeholder="radiusKm" [(ngModel)]="nearbyRadiusKm" />
-							<button type="button" class="btn-secondary" (click)="filterNearby()">Nearby</button>
-						</div>
+						
 
 						<div class="flex flex-wrap gap-2">
 							<button type="button" class="btn-primary" (click)="loadAll()">Tous les événements</button>

@@ -1,25 +1,51 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import * as L from 'leaflet';
+import 'leaflet-defaulticon-compatibility';
+import { CategoryDto } from '../../models/category.model';
 import { EventService } from '../../services/event.service';
 import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
+
+const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
+const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
+const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
+const iconDefault = L.icon({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
   selector: 'app-event-list',
   templateUrl: './event-list.component.html',
   styleUrl: './event-list.component.css'
 })
-export class EventListComponent implements OnInit {
+export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('createMapContainer') createMapContainer?: ElementRef<HTMLDivElement>;
+
   events: EventDto[] = [];
+  categories: CategoryDto[] = [];
   isLoading = false;
   errorMessage = '';
   successMessage = '';
   searchTerm = '';
   selectedStatus: EventStatus | '' = '';
-  categoryId: number | null = null;
+  categoryFilterName = '';
   dateStart = '';
   dateEnd = '';
   nearbyLatitude: number | null = null;
   nearbyLongitude: number | null = null;
   nearbyRadiusKm = 5;
+  selectedCoordinates = '';
+
+  private map?: L.Map;
+  private marker?: L.Marker;
+  private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815];
 
   createModel: CreateEventRequest = {
     name: '',
@@ -30,7 +56,7 @@ export class EventListComponent implements OnInit {
     startDate: '',
     endDate: '',
     status: 'PLANIFIE',
-    categoryId: 2,
+    categoryId: 0,
     maxCapacity: 1,
     currentParticipants: 0
   };
@@ -42,32 +68,77 @@ export class EventListComponent implements OnInit {
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
 
   ngOnInit(): void {
+    this.loadCategories();
     this.loadAll();
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initCreateMap());
+  }
+
+  ngOnDestroy(): void {
+    this.map?.remove();
+  }
+
   createEvent(): void {
-    if (!this.createModel.name.trim()) {
+    const name = this.cleanString(this.createModel.name);
+    const location = this.cleanString(this.createModel.location);
+    const description = this.cleanString(this.createModel.description);
+    const startDate = this.toDate(this.createModel.startDate);
+    const endDate = this.toDate(this.createModel.endDate);
+
+    if (!name) {
       this.errorMessage = 'Le nom de l\'événement est obligatoire.';
       return;
     }
 
-    if (!this.createModel.location.trim()) {
+    if (name.length < 3 || name.length > 100) {
+      this.errorMessage = 'Le nom doit contenir entre 3 et 100 caractères.';
+      return;
+    }
+
+    if (!location) {
       this.errorMessage = 'La localisation est obligatoire.';
       return;
     }
 
-    if (!this.createModel.startDate || !this.createModel.endDate) {
+    if (!startDate || !endDate) {
       this.errorMessage = 'La date de début et de fin sont obligatoires.';
       return;
     }
 
+    if (startDate.getTime() <= Date.now()) {
+      this.errorMessage = 'La date de début doit être dans le futur.';
+      return;
+    }
+
+    if (endDate.getTime() <= startDate.getTime()) {
+      this.errorMessage = 'La date de fin doit être après la date de début.';
+      return;
+    }
+
+    if (description && description.length > 500) {
+      this.errorMessage = 'La description ne doit pas dépasser 500 caractères.';
+      return;
+    }
+
     if (!this.createModel.categoryId || this.createModel.categoryId <= 0) {
-      this.errorMessage = 'Le categoryId est obligatoire.';
+      this.errorMessage = 'La catégorie est obligatoire.';
+      return;
+    }
+
+    if (!this.createModel.status) {
+      this.errorMessage = 'Le statut est obligatoire.';
       return;
     }
 
     if (!this.createModel.maxCapacity || this.createModel.maxCapacity <= 0) {
       this.errorMessage = 'La capacité maximale doit être supérieure à 0.';
+      return;
+    }
+
+    if (!this.hasMapCoordinates()) {
+      this.errorMessage = 'Veuillez choisir l\'emplacement sur la carte.';
       return;
     }
 
@@ -77,11 +148,11 @@ export class EventListComponent implements OnInit {
 
     const payload: CreateEventRequest = {
       ...this.createModel,
-      name: this.createModel.name.trim(),
-      description: this.cleanString(this.createModel.description),
-      location: this.createModel.location.trim(),
-      startDate: this.cleanString(this.createModel.startDate),
-      endDate: this.cleanString(this.createModel.endDate),
+      name,
+      description,
+      location,
+      startDate: this.formatDateForBackend(startDate),
+      endDate: this.formatDateForBackend(endDate),
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
@@ -93,6 +164,7 @@ export class EventListComponent implements OnInit {
       next: () => {
         this.successMessage = 'Événement créé avec succès.';
         this.resetCreateForm();
+        this.initCreateMarker();
         this.loadAll();
       },
       error: () => {
@@ -110,10 +182,6 @@ export class EventListComponent implements OnInit {
     this.eventService.getAll().subscribe({
       next: events => {
         this.events = events;
-        const firstKnownCategoryId = events.find(item => !!item.categoryId)?.categoryId;
-        if (firstKnownCategoryId && (!this.createModel.categoryId || this.createModel.categoryId <= 0)) {
-          this.createModel.categoryId = firstKnownCategoryId;
-        }
         this.hydrateEventImages(events);
         this.isLoading = false;
       },
@@ -172,8 +240,15 @@ export class EventListComponent implements OnInit {
   }
 
   filterByCategory(): void {
-    if (!this.categoryId || this.categoryId <= 0) {
-      this.errorMessage = 'Veuillez saisir un categoryId valide.';
+    const name = this.cleanString(this.categoryFilterName);
+    if (!name) {
+      this.errorMessage = 'Veuillez choisir une catégorie.';
+      return;
+    }
+
+    const categoryId = this.findCategoryIdByName(name);
+    if (!categoryId) {
+      this.errorMessage = 'Catégorie introuvable.';
       return;
     }
 
@@ -181,7 +256,7 @@ export class EventListComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getByCategory(this.categoryId).subscribe({
+    this.eventService.getByCategory(categoryId).subscribe({
       next: events => {
         this.events = events;
         this.hydrateEventImages(events);
@@ -268,7 +343,7 @@ export class EventListComponent implements OnInit {
   resetFilters(): void {
     this.searchTerm = '';
     this.selectedStatus = '';
-    this.categoryId = null;
+    this.categoryFilterName = '';
     this.dateStart = '';
     this.dateEnd = '';
     this.nearbyLatitude = null;
@@ -287,10 +362,103 @@ export class EventListComponent implements OnInit {
       startDate: '',
       endDate: '',
       status: 'PLANIFIE',
-      categoryId: this.createModel.categoryId || 2,
+      categoryId: this.categories[0]?.id || 0,
       maxCapacity: 1,
       currentParticipants: 0
     };
+    this.selectedCoordinates = '';
+  }
+
+  loadCategories(): void {
+    this.eventService.getCategories().subscribe({
+      next: categories => {
+        this.categories = categories || [];
+        if (!this.createModel.categoryId && this.categories.length > 0) {
+          this.createModel.categoryId = this.categories[0].id;
+        }
+      },
+      error: () => {
+        this.errorMessage = 'Impossible de charger les catégories.';
+      }
+    });
+  }
+
+  private initCreateMap(): void {
+    if (!this.createMapContainer?.nativeElement || this.map) {
+      return;
+    }
+
+    this.map = L.map(this.createMapContainer.nativeElement).setView(this.defaultCenter, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.map);
+
+    this.initCreateMarker();
+
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      this.setCoordinatesFromMap(e.latlng.lat, e.latlng.lng);
+    });
+
+    setTimeout(() => this.map?.invalidateSize(), 0);
+  }
+
+  private initCreateMarker(): void {
+    const lat = this.createModel.latitude ?? this.defaultCenter[0];
+    const lng = this.createModel.longitude ?? this.defaultCenter[1];
+
+    if (!this.map) {
+      return;
+    }
+
+    this.marker?.remove();
+    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
+    this.marker.on('moveend', (event: L.LeafletEvent) => {
+      const target = event.target as L.Marker;
+      const point = target.getLatLng();
+      this.setCoordinatesFromMap(point.lat, point.lng, false);
+    });
+
+    this.map.setView([lat, lng], 12);
+    if (this.hasMapCoordinates()) {
+      this.selectedCoordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+  }
+
+  private setCoordinatesFromMap(latitude: number, longitude: number, moveMap = true): void {
+    this.createModel.latitude = Number(latitude.toFixed(7));
+    this.createModel.longitude = Number(longitude.toFixed(7));
+    this.selectedCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
+
+    if (this.marker) {
+      this.marker.setLatLng([this.createModel.latitude, this.createModel.longitude]);
+    }
+
+    if (moveMap) {
+      this.map?.panTo([this.createModel.latitude, this.createModel.longitude]);
+    }
+  }
+
+  private hasMapCoordinates(): boolean {
+    return this.createModel.latitude !== undefined && this.createModel.longitude !== undefined;
+  }
+
+  private findCategoryIdByName(name: string): number | undefined {
+    return this.categories.find(category => category.name.toLowerCase() === name.toLowerCase())?.id;
+  }
+
+  private toDate(value?: string): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    const normalized = value.length === 16 ? `${value}:00` : value;
+    const date = new Date(normalized);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private formatDateForBackend(date: Date): string {
+    const pad = (value: number) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
   private cleanString(value?: string): string | undefined {
