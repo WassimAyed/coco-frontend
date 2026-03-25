@@ -32,7 +32,8 @@ export class SubsListComponent implements OnInit {
   loadPlans(): void {
     this.subsService.getAllPlans().subscribe({
       next: (data) => {
-        this.plans = data;
+        // Cacher le plan FREE de la liste des plans disponibles
+        this.plans = data.filter(p => !p.name.includes('FREE'));
         this.loading = false;
       },
       error: (err) => {
@@ -52,26 +53,26 @@ export class SubsListComponent implements OnInit {
 
   getFeatures(planName: string): string[] {
     const common = ["Support technique 24/7", "Visibilité accrue"];
-    if (planName === 'FREE_PROMO') return ["5 Posts inclus", ...common];
+    if (planName.includes('FREE')) return ["5 Posts inclus", ...common];
     if (planName === 'PAY_PER_POST') return ["1 Post inclus", ...common];
     return ["Posts Illimités", ...common];
   }
 
   getDescription(planName: string): string {
-    if (planName === 'FREE_PROMO') return "Idéal pour tester la plateforme.";
+    if (planName.includes('FREE')) return "Idéal pour tester la plateforme.";
     if (planName === 'MONTHLY') return "Le choix parfait pour les professionnels.";
     if (planName === 'YEARLY') return "Économisez gros avec le plan annuel.";
     return "Payez uniquement ce que vous postez.";
   }
 
   getButtonText(planName: string): string {
-    if (planName === 'FREE_PROMO') return "COMMENCER";
+    if (planName.includes('FREE')) return "COMMENCER";
     if (planName === 'PAY_PER_POST') return "ACHETER UN POST";
     return "S'ABONNER";
   }
 
   getDelay(planName: string): string {
-    if (planName === 'FREE_PROMO') return '0s';
+    if (planName.includes('FREE')) return '0s';
     if (planName === 'MONTHLY') return '0.1s';
     if (planName === 'YEARLY') return '0.2s';
     return '0.3s';
