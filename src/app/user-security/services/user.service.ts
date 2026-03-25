@@ -5,13 +5,17 @@ import { getRoleHomeRoute } from '../utils/auth-route.util';
 import {
   LoginResult,
   MessageResponse,
+  PasswordUpdatePayload,
   RegisterPayload,
   RegisterResult,
   ResendVerificationCodePayload,
+  ToggleTwoFactorPayload,
+  UserUpdatePayload,
   VerifyEmailPayload,
   VerifyTwoFactorPayload,
 } from '../models/auth-api.model';
 import { AuthApiService } from './auth-api.service';
+import { UserApiService } from './user-api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +23,7 @@ import { AuthApiService } from './auth-api.service';
 export class UserService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly authApiService = inject(AuthApiService);
+  private readonly userApiService = inject(UserApiService);
   private readonly snapshot = signal<AuthStoreState>(authStore.getState());
 
   readonly state = computed(() => this.snapshot());
@@ -103,6 +108,56 @@ export class UserService {
     }
   }
 
+  async loadCurrentUserProfile(): Promise<UserProfile> {
+    const currentUser = this.currentUser();
+    const profile = await this.userApiService.getCurrentUser(
+      this.currentUser()?.email ?? '',
+    );
+    const resolvedProfile: UserProfile = {
+      ...profile,
+      avatarUrl: profile.avatarUrl || currentUser?.avatarUrl || '',
+      firstName: profile.firstName || currentUser?.firstName || '',
+      lastName: profile.lastName || currentUser?.lastName || '',
+      twoFactorEnabled:
+        profile.twoFactorEnabled ?? currentUser?.twoFactorEnabled ?? false,
+    };
+    authStore.getState().updateProfile(resolvedProfile);
+    return resolvedProfile;
+  }
+
+  async saveCurrentUserProfile(payload: UserUpdatePayload): Promise<UserProfile> {
+    const currentUser = this.currentUser();
+    const profile = await this.userApiService.updateCurrentUser(
+      payload,
+      this.currentUser()?.email ?? '',
+    );
+    const resolvedProfile: UserProfile = {
+      ...profile,
+      avatarUrl:
+        payload.imageUrl.trim() || profile.avatarUrl || currentUser?.avatarUrl || '',
+      firstName:
+        payload.username.trim() || profile.firstName || currentUser?.firstName || '',
+      lastName:
+        payload.lastname.trim() || profile.lastName || currentUser?.lastName || '',
+      twoFactorEnabled:
+        profile.twoFactorEnabled ?? currentUser?.twoFactorEnabled ?? false,
+    };
+    authStore.getState().updateProfile(resolvedProfile);
+    return resolvedProfile;
+  }
+
+  updatePasswordRequest(payload: PasswordUpdatePayload): Promise<void> {
+    return this.userApiService.updatePassword(payload);
+  }
+
+  async setTwoFactorEnabled(payload: ToggleTwoFactorPayload): Promise<MessageResponse> {
+    const result = await this.userApiService.setTwoFactorEnabled(payload);
+    authStore.getState().updateProfile({
+      twoFactorEnabled: payload.enabled,
+    });
+    return result;
+  }
+
   getHomeRoute(): string {
     return getRoleHomeRoute(this.snapshot().session);
   }
@@ -118,29 +173,4 @@ export class UserService {
   clearError(): void {
     authStore.getState().clearError();
   }
-
-
-  private readonly USER_KEY = 'currentUser';
-
-storeUser(user: any): void {
-  try {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-  } catch (e) {
-    console.error('Failed to store user', e);
-  }
-}
-
-getStoredUser(): any | null {
-  try {
-    const data = localStorage.getItem(this.USER_KEY);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
-  }
-}
-
-clearStoredUser(): void {
-  localStorage.removeItem(this.USER_KEY);
-}
-
 }

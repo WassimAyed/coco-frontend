@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import {
   Bell,
@@ -15,21 +15,26 @@ import {
 } from 'lucide-angular';
 import {
   createConversations,
-  DEFAULT_PREFERENCES,
   PROFILE_ACTIVITY_FEED,
   PROFILE_SECTIONS,
   PROFILE_SHORTCUTS,
   ProfileSidebarSection
 } from '../../data/profile-shell.data';
 import { ChatConversation, ProfileSectionId } from '../../models/profile-shell.model';
+import { AuthApiService } from '../../services/auth-api.service';
+import { ProfileImageUploadService } from '../../services/profile-image-upload.service';
 import { UserService } from '../../services/user.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-user-profile-page',
   templateUrl: './user-profile-page.component.html'
 })
-export class UserProfilePageComponent {
+export class UserProfilePageComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly authApiService = inject(AuthApiService);
+  private readonly profileImageUploadService = inject(ProfileImageUploadService);
+  private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
 
   readonly ShieldCheckIcon = ShieldCheck;
@@ -50,14 +55,22 @@ export class UserProfilePageComponent {
   readonly activityFeed = PROFILE_ACTIVITY_FEED;
   readonly activeSection = signal<ProfileSectionId>('profile');
   readonly saveMessage = signal<string | null>(null);
-  readonly preferences = signal(DEFAULT_PREFERENCES);
+  readonly isSavingProfile = signal(false);
+  readonly isUploadingProfileImage = signal(false);
+  readonly isSavingSettings = signal(false);
+  readonly isUpdatingPassword = signal(false);
+  readonly selectedProfileImageFile = signal<File | null>(null);
+  readonly selectedProfileImageFileName = computed(
+    () => this.selectedProfileImageFile()?.name ?? '',
+  );
+  readonly profileImagePreviewUrl = signal<string | null>(null);
+  readonly effectiveProfileImageUrl = computed(
+    () => this.profileImagePreviewUrl() || this.user()?.avatarUrl || '',
+  );
   readonly messageDraft = signal('');
   readonly chatSearch = signal('');
   readonly conversations = signal<ChatConversation[]>([]);
   readonly selectedConversationId = signal<string | null>(null);
-  readonly unreadConversationCount = computed(() =>
-    this.conversations().reduce((total, conversation) => total + conversation.unreadCount, 0)
-  );
   readonly selectedSectionMeta = computed<ProfileSidebarSection | undefined>(() =>
     this.sections.find((section) => section.id === this.activeSection())
   );
@@ -92,24 +105,25 @@ export class UserProfilePageComponent {
   );
 
   readonly profileForm = this.fb.nonNullable.group({
-    academicLevel: ['', Validators.required],
-    bio: ['', [Validators.required, Validators.maxLength(240)]],
-    campus: ['', Validators.required],
-    department: ['', Validators.required],
     email: [{ disabled: true, value: '' }, [Validators.required, Validators.email]],
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required]
+    imageUrl: [''],
+    lastname: ['', Validators.required],
+    username: ['', Validators.required],
   });
 
   readonly settingsForm = this.fb.nonNullable.group({
-    aiSuggestions: [DEFAULT_PREFERENCES[3].enabled],
-    instantNotifications: [DEFAULT_PREFERENCES[0].enabled],
-    profileVisibility: [DEFAULT_PREFERENCES[1].enabled],
-    securitySummary: [DEFAULT_PREFERENCES[2].enabled]
+    twoFactorEnabled: [false],
+  });
+
+  readonly passwordForm = this.fb.nonNullable.group({
+    confirmPassword: ['', Validators.required],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    oldPassword: ['', Validators.required],
   });
 
   constructor() {
     this.loadFakeConversations();
+    void this.loadProfile();
 
     effect(() => {
       const profile = this.user();
@@ -119,17 +133,22 @@ export class UserProfilePageComponent {
       }
 
       this.profileForm.patchValue({
-        academicLevel: profile.academicLevel,
-        bio: profile.bio,
-        campus: profile.campus,
-        department: profile.department,
         email: profile.email,
-        firstName: profile.firstName,
-        lastName: profile.lastName
+        imageUrl: this.toEditableImageUrl(profile.avatarUrl),
+        lastname: profile.lastName,
+        username: profile.firstName,
+      });
+
+      this.settingsForm.patchValue({
+        twoFactorEnabled: profile.twoFactorEnabled ?? false,
       });
 
       this.loadFakeConversations();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.releaseProfileImagePreviewUrl();
   }
 
   selectSection(sectionId: ProfileSectionId): void {
@@ -160,41 +179,102 @@ export class UserProfilePageComponent {
     );
   }
 
+  get passwordsMatch(): boolean {
+    return (
+      this.passwordForm.controls.newPassword.value ===
+      this.passwordForm.controls.confirmPassword.value
+    );
+  }
+
   saveProfile(): void {
+    if (this.isSavingProfile()) {
+      return;
+    }
+
     this.profileForm.markAllAsTouched();
 
     if (this.profileForm.invalid) {
       return;
     }
 
-    this.userService.updateProfile(this.profileForm.getRawValue());
-    this.saveMessage.set('Profile updated successfully.');
+    this.isSavingProfile.set(true);
+    this.saveMessage.set(null);
+    void this.persistProfileChanges();
   }
 
   saveSettings(): void {
-    const values = this.settingsForm.getRawValue();
+    if (this.isSavingSettings()) {
+      return;
+    }
 
-    this.preferences.set([
-      {
-        ...DEFAULT_PREFERENCES[0],
-        enabled: values.instantNotifications
-      },
-      {
-        ...DEFAULT_PREFERENCES[1],
-        enabled: values.profileVisibility
-      },
-      {
-        ...DEFAULT_PREFERENCES[2],
-        enabled: values.securitySummary
-      },
-      {
-        ...DEFAULT_PREFERENCES[3],
-        enabled: values.aiSuggestions
-      }
-    ]);
+    this.isSavingSettings.set(true);
+    this.saveMessage.set(null);
 
-    this.saveMessage.set('Settings saved for your account.');
+    void this.userService
+      .setTwoFactorEnabled({
+        enabled: this.settingsForm.controls.twoFactorEnabled.value,
+      })
+      .then((result) => {
+        this.saveMessage.set(
+          result.message ?? 'Two-factor authentication updated successfully.',
+        );
+        this.toastService.success(
+          result.message ?? 'Two-factor authentication updated successfully.',
+          'Security Saved',
+        );
+      })
+      .catch((error) => {
+        const message = this.authApiService.extractErrorMessage(
+          error,
+          'Unable to update two-factor authentication right now.',
+        );
+        this.saveMessage.set(message);
+        this.toastService.error(message, 'Security Update Failed');
+      })
+      .finally(() => {
+        this.isSavingSettings.set(false);
+      });
   }
+
+  updatePassword(): void {
+    if (this.isUpdatingPassword()) {
+      return;
+    }
+
+    this.passwordForm.markAllAsTouched();
+    this.saveMessage.set(null);
+
+    if (this.passwordForm.invalid || !this.passwordsMatch) {
+      return;
+    }
+
+    this.isUpdatingPassword.set(true);
+
+    void this.userService
+      .updatePasswordRequest({
+        newPassword: this.passwordForm.controls.newPassword.value,
+        oldPassword: this.passwordForm.controls.oldPassword.value,
+      })
+      .then(() => {
+        this.passwordForm.reset();
+        this.saveMessage.set('Password updated successfully.');
+        this.toastService.success(
+          'Password updated successfully.',
+          'Password Changed',
+        );
+      })
+      .catch((error) => {
+        const message = this.authApiService.extractErrorMessage(
+          error,
+          'Unable to update your password right now.',
+        );
+        this.saveMessage.set(message);
+        this.toastService.error(message, 'Password Update Failed');
+      })
+      .finally(() => {
+        this.isUpdatingPassword.set(false);
+      });
+    }
 
   sendMessage(): void {
     const content = this.messageDraft().trim();
@@ -240,6 +320,42 @@ export class UserProfilePageComponent {
     this.chatSearch.set((event.target as HTMLInputElement).value);
   }
 
+  onProfileImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.saveMessage.set('Please choose a valid image file.');
+      this.toastService.error('Please choose a valid image file.', 'Invalid Image');
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.releaseProfileImagePreviewUrl();
+    this.selectedProfileImageFile.set(file);
+    this.profileImagePreviewUrl.set(URL.createObjectURL(file));
+    this.saveMessage.set(
+      'Image selected. Save your profile to upload it to storage.',
+    );
+  }
+
+  clearSelectedProfileImage(resetInput = false): void {
+    this.selectedProfileImageFile.set(null);
+    this.releaseProfileImagePreviewUrl();
+
+    if (resetInput) {
+      this.profileForm.controls.imageUrl.setValue(
+        this.toEditableImageUrl(this.user()?.avatarUrl),
+      );
+    }
+  }
+
   loadFakeConversations(force = false): void {
     const profile = this.user();
 
@@ -257,5 +373,77 @@ export class UserProfilePageComponent {
     if (!this.selectedConversationId() || force) {
       this.selectedConversationId.set(seededConversations[0]?.id ?? null);
     }
+  }
+
+  private async loadProfile(): Promise<void> {
+    try {
+      await this.userService.loadCurrentUserProfile();
+    } catch (error) {
+      const message = this.authApiService.extractErrorMessage(
+        error,
+        'Unable to load your profile details right now.',
+      );
+      this.saveMessage.set(message);
+      this.toastService.error(message, 'Profile Load Failed');
+    }
+  }
+
+  private async persistProfileChanges(): Promise<void> {
+    try {
+      let imageUrl = this.normalizeSubmittedImageUrl(
+        this.profileForm.controls.imageUrl.value,
+      );
+
+      if (this.selectedProfileImageFile()) {
+        this.isUploadingProfileImage.set(true);
+        this.saveMessage.set('Uploading your profile image...');
+        imageUrl = await this.profileImageUploadService.uploadProfileImage(
+          this.selectedProfileImageFile() as File,
+        );
+        this.profileForm.controls.imageUrl.setValue(imageUrl);
+      }
+
+      await this.userService.saveCurrentUserProfile({
+        imageUrl,
+        lastname: this.profileForm.controls.lastname.value.trim(),
+        username: this.profileForm.controls.username.value.trim(),
+      });
+
+      this.clearSelectedProfileImage();
+      this.saveMessage.set('Profile updated successfully.');
+      this.toastService.success('Profile updated successfully.', 'Profile Saved');
+    } catch (error) {
+      const message = this.authApiService.extractErrorMessage(
+        error,
+        'Unable to update your profile right now.',
+      );
+      this.saveMessage.set(message);
+      this.toastService.error(message, 'Profile Update Failed');
+    } finally {
+      this.isUploadingProfileImage.set(false);
+      this.isSavingProfile.set(false);
+    }
+  }
+
+  private toEditableImageUrl(value: string | null | undefined): string {
+    const normalizedValue = value?.trim() ?? '';
+    return this.isGeneratedAvatarDataUrl(normalizedValue) ? '' : normalizedValue;
+  }
+
+  private normalizeSubmittedImageUrl(value: string | null | undefined): string {
+    const normalizedValue = value?.trim() ?? '';
+    return this.isGeneratedAvatarDataUrl(normalizedValue) ? '' : normalizedValue;
+  }
+
+  private isGeneratedAvatarDataUrl(value: string): boolean {
+    return value.startsWith('data:image/svg+xml');
+  }
+
+  private releaseProfileImagePreviewUrl(): void {
+    const previewUrl = this.profileImagePreviewUrl();
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    this.profileImagePreviewUrl.set(null);
   }
 }
