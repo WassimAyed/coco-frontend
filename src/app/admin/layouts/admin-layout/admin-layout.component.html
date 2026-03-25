@@ -1,0 +1,267 @@
+<div class="flex min-h-screen bg-gray-50">
+  <aside class="hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+    <div class="border-b border-sidebar-border p-6">
+      <app-logo />
+    </div>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto p-4">
+      @for (module of modules; track module.id) {
+        <button
+          type="button"
+          (click)="selectModule(module.id)"
+          class="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+          [ngClass]="selectedModule() === module.id ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'"
+        >
+          <lucide-icon [img]="module.icon" [size]="20"></lucide-icon>
+          <span class="text-sm font-medium">{{ module.name }}</span>
+        </button>
+      }
+    </nav>
+
+    <div class="border-t border-sidebar-border p-4">
+      <button type="button" class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent">
+        <lucide-icon [img]="SettingsIcon" [size]="20"></lucide-icon>
+        <span class="text-sm font-medium">Settings</span>
+      </button>
+      <button type="button" (click)="logout()" class="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent">
+        <lucide-icon [img]="LogOutIcon" [size]="20"></lucide-icon>
+        <span class="text-sm font-medium">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="sticky top-0 z-10 border-b border-border bg-white">
+      <div class="flex h-16 items-center justify-between px-4 lg:px-8">
+        <div class="lg:hidden">
+          <app-logo />
+        </div>
+
+        <div class="hidden max-w-md flex-1 md:block">
+          <div class="relative">
+            <lucide-icon [img]="SearchIcon" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" [size]="16"></lucide-icon>
+            <input
+              class="w-full rounded-xl border-0 bg-accent py-3 pl-10 pr-4 text-sm outline-none"
+              placeholder="Search..."
+              [value]="searchQuery()"
+              (input)="searchQuery.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button type="button" class="relative flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-slate-100">
+            <lucide-icon [img]="BellIcon" [size]="20"></lucide-icon>
+            <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary"></span>
+          </button>
+
+          <div class="flex cursor-pointer items-center gap-3 border-l border-border pl-4 transition hover:opacity-80">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-medium text-white">AD</div>
+            <div class="hidden text-left sm:block">
+              <p class="text-sm font-medium text-foreground">Admin User</p>
+              <p class="text-xs text-slate-500">Super Admin</p>
+            </div>
+            <lucide-icon [img]="ChevronDownIcon" class="hidden text-slate-500 sm:block" [size]="16"></lucide-icon>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 pb-24 lg:p-8">
+      <div class="mb-8">
+        <h1 class="mb-2 text-2xl font-bold text-foreground lg:text-3xl">{{ selectedModuleName }}</h1>
+        <p class="text-slate-500">Welcome to ESPRIT Life Admin Dashboard</p>
+      </div>
+
+      @if (selectedModule() === 'overview') {
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            @for (kpi of kpiCards; track kpi.title) {
+              <article class="rounded-2xl bg-white p-6 transition-shadow hover:shadow-lg">
+                <div class="mb-4 flex items-start justify-between">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100" [ngClass]="kpi.color">
+                    <lucide-icon [img]="kpi.icon" [size]="24"></lucide-icon>
+                  </div>
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
+                    [ngClass]="kpi.trend === 'up' ? 'bg-primary text-white' : 'bg-gray-100 text-slate-700'"
+                  >
+                    <lucide-icon [img]="kpi.trend === 'up' ? TrendingUpIcon : TrendingDownIcon" [size]="12"></lucide-icon>
+                    {{ kpi.change }}
+                  </span>
+                </div>
+                <div class="mb-1 text-2xl font-bold text-foreground">{{ kpi.value }}</div>
+                <div class="text-sm text-slate-500">{{ kpi.title }}</div>
+              </article>
+            }
+          </div>
+
+          <article class="rounded-2xl bg-white p-6">
+            <div class="mb-6 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-bold text-foreground">Pending User Approvals</h3>
+                <p class="text-sm text-slate-500">Review and approve student registrations</p>
+              </div>
+              <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium">
+                <lucide-icon [img]="FilterIcon" [size]="16"></lucide-icon>
+                Filter
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b border-border text-left text-sm text-slate-500">
+                    <th class="px-4 py-3 font-medium">Name</th>
+                    <th class="px-4 py-3 font-medium">Email</th>
+                    <th class="px-4 py-3 font-medium">Registered</th>
+                    <th class="px-4 py-3 font-medium">Status</th>
+                    <th class="px-4 py-3 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (user of pendingUsers; track user.id) {
+                    <tr class="border-b border-slate-100">
+                      <td class="px-4 py-4 font-medium">{{ user.name }}</td>
+                      <td class="px-4 py-4 text-slate-500">{{ user.email }}</td>
+                      <td class="px-4 py-4 text-slate-500">{{ user.registeredDate }}</td>
+                      <td class="px-4 py-4">
+                        <span class="inline-flex items-center gap-1 rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700">
+                          <lucide-icon [img]="ClockIcon" [size]="12"></lucide-icon>
+                          Pending
+                        </span>
+                      </td>
+                      <td class="px-4 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button type="button" class="inline-flex items-center gap-1 rounded-xl border border-primary px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/10">
+                            <lucide-icon [img]="CheckCircleIcon" [size]="16"></lucide-icon>
+                            Approve
+                          </button>
+                          <button type="button" class="inline-flex items-center gap-1 rounded-xl border border-red-300 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50">
+                            <lucide-icon [img]="XCircleIcon" [size]="16"></lucide-icon>
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <div class="grid gap-6 lg:grid-cols-2">
+            <article class="rounded-2xl bg-white p-6">
+              <div class="mb-6 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-foreground">Recent Activity</h3>
+                <button type="button" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500">View All</button>
+              </div>
+              <div class="space-y-4">
+                @for (activity of recentActivity; track activity.id) {
+                  <div class="flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-accent">
+                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <lucide-icon [img]="activity.icon" class="text-primary" [size]="20"></lucide-icon>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-medium text-foreground">{{ activity.user }}</p>
+                      <p class="text-sm text-slate-500">{{ activity.action }}</p>
+                      <p class="mt-1 text-xs text-slate-400">{{ activity.time }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+
+            <article class="rounded-2xl bg-white p-6">
+              <div class="mb-6 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <h3 class="text-lg font-bold text-foreground">Fraud Alerts</h3>
+                  <span class="rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">{{ fraudAlerts.length }}</span>
+                </div>
+                <button type="button" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500">View All</button>
+              </div>
+              <div class="space-y-4">
+                @for (alert of fraudAlerts; track alert.id) {
+                  <div class="rounded-lg border-2 border-red-200 bg-red-50 p-4">
+                    <div class="mb-2 flex items-start justify-between">
+                      <div class="flex items-center gap-2">
+                        <lucide-icon [img]="AlertTriangleIcon" class="text-red-600" [size]="20"></lucide-icon>
+                        <span class="font-medium text-foreground">{{ alert.user }}</span>
+                      </div>
+                      <span class="rounded-full px-3 py-1 text-xs font-medium" [ngClass]="alert.severity === 'high' ? 'bg-red-600 text-white' : 'bg-gray-100 text-slate-700'">
+                        {{ alert.severity }}
+                      </span>
+                    </div>
+                    <p class="mb-2 text-sm text-slate-500">{{ alert.reason }}</p>
+                    <div class="flex items-center justify-between">
+                      <p class="text-xs text-slate-400">{{ alert.time }}</p>
+                      <button type="button" class="inline-flex items-center gap-1 rounded-xl border border-border bg-white px-3 py-2 text-xs font-medium">
+                        <lucide-icon [img]="EyeIcon" [size]="12"></lucide-icon>
+                        Investigate
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+          </div>
+        </div>
+      } @else if (selectedModule() === 'users') {
+        <article class="rounded-2xl bg-white p-6">
+          <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-foreground">User Management</h3>
+              <p class="text-sm text-slate-500">Manage all ESPRIT Life users</p>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium">
+                <lucide-icon [img]="DownloadIcon" [size]="16"></lucide-icon>
+                Export
+              </button>
+              <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white">
+                <lucide-icon [img]="UsersIcon" [size]="16"></lucide-icon>
+                Add User
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-6 flex flex-col gap-4 sm:flex-row">
+            <div class="relative flex-1">
+              <lucide-icon [img]="SearchIcon" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" [size]="16"></lucide-icon>
+              <input class="w-full rounded-xl border border-border py-3 pl-10 pr-4 text-sm outline-none" placeholder="Search users..." />
+            </div>
+            <div class="w-full rounded-xl border border-border px-4 py-3 text-sm text-slate-500 sm:w-[180px]">Filter by status</div>
+          </div>
+
+          <p class="py-12 text-center text-slate-500">User management table would be displayed here...</p>
+        </article>
+      } @else {
+        <article class="rounded-2xl bg-white p-12 text-center">
+          <div class="mx-auto max-w-md">
+            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
+              <lucide-icon [img]="selectedModuleIcon" class="text-slate-500" [size]="32"></lucide-icon>
+            </div>
+            <h3 class="mb-2 text-xl font-bold text-foreground">{{ selectedModuleName }}</h3>
+            <p class="text-slate-500">This module is under development. Content will be displayed here.</p>
+          </div>
+        </article>
+      }
+    </main>
+  </div>
+
+  <nav class="fixed bottom-0 left-0 right-0 border-t border-border bg-white lg:hidden">
+    <div class="grid grid-cols-5 gap-1 p-2">
+      @for (module of mobileModules; track module.id) {
+        <button
+          type="button"
+          (click)="selectModule(module.id)"
+          class="flex flex-col items-center gap-1 rounded-lg p-2"
+          [ngClass]="selectedModule() === module.id ? 'bg-primary/10 text-primary' : 'text-slate-500'"
+        >
+          <lucide-icon [img]="module.icon" [size]="20"></lucide-icon>
+          <span class="w-full truncate text-center text-xs">{{ module.name.split(' ')[0] }}</span>
+        </button>
+      }
+    </div>
+  </nav>
+</div>

@@ -1,0 +1,236 @@
+<div class="container mt-4">
+  <div class="card shadow-sm col-lg-8 mx-auto">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">
+        <i class="fas fa-home me-2 text-success"></i>Créer une offre de collocation
+      </h2>
+
+      <form [formGroup]="offerForm" (ngSubmit)="submit()" enctype="multipart/form-data">
+        <!-- Titre -->
+        <div class="mb-3">
+          <label class="form-label">Titre <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="titre"
+            placeholder="Ex: Bel appartement partagé"
+            [class.is-invalid]="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched"
+          />
+          <div *ngIf="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched" class="invalid-feedback">
+            Le titre est obligatoire.
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label class="form-label">Description <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            formControlName="description"
+            rows="4"
+            placeholder="Décrivez le logement, les équipements, le quartier..."
+            [class.is-invalid]="offerForm.get('description')?.invalid && offerForm.get('description')?.touched"
+          ></textarea>
+          <div *ngIf="offerForm.get('description')?.invalid && offerForm.get('description')?.touched" class="invalid-feedback">
+            La description est requise.
+          </div>
+        </div>
+
+        <!-- Prix -->
+        <div class="mb-3">
+          <label class="form-label">Prix (TND) <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-tag"></i></span>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="prixLoc"
+              placeholder="450"
+              min="0"
+              step="10"
+              [class.is-invalid]="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched"
+            />
+          </div>
+          <div *ngIf="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched" class="invalid-feedback">
+            Prix valide requis.
+          </div>
+        </div>
+
+        <!-- Ville -->
+        <div class="mb-3">
+          <label class="form-label">Ville <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="ville"
+            [class.is-invalid]="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched"
+          >
+            <option value="" disabled selected>-- Sélectionner une ville --</option>
+            <option *ngFor="let v of tunisianVilles" [value]="v">{{ v }}</option>
+          </select>
+          <div *ngIf="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched" class="invalid-feedback">
+            Ville obligatoire.
+          </div>
+        </div>
+
+        <!-- Chambres -->
+        <div class="mb-3">
+          <label class="form-label">Nombre de chambre(s) <span class="text-danger">*</span></label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="chambres"
+            placeholder="2"
+            min="1"
+            [class.is-invalid]="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched"
+          />
+          <div *ngIf="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched" class="invalid-feedback">
+            Minimum 1 chambre.
+          </div>
+        </div>
+
+        <!-- Meublé (checkbox) -->
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="meublee" formControlName="meublee" />
+          <label class="form-check-label" for="meublee">
+            <i class="fas fa-couch me-1 text-success"></i>Meublé
+          </label>
+        </div>
+
+        <!-- Carte de localisation -->
+        <div class="mb-3">
+          <label class="form-label">Localisation sur la carte <span class="text-danger">*</span></label>
+          <div #mapContainer class="map-container border rounded"></div>
+          <div class="form-text">
+            <i class="fas fa-info-circle me-1"></i>Cliquez sur la carte ou déplacez le marqueur pour définir l'emplacement exact.
+          </div>
+          <div *ngIf="offerForm.get('latitude')?.value" class="mt-2">
+            <span class="badge bg-light text-dark">
+              <i class="fas fa-map-pin text-danger me-1"></i>
+              Lat: {{ offerForm.get('latitude')?.value | number:'1.4-4' }}, Lng: {{ offerForm.get('longitude')?.value | number:'1.4-4' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Upload d'images -->
+        <div class="mb-3">
+          <label class="form-label">Images <span class="text-danger">*</span></label>
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <input
+              type="file"
+              (change)="onFileChange($event)"
+              multiple
+              accept=".jpg,.jpeg,.png"
+              #fileInput
+              class="d-none"
+            />
+            <button type="button" (click)="fileInput.click()" class="btn btn-primary">
+              <i class="fas fa-folder-open me-2"></i>Choisir Images
+            </button>
+            <span class="text-muted small">
+              <i class="fas fa-info-circle me-1"></i>Max 5MB par image (JPG/PNG)
+            </span>
+          </div>
+          <div class="form-text">Vous pouvez sélectionner plusieurs images.</div>
+          <div *ngIf="typeWarning" class="alert alert-warning mt-2 d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ typeWarning }}
+          </div>
+        </div>
+
+        <!-- Prévisualisation des images avec sélection et suppression -->
+        <div *ngIf="selectedFiles && selectedFiles.length > 0" class="border rounded p-3 bg-light mb-3">
+          <h3 class="h5 mb-3">
+            <i class="fas fa-images me-2 text-success"></i>Images sélectionnées ({{ selectedFiles.length }})
+          </h3>
+
+          <!-- Contrôles groupés -->
+          <div *ngIf="selectedFiles.length > 1" class="d-flex gap-2 mb-3 flex-wrap">
+            <button type="button" (click)="selectAllImages()" class="btn btn-outline-success btn-sm">
+              <i class="fas" [ngClass]="allSelected ? 'fa-check-square' : 'fa-square'"></i>
+              {{ allSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+            </button>
+            <button
+              type="button"
+              (click)="deleteSelectedImages()"
+              class="btn btn-outline-danger btn-sm"
+              [disabled]="!hasSelectedImages()"
+            >
+              <i class="fas fa-trash-alt me-1"></i>Supprimer ({{ getSelectedCount() }})
+            </button>
+            <button type="button" (click)="clearAllImages()" class="btn btn-outline-warning btn-sm">
+              <i class="fas fa-times-circle me-1"></i>Tout effacer
+            </button>
+          </div>
+
+          <!-- Grille d'images (responsive) -->
+          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
+            <div *ngFor="let file of selectedFiles; let i = index" class="col">
+              <div
+                class="card h-100"
+                [class.border-primary]="isImageSelected(i)"
+                (click)="toggleImageSelection(i)"
+                style="cursor: pointer;"
+              >
+                <div class="position-relative">
+                  <img
+                    [src]="getImageUrl(file)"
+                    class="card-img-top"
+                    alt="{{ file.name }}"
+                    style="height: 140px; object-fit: cover;"
+                  />
+                  <div
+                    *ngIf="isImageSelected(i)"
+                    class="position-absolute top-0 end-0 m-2 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 24px; height: 24px;"
+                  >
+                    <i class="fas fa-check fa-xs"></i>
+                  </div>
+                </div>
+                <div class="card-body p-2">
+                  <p class="card-title small text-truncate" [title]="file.name">
+                    {{ truncateFileName(file.name, 15) }}
+                  </p>
+                  <p class="card-text small text-muted">{{ formatFileSize(file.size) }}</p>
+                  <button
+                    type="button"
+                    (click)="deleteImage(i, $event)"
+                    class="btn btn-outline-danger btn-sm w-100"
+                  >
+                    <i class="fas fa-trash-alt me-1"></i>Retirer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages d'erreur / succès -->
+        <div *ngIf="errorMessage" class="alert alert-danger d-flex align-items-center">
+          <i class="fas fa-exclamation-circle me-2"></i>{{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="alert alert-success d-flex align-items-center">
+          <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex gap-3 mt-4">
+          <button
+            type="submit"
+            [disabled]="submitting || offerForm.invalid || selectedFiles.length === 0"
+            class="btn btn-success flex-fill"
+          >
+            <span *ngIf="!submitting"><i class="fas fa-plus-circle me-2"></i>Créer l'offre</span>
+            <span *ngIf="submitting"><i class="fas fa-spinner fa-spin me-2"></i>Création...</span>
+          </button>
+          <button
+            type="button"
+            (click)="resetForm()"
+            class="btn btn-secondary"
+            [disabled]="submitting"
+          >
+            <i class="fas fa-undo-alt me-2"></i>Réinitialiser
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

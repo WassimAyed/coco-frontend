@@ -1,0 +1,586 @@
+@if (user(); as profile) {
+  <div class="section-shell py-8 lg:py-10">
+    <div class="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)_320px]">
+      <aside class="surface-card h-fit p-3 lg:sticky lg:top-28">
+        <div class="rounded-[1.75rem] bg-white ">
+          <img
+            [src]="effectiveProfileImageUrl()"
+            [alt]="profile.firstName + ' ' + profile.lastName"
+            class="h-20 w-20 rounded-[1.5rem] object-cover shadow-soft"
+          />
+          <h1 class="mt-4 text-2xl font-black text-foreground">
+            {{ profile.firstName }} {{ profile.lastName }}
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">{{ profile.email }}</p>
+          <div class="mt-2 inline-flex rounded-full border border-primary/15 bg-primary/10 px-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+            Verified student
+          </div>
+        </div>
+
+        <nav class="mt-5 space-y-2">
+          @for (section of sections; track section.id) {
+            <button
+              type="button"
+              class="w-full rounded-[1.4rem] border px-4 py-4 text-left transition"
+              [class.border-primary]="activeSection() === section.id"
+              [class.bg-primary]="activeSection() === section.id"
+              [class.text-primary-foreground]="activeSection() === section.id"
+              [class.border-border]="activeSection() !== section.id"
+              [class.bg-card]="activeSection() !== section.id"
+              [class.text-foreground]="activeSection() !== section.id"
+              (click)="selectSection(section.id)"
+            >
+              <div class="flex items-center gap-3">
+                <lucide-icon [img]="section.icon" [size]="18"></lucide-icon>
+                <div>
+                  <p class="text-sm font-semibold">{{ section.label }}</p>
+                  <p
+                    class="mt-1 text-xs"
+                    [ngClass]="
+                      activeSection() === section.id
+                        ? 'text-primary-foreground/80'
+                        : 'text-muted-foreground'
+                    "
+                  >
+                    {{ section.description }}
+                  </p>
+                </div>
+              </div>
+            </button>
+          }
+        </nav>
+      </aside>
+
+      <main class="space-y-6">
+        <section class="surface-card overflow-hidden">
+          <div
+            class="relative border-b border-border bg-gradient-to-r from-primary to-sidebar px-6 py-7 text-primary-foreground"
+          >
+            <div
+              class="absolute right-6 top-4 h-20 w-20 rounded-full bg-white/10 blur-2xl"
+            ></div>
+            <p
+              class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/75"
+            >
+              User workspace
+            </p>
+            <h2 class="mt-2 text-3xl font-black">
+              {{ selectedSectionMeta()?.label }}
+            </h2>
+            <p
+              class="mt-2 max-w-2xl text-sm leading-6 text-primary-foreground/80"
+            >
+              {{ selectedSectionMeta()?.description }}
+            </p>
+          </div>
+
+          <div class="p-6 sm:p-7">
+            @if (saveMessage()) {
+              <div
+                class="mb-6 rounded-[1.25rem] border border-primary/15 bg-primary/5 px-4 py-3 text-sm font-medium text-primary"
+              >
+                {{ saveMessage() }}
+              </div>
+            }
+
+            @if (activeSection() === "profile") {
+              <div class="space-y-6">
+                <div class="grid gap-4 xl:grid-cols-3">
+                  @for (shortcut of shortcuts; track shortcut.title) {
+                    <article
+                      class="rounded-[1.5rem] border border-border bg-card p-5"
+                    >
+                      <p
+                        class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                      >
+                        {{ shortcut.title }}
+                      </p>
+                      <p class="mt-3 text-3xl font-black text-foreground">
+                        {{ shortcut.value }}
+                      </p>
+                      <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                        {{ shortcut.caption }}
+                      </p>
+                    </article>
+                  }
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-3">
+                  @for (stat of profile.stats; track stat.label) {
+                    <article
+                      class="rounded-[1.5rem] border border-border bg-white/60 p-5"
+                    >
+                      <p class="text-sm text-muted-foreground">
+                        {{ stat.label }}
+                      </p>
+                      <p
+                        class="mt-3 text-3xl font-black tracking-tight text-foreground"
+                      >
+                        {{ stat.value }}
+                      </p>
+                    </article>
+                  }
+                </div>
+
+                <form
+                  class="space-y-5"
+                  [formGroup]="profileForm"
+                  (ngSubmit)="saveProfile()"
+                >
+                  <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label
+                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
+                        >Username</label
+                      >
+                      <input class="form-input" formControlName="username" />
+                    </div>
+                    <div>
+                      <label
+                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
+                        >Last name</label
+                      >
+                      <input class="form-input" formControlName="lastname" />
+                    </div>
+                    <div>
+                      <label
+                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
+                        >Email</label
+                      >
+                      <input
+                        class="form-input opacity-80"
+                        formControlName="email"
+                      />
+                    </div>
+                    <div class="md:col-span-2 rounded-[1.5rem] border border-border bg-card p-5">
+                      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                        <div class="flex items-center gap-4">
+                          <img
+                            [src]="effectiveProfileImageUrl()"
+                            [alt]="profile.firstName + ' ' + profile.lastName"
+                            class="h-20 w-20 rounded-[1.5rem] object-cover shadow-soft"
+                          />
+                          <div>
+                            <p class="text-base font-semibold text-foreground">Profile image</p>
+                            <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                              Choose an image, upload it to storage, then save your profile.
+                            </p>
+                            @if (selectedProfileImageFileName()) {
+                              <p class="mt-2 text-xs font-medium text-primary">
+                                Selected file: {{ selectedProfileImageFileName() }}
+                              </p>
+                            } @else if (profileForm.controls.imageUrl.value) {
+                              <p class="mt-2 break-all text-xs text-muted-foreground">
+                                Current URL: {{ profileForm.controls.imageUrl.value }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-3">
+                          <label class="btn-secondary cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              class="hidden"
+                              [disabled]="isSavingProfile() || isUploadingProfileImage()"
+                              (change)="onProfileImageSelected($event)"
+                            />
+                            Choose image
+                          </label>
+
+                          @if (selectedProfileImageFileName()) {
+                            <button
+                              type="button"
+                              class="rounded-[1.1rem] border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary"
+                              [disabled]="isSavingProfile() || isUploadingProfileImage()"
+                              (click)="clearSelectedProfileImage()"
+                            >
+                              Remove selection
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      @if (isUploadingProfileImage()) {
+                        <p class="mt-4 text-sm font-medium text-primary">
+                          Uploading image to storage server...
+                        </p>
+                      }
+                    </div>
+                  </div>
+
+                 
+
+                  <div class="flex justify-end">
+                    <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isSavingProfile() || isUploadingProfileImage()">
+                      <lucide-icon
+                        [img]="SaveIcon"
+                        class="mr-2"
+                        [size]="16"
+                      ></lucide-icon>
+                      {{ isUploadingProfileImage() ? 'Uploading image...' : isSavingProfile() ? 'Saving...' : 'Update profile' }}
+                    </button>
+                  </div>
+                </form>
+
+                <div
+                  class="rounded-[1.5rem] border border-border bg-white/40 p-5"
+                >
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <p class="text-lg font-bold text-foreground">
+                        Recent activity
+                      </p>
+                      <p class="mt-1 text-sm text-muted-foreground">
+                        Fake data to help review spacing, cards, and text
+                        rhythm.
+                      </p>
+                    </div>
+                    <div
+                      class="rounded-full bg-card px-3 py-2 text-xs font-semibold text-muted-foreground"
+                    >
+                      {{ activityFeed.length }} updates
+                    </div>
+                  </div>
+
+                  <div class="mt-5 grid gap-4 xl:grid-cols-2">
+                    @for (activity of activityFeed; track activity.id) {
+                      <article
+                        class="rounded-[1.35rem] border border-border bg-card p-4"
+                      >
+                        <div class="flex items-start justify-between gap-4">
+                          <p class="text-base font-semibold text-foreground">
+                            {{ activity.title }}
+                          </p>
+                          <span
+                            class="shrink-0 text-xs font-medium text-muted-foreground"
+                            >{{ activity.time }}</span
+                          >
+                        </div>
+                        <p class="mt-3 text-sm leading-6 text-muted-foreground">
+                          {{ activity.description }}
+                        </p>
+                      </article>
+                    }
+                  </div>
+                </div>
+              </div>
+            } @else if (activeSection() === "settings") {
+              <div class="space-y-6">
+                <form class="space-y-6" [formGroup]="settingsForm">
+                  <label
+                    class="flex items-start justify-between gap-4 rounded-[1.5rem] border border-border bg-card p-5"
+                  >
+                    <div>
+                      <p class="text-base font-semibold text-foreground">
+                        Enable two-factor authentication
+                      </p>
+                      <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                        When enabled, every login sends a 6-digit security code to your email before access is granted.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      class="mt-1 h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                      formControlName="twoFactorEnabled"
+                    />
+                  </label>
+
+                  <div class="flex justify-end">
+                    <button
+                      type="button"
+                      class="btn-primary disabled:cursor-not-allowed disabled:opacity-70"
+                      [disabled]="isSavingSettings()"
+                      (click)="saveSettings()"
+                    >
+                      <lucide-icon
+                        [img]="SettingsIcon"
+                        class="mr-2"
+                        [size]="16"
+                      ></lucide-icon>
+                      {{ isSavingSettings() ? 'Saving...' : 'Save security settings' }}
+                    </button>
+                  </div>
+                </form>
+
+                <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+                  <div>
+                    <p class="text-base font-semibold text-foreground">Update password</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                      Change your current password using your existing password and a new secure one.
+                    </p>
+                  </div>
+
+                  <div class="grid gap-5 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Current password</label>
+                      <input class="form-input" type="password" formControlName="oldPassword" />
+                    </div>
+
+                    <div>
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">New password</label>
+                      <input class="form-input" type="password" formControlName="newPassword" />
+                    </div>
+
+                    <div>
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Confirm new password</label>
+                      <input class="form-input" type="password" formControlName="confirmPassword" />
+                    </div>
+                  </div>
+
+                  @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) {
+                    <p class="text-xs font-medium text-destructive">New password must be at least 8 characters.</p>
+                  }
+
+                  @if (passwordForm.controls.confirmPassword.touched && !passwordsMatch) {
+                    <p class="text-xs font-medium text-destructive">Passwords do not match.</p>
+                  }
+
+                  <div class="flex justify-end">
+                    <button
+                      type="submit"
+                      class="btn-primary disabled:cursor-not-allowed disabled:opacity-70"
+                      [disabled]="isUpdatingPassword()"
+                    >
+                      {{ isUpdatingPassword() ? 'Updating...' : 'Update password' }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            } @else {
+              @if (selectedConversation(); as activeConversation) {
+                <div class="space-y-5">
+                  <div
+                    class="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border bg-white/50 p-4"
+                  >
+                    <div class="flex min-w-0 items-center gap-4">
+                      <div class="relative">
+                        <img
+                          [src]="activeConversation.avatarUrl"
+                          [alt]="activeConversation.name"
+                          class="h-14 w-14 rounded-[1.2rem] object-cover"
+                        />
+                        <span
+                          class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-card"
+                          [ngClass]="
+                            activeConversation.status === 'online'
+                              ? 'bg-primary'
+                              : activeConversation.status === 'away'
+                                ? 'bg-sidebar'
+                                : 'bg-muted-foreground'
+                          "
+                        ></span>
+                      </div>
+                      <div class="min-w-0">
+                        <p
+                          class="truncate text-base font-semibold text-foreground"
+                        >
+                          {{ activeConversation.name }}
+                        </p>
+                        <p class="truncate text-sm text-muted-foreground">
+                          {{
+                            activeConversation.isTyping
+                              ? "Typing now..."
+                              : activeConversation.lastSeen
+                          }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      class="hidden rounded-full bg-card px-3 py-2 text-xs font-semibold text-muted-foreground sm:inline-flex"
+                    >
+                      {{ activeConversation.messages.length }} messages
+                    </div>
+                  </div>
+
+                  <div
+                    class="space-y-4 rounded-[1.5rem] border border-border bg-background p-4"
+                  >
+                    <div class="max-h-[24rem] space-y-4 overflow-y-auto pr-1">
+                      @for (
+                        message of activeConversation.messages;
+                        track message.id
+                      ) {
+                        @if (message.dayLabel) {
+                          <div class="flex justify-center">
+                            <span
+                              class="rounded-full bg-white px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            >
+                              {{ message.dayLabel }}
+                            </span>
+                          </div>
+                        }
+
+                        <div
+                          class="flex"
+                          [class.justify-end]="message.author === 'me'"
+                          [class.justify-start]="message.author === 'other'"
+                        >
+                          <div
+                            class="max-w-[85%] rounded-[1.3rem] px-4 py-3 text-sm leading-6 shadow-soft"
+                            [class.bg-primary]="message.author === 'me'"
+                            [class.text-primary-foreground]="
+                              message.author === 'me'
+                            "
+                            [class.bg-white]="message.author === 'other'"
+                            [class.text-foreground]="message.author === 'other'"
+                          >
+                            <p>{{ message.content }}</p>
+                            <p
+                              class="mt-2 text-[0.7rem]"
+                              [ngClass]="
+                                message.author === 'me'
+                                  ? 'text-primary-foreground/70'
+                                  : 'text-muted-foreground'
+                              "
+                            >
+                              {{ message.timestamp }}
+                            </p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <div
+                    class="rounded-[1.5rem] border border-border bg-white/40 p-4"
+                  >
+                    <div class="flex gap-3">
+                      <input
+                        class="form-input"
+                        placeholder="Write a message..."
+                        [value]="messageDraft()"
+                        (input)="onDraftChange($event)"
+                      />
+                      <button
+                        type="button"
+                        class="btn-primary shrink-0"
+                        (click)="sendMessage()"
+                      >
+                        <lucide-icon [img]="SendIcon" [size]="16"></lucide-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div
+                  class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center"
+                >
+                  <p class="text-lg font-semibold text-foreground">
+                    No conversation selected
+                  </p>
+                  <p class="mt-2 text-sm text-muted-foreground">
+                    Choose a user from the right sidebar to open the chat
+                    thread.
+                  </p>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      </main>
+
+      <aside class="surface-card h-fit p-3 lg:sticky lg:top-28">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-lg font-bold text-foreground">Conversations</p>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <input
+            class="form-input"
+            placeholder="Search chats, tags, or users..."
+            [value]="chatSearch()"
+            (input)="onChatSearchChange($event)"
+          />
+        </div>
+
+        <div class="mt-5 max-h-[25.5rem] space-y-3 overflow-y-auto pr-2">
+          @for (conversation of sortedConversations(); track conversation.id) {
+            <button
+              type="button"
+              class="flex w-full items-start gap-3 rounded-[1.35rem] border p-4 text-left transition hover:border-primary/30 hover:bg-white/70"
+              [class.border-primary]="selectedConversationId() === conversation.id"
+              [class.bg-white]="selectedConversationId() === conversation.id"
+              [class.border-border]="selectedConversationId() !== conversation.id"
+              (click)="selectConversation(conversation.id)"
+            >
+              <div class="relative">
+                <img
+                  [src]="conversation.avatarUrl"
+                  [alt]="conversation.name"
+                  class="h-12 w-12 rounded-[1rem] object-cover"
+                />
+                <span
+                  class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-card"
+                  [ngClass]="
+                    conversation.status === 'online'
+                      ? 'bg-primary'
+                      : conversation.status === 'away'
+                        ? 'bg-sidebar'
+                        : 'bg-muted-foreground'
+                  "
+                ></span>
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-foreground">
+                      {{ conversation.name }}
+                    </p>
+                    <p class="truncate text-xs text-muted-foreground">
+                      {{
+                        conversation.isTyping
+                          ? "Typing now..."
+                          : conversation.role
+                      }}
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 text-[0.7rem] font-medium text-muted-foreground"
+                    >{{ conversation.lastMessageTime }}</span
+                  >
+                </div>
+
+                <p class="mt-2 truncate text-sm text-muted-foreground">
+                  {{ conversation.lastMessage }}
+                </p>
+              </div>
+
+              @if (conversation.unreadCount > 0) {
+                <span
+                  class="rounded-full bg-primary px-2.5 py-1 text-[0.7rem] font-semibold text-primary-foreground"
+                >
+                  {{ conversation.unreadCount }}
+                </span>
+              }
+            </button>
+          }
+
+          @if (sortedConversations().length === 0) {
+            <div
+              class="rounded-[1.35rem] border border-dashed border-border bg-white/30 p-5 text-center"
+            >
+              <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                You don’t have any conversations
+              </p>
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+  </div>
+} @else {
+  <div class="section-shell py-12">
+    <div class="surface-card w-full max-w-lg px-8 py-12">
+      <app-loading
+        label="Loading profile"
+        caption="Restoring your secure student workspace..."
+      />
+    </div>
+  </div>
+}

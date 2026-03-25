@@ -1,0 +1,18 @@
+<div class="relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
+  <app-ambient-background />
+  <app-auth-splash-cursor />
+
+  <div class="section-shell relative z-10 py-6">
+    <app-logo />
+  </div>
+
+  <main class="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+    <div class="w-full max-w-6xl">
+      <router-outlet />
+    </div>
+  </main>
+
+  <div class="relative z-10 pb-8 text-center text-sm text-muted-foreground">
+    2026 ESPRIT Life. All rights reserved.
+  </div>
+</div>

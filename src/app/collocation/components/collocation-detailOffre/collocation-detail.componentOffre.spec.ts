@@ -1,0 +1,23 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CollocationDetailComponent } from './collocation-detailOffre.component';
+
+describe('CollocationDetailComponent', () => {
+  let component: CollocationDetailComponent;
+  let fixture: ComponentFixture<CollocationDetailComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CollocationDetailComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(CollocationDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

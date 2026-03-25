@@ -1,0 +1,56 @@
+/* Custom scrollbar for left column */
+.list-column-custom {
+  max-height: 800px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #dee2e6 #f8f9fa;
+}
+
+.list-column-custom::-webkit-scrollbar {
+  width: 6px;
+}
+.list-column-custom::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+.list-column-custom::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 20px;
+}
+
+/* Offer card hover effect */
+.offer-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.offer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px rgba(225, 29, 72, 0.1) !important;
+  cursor: pointer;
+}
+
+/* Map container */
+.map-container {
+  background: #f0f0f0; /* fallback */
+  border: 1px solid #dee2e6;
+}
+
+/* Ensure Leaflet tiles load properly */
+.leaflet-container {
+  border-radius: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .list-column-custom {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+
+.form-control {
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.form-control:focus {
+  border-color: #f83441; /* matches the coin icon color */
+  box-shadow: 0 0 0 0.2rem rgba(247, 99, 102, 0.25);
+}
