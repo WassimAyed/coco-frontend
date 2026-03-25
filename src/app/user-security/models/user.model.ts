@@ -10,6 +10,7 @@ export interface UserProfile {
   email: string;
   avatarUrl: string;
   role: 'student' | 'admin';
+  twoFactorEnabled?: boolean;
   department: string;
   academicLevel: string;
   campus: string;

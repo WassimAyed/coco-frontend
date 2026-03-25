@@ -9,5 +9,10 @@ export const environment = {
     resendTwoFactorCodePath: '/auth/resend-2fa-code',
     googleLoginPath: '/oauth2/authorization/google',
     withCredentials: true
+  },
+  storage: {
+    profileImageUploadUrl: '',
+    profileImageFormFieldName: 'file',
+    withCredentials: true
   }
 };

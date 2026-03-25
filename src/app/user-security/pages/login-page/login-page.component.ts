@@ -114,7 +114,11 @@ export class LoginPageComponent {
       ? environment.auth.googleLoginPath
       : `/${environment.auth.googleLoginPath}`;
 
-    window.location.href = `${authBaseUrl}${googlePath}`;
+    this.toastService.info(
+      'Redirecting to Google sign-in...',
+      'Google Authentication',
+    );
+    window.location.assign(`${authBaseUrl}${googlePath}`);
   }
 
   private persistPendingTwoFactorContext(email: string, rememberMe: boolean): void {
@@ -132,9 +136,6 @@ export class LoginPageComponent {
 
   private storeUserAndId(user: any): void {
     try {
-      // store the full user object
-      this.userService.storeUser(user);
-
       // store only the user ID in localStorage
       localStorage.setItem("userId", user.id);
     } catch (e) {

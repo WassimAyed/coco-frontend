@@ -71,6 +71,15 @@ function readString(record: Record<string, unknown> | null, keys: string[]): str
   return null;
 }
 
+function readBoolean(record: Record<string, unknown> | null, keys: string[]): boolean | null {
+  if (!record) return null;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'boolean') return value;
+  }
+  return null;
+}
+
 // ✅ Fixed: only return string or number (no {} allowed)
 function readValue(record: Record<string, unknown> | null, keys: string[]): string | number | null {
   if (!record) return null;
@@ -110,7 +119,7 @@ export function buildAuthSessionFromApiResponse(
   const department = readString(user, ['department']) ?? DEPARTMENTS[seed % DEPARTMENTS.length];
   const academicLevel = readString(user, ['academicLevel', 'level']) ?? LEVELS[seed % LEVELS.length];
   const fallbackNames = formatNames(normalizedEmail);
-  const firstName = readString(user, ['firstName', 'firstname', 'givenName']) ?? fallbackNames.firstName;
+  const firstName = readString(user, ['firstName', 'firstname', 'givenName', 'username']) ?? fallbackNames.firstName;
   const lastName = readString(user, ['lastName', 'lastname', 'familyName']) ?? fallbackNames.lastName;
 
   // ✅ DB id converted to string
@@ -146,6 +155,7 @@ export function buildAuthSessionFromApiResponse(
       lastName,
       id,
       role,
+      twoFactorEnabled: readBoolean(user, ['twoFactorEnabled']) ?? false,
       highlights,
       stats: buildDefaultStats(seed, role)
     }
