@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-payment-success',
@@ -13,15 +14,23 @@ import { RouterModule } from '@angular/router';
 
       <div class="feedback-container">
         <div class="feedback-card">
-          <div class="icon-wrapper">
-            <i class="bi bi-check-circle-fill"></i>
+          <div class="icon-wrapper" [class.loading]="status === 'processing'">
+            <i class="bi" [ngClass]="status === 'success' ? 'bi-check-circle-fill' : (status === 'error' ? 'bi-x-circle-fill' : 'bi-arrow-repeat')"></i>
           </div>
-          <h1>Paiement Réussi !</h1>
-          <p>Votre abonnement CoCo est désormais actif. Profitez d'une visibilité maximale et propulsez votre activité au niveau supérieur.</p>
+          
+          <h1 *ngIf="status === 'processing'">Activation en cours...</h1>
+          <h1 *ngIf="status === 'success'">Paiement Réussi !</h1>
+          <h1 *ngIf="status === 'error'">Un problème est survenu</h1>
+
+          <p *ngIf="status === 'processing'">Veuillez patienter pendant que nous confirmons votre transaction auprès de Stripe.</p>
+          <p *ngIf="status === 'success'">Votre abonnement CoCo est désormais actif. Profitez d'une visibilité maximale !</p>
+          <p *ngIf="status === 'error'">Nous n'avons pas pu confirmer votre paiement. Si vous avez été débité, contactez notre support.</p>
           
           <div class="divider"></div>
 
-          <button class="btn btn-red" routerLink="/subs-payment">Consulter mes offres</button>
+          <button class="btn btn-red" [routerLink]="status === 'success' ? '/subs-payment/user-dashboard' : '/subs-payment'">
+            {{ status === 'success' ? 'Aller vers mon Dashboard' : 'Retour aux offres' }}
+          </button>
         </div>
 
         <div class="trust-bar">
@@ -98,6 +107,14 @@ import { RouterModule } from '@angular/router';
       margin: 0 auto 2.5rem;
       font-size: 3rem;
       animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s both;
+      
+      &.loading i {
+        animation: spin 2s linear infinite;
+      }
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
     }
 
     h1 {
@@ -167,4 +184,35 @@ import { RouterModule } from '@angular/router';
     }
   `]
 })
-export class PaymentSuccessComponent { }
+export class PaymentSuccessComponent implements OnInit {
+  status: 'processing' | 'success' | 'error' = 'processing';
+  sessionId: string | null = null;
+
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient
+  ) { }
+
+  ngOnInit() {
+    this.sessionId = this.route.snapshot.queryParamMap.get('session_id');
+
+    if (this.sessionId) {
+      this.confirmPayment();
+    } else {
+      this.status = 'error';
+    }
+  }
+
+  confirmPayment() {
+    this.http.get(`http://localhost:9092/api/payment/payments/confirm?sessionId=${this.sessionId}`)
+      .subscribe({
+        next: () => {
+          this.status = 'success';
+        },
+        error: (err) => {
+          console.error('Erreur confirmation paiement:', err);
+          this.status = 'error';
+        }
+      });
+  }
+}
