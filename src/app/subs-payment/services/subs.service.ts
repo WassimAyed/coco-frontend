@@ -39,9 +39,7 @@ export class SubsService {
   }
 
   getUserSubscriptions(userId: number): Observable<UserSubscription[]> {
-    // Note: On pourrait filtrer par userId si le backend le supportait spécifiquement, 
-    // ici on pourra filtrer côté client ou utiliser getAllUserSubscriptions si l'admin/user partage le service.
-    return this.http.get<UserSubscription[]>(`${this.apiUrl}/user-subscriptions`);
+    return this.http.get<UserSubscription[]>(`${this.apiUrl}/user-subscriptions/user/${userId}`);
   }
 
   createUserSubscription(userId: number): Observable<UserSubscription> {

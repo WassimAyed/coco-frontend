@@ -263,7 +263,7 @@ export class UserDashboardComponent implements OnInit {
   getRemainingDays(): number {
     if (!this.activeSubscription?.endDate) return 0;
     const end = new Date(this.activeSubscription.endDate).getTime();
-    const now = new Date().getTime();
+    const now = new Date().setHours(0, 0, 0, 0);
     const diff = end - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }
@@ -275,7 +275,7 @@ export class UserDashboardComponent implements OnInit {
     const now = new Date().getTime();
     const total = end - start;
     const elapsed = now - start;
-    return Math.min(100, Math.max(0, (elapsed / total) * 100));
+    return Math.min(100, Math.max(0, Math.floor((elapsed / total) * 100)));
   }
 
   showWarning(): boolean {
