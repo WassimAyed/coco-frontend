@@ -5,10 +5,10 @@ import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
 
 @Component({
-    selector: 'app-admin-plans',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-admin-plans',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="admin-page">
       <div class="mesh-gradient"></div>
       <div class="noise-overlay"></div>
@@ -78,7 +78,7 @@ import { SubscriptionPlan } from '../../models/subscription.model';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .admin-page {
       min-height: 100vh;
       background-color: #f5f5f3;
@@ -132,10 +132,10 @@ import { SubscriptionPlan } from '../../models/subscription.model';
 
     .btn {
       padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s;
-      &-red { background: #e63030; color: white; border: none; box-shadow: 0 5px 15px rgba(230,48,48,0.3); }
-      &-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
       &:hover { transform: translateY(-2px); opacity: 0.9; }
     }
+    .btn-red { background: #e63030; color: white; border: none; box-shadow: 0 5px 15px rgba(230,48,48,0.3); }
+    .btn-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
 
     /* Modal */
     .modal-backdrop {
@@ -167,54 +167,54 @@ import { SubscriptionPlan } from '../../models/subscription.model';
   `]
 })
 export class AdminPlansComponent implements OnInit {
-    plans: SubscriptionPlan[] = [];
-    showModal = false;
-    isEditing = false;
-    currentPlan: SubscriptionPlan = this.initPlan();
+  plans: SubscriptionPlan[] = [];
+  showModal = false;
+  isEditing = false;
+  currentPlan: SubscriptionPlan = this.initPlan();
 
-    constructor(private subsService: SubsService) { }
+  constructor(private subsService: SubsService) { }
 
-    ngOnInit() { this.loadPlans(); }
+  ngOnInit() { this.loadPlans(); }
 
-    loadPlans() {
-        this.subsService.getAllPlans().subscribe(data => this.plans = data);
+  loadPlans() {
+    this.subsService.getAllPlans().subscribe(data => this.plans = data);
+  }
+
+  initPlan(): SubscriptionPlan {
+    return { name: '', price: 0, postLimit: 0, durationDays: 30, type: 'SUBSCRIPTION' };
+  }
+
+  openCreateModal() {
+    this.isEditing = false;
+    this.currentPlan = this.initPlan();
+    this.showModal = true;
+  }
+
+  editPlan(plan: SubscriptionPlan) {
+    this.isEditing = true;
+    this.currentPlan = { ...plan };
+    this.showModal = true;
+  }
+
+  closeModal() { this.showModal = false; }
+
+  savePlan() {
+    if (this.isEditing) {
+      this.subsService.updatePlan(this.currentPlan.id!, this.currentPlan).subscribe(() => {
+        this.loadPlans();
+        this.closeModal();
+      });
+    } else {
+      this.subsService.createPlan(this.currentPlan).subscribe(() => {
+        this.loadPlans();
+        this.closeModal();
+      });
     }
+  }
 
-    initPlan(): SubscriptionPlan {
-        return { name: '', price: 0, postLimit: 0, durationDays: 30, type: 'SUBSCRIPTION' };
+  deletePlan(id: number) {
+    if (confirm('Supprimer ce plan ?')) {
+      this.subsService.deletePlan(id).subscribe(() => this.loadPlans());
     }
-
-    openCreateModal() {
-        this.isEditing = false;
-        this.currentPlan = this.initPlan();
-        this.showModal = true;
-    }
-
-    editPlan(plan: SubscriptionPlan) {
-        this.isEditing = true;
-        this.currentPlan = { ...plan };
-        this.showModal = true;
-    }
-
-    closeModal() { this.showModal = false; }
-
-    savePlan() {
-        if (this.isEditing) {
-            this.subsService.updatePlan(this.currentPlan.id!, this.currentPlan).subscribe(() => {
-                this.loadPlans();
-                this.closeModal();
-            });
-        } else {
-            this.subsService.createPlan(this.currentPlan).subscribe(() => {
-                this.loadPlans();
-                this.closeModal();
-            });
-        }
-    }
-
-    deletePlan(id: number) {
-        if (confirm('Supprimer ce plan ?')) {
-            this.subsService.deletePlan(id).subscribe(() => this.loadPlans());
-        }
-    }
+  }
 }

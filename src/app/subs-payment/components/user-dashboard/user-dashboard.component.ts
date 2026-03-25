@@ -212,10 +212,10 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
 
     .btn {
       width: 100%; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s;
-      &-red { background: #e63030; color: white; border: none; }
-      &-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
       &:hover { transform: translateY(-2px); opacity: 0.9; }
     }
+    .btn-red { background: #e63030; color: white; border: none; }
+    .btn-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
