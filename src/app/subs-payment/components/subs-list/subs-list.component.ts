@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
 
@@ -13,11 +14,18 @@ import { SubscriptionPlan } from '../../models/subscription.model';
 export class SubsListComponent implements OnInit {
   plans: SubscriptionPlan[] = [];
   loading = true;
-  userId = 1; // ID statique pour la démo
+  userId!: number;
 
-  constructor(private subsService: SubsService) { }
+  constructor(private subsService: SubsService, private router: Router) { }
 
   ngOnInit(): void {
+    const storedId = localStorage.getItem('userId');
+    if (!storedId) {
+      console.warn('Utilisateur non connecté, redirection vers /login');
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.userId = Number(storedId);
     this.loadPlans();
   }
 

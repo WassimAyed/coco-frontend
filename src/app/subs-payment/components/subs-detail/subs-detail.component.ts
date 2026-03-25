@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 
 @Component({
@@ -11,11 +12,18 @@ import { SubsService } from '../../services/subs.service';
 })
 export class SubsDetailComponent implements OnInit {
   quota: any;
-  userId = 1;
+  userId!: number;
 
-  constructor(private subsService: SubsService) { }
+  constructor(private subsService: SubsService, private router: Router) { }
 
   ngOnInit(): void {
+    const storedId = localStorage.getItem('userId');
+    if (!storedId) {
+      console.warn('Utilisateur non connecté, redirection vers /login');
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.userId = Number(storedId);
     this.loadQuota();
   }
 
@@ -28,7 +36,6 @@ export class SubsDetailComponent implements OnInit {
 
   getProgressBarWidth(): string {
     if (!this.quota || this.quota.remaining_posts === null) return '100%';
-    // On assume 5 posts max pour le plan FREE pour la demo visuelle
     return (this.quota.remaining_posts / 5 * 100) + '%';
   }
 }

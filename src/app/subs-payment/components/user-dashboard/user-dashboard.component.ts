@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 import { UserSubscription, Payment } from '../../models/subscription.model';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="user-page">
       <div class="mesh-gradient"></div>
@@ -225,11 +226,18 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
 export class UserDashboardComponent implements OnInit {
   activeSubscription?: UserSubscription;
   payments: Payment[] = [];
-  userId = 1; // Statique pour la démo
+  userId!: number;
 
-  constructor(private subsService: SubsService) { }
+  constructor(private subsService: SubsService, private router: Router) { }
 
   ngOnInit() {
+    const storedId = localStorage.getItem('userId');
+    if (!storedId) {
+      console.warn('Utilisateur non connecté, redirection vers /login');
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.userId = Number(storedId);
     this.subsService.getUserSubscriptions(this.userId).subscribe(subs => {
       this.activeSubscription = subs.find(s => s.status === 'ACTIVE');
     });
