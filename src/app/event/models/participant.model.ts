@@ -5,4 +5,5 @@ export interface ParticipantDto {
   phone?: string;
   registrationDate?: string;
   eventId: number;
+  userId?: number;
 }

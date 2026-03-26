@@ -12,7 +12,15 @@ export class ParticipantService {
 
   constructor(private readonly http: HttpClient) {}
 
+  add(payload: ParticipantDto): Observable<ParticipantDto> {
+    return this.http.post<ParticipantDto>(this.baseUrl, payload);
+  }
+
   getByEvent(eventId: number): Observable<ParticipantDto[]> {
     return this.http.get<ParticipantDto[]>(`${this.baseUrl}/event/${eventId}`);
+  }
+
+  countByEvent(eventId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/event/${eventId}/count`);
   }
 }

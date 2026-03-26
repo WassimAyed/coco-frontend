@@ -1,6 +1,7 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import * as L from 'leaflet';
+import 'leaflet-defaulticon-compatibility';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { EventDto } from '../../models/event.model';
@@ -10,14 +11,16 @@ import { CommentService } from '../../services/comment.service';
 import { EventService } from '../../services/event.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
+import { ShareService } from '../../services/share.service';
 
 @Component({
   selector: 'app-event-detail',
   templateUrl: './event-detail.component.html',
   styleUrl: './event-detail.component.css'
 })
-export class EventDetailComponent implements OnInit {
+export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('galleryStrip') galleryStrip?: ElementRef<HTMLDivElement>;
+  @ViewChild('detailMapContainer') detailMapContainer?: ElementRef<HTMLDivElement>;
 
   eventId: number | null = null;
   event: EventDto | null = null;
@@ -37,12 +40,18 @@ export class EventDetailComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
   successMessage = '';
-  mapUrl: SafeResourceUrl | null = null;
   mapOpenUrl: string | null = null;
   activeImageUrl: string | null = null;
   currentUserId: number | null = null;
   currentUserName = '';
   currentUserEmail = '';
+  currentUserPhone = '';
+  totalShares = 0;
+  isJoining = false;
+
+  private detailMap?: L.Map;
+  private detailMarker?: L.Marker;
+  private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815];
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1200&q=80';
 
@@ -52,7 +61,7 @@ export class EventDetailComponent implements OnInit {
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
     private readonly participantService: ParticipantService,
-    private readonly sanitizer: DomSanitizer
+    private readonly shareService: ShareService
   ) {}
 
   ngOnInit(): void {
@@ -73,7 +82,16 @@ export class EventDetailComponent implements OnInit {
     this.loadComments(id);
     this.loadCommentCount(id);
     this.loadParticipants(id);
+    this.loadShares(id);
     this.selectedReaction = this.readLocalReaction(id, this.currentUserId);
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initDetailMap());
+  }
+
+  ngOnDestroy(): void {
+    this.detailMap?.remove();
   }
 
   private loadEvent(id: number): void {
@@ -254,6 +272,62 @@ export class EventDetailComponent implements OnInit {
     return !!this.currentUserId && comment.userId === this.currentUserId;
   }
 
+  participateInEvent(): void {
+    if (!this.eventId || !this.currentUserId || !this.currentUserEmail) {
+      this.errorMessage = 'You must be logged in to participate.';
+      return;
+    }
+
+    const alreadyParticipant = this.participants.some(participant =>
+      (participant.userId && participant.userId === this.currentUserId)
+      || (!!participant.email && participant.email.toLowerCase() === this.currentUserEmail.toLowerCase())
+    );
+
+    if (alreadyParticipant) {
+      this.errorMessage = 'You are already participating in this event.';
+      return;
+    }
+
+    this.isJoining = true;
+    this.participantService.add({
+      eventId: this.eventId,
+      fullName: this.currentUserName,
+      email: this.currentUserEmail,
+      phone: this.currentUserPhone || undefined,
+      userId: this.currentUserId
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'You are now participating in this event.';
+        this.errorMessage = '';
+        this.isJoining = false;
+        this.loadParticipants(this.eventId!);
+        this.loadEvent(this.eventId!);
+      },
+      error: () => {
+        this.errorMessage = 'Unable to register participation.';
+        this.isJoining = false;
+      }
+    });
+  }
+
+  shareOnFacebook(): void {
+    if (!this.eventId) {
+      return;
+    }
+
+    this.shareService.shareEvent(this.eventId).subscribe({
+      next: response => {
+        if (response?.shareUrl) {
+          window.open(response.shareUrl, '_blank');
+        }
+        this.loadShares(this.eventId!);
+      },
+      error: () => {
+        this.errorMessage = 'Unable to share event right now.';
+      }
+    });
+  }
+
   private loadReactionSummary(eventId: number): void {
     this.reactionService.getSummary(eventId).subscribe({
       next: summary => {
@@ -301,6 +375,17 @@ export class EventDetailComponent implements OnInit {
     });
   }
 
+  private loadShares(eventId: number): void {
+    this.shareService.getSummary(eventId).subscribe({
+      next: summary => {
+        this.totalShares = Number(summary?.totalShares || 0);
+      },
+      error: () => {
+        this.totalShares = 0;
+      }
+    });
+  }
+
   private loadGallery(id: number): void {
     this.eventService.getGallery(id).subscribe({
       next: images => {
@@ -322,24 +407,6 @@ export class EventDetailComponent implements OnInit {
         this.gallery = [];
       }
     });
-  }
-
-  private buildMapUrl(latitude?: number | null, longitude?: number | null): SafeResourceUrl | null {
-    if (!this.hasValidCoordinates(latitude, longitude)) {
-      return null;
-    }
-
-    const lat = Number(latitude);
-    const lng = Number(longitude);
-
-    const delta = 0.01;
-    const left = lng - delta;
-    const right = lng + delta;
-    const bottom = lat - delta;
-    const top = lat + delta;
-    const rawUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${left},${bottom},${right},${top}&layer=mapnik&marker=${lat},${lng}`;
-
-    return this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);
   }
 
   private buildMapOpenUrl(latitude?: number | null, longitude?: number | null): string | null {
@@ -367,8 +434,8 @@ export class EventDetailComponent implements OnInit {
   private applyLoadedEvent(event: EventDto): void {
     this.event = event;
     this.activeImageUrl = event.imageUrl?.trim() || null;
-    this.mapUrl = this.buildMapUrl(event.latitude, event.longitude);
     this.mapOpenUrl = this.buildMapOpenUrl(event.latitude, event.longitude);
+    this.updateDetailMap(event.latitude, event.longitude);
   }
 
   getAvailablePlaces(): number | 'N/A' {
@@ -447,6 +514,49 @@ export class EventDetailComponent implements OnInit {
         }).format(date);
   }
 
+  getImageSlides(): string[] {
+    const slides = [this.getEventCover(), ...this.gallery.map(image => this.getGalleryImage(image))]
+      .filter(url => !!url?.trim());
+    return Array.from(new Set(slides));
+  }
+
+  getImageCount(): number {
+    return this.getImageSlides().length;
+  }
+
+  getActiveImageIndex(): number {
+    const slides = this.getImageSlides();
+    if (slides.length === 0) {
+      return 0;
+    }
+
+    const current = this.getDisplayedImage();
+    const index = slides.indexOf(current);
+    return index >= 0 ? index : 0;
+  }
+
+  previousImage(): void {
+    const slides = this.getImageSlides();
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const currentIndex = this.getActiveImageIndex();
+    const nextIndex = (currentIndex - 1 + slides.length) % slides.length;
+    this.activeImageUrl = slides[nextIndex];
+  }
+
+  nextImage(): void {
+    const slides = this.getImageSlides();
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const currentIndex = this.getActiveImageIndex();
+    const nextIndex = (currentIndex + 1) % slides.length;
+    this.activeImageUrl = slides[nextIndex];
+  }
+
   getStatusBadgeClass(status?: string): string {
     switch ((status || '').toUpperCase()) {
       case 'EN_COURS':
@@ -478,7 +588,42 @@ export class EventDetailComponent implements OnInit {
     this.currentUserName = `${firstName} ${lastName}`.trim();
 
     const email = storedUser?.email?.trim();
+    const phone = storedUser?.phone?.trim();
     this.currentUserEmail = email || (this.currentUserId ? `user-${this.currentUserId}@local.user` : '');
+    this.currentUserPhone = phone || '';
+  }
+
+  private initDetailMap(): void {
+    if (!this.detailMapContainer?.nativeElement || this.detailMap) {
+      return;
+    }
+
+    this.detailMap = L.map(this.detailMapContainer.nativeElement).setView(this.defaultCenter, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.detailMap);
+
+    this.updateDetailMap(this.event?.latitude, this.event?.longitude);
+    setTimeout(() => this.detailMap?.invalidateSize(), 0);
+  }
+
+  private updateDetailMap(latitude?: number | null, longitude?: number | null): void {
+    if (!this.detailMap) {
+      return;
+    }
+
+    if (!this.hasValidCoordinates(latitude, longitude)) {
+      this.detailMarker?.remove();
+      this.detailMap.setView(this.defaultCenter, 11);
+      return;
+    }
+
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    this.detailMarker?.remove();
+    this.detailMarker = L.marker([lat, lng]).addTo(this.detailMap);
+    this.detailMap.setView([lat, lng], 14);
   }
 
   private reactionLocalKey(eventId: number, userId: number): string {

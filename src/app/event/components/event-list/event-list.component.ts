@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
+import { forkJoin, map, Observable, of } from 'rxjs';
 import { CategoryDto } from '../../models/category.model';
 import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
@@ -48,6 +49,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   private map?: L.Map;
   private marker?: L.Marker;
   private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815];
+  mainImageFile: File | null = null;
+  galleryFiles: File[] = [];
 
   createModel: CreateEventRequest = {
     name: '',
@@ -57,7 +60,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     longitude: undefined,
     startDate: '',
     endDate: '',
-    status: 'PLANIFIE',
+    status: 'EN_COURS',
     categoryId: 0,
     maxCapacity: 1,
     currentParticipants: 0
@@ -138,11 +141,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.createModel.status) {
-      this.errorMessage = 'Status is required.';
-      return;
-    }
-
     if (!this.createModel.maxCapacity || this.createModel.maxCapacity <= 0) {
       this.errorMessage = 'Maximum capacity must be greater than 0.';
       return;
@@ -164,6 +162,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       location,
       startDate: this.formatDateForBackend(startDate),
       endDate: this.formatDateForBackend(endDate),
+      status: 'EN_COURS',
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
@@ -174,13 +173,33 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.create(payload).subscribe({
       next: created => {
-        if (created.id && this.currentUserId) {
-          this.ownershipService.addOwnedEvent(created.id, this.currentUserId);
+        const eventId = created.id;
+        if (!eventId) {
+          this.successMessage = 'Event has been added successfully.';
+          this.resetCreateForm();
+          this.initCreateMarker();
+          this.loadAll();
+          return;
         }
-        this.successMessage = 'Event created successfully.';
-        this.resetCreateForm();
-        this.initCreateMarker();
-        this.loadAll();
+
+        if (this.currentUserId) {
+          this.ownershipService.addOwnedEvent(eventId, this.currentUserId);
+        }
+
+        this.uploadEventImages(eventId).subscribe({
+          next: () => {
+            this.successMessage = 'Event has been added successfully.';
+            this.resetCreateForm();
+            this.initCreateMarker();
+            this.loadAll();
+          },
+          error: () => {
+            this.successMessage = 'Event has been added successfully, but some images could not be uploaded.';
+            this.resetCreateForm();
+            this.initCreateMarker();
+            this.loadAll();
+          }
+        });
       },
       error: () => {
         this.errorMessage = 'Error while creating event.';
@@ -376,13 +395,31 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       longitude: undefined,
       startDate: '',
       endDate: '',
-      status: 'PLANIFIE',
+      status: 'EN_COURS',
       categoryId: this.categories[0]?.id || 0,
       userId: this.currentUserId || undefined,
       maxCapacity: 1,
       currentParticipants: 0
     };
     this.selectedCoordinates = '';
+    this.mainImageFile = null;
+    this.galleryFiles = [];
+  }
+
+  onMainImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.mainImageFile = file;
+  }
+
+  onGallerySelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    this.galleryFiles = files;
+  }
+
+  removeGalleryFile(index: number): void {
+    this.galleryFiles = this.galleryFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   loadCategories(): void {
@@ -570,6 +607,24 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
     });
+  }
+
+  private uploadEventImages(eventId: number): Observable<void> {
+    const uploads: Observable<unknown>[] = [];
+
+    if (this.mainImageFile) {
+      uploads.push(this.eventService.uploadMainImage(eventId, this.mainImageFile));
+    }
+
+    this.galleryFiles.forEach(file => {
+      uploads.push(this.eventService.addGalleryImage(eventId, file));
+    });
+
+    if (uploads.length === 0) {
+      return of(void 0);
+    }
+
+    return forkJoin(uploads).pipe(map(() => void 0));
   }
 
 }

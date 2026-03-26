@@ -26,6 +26,7 @@ src/app/event/
 │   ├── reaction.service.ts           # Reaction add/update, delete, summary
 │   ├── comment.service.ts            # Comment CRUD, by event, count
 │   ├── participant.service.ts        # Participant list, count by event
+│   ├── share.service.ts              # Facebook share + share summary
 │   └── event-ownership.service.ts    # Local userId-to-eventIds mapping
 │
 ├── components/
@@ -70,6 +71,25 @@ User Interface (Component)
 4. Backend validates, stores in DB, returns EventDto with ID
 5. Component stores ownership in localStorage via `EventOwnershipService`
 6. Component resets form and reloads event list
+
+### Map Implementation (Leaflet) — Frontend & Backend Contract
+
+Business logic is unchanged. Only the map rendering technology was switched to Leaflet in the frontend.
+
+**Frontend (Angular + Leaflet):**
+- `event-list.component.ts` initializes a Leaflet map and draggable marker for event creation.
+- `event-detail.component.ts` initializes a read-only Leaflet map centered on event coordinates.
+- Tile source remains OpenStreetMap (`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`).
+- User interactions still produce the same payload fields: `latitude`, `longitude`, `location`.
+
+**Backend (Spring Boot):**
+- No controller/service/domain change required for map migration.
+- Existing API contract is preserved (`latitude`, `longitude`, optional `fullAddress`).
+- Geocoding/reverse-geocoding behavior remains server-side and unchanged.
+
+**Compatibility Note:**
+- Old OpenLayers/OpenStreetMap iframe display is replaced by Leaflet components.
+- Event creation, filtering, and persistence logic remain exactly the same.
 
 ---
 

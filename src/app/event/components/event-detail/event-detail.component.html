@@ -14,15 +14,35 @@
 					<div class="relative overflow-hidden rounded-2xl border border-border">
 						<img [src]="getDisplayedImage()" [alt]="event.name || 'Event'" class="h-80 w-full object-cover lg:h-[26rem]" />
 						<div class="event-card-overlay"></div>
+						<div class="hero-info-overlay">
+							<h2 class="text-2xl font-bold text-white">{{ event.name || 'Event' }}</h2>
+							<p class="text-sm text-slate-200">{{ event.location || 'N/A' }}</p>
+						</div>
 						<span class="absolute left-4 top-4" [ngClass]="getStatusBadgeClass(event.status)">
 							{{ event.status || 'PLANNED' }}
 						</span>
-						<button type="button" class="gallery-next-btn" (click)="scrollGallery('right')">→ Gallery</button>
+						<button type="button" class="carousel-nav-btn left" (click)="previousImage()" [disabled]="getImageCount() <= 1">←</button>
+						<button type="button" class="carousel-nav-btn right" (click)="nextImage()" [disabled]="getImageCount() <= 1">→</button>
+						<div class="carousel-count">{{ getActiveImageIndex() + 1 }} / {{ getImageCount() }}</div>
 					</div>
+
+					<div #galleryStrip class="gallery-strip" *ngIf="gallery.length > 0; else emptyGalleryTop">
+						<button
+							type="button"
+							*ngFor="let image of gallery"
+							class="gallery-thumb"
+							(click)="setActiveImage(getGalleryImage(image))"
+						>
+							<img [src]="getGalleryImage(image)" alt="Gallery image" class="h-full w-full object-cover" />
+						</button>
+					</div>
+
+					<ng-template #emptyGalleryTop>
+						<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">No gallery images available.</p>
+					</ng-template>
 
 					<div class="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
 						<div class="space-y-3 text-sm text-slate-700">
-							<h1 class="text-2xl font-bold text-foreground">{{ event.name || 'Event' }}</h1>
 							<p><strong>Description:</strong> {{ event.description || 'N/A' }}</p>
 							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
 							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
@@ -31,18 +51,19 @@
 							<p><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</p>
 							<p><strong>Available seats:</strong> {{ getAvailablePlaces() }}</p>
 							<p><strong>Category:</strong> {{ event.categoryName || ('#' + (event.categoryId ?? 'N/A')) }}</p>
+
+							<div class="mt-4 flex flex-wrap gap-2">
+								<button type="button" class="btn-primary !px-4 !py-2" (click)="participateInEvent()" [disabled]="isJoining">
+									{{ isJoining ? 'Joining...' : 'Participate in this event' }}
+								</button>
+								<button type="button" class="btn-secondary !px-4 !py-2" (click)="shareOnFacebook()">📤 Share on Facebook</button>
+							</div>
+							<p class="text-sm text-slate-600">📊 Shares: {{ totalShares }}</p>
 						</div>
 
 						<div class="space-y-3">
-							<iframe
-								*ngIf="mapUrl"
-								[src]="mapUrl"
-								class="h-72 w-full rounded-2xl border border-border"
-								loading="lazy"
-								referrerpolicy="no-referrer-when-downgrade"
-								title="Event location map"
-							></iframe>
-							<p *ngIf="!mapUrl" class="text-sm text-slate-500">Coordinates are not available for map view.</p>
+							<div #detailMapContainer class="detail-map"></div>
+							<p *ngIf="!event.latitude || !event.longitude" class="text-sm text-slate-500">Coordinates are not available for map view.</p>
 							<a *ngIf="mapOpenUrl" [href]="mapOpenUrl" target="_blank" rel="noreferrer" class="inline-flex text-sm font-medium text-primary hover:underline">
 								Open in OpenStreetMap
 							</a>
@@ -126,30 +147,7 @@
 						</div>
 					</div>
 
-					<div class="space-y-3">
-						<div class="flex items-center justify-between gap-3">
-							<h3 class="text-lg font-semibold text-foreground">Gallery</h3>
-							<div class="flex gap-2">
-								<button type="button" class="btn-secondary !px-3 !py-2" (click)="scrollGallery('left')">←</button>
-								<button type="button" class="btn-secondary !px-3 !py-2" (click)="scrollGallery('right')">→</button>
-							</div>
-						</div>
 
-						<div #galleryStrip class="gallery-strip" *ngIf="gallery.length > 0; else emptyGallery">
-							<button
-								type="button"
-								*ngFor="let image of gallery"
-								class="gallery-thumb"
-								(click)="setActiveImage(getGalleryImage(image))"
-							>
-								<img [src]="getGalleryImage(image)" alt="Gallery image" class="h-full w-full object-cover" />
-							</button>
-						</div>
-
-						<ng-template #emptyGallery>
-							<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">No gallery images available.</p>
-						</ng-template>
-					</div>
 				</div>
 			</article>
 		</div>
