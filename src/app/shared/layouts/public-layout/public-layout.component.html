@@ -20,6 +20,11 @@
 
           @if (featuresDropdownOpen()) {
           <div class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-white shadow-lg z-50">
+            <a routerLink="/lost-found"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Lost & Found Service
+            </a>
             <a routerLink="/collocation/offres"
               class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
@@ -44,6 +49,10 @@
             <a routerLink="/services/realestate" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
               Realestate Service
+            </a>
+            <a routerLink="/lost-found" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Lost & Found Service
             </a>
             <div class="border-t border-border my-1"></div>
             <a routerLink="/subs-payment" class="block px-4 py-2 text-sm font-semibold text-red-600 hover:bg-secondary"
@@ -100,6 +109,9 @@
         <a routerLink="/collocation/offres" class="block rounded-2xl px-3 py-2 hover:bg-secondary"
           (click)="closeMenu()">
           Collocation Service
+        </a>
+        <a routerLink="/lost-found" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Lost & Found Service
         </a>
         <a routerLink="/subs-payment" class="block rounded-2xl px-3 py-2 text-red-600 font-bold hover:bg-secondary"
           (click)="closeMenu()">
