@@ -48,7 +48,7 @@
   <!-- Modal Modifier -->
   <div *ngIf="showEditModal" class="modal-backdrop fade show"></div>
   <div *ngIf="showEditModal" class="modal fade show d-block" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content rounded-4 border-0 shadow">
         <div class="modal-header border-0">
           <h5 class="modal-title fw-bold"><i class="fas fa-edit text-warning me-2"></i> Modifier le trajet</h5>
@@ -59,14 +59,40 @@
 
           <form (ngSubmit)="submitEdit()">
             <div class="row g-3">
+              <!-- Depart avec Google Places Autocomplete -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Point de depart *</label>
-                <input type="text" class="form-control" [(ngModel)]="editTrajet.pointDepart" name="editPointDepart" required>
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
+                <input #editDepartInput type="text" class="form-control" [value]="editTrajet.pointDepart" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="editTrajet.lattitudeDepart" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ editTrajet.pointDepart }}
+                </small>
+              </div>
+              <!-- Arrivee avec Google Places Autocomplete -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
+                <input #editArriveeInput type="text" class="form-control" [value]="editTrajet.pointArrivee" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="editTrajet.latitudeArrivee" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ editTrajet.pointArrivee }}
+                </small>
+              </div>
+
+              <!-- Google Map -->
+              <div class="col-md-12">
+                <div #editMapContainer class="rounded-3 border" style="width: 100%; height: 300px;"></div>
+              </div>
+
+              <!-- Distance & Duree (auto-calcules) -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-road text-info me-1"></i> Distance (km)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="editTrajet.distance" name="editDistance" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold">Point d'arrivee *</label>
-                <input type="text" class="form-control" [(ngModel)]="editTrajet.pointArrivee" name="editPointArrivee" required>
+                <label class="form-label fw-bold"><i class="fas fa-clock text-info me-1"></i> Duree estimee (min)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="editTrajet.dureeEstimee" name="editDureeEstimee" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
               </div>
+
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de depart *</label>
                 <input type="datetime-local" class="form-control" [(ngModel)]="editTrajet.dateDepart" name="editDateDepart" required>
@@ -75,19 +101,11 @@
                 <label class="form-label fw-bold">Nombre de places</label>
                 <input type="number" class="form-control" [(ngModel)]="editTrajet.nombrePlaces" name="editNombrePlaces" min="1" (change)="onEditNombrePlacesChange()">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label fw-bold">Prix par passager (TND)</label>
                 <input type="number" class="form-control" [(ngModel)]="editTrajet.prixParPassager" name="editPrixParPassager" min="0" step="0.5">
               </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Distance (km)</label>
-                <input type="number" class="form-control" [(ngModel)]="editTrajet.distance" name="editDistance" min="0">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Duree estimee (min)</label>
-                <input type="number" class="form-control" [(ngModel)]="editTrajet.dureeEstimee" name="editDureeEstimee" min="0">
-              </div>
-              <div class="col-md-12">
+              <div class="col-md-6">
                 <label class="form-label fw-bold">Vehicule</label>
                 <select class="form-select" [(ngModel)]="editTrajet.vehicleId" name="editVehicleId">
                   <option [ngValue]="0" disabled>-- Choisir un vehicule --</option>

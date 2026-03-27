@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
+import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { Covoiturage, Reservation, Vehicule, StatusReservation } from '../../models/covoiturage.model';
+
+declare var google: any;
 
 @Component({
   selector: 'app-covoiturage-detail',
@@ -24,21 +27,26 @@ export class CovoiturageDetailComponent implements OnInit {
 
   StatusReservation = StatusReservation;
 
-  // Reservation existante du user
   myReservation: Reservation | null = null;
   loadingMyReservation = false;
 
-  // Confirm modal
   showConfirmModal = false;
   confirmModalTitle = '';
   confirmModalMessage = '';
   confirmModalIcon = '';
   confirmModalAction: (() => void) | null = null;
 
+  // Google Map
+  @ViewChild('detailMapContainer', { static: false }) mapContainer!: ElementRef;
+  private map: any;
+  private mapReady = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private covoiturageService: CovoiturageService
+    private covoiturageService: CovoiturageService,
+    private ngZone: NgZone,
+    private googleMapsLoader: GoogleMapsLoaderService
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +55,55 @@ export class CovoiturageDetailComponent implements OnInit {
     if (id) {
       this.loadCovoiturage(id);
     }
+  }
+
+  private initMap(): void {
+    if (this.mapReady || !this.mapContainer) return;
+
+    this.map = new google.maps.Map(this.mapContainer.nativeElement, {
+      zoom: 7,
+      center: { lat: 34.0, lng: 9.0 },
+      mapTypeControl: false,
+      streetViewControl: false
+    });
+
+    this.mapReady = true;
+  }
+
+  private showRouteOnMap(): void {
+    if (!this.covoiturage) return;
+    if (!this.covoiturage.lattitudeDepart || !this.covoiturage.latitudeArrivee) return;
+
+    // Load Google Maps then init
+    this.googleMapsLoader.load().then(() => {
+    setTimeout(() => {
+      this.initMap();
+      if (!this.map) return;
+
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({
+        map: this.map,
+        suppressMarkers: false,
+        polylineOptions: { strokeColor: '#dc3545', strokeWeight: 5 }
+      });
+
+      const request = {
+        origin: { lat: this.covoiturage!.lattitudeDepart, lng: this.covoiturage!.longitudeDepart },
+        destination: { lat: this.covoiturage!.latitudeArrivee, lng: this.covoiturage!.longitudeArrivee },
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+
+      directionsService.route(request, (result: any, status: any) => {
+        this.ngZone.run(() => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+          } else {
+            console.error('Directions request failed:', status);
+          }
+        });
+      });
+    }, 100);
+    });
   }
 
   loadCovoiturage(id: number): void {
@@ -65,6 +122,8 @@ export class CovoiturageDetailComponent implements OnInit {
         } else {
           this.loadMyReservation(id);
         }
+
+        this.showRouteOnMap();
       },
       error: (err) => {
         this.error = 'Impossible de charger ce trajet.';
@@ -106,7 +165,6 @@ export class CovoiturageDetailComponent implements OnInit {
     });
   }
 
-  // Nouvelle reservation
   reserver(): void {
     if (!this.covoiturage) return;
     this.reservationError = '';
@@ -136,7 +194,6 @@ export class CovoiturageDetailComponent implements OnInit {
     });
   }
 
-  // Modifier reservation existante (EN_ATTENTE uniquement)
   modifierReservation(): void {
     if (!this.myReservation || !this.covoiturage) return;
     this.reservationError = '';
@@ -164,7 +221,6 @@ export class CovoiturageDetailComponent implements OnInit {
     });
   }
 
-  // Annuler reservation (EN_ATTENTE uniquement)
   annulerReservation(): void {
     if (!this.myReservation) return;
     this.openConfirmModal(

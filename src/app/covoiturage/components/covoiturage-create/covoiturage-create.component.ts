@@ -1,14 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
+import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { Covoiturage, Vehicule } from '../../models/covoiturage.model';
+
+declare var google: any;
 
 @Component({
   selector: 'app-covoiturage-create',
   templateUrl: './covoiturage-create.component.html',
   styleUrls: ['./covoiturage-create.component.scss']
 })
-export class CovoiturageCreateComponent implements OnInit {
+export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDestroy {
 
   covoiturage: Covoiturage = {
     pointDepart: '',
@@ -20,7 +23,11 @@ export class CovoiturageCreateComponent implements OnInit {
     distance: 0,
     dureeEstimee: 0,
     idDriver: 0,
-    vehicleId: 0
+    vehicleId: 0,
+    lattitudeDepart: 0,
+    longitudeDepart: 0,
+    latitudeArrivee: 0,
+    longitudeArrivee: 0
   };
 
   vehicules: Vehicule[] = [];
@@ -40,9 +47,21 @@ export class CovoiturageCreateComponent implements OnInit {
   selectedImageFile: File | null = null;
   imagePreview: string | null = null;
 
+  // Google Maps
+  @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
+  @ViewChild('departInput', { static: false }) departInput!: ElementRef;
+  @ViewChild('arriveeInput', { static: false }) arriveeInput!: ElementRef;
+  private map: any;
+  private directionsService: any;
+  private directionsRenderer: any;
+  private departMarker: any;
+  private arriveeMarker: any;
+
   constructor(
     private covoiturageService: CovoiturageService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone,
+    private googleMapsLoader: GoogleMapsLoaderService
   ) {}
 
   ngOnInit(): void {
@@ -50,6 +69,117 @@ export class CovoiturageCreateComponent implements OnInit {
     this.covoiturage.idDriver = this.currentUserId;
     this.loadVehicules();
   }
+
+  ngAfterViewInit(): void {
+    this.googleMapsLoader.load().then(() => this.initMap());
+  }
+
+  ngOnDestroy(): void {
+    // Google Maps cleans up automatically
+  }
+
+  initMap(): void {
+    // Center on Tunisia
+    const tunisiaCenter = { lat: 34.0, lng: 9.0 };
+
+    this.map = new google.maps.Map(this.mapContainer.nativeElement, {
+      zoom: 7,
+      center: tunisiaCenter,
+      mapTypeControl: false,
+      streetViewControl: false
+    });
+
+    this.directionsService = new google.maps.DirectionsService();
+    this.directionsRenderer = new google.maps.DirectionsRenderer({
+      map: this.map,
+      suppressMarkers: false,
+      polylineOptions: { strokeColor: '#dc3545', strokeWeight: 5 }
+    });
+
+    // Setup autocomplete for departure
+    const departAutocomplete = new google.maps.places.Autocomplete(this.departInput.nativeElement, {
+      types: ['geocode', 'establishment']
+    });
+    departAutocomplete.addListener('place_changed', () => {
+      this.ngZone.run(() => {
+        const place = departAutocomplete.getPlace();
+        if (!place.geometry) return;
+
+        this.covoiturage.pointDepart = place.formatted_address || place.name;
+        this.covoiturage.lattitudeDepart = place.geometry.location.lat();
+        this.covoiturage.longitudeDepart = place.geometry.location.lng();
+        this.updateMapAndRoute();
+      });
+    });
+
+    // Setup autocomplete for arrival
+    const arriveeAutocomplete = new google.maps.places.Autocomplete(this.arriveeInput.nativeElement, {
+      types: ['geocode', 'establishment']
+    });
+    arriveeAutocomplete.addListener('place_changed', () => {
+      this.ngZone.run(() => {
+        const place = arriveeAutocomplete.getPlace();
+        if (!place.geometry) return;
+
+        this.covoiturage.pointArrivee = place.formatted_address || place.name;
+        this.covoiturage.latitudeArrivee = place.geometry.location.lat();
+        this.covoiturage.longitudeArrivee = place.geometry.location.lng();
+        this.updateMapAndRoute();
+      });
+    });
+  }
+
+  // ========== MAP & ROUTE ==========
+
+  private updateMapAndRoute(): void {
+    // Clear previous markers
+    if (this.departMarker) { this.departMarker.setMap(null); this.departMarker = null; }
+    if (this.arriveeMarker) { this.arriveeMarker.setMap(null); this.arriveeMarker = null; }
+    this.directionsRenderer.setDirections({ routes: [] });
+
+    const hasDepart = this.covoiturage.lattitudeDepart && this.covoiturage.longitudeDepart;
+    const hasArrivee = this.covoiturage.latitudeArrivee && this.covoiturage.longitudeArrivee;
+
+    // If both points are set, calculate route
+    if (hasDepart && hasArrivee) {
+      this.calculateRoute();
+    } else if (hasDepart) {
+      const pos = { lat: this.covoiturage.lattitudeDepart, lng: this.covoiturage.longitudeDepart };
+      this.departMarker = new google.maps.Marker({ position: pos, map: this.map, label: 'A' });
+      this.map.setCenter(pos);
+      this.map.setZoom(12);
+    } else if (hasArrivee) {
+      const pos = { lat: this.covoiturage.latitudeArrivee, lng: this.covoiturage.longitudeArrivee };
+      this.arriveeMarker = new google.maps.Marker({ position: pos, map: this.map, label: 'B' });
+      this.map.setCenter(pos);
+      this.map.setZoom(12);
+    }
+  }
+
+  private calculateRoute(): void {
+    const request = {
+      origin: { lat: this.covoiturage.lattitudeDepart, lng: this.covoiturage.longitudeDepart },
+      destination: { lat: this.covoiturage.latitudeArrivee, lng: this.covoiturage.longitudeArrivee },
+      travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    this.directionsService.route(request, (result: any, status: any) => {
+      this.ngZone.run(() => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          this.directionsRenderer.setDirections(result);
+
+          const leg = result.routes[0].legs[0];
+          // distance in km, duration in minutes
+          this.covoiturage.distance = Math.round(leg.distance.value / 1000);
+          this.covoiturage.dureeEstimee = Math.round(leg.duration.value / 60);
+        } else {
+          console.error('Directions request failed:', status);
+        }
+      });
+    });
+  }
+
+  // ========== EXISTING METHODS ==========
 
   loadVehicules(): void {
     this.covoiturageService.getVehiculesByUtilisateur(this.currentUserId).subscribe({
@@ -72,6 +202,11 @@ export class CovoiturageCreateComponent implements OnInit {
 
     if (!this.covoiturage.pointDepart || !this.covoiturage.pointArrivee || !this.covoiturage.dateDepart) {
       this.error = 'Veuillez remplir tous les champs obligatoires.';
+      return;
+    }
+
+    if (!this.covoiturage.lattitudeDepart || !this.covoiturage.latitudeArrivee) {
+      this.error = 'Veuillez selectionner les points de depart et d\'arrivee depuis les suggestions.';
       return;
     }
 

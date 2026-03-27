@@ -13,16 +13,41 @@
 
           <form (ngSubmit)="submit()">
             <div class="row g-3">
-              <!-- Depart -->
+              <!-- Depart avec Google Places Autocomplete -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Point de depart *</label>
-                <input type="text" class="form-control" [(ngModel)]="covoiturage.pointDepart" name="pointDepart" required placeholder="Ex: Tunis">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
+                <input #departInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="covoiturage.lattitudeDepart" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointDepart }}
+                </small>
               </div>
-              <!-- Arrivee -->
+
+              <!-- Arrivee avec Google Places Autocomplete -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Point d'arrivee *</label>
-                <input type="text" class="form-control" [(ngModel)]="covoiturage.pointArrivee" name="pointArrivee" required placeholder="Ex: Sousse">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
+                <input #arriveeInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="covoiturage.latitudeArrivee" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointArrivee }}
+                </small>
               </div>
+
+              <!-- Google Map -->
+              <div class="col-md-12">
+                <div #mapContainer class="rounded-3 border" style="width: 100%; height: 350px;"></div>
+              </div>
+
+              <!-- Distance & Duree (auto-calcules, read-only) -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-road text-info me-1"></i> Distance (km)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="covoiturage.distance" name="distance" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-clock text-info me-1"></i> Duree estimee (min)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="covoiturage.dureeEstimee" name="dureeEstimee" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
+              </div>
+
               <!-- Date -->
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de depart *</label>
@@ -34,19 +59,9 @@
                 <input type="number" class="form-control" [(ngModel)]="covoiturage.nombrePlaces" name="nombrePlaces" min="1" (change)="onNombrePlacesChange()">
               </div>
               <!-- Prix -->
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label fw-bold">Prix par passager (TND)</label>
                 <input type="number" class="form-control" [(ngModel)]="covoiturage.prixParPassager" name="prixParPassager" min="0" step="0.5">
-              </div>
-              <!-- Distance -->
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Distance (km)</label>
-                <input type="number" class="form-control" [(ngModel)]="covoiturage.distance" name="distance" min="0">
-              </div>
-              <!-- Duree -->
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Duree estimee (min)</label>
-                <input type="number" class="form-control" [(ngModel)]="covoiturage.dureeEstimee" name="dureeEstimee" min="0">
               </div>
 
               <!-- ========== VEHICULE SECTION ========== -->

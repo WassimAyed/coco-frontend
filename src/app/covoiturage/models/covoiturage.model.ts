@@ -10,6 +10,10 @@ export interface Covoiturage {
   dureeEstimee: number;
   idDriver: number;
   vehicleId: number;
+  lattitudeDepart: number;
+  longitudeDepart: number;
+  latitudeArrivee: number;
+  longitudeArrivee: number;
 }
 
 export interface Reservation {

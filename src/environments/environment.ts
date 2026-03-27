@@ -1,4 +1,5 @@
 export const environment = {
+  googleMapsApiKey: 'AIzaSyBIaXbRrGVgkj8Ffre1-dHYRrEokUrp-w0',
   apiBaseUrl: 'http://localhost:8090/',
   auth: {
     loginPath: '/auth/login',
