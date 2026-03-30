@@ -1,26 +1,22 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import * as L from 'leaflet';
-import 'leaflet-defaulticon-compatibility';
+import Collection from 'ol/Collection';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import Translate from 'ol/interaction/Translate';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import Map from 'ol/Map';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
+import View from 'ol/View';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { CategoryDto } from '../../models/category.model';
+import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
 import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
-import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
-
-const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png';
-const iconUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png';
-const shadowUrl = 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png';
-const iconDefault = L.icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-});
-L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
   selector: 'app-event-list',
@@ -45,10 +41,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   nearbyRadiusKm = 5;
   selectedCoordinates = '';
   currentUserId: number | null = null;
+  createFieldErrors: Record<string, string> = {};
 
-  private map?: L.Map;
-  private marker?: L.Marker;
-  private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815];
+  private map?: Map;
+  private markerFeature?: Feature<Point>;
+  private markerFeatures?: Collection<Feature<Point>>;
+  private markerSource?: VectorSource;
+  private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
   mainImageFile: File | null = null;
   galleryFiles: File[] = [];
 
@@ -58,6 +57,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     location: '',
     latitude: undefined,
     longitude: undefined,
+    fullAddress: '',
     startDate: '',
     endDate: '',
     status: 'EN_COURS',
@@ -86,13 +86,14 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.map?.remove();
+    this.map?.setTarget(undefined);
   }
 
   createEvent(): void {
-    const name = this.cleanString(this.createModel.name);
-    const location = this.cleanString(this.createModel.location);
+    const name = this.cleanString(this.createModel.name) || '';
+    const location = this.cleanString(this.createModel.location) || '';
     const description = this.cleanString(this.createModel.description);
+    const fullAddress = this.cleanString(this.createModel.fullAddress);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
 
@@ -101,57 +102,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!name) {
-      this.errorMessage = 'Event name is required.';
-      return;
-    }
-
-    if (name.length < 3 || name.length > 100) {
-      this.errorMessage = 'Event name must be between 3 and 100 characters.';
-      return;
-    }
-
-    if (!location) {
-      this.errorMessage = 'Location is required.';
-      return;
-    }
-
-    if (!startDate || !endDate) {
-      this.errorMessage = 'Start and end dates are required.';
-      return;
-    }
-
-    if (startDate.getTime() <= Date.now()) {
-      this.errorMessage = 'Start date must be in the future.';
-      return;
-    }
-
-    if (endDate.getTime() <= startDate.getTime()) {
-      this.errorMessage = 'End date must be after start date.';
-      return;
-    }
-
-    if (description && description.length > 500) {
-      this.errorMessage = 'Description must not exceed 500 characters.';
-      return;
-    }
-
-    if (!this.createModel.categoryId || this.createModel.categoryId <= 0) {
-      this.errorMessage = 'Category is required.';
-      return;
-    }
-
-    if (!this.createModel.maxCapacity || this.createModel.maxCapacity <= 0) {
-      this.errorMessage = 'Maximum capacity must be greater than 0.';
-      return;
-    }
-
-    if (!this.hasMapCoordinates()) {
-      this.errorMessage = 'Please select location on the map.';
-      return;
-    }
-
     this.isLoading = true;
+    this.createFieldErrors = {};
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -159,10 +111,10 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       ...this.createModel,
       name,
       description,
+      fullAddress,
       location,
-      startDate: this.formatDateForBackend(startDate),
-      endDate: this.formatDateForBackend(endDate),
-      status: 'EN_COURS',
+      startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
+      endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
@@ -201,8 +153,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         });
       },
-      error: () => {
-        this.errorMessage = 'Error while creating event.';
+      error: (error: HttpErrorResponse) => {
+        this.handleApiError(error, 'Error while creating event.');
         this.isLoading = false;
       }
     });
@@ -393,6 +345,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       location: '',
       latitude: undefined,
       longitude: undefined,
+      fullAddress: '',
       startDate: '',
       endDate: '',
       status: 'EN_COURS',
@@ -401,6 +354,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       maxCapacity: 1,
       currentParticipants: 0
     };
+    this.createFieldErrors = {};
     this.selectedCoordinates = '';
     this.mainImageFile = null;
     this.galleryFiles = [];
@@ -426,9 +380,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.eventService.getCategories().subscribe({
       next: categories => {
         this.categories = categories || [];
-        if (!this.createModel.categoryId && this.categories.length > 0) {
-          this.createModel.categoryId = this.categories[0].id;
-        }
       },
       error: () => {
         this.errorMessage = 'Unable to load categories.';
@@ -441,37 +392,65 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.map = L.map(this.createMapContainer.nativeElement).setView(this.defaultCenter, 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
+    this.markerSource = new VectorSource();
+    const markerLayer = new VectorLayer({ source: this.markerSource });
+
+    this.map = new Map({
+      target: this.createMapContainer.nativeElement,
+      layers: [new TileLayer({ source: new OSM() }), markerLayer],
+      view: new View({
+        center: fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]),
+        zoom: 12
+      })
+    });
+
+    this.markerFeatures = new Collection<Feature<Point>>();
+    const translate = new Translate({ features: this.markerFeatures });
+    translate.on('translateend', () => {
+      const geometry = this.markerFeature?.getGeometry();
+      if (!geometry) {
+        return;
+      }
+      const [lng, lat] = toLonLat(geometry.getCoordinates());
+      this.setCoordinatesFromMap(lat, lng, false);
+    });
+    this.map.addInteraction(translate);
 
     this.initCreateMarker();
 
-    this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.setCoordinatesFromMap(e.latlng.lat, e.latlng.lng);
+    this.map.on('click', event => {
+      const [lng, lat] = toLonLat(event.coordinate);
+      this.setCoordinatesFromMap(lat, lng);
     });
-
-    setTimeout(() => this.map?.invalidateSize(), 0);
   }
 
   private initCreateMarker(): void {
     const lat = this.createModel.latitude ?? this.defaultCenter[0];
     const lng = this.createModel.longitude ?? this.defaultCenter[1];
 
-    if (!this.map) {
+    if (!this.map || !this.markerSource || !this.markerFeatures) {
       return;
     }
 
-    this.marker?.remove();
-    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
-    this.marker.on('moveend', (event: L.LeafletEvent) => {
-      const target = event.target as L.Marker;
-      const point = target.getLatLng();
-      this.setCoordinatesFromMap(point.lat, point.lng, false);
+    this.markerFeature = new Feature({
+      geometry: new Point(fromLonLat([lng, lat]))
     });
+    this.markerFeature.setStyle(new Style({
+      image: new CircleStyle({
+        radius: 7,
+        fill: new Fill({ color: '#0f766e' }),
+        stroke: new Stroke({ color: '#ffffff', width: 2 })
+      })
+    }));
 
-    this.map.setView([lat, lng], 12);
+    this.markerSource.clear();
+    this.markerFeatures.clear();
+    this.markerSource.addFeature(this.markerFeature);
+    this.markerFeatures.push(this.markerFeature);
+
+    this.map.getView().setCenter(fromLonLat([lng, lat]));
+    this.map.getView().setZoom(12);
+
     if (this.hasMapCoordinates()) {
       this.selectedCoordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
@@ -482,12 +461,15 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.createModel.longitude = Number(longitude.toFixed(7));
     this.selectedCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
 
-    if (this.marker) {
-      this.marker.setLatLng([this.createModel.latitude, this.createModel.longitude]);
+    if (this.markerFeature) {
+      this.markerFeature.setGeometry(new Point(fromLonLat([this.createModel.longitude, this.createModel.latitude])));
     }
 
-    if (moveMap) {
-      this.map?.panTo([this.createModel.latitude, this.createModel.longitude]);
+    if (moveMap && this.map) {
+      this.map.getView().animate({
+        center: fromLonLat([this.createModel.longitude, this.createModel.latitude]),
+        duration: 150
+      });
     }
   }
 
@@ -521,6 +503,63 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private toOptionalNumber(value?: number | null): number | undefined {
     return value === null || value === undefined || Number.isNaN(Number(value)) ? undefined : Number(value);
+  }
+
+  private handleApiError(error: HttpErrorResponse, fallbackMessage: string): void {
+    this.createFieldErrors = this.extractFieldErrors(error);
+    this.errorMessage = this.buildGlobalError(error, fallbackMessage, this.createFieldErrors);
+  }
+
+  private extractFieldErrors(error: HttpErrorResponse): Record<string, string> {
+    const source = error?.error;
+    if (source && typeof source === 'object' && source.fieldErrors && typeof source.fieldErrors === 'object') {
+      return source.fieldErrors as Record<string, string>;
+    }
+
+    const message = source?.message;
+    if (typeof message !== 'string') {
+      return {};
+    }
+
+    return this.parseMapString(message);
+  }
+
+  private parseMapString(value: string): Record<string, string> {
+    const trimmed = value.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
+      return {};
+    }
+
+    const raw = trimmed.slice(1, -1).trim();
+    if (!raw) {
+      return {};
+    }
+
+    const result: Record<string, string> = {};
+    const pairs = raw.split(', ');
+    pairs.forEach(pair => {
+      const separatorIndex = pair.indexOf('=');
+      if (separatorIndex <= 0) {
+        return;
+      }
+
+      const field = pair.slice(0, separatorIndex).trim();
+      const message = pair.slice(separatorIndex + 1).trim();
+      if (field && message) {
+        result[field] = message;
+      }
+    });
+
+    return result;
+  }
+
+  private buildGlobalError(error: HttpErrorResponse, fallbackMessage: string, fieldErrors: Record<string, string>): string {
+    if (Object.keys(fieldErrors).length > 0) {
+      return 'Please correct the highlighted fields.';
+    }
+
+    const message = error?.error?.message || error?.error?.error || error?.message;
+    return typeof message === 'string' && message.trim() ? message : fallbackMessage;
   }
 
   getEventCover(event: EventDto): string {
@@ -603,7 +642,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
           );
         },
         error: () => {
-          // le backend peut retourner 500 pour certaines galeries; on garde le fallback UI
+          // Backend can return gallery errors for some events; keep UI fallback.
         }
       });
     });
@@ -626,5 +665,4 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return forkJoin(uploads).pipe(map(() => void 0));
   }
-
 }

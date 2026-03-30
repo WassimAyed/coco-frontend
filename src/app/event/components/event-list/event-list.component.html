@@ -17,30 +17,60 @@
 				<article class="event-panel rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h2 class="mb-4 text-xl font-bold text-foreground">Create Event</h2>
 					<div class="grid gap-3 md:grid-cols-2">
-						<input class="form-input" placeholder="Name* (3-100 chars)" [(ngModel)]="createModel.name" maxlength="100" />
-						<div class="form-input flex items-center text-sm text-slate-600">
-							Status is set automatically to <span class="ml-1 font-semibold">EN_COURS</span>
+						<div>
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Name</label>
+							<input class="form-input" placeholder="Name" [(ngModel)]="createModel.name" maxlength="100" />
+							<p *ngIf="createFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['name'] }}</p>
 						</div>
-						<input class="form-input md:col-span-2" placeholder="Description (max 500)" [(ngModel)]="createModel.description" maxlength="500" />
-						<input class="form-input md:col-span-2" placeholder="Location*" [(ngModel)]="createModel.location" />
+						<div>
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
+							<input class="form-input" placeholder="Full address" [(ngModel)]="createModel.fullAddress" />
+							<p *ngIf="createFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['fullAddress'] }}</p>
+						</div>
+						<div class="md:col-span-2">
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Description</label>
+							<input class="form-input" placeholder="Description" [(ngModel)]="createModel.description" maxlength="500" />
+							<p *ngIf="createFieldErrors['description']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['description'] }}</p>
+						</div>
+						<div class="md:col-span-2">
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Location</label>
+							<input class="form-input" placeholder="Location" [(ngModel)]="createModel.location" />
+							<p *ngIf="createFieldErrors['location']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['location'] }}</p>
+						</div>
 
-						<select class="form-input" [ngModel]="createModel.categoryId" (ngModelChange)="createModel.categoryId = $event">
-							<option [ngValue]="0">Choose category*</option>
-							<option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
-						</select>
+						<div>
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Category</label>
+							<select class="form-input" [ngModel]="createModel.categoryId" (ngModelChange)="createModel.categoryId = $event">
+								<option [ngValue]="0">Select category</option>
+								<option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+							</select>
+							<p *ngIf="createFieldErrors['categoryId']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['categoryId'] }}</p>
+						</div>
 
-						<input class="form-input" type="datetime-local" [(ngModel)]="createModel.startDate" />
-						<input class="form-input" type="datetime-local" [(ngModel)]="createModel.endDate" />
-						<input class="form-input" type="number" min="1" placeholder="Max capacity*" [(ngModel)]="createModel.maxCapacity" />
+						<div>
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Start Date</label>
+							<input class="form-input" type="datetime-local" [(ngModel)]="createModel.startDate" />
+							<p *ngIf="createFieldErrors['startDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['startDate'] }}</p>
+						</div>
+						<div>
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">End Date</label>
+							<input class="form-input" type="datetime-local" [(ngModel)]="createModel.endDate" />
+							<p *ngIf="createFieldErrors['endDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['endDate'] }}</p>
+						</div>
+						<div class="md:col-span-2">
+							<label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Max Capacity</label>
+							<input class="form-input" type="number" min="1" placeholder="Max capacity" [(ngModel)]="createModel.maxCapacity" />
+							<p *ngIf="createFieldErrors['maxCapacity']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['maxCapacity'] }}</p>
+						</div>
 
 						<div class="md:col-span-2 space-y-2 rounded-xl border border-border bg-slate-50 p-3">
-							<p class="text-sm font-medium text-slate-700">Main image</p>
+							<p class="text-sm font-medium text-slate-700">Main Image</p>
 							<input class="form-input" type="file" accept="image/*" (change)="onMainImageSelected($event)" />
 							<p class="text-xs text-slate-500" *ngIf="mainImageFile">Selected: {{ mainImageFile.name }}</p>
 						</div>
 
 						<div class="md:col-span-2 space-y-2 rounded-xl border border-border bg-slate-50 p-3">
-							<p class="text-sm font-medium text-slate-700">Gallery images</p>
+							<p class="text-sm font-medium text-slate-700">Gallery Images</p>
 							<input class="form-input" type="file" accept="image/*" multiple (change)="onGallerySelected($event)" />
 							<div class="space-y-1" *ngIf="galleryFiles.length > 0">
 								<div *ngFor="let file of galleryFiles; let i = index" class="flex items-center justify-between rounded-lg border border-border bg-white px-2 py-1 text-xs">
@@ -51,11 +81,14 @@
 						</div>
 
 						<div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
-							<p class="mb-2 text-sm font-medium text-slate-700">Position (Leaflet + OpenStreetMap) *</p>
+							<p class="mb-2 text-sm font-medium text-slate-700">Position</p>
 							<div #createMapContainer class="event-create-map"></div>
 							<p class="mt-2 text-xs text-slate-500">
 								Click or drag marker to select exact location.
 								<span class="font-semibold text-slate-700" *ngIf="selectedCoordinates">{{ selectedCoordinates }}</span>
+							</p>
+							<p *ngIf="createFieldErrors['latitude'] || createFieldErrors['longitude']" class="mt-1 text-xs text-red-600">
+								{{ createFieldErrors['latitude'] || createFieldErrors['longitude'] }}
 							</p>
 						</div>
 					</div>

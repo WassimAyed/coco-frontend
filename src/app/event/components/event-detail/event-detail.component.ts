@@ -1,7 +1,15 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as L from 'leaflet';
-import 'leaflet-defaulticon-compatibility';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import Map from 'ol/Map';
+import { fromLonLat } from 'ol/proj';
+import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
+import View from 'ol/View';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { EventDto } from '../../models/event.model';
@@ -49,9 +57,10 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   totalShares = 0;
   isJoining = false;
 
-  private detailMap?: L.Map;
-  private detailMarker?: L.Marker;
-  private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815];
+  private detailMap?: Map;
+  private detailMarker?: Feature<Point>;
+  private detailMarkerSource?: VectorSource;
+  private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1200&q=80';
 
@@ -91,7 +100,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.detailMap?.remove();
+    this.detailMap?.setTarget(undefined);
   }
 
   private loadEvent(id: number): void {
@@ -435,7 +444,11 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.event = event;
     this.activeImageUrl = event.imageUrl?.trim() || null;
     this.mapOpenUrl = this.buildMapOpenUrl(event.latitude, event.longitude);
-    this.updateDetailMap(event.latitude, event.longitude);
+    setTimeout(() => {
+      this.initDetailMap();
+      this.updateDetailMap(event.latitude, event.longitude);
+      this.detailMap?.updateSize();
+    }, 0);
   }
 
   getAvailablePlaces(): number | 'N/A' {
@@ -598,13 +611,22 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.detailMap = L.map(this.detailMapContainer.nativeElement).setView(this.defaultCenter, 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.detailMap);
+    this.detailMarkerSource = new VectorSource();
+
+    this.detailMap = new Map({
+      target: this.detailMapContainer.nativeElement,
+      layers: [
+        new TileLayer({ source: new OSM() }),
+        new VectorLayer({ source: this.detailMarkerSource })
+      ],
+      view: new View({
+        center: fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]),
+        zoom: 12
+      })
+    });
 
     this.updateDetailMap(this.event?.latitude, this.event?.longitude);
-    setTimeout(() => this.detailMap?.invalidateSize(), 0);
+    setTimeout(() => this.detailMap?.updateSize(), 0);
   }
 
   private updateDetailMap(latitude?: number | null, longitude?: number | null): void {
@@ -613,17 +635,30 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!this.hasValidCoordinates(latitude, longitude)) {
-      this.detailMarker?.remove();
-      this.detailMap.setView(this.defaultCenter, 11);
+      this.detailMarkerSource?.clear();
+      this.detailMap.getView().setCenter(fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]));
+      this.detailMap.getView().setZoom(11);
       return;
     }
 
     const lat = Number(latitude);
     const lng = Number(longitude);
 
-    this.detailMarker?.remove();
-    this.detailMarker = L.marker([lat, lng]).addTo(this.detailMap);
-    this.detailMap.setView([lat, lng], 14);
+    this.detailMarker = new Feature({
+      geometry: new Point(fromLonLat([lng, lat]))
+    });
+    this.detailMarker.setStyle(new Style({
+      image: new CircleStyle({
+        radius: 7,
+        fill: new Fill({ color: '#0f766e' }),
+        stroke: new Stroke({ color: '#ffffff', width: 2 })
+      })
+    }));
+
+    this.detailMarkerSource?.clear();
+    this.detailMarkerSource?.addFeature(this.detailMarker);
+    this.detailMap.getView().setCenter(fromLonLat([lng, lat]));
+    this.detailMap.getView().setZoom(14);
   }
 
   private reactionLocalKey(eventId: number, userId: number): string {
