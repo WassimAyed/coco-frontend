@@ -8,6 +8,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   avatarUrl: string;
   role: 'student' | 'admin';
   department: string;

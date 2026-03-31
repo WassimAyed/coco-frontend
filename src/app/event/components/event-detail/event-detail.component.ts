@@ -1,15 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import Map from 'ol/Map';
-import { fromLonLat } from 'ol/proj';
-import OSM from 'ol/source/OSM';
-import VectorSource from 'ol/source/Vector';
-import View from 'ol/View';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { Router } from '@angular/router';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { EventDto } from '../../models/event.model';
@@ -20,6 +13,9 @@ import { EventService } from '../../services/event.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { ShareService } from '../../services/share.service';
+import { AuthApiService } from '../../../user-security/services/auth-api.service';
+import { hasValidAuthToken } from '../../../user-security/utils/auth-token.util';
+import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 
 @Component({
   selector: 'app-event-detail',
@@ -57,20 +53,21 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   totalShares = 0;
   isJoining = false;
 
-  private detailMap?: Map;
-  private detailMarker?: Feature<Point>;
-  private detailMarkerSource?: VectorSource;
+  private detailMap?: maplibregl.Map;
+  private detailMarker?: maplibregl.Marker;
   private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1200&q=80';
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly eventService: EventService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
     private readonly participantService: ParticipantService,
-    private readonly shareService: ShareService
+    private readonly shareService: ShareService,
+    private readonly authApiService: AuthApiService
   ) {}
 
   ngOnInit(): void {
@@ -100,7 +97,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.detailMap?.setTarget(undefined);
+    this.detailMap?.remove();
   }
 
   private loadEvent(id: number): void {
@@ -281,9 +278,29 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     return !!this.currentUserId && comment.userId === this.currentUserId;
   }
 
-  participateInEvent(): void {
+  async participateInEvent(): Promise<void> {
+    if (this.isJoining) {
+      return;
+    }
+
+    if (!hasValidAuthToken()) {
+      this.errorMessage = 'Your session has expired. Please log in again.';
+      void this.router.navigate(['/login']);
+      return;
+    }
+
     if (!this.eventId || !this.currentUserId || !this.currentUserEmail) {
       this.errorMessage = 'You must be logged in to participate.';
+      void this.router.navigate(['/login']);
+      return;
+    }
+
+    if (!this.currentUserPhone?.trim()) {
+      await this.refreshUserContextFromProfileApi();
+    }
+
+    if (!this.currentUserPhone?.trim()) {
+      this.errorMessage = 'Please update your profile phone number before registering for an event.';
       return;
     }
 
@@ -297,14 +314,18 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.isJoining = true;
-    this.participantService.add({
+    const payload: ParticipantDto = {
       eventId: this.eventId,
       fullName: this.currentUserName,
       email: this.currentUserEmail,
-      phone: this.currentUserPhone || undefined,
+      phone: this.currentUserPhone,
       userId: this.currentUserId
-    }).subscribe({
+    };
+
+    console.debug('Participant registration payload', payload);
+
+    this.isJoining = true;
+    this.participantService.add(payload).subscribe({
       next: () => {
         this.successMessage = 'You are now participating in this event.';
         this.errorMessage = '';
@@ -447,7 +468,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.initDetailMap();
       this.updateDetailMap(event.latitude, event.longitude);
-      this.detailMap?.updateSize();
+      this.detailMap?.resize();
     }, 0);
   }
 
@@ -588,12 +609,17 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private bootstrapUserContext(): void {
     this.currentUserId = Number(localStorage.getItem('userId')) || null;
+    const session = loadAuthSession();
 
     let storedUser: any = null;
     try {
       storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     } catch {
       storedUser = null;
+    }
+
+    if (!storedUser && session?.user) {
+      storedUser = session.user;
     }
 
     const firstName = storedUser?.firstName || 'User';
@@ -606,27 +632,75 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentUserPhone = phone || '';
   }
 
+  private async refreshUserContextFromProfileApi(): Promise<void> {
+    try {
+      const profile = await this.authApiService.getCurrentUserProfile();
+      if (!profile) {
+        return;
+      }
+
+      const phone = typeof profile['phone'] === 'string' ? profile['phone'].trim() : '';
+      const email = typeof profile['email'] === 'string' ? profile['email'].trim() : '';
+      const username = typeof profile['username'] === 'string' ? profile['username'].trim() : '';
+      const lastname = typeof profile['lastname'] === 'string' ? profile['lastname'].trim() : '';
+      const id = profile['id'];
+
+      if (phone) {
+        this.currentUserPhone = phone;
+      }
+      if (email) {
+        this.currentUserEmail = email;
+      }
+      if (username || lastname) {
+        this.currentUserName = `${username} ${lastname}`.trim();
+      }
+      if (typeof id === 'number' || typeof id === 'string') {
+        const parsedId = Number(id);
+        if (Number.isFinite(parsedId) && parsedId > 0) {
+          this.currentUserId = parsedId;
+          localStorage.setItem('userId', String(parsedId));
+        }
+      }
+
+      const cachedUserRaw = localStorage.getItem('currentUser');
+      const cachedUser = cachedUserRaw ? JSON.parse(cachedUserRaw) : {};
+      const mergedUser = {
+        ...cachedUser,
+        id: this.currentUserId ?? cachedUser?.id,
+        firstName: username || cachedUser?.firstName,
+        lastName: lastname || cachedUser?.lastName,
+        email: this.currentUserEmail || cachedUser?.email,
+        phone: this.currentUserPhone || cachedUser?.phone
+      };
+      localStorage.setItem('currentUser', JSON.stringify(mergedUser));
+    } catch {
+      // Ignore profile refresh errors and keep existing local context.
+    }
+  }
+
   private initDetailMap(): void {
-    if (!this.detailMapContainer?.nativeElement || this.detailMap) {
+    if (!this.detailMapContainer?.nativeElement) {
       return;
     }
 
-    this.detailMarkerSource = new VectorSource();
+    const lat = this.event?.latitude ?? this.defaultCenter[0];
+    const lng = this.event?.longitude ?? this.defaultCenter[1];
 
-    this.detailMap = new Map({
-      target: this.detailMapContainer.nativeElement,
-      layers: [
-        new TileLayer({ source: new OSM() }),
-        new VectorLayer({ source: this.detailMarkerSource })
-      ],
-      view: new View({
-        center: fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]),
-        zoom: 12
-      })
+    this.detailMap?.remove();
+
+    this.detailMap = new maplibregl.Map({
+      container: this.detailMapContainer.nativeElement,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [lng, lat],
+      zoom: 12,
+      attributionControl: false,
+      interactive: false
     });
 
-    this.updateDetailMap(this.event?.latitude, this.event?.longitude);
-    setTimeout(() => this.detailMap?.updateSize(), 0);
+    this.detailMap.on('load', () => {
+      this.updateDetailMap(this.event?.latitude, this.event?.longitude);
+      this.detailMap?.resize();
+    });
   }
 
   private updateDetailMap(latitude?: number | null, longitude?: number | null): void {
@@ -635,30 +709,28 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!this.hasValidCoordinates(latitude, longitude)) {
-      this.detailMarkerSource?.clear();
-      this.detailMap.getView().setCenter(fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]));
-      this.detailMap.getView().setZoom(11);
+      this.detailMarker?.remove();
+      this.detailMarker = undefined;
+      this.detailMap.easeTo({
+        center: [this.defaultCenter[1], this.defaultCenter[0]],
+        zoom: 11,
+        duration: 0
+      });
       return;
     }
 
     const lat = Number(latitude);
     const lng = Number(longitude);
 
-    this.detailMarker = new Feature({
-      geometry: new Point(fromLonLat([lng, lat]))
-    });
-    this.detailMarker.setStyle(new Style({
-      image: new CircleStyle({
-        radius: 7,
-        fill: new Fill({ color: '#0f766e' }),
-        stroke: new Stroke({ color: '#ffffff', width: 2 })
-      })
-    }));
+    if (!this.detailMarker) {
+      this.detailMarker = new maplibregl.Marker({ draggable: false })
+        .setLngLat([lng, lat])
+        .addTo(this.detailMap);
+    } else {
+      this.detailMarker.setLngLat([lng, lat]);
+    }
 
-    this.detailMarkerSource?.clear();
-    this.detailMarkerSource?.addFeature(this.detailMarker);
-    this.detailMap.getView().setCenter(fromLonLat([lng, lat]));
-    this.detailMap.getView().setZoom(14);
+    this.detailMap.easeTo({ center: [lng, lat], zoom: 14, duration: 0 });
   }
 
   private reactionLocalKey(eventId: number, userId: number): string {

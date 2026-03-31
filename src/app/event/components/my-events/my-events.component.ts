@@ -1,23 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { EventImageDto } from '../../models/event-image.model';
-import Collection from 'ol/Collection';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-import Translate from 'ol/interaction/Translate';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import Map from 'ol/Map';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import OSM from 'ol/source/OSM';
-import VectorSource from 'ol/source/Vector';
-import View from 'ol/View';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { forkJoin, map, Observable, of } from 'rxjs';
+import { CommentDto } from '../../models/comment.model';
+import { EventImageDto } from '../../models/event-image.model';
 import { CategoryDto } from '../../models/category.model';
 import { EventDto, UpdateEventRequest } from '../../models/event.model';
+import { REACTION_EMOJI, ReactionType } from '../../models/reaction.model';
+import { CommentService } from '../../services/comment.service';
 import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
+import { ParticipantService } from '../../services/participant.service';
+import { ReactionService } from '../../services/reaction.service';
+import { ParticipantDto } from '../../models/participant.model';
 
 @Component({
   selector: 'app-my-events',
@@ -32,25 +28,36 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   successMessage = '';
   editFieldErrors: Record<string, string> = {};
   selectedEditCoordinates = '';
+  editExistingMainImageUrl = '';
   editMainImageFile: File | null = null;
   editGalleryFiles: File[] = [];
   editExistingGallery: EventImageDto[] = [];
+  isSavingEdit = false;
+
+  detailModalEvent: EventDto | null = null;
+  detailModalReactions: Partial<Record<ReactionType, number>> = {};
+  detailModalComments: CommentDto[] = [];
+  detailModalParticipants: ParticipantDto[] = [];
+  isDetailModalLoading = false;
+  readonly reactionTypes: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+  readonly reactionEmoji = REACTION_EMOJI;
 
   editingEventId: number | null = null;
   editingEvent: EventDto | null = null;
   editModel: UpdateEventRequest = {};
 
-  private editMap?: Map;
-  private editMarkerFeature?: Feature<Point>;
-  private editMarkerFeatures?: Collection<Feature<Point>>;
-  private editMarkerSource?: VectorSource;
+  private editMap?: maplibregl.Map;
+  private editMarker?: maplibregl.Marker;
   private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
 
   constructor(
     private readonly eventService: EventService,
-    private readonly ownershipService: EventOwnershipService
+    private readonly ownershipService: EventOwnershipService,
+    private readonly reactionService: ReactionService,
+    private readonly commentService: CommentService,
+    private readonly participantService: ParticipantService
   ) {}
 
   ngOnInit(): void {
@@ -59,7 +66,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.editMap?.setTarget(undefined);
+    this.editMap?.remove();
   }
 
   loadMyEvents(): void {
@@ -104,9 +111,11 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
     this.editFieldErrors = {};
+    this.editExistingMainImageUrl = this.cleanString(event.imageUrl) || '';
     this.editMainImageFile = null;
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
+    this.isSavingEdit = false;
 
     this.editModel = {
       name: event.name,
@@ -142,11 +151,13 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editModel = {};
     this.editFieldErrors = {};
     this.selectedEditCoordinates = '';
+    this.editExistingMainImageUrl = '';
     this.editMainImageFile = null;
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
-    this.editMap?.setTarget(undefined);
+    this.editMap?.remove();
     this.editMap = undefined;
+    this.editMarker = undefined;
   }
 
   onEditMainImageSelected(event: Event): void {
@@ -156,7 +167,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
   onEditGallerySelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.editGalleryFiles = Array.from(input.files || []);
+    const incomingFiles = Array.from(input.files || []);
+    this.editGalleryFiles = this.mergeUniqueFiles(this.editGalleryFiles, incomingFiles);
   }
 
   removeEditGalleryFile(index: number): void {
@@ -179,15 +191,62 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     return image.imageUrl?.trim() || image.url?.trim() || this.fallbackCover;
   }
 
+  openDetailModal(event: EventDto): void {
+    if (!event.id) {
+      return;
+    }
+
+    this.detailModalEvent = event;
+    this.detailModalReactions = {};
+    this.detailModalComments = [];
+    this.detailModalParticipants = [];
+    this.isDetailModalLoading = true;
+
+    forkJoin({
+      summary: this.reactionService.getSummary(event.id),
+      comments: this.commentService.getByEvent(event.id),
+      participants: this.participantService.getByEvent(event.id)
+    }).subscribe({
+      next: ({ summary, comments, participants }) => {
+        this.detailModalReactions = summary?.reactionCounts || {};
+        this.detailModalComments = comments || [];
+        this.detailModalParticipants = participants || [];
+        this.isDetailModalLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to load event detail data.';
+        this.isDetailModalLoading = false;
+      }
+    });
+  }
+
+  closeDetailModal(): void {
+    this.detailModalEvent = null;
+    this.detailModalReactions = {};
+    this.detailModalComments = [];
+    this.detailModalParticipants = [];
+    this.isDetailModalLoading = false;
+  }
+
+  getModalReactionCount(type: ReactionType): number {
+    return Number(this.detailModalReactions[type] || 0);
+  }
+
   saveEdit(eventId: number): void {
+    if (this.isSavingEdit) {
+      return;
+    }
+
     const startDate = this.toDate(this.editModel.startDate);
     const endDate = this.toDate(this.editModel.endDate);
+    const existingImageValue = this.cleanString(this.editExistingMainImageUrl) || this.cleanString(this.editingEvent?.imageUrl);
 
     const payload: UpdateEventRequest = {
       ...this.editModel,
       name: this.cleanString(this.editModel.name),
       description: this.cleanString(this.editModel.description),
       location: this.cleanString(this.editModel.location),
+      imageUrl: existingImageValue,
       fullAddress: this.cleanString(this.editModel.fullAddress),
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
@@ -201,6 +260,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editFieldErrors = {};
     this.errorMessage = '';
     this.successMessage = '';
+    this.isSavingEdit = true;
 
     this.eventService.update(eventId, payload).subscribe({
       next: () => {
@@ -208,20 +268,78 @@ export class MyEventsComponent implements OnInit, OnDestroy {
         this.uploadEditImages(eventId).subscribe({
           next: () => {
             this.successMessage = 'Event updated successfully.';
+            this.isSavingEdit = false;
             this.cancelEdit();
             this.loadMyEvents();
           },
           error: () => {
             this.successMessage = 'Event updated, but some images could not be uploaded.';
+            this.isSavingEdit = false;
             this.cancelEdit();
             this.loadMyEvents();
           }
         });
       },
       error: (error: HttpErrorResponse) => {
+        this.isSavingEdit = false;
         this.handleApiError(error, 'Unable to update event.');
       }
     });
+  }
+
+  getModalMaxCapacity(): number {
+    if (!this.detailModalEvent) {
+      return 0;
+    }
+
+    return Number(this.detailModalEvent.maxCapacity ?? this.detailModalEvent.capacity ?? 0);
+  }
+
+  getModalParticipantsCount(): number {
+    if (this.detailModalParticipants.length > 0) {
+      return this.detailModalParticipants.length;
+    }
+
+    return Number(this.detailModalEvent?.currentParticipants ?? this.detailModalEvent?.occupiedPlaces ?? 0);
+  }
+
+  getModalRemainingSpots(): number {
+    const maxCapacity = this.getModalMaxCapacity();
+    if (maxCapacity <= 0) {
+      return 0;
+    }
+
+    return Math.max(maxCapacity - this.getModalParticipantsCount(), 0);
+  }
+
+  getModalAvailabilityClass(): string {
+    const maxCapacity = this.getModalMaxCapacity();
+    if (maxCapacity <= 0) {
+      return 'availability-orange';
+    }
+
+    const remaining = this.getModalRemainingSpots();
+    if (remaining <= 0) {
+      return 'availability-red';
+    }
+
+    const ratio = remaining / maxCapacity;
+    return ratio > 0.5 ? 'availability-green' : 'availability-orange';
+  }
+
+  getModalAvailabilityLabel(): string {
+    const maxCapacity = this.getModalMaxCapacity();
+    if (maxCapacity <= 0) {
+      return 'Capacity unavailable';
+    }
+
+    const remaining = this.getModalRemainingSpots();
+    if (remaining <= 0) {
+      return 'Full';
+    }
+
+    const ratio = remaining / maxCapacity;
+    return ratio > 0.5 ? 'Available' : 'Almost full';
   }
 
   isEditingEvent(event: EventDto): boolean {
@@ -284,36 +402,26 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.editMap?.setTarget(undefined);
+    const lat = this.editModel.latitude ?? this.defaultCenter[0];
+    const lng = this.editModel.longitude ?? this.defaultCenter[1];
 
-    this.editMarkerSource = new VectorSource();
-    const markerLayer = new VectorLayer({ source: this.editMarkerSource });
+    this.editMap?.remove();
 
-    this.editMap = new Map({
-      target: container,
-      layers: [new TileLayer({ source: new OSM() }), markerLayer],
-      view: new View({
-        center: fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]),
-        zoom: 12
-      })
+    this.editMap = new maplibregl.Map({
+      container,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [lng, lat],
+      zoom: 12,
+      attributionControl: false
     });
 
-    this.editMarkerFeatures = new Collection<Feature<Point>>();
-    const translate = new Translate({ features: this.editMarkerFeatures });
-    translate.on('translateend', () => {
-      const geometry = this.editMarkerFeature?.getGeometry();
-      if (!geometry) {
-        return;
-      }
-      const [lng, lat] = toLonLat(geometry.getCoordinates());
-      this.setCoordinatesFromMap(lat, lng, false);
+    this.editMap.on('load', () => {
+      this.initEditMarker();
+      this.editMap?.resize();
     });
-    this.editMap.addInteraction(translate);
-
-    this.initEditMarker();
 
     this.editMap.on('click', event => {
-      const [lng, lat] = toLonLat(event.coordinate);
+      const { lng, lat } = event.lngLat;
       this.setCoordinatesFromMap(lat, lng);
     });
   }
@@ -333,28 +441,27 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     const lat = this.editModel.latitude ?? this.defaultCenter[0];
     const lng = this.editModel.longitude ?? this.defaultCenter[1];
 
-    if (!this.editMap || !this.editMarkerSource || !this.editMarkerFeatures) {
+    if (!this.editMap) {
       return;
     }
 
-    this.editMarkerFeature = new Feature({
-      geometry: new Point(fromLonLat([lng, lat]))
-    });
-    this.editMarkerFeature.setStyle(new Style({
-      image: new CircleStyle({
-        radius: 7,
-        fill: new Fill({ color: '#0f766e' }),
-        stroke: new Stroke({ color: '#ffffff', width: 2 })
-      })
-    }));
+    if (!this.editMarker) {
+      this.editMarker = new maplibregl.Marker({ draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(this.editMap);
 
-    this.editMarkerSource.clear();
-    this.editMarkerFeatures.clear();
-    this.editMarkerSource.addFeature(this.editMarkerFeature);
-    this.editMarkerFeatures.push(this.editMarkerFeature);
+      this.editMarker.on('dragend', () => {
+        const markerPosition = this.editMarker?.getLngLat();
+        if (!markerPosition) {
+          return;
+        }
+        this.setCoordinatesFromMap(markerPosition.lat, markerPosition.lng, false);
+      });
+    } else {
+      this.editMarker.setLngLat([lng, lat]);
+    }
 
-    this.editMap.getView().setCenter(fromLonLat([lng, lat]));
-    this.editMap.getView().setZoom(12);
+    this.editMap.easeTo({ center: [lng, lat], zoom: 12, duration: 0 });
   }
 
   private setCoordinatesFromMap(latitude: number, longitude: number, moveMap = true): void {
@@ -362,13 +469,13 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editModel.longitude = Number(longitude.toFixed(7));
     this.selectedEditCoordinates = `${this.editModel.latitude.toFixed(6)}, ${this.editModel.longitude.toFixed(6)}`;
 
-    if (this.editMarkerFeature) {
-      this.editMarkerFeature.setGeometry(new Point(fromLonLat([this.editModel.longitude, this.editModel.latitude])));
+    if (this.editMarker) {
+      this.editMarker.setLngLat([this.editModel.longitude, this.editModel.latitude]);
     }
 
     if (moveMap && this.editMap) {
-      this.editMap.getView().animate({
-        center: fromLonLat([this.editModel.longitude, this.editModel.latitude]),
+      this.editMap.easeTo({
+        center: [this.editModel.longitude, this.editModel.latitude],
         duration: 150
       });
     }
@@ -486,5 +593,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     }
 
     return forkJoin(uploads).pipe(map(() => void 0));
+  }
+
+  private mergeUniqueFiles(existingFiles: File[], newFiles: File[]): File[] {
+    const mapBySignature = new Map<string, File>();
+
+    [...existingFiles, ...newFiles].forEach(file => {
+      const signature = `${file.name}|${file.size}|${file.lastModified}`;
+      mapBySignature.set(signature, file);
+    });
+
+    return Array.from(mapBySignature.values());
   }
 }

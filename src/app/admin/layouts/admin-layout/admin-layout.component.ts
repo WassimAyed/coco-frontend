@@ -100,11 +100,11 @@ export class AdminLayoutComponent {
   ];
 
   readonly pendingUsers = [
-    { id: 1, name: 'Ahmed Ben Ali', email: 'ahmed.benali@esprit.tn', registeredDate: '2026-03-15', status: 'pending' },
-    { id: 2, name: 'Sarah Tounsi', email: 'sarah.tounsi@esprit.tn', registeredDate: '2026-03-16', status: 'pending' },
-    { id: 3, name: 'Mohamed Karim', email: 'mohamed.karim@esprit.tn', registeredDate: '2026-03-17', status: 'pending' },
-    { id: 4, name: 'Leila Mansour', email: 'leila.mansour@esprit.tn', registeredDate: '2026-03-17', status: 'pending' },
-    { id: 5, name: 'Youssef Gharbi', email: 'youssef.gharbi@esprit.tn', registeredDate: '2026-03-18', status: 'pending' }
+    { id: 1, name: 'Ahmed Ben Ali', email: 'ahmed.benali@esprit.tn', phone: '+21620111222', registeredDate: '2026-03-15', status: 'pending' },
+    { id: 2, name: 'Sarah Tounsi', email: 'sarah.tounsi@esprit.tn', phone: '+21622111333', registeredDate: '2026-03-16', status: 'pending' },
+    { id: 3, name: 'Mohamed Karim', email: 'mohamed.karim@esprit.tn', phone: '+21623111444', registeredDate: '2026-03-17', status: 'pending' },
+    { id: 4, name: 'Leila Mansour', email: 'leila.mansour@esprit.tn', phone: '+21624111555', registeredDate: '2026-03-17', status: 'pending' },
+    { id: 5, name: 'Youssef Gharbi', email: 'youssef.gharbi@esprit.tn', phone: '+21625111666', registeredDate: '2026-03-18', status: 'pending' }
   ];
 
   readonly recentActivity = [

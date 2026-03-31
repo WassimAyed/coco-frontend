@@ -17,6 +17,8 @@ import { UserProfilePageComponent } from './user-security/pages/user-profile-pag
 export const routes: Routes = [
   // Redirect from root to landing page (which is inside PublicLayout)
   { path: '', redirectTo: 'landing', pathMatch: 'full' },
+  { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
+  { path: 'login/2fa', redirectTo: 'auth/login/2fa', pathMatch: 'full' },
 
   // Public routes – all these will display the navbar (PublicLayout)
   {

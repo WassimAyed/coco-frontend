@@ -26,6 +26,23 @@ function joinUrl(baseUrl: string, path: string): string {
 export class AuthApiService {
   private readonly http = inject(HttpClient);
 
+  async getCurrentUserProfile(): Promise<Record<string, unknown> | null> {
+    const response = await firstValueFrom(
+      this.http.get<unknown>(
+        joinUrl(environment.apiBaseUrl, '/users/me'),
+        {
+          withCredentials: environment.auth.withCredentials
+        }
+      )
+    );
+
+    if (response && typeof response === 'object') {
+      return response as Record<string, unknown>;
+    }
+
+    return null;
+  }
+
   async login(credentials: LoginCredentials): Promise<LoginResult> {
     const response = await firstValueFrom(
       this.http.post<unknown>(

@@ -45,6 +45,7 @@ export interface UpdateEventRequest {
 	name?: string;
 	description?: string;
 	location?: string;
+	imageUrl?: string;
 	latitude?: number;
 	longitude?: number;
 	fullAddress?: string;

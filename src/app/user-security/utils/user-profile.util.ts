@@ -112,6 +112,7 @@ export function buildAuthSessionFromApiResponse(
   const fallbackNames = formatNames(normalizedEmail);
   const firstName = readString(user, ['firstName', 'firstname', 'givenName']) ?? fallbackNames.firstName;
   const lastName = readString(user, ['lastName', 'lastname', 'familyName']) ?? fallbackNames.lastName;
+  const phone = readString(user, ['phone', 'phoneNumber', 'mobile']) ?? '';
 
   // ✅ DB id converted to string
   const rawId = readValue(user, ['id', 'userId']);
@@ -142,6 +143,7 @@ export function buildAuthSessionFromApiResponse(
       campus: readString(user, ['campus']) ?? 'ESPRIT Ariana',
       department,
       email: normalizedEmail,
+      phone,
       firstName,
       lastName,
       id,

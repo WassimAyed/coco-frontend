@@ -72,14 +72,14 @@ User Interface (Component)
 5. Component stores ownership in localStorage via `EventOwnershipService`
 6. Component resets form and reloads event list
 
-### Map Implementation (Leaflet) — Frontend & Backend Contract
+### Map Implementation (OpenLayers) — Frontend & Backend Contract
 
-Business logic is unchanged. Only the map rendering technology was switched to Leaflet in the frontend.
+Business logic is unchanged. Map rendering is implemented with OpenLayers in the frontend.
 
-**Frontend (Angular + Leaflet):**
-- `event-list.component.ts` initializes a Leaflet map and draggable marker for event creation.
-- `event-detail.component.ts` initializes a read-only Leaflet map centered on event coordinates.
-- Tile source remains OpenStreetMap (`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`).
+**Frontend (Angular + OpenLayers):**
+- `event-list.component.ts` initializes an OpenLayers map and draggable marker for event creation.
+- `event-detail.component.ts` initializes a read-only OpenLayers map centered on event coordinates.
+- Tile source remains OpenStreetMap (OSM layer in OpenLayers).
 - User interactions still produce the same payload fields: `latitude`, `longitude`, `location`.
 
 **Backend (Spring Boot):**
@@ -88,7 +88,7 @@ Business logic is unchanged. Only the map rendering technology was switched to L
 - Geocoding/reverse-geocoding behavior remains server-side and unchanged.
 
 **Compatibility Note:**
-- Old OpenLayers/OpenStreetMap iframe display is replaced by Leaflet components.
+- Old iframe display was replaced by OpenLayers components.
 - Event creation, filtering, and persistence logic remain exactly the same.
 
 ---

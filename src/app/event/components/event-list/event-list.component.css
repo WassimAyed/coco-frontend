@@ -7,15 +7,11 @@
 }
 
 .event-create-map {
-	height: 280px;
+	height: 400px;
 	width: 100%;
 	border-radius: 0.75rem;
 	border: 1px solid var(--border);
 	overflow: hidden;
-}
-
-.event-create-map .ol-attribution {
-	display: none !important;
 }
 
 .event-card-overlay {

@@ -1,7 +1,7 @@
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppComponent } from './app.component';
@@ -10,6 +10,7 @@ import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AuthTokenInterceptor } from './user-security/interceptors/auth-token.class-interceptor';
 
 
 
@@ -18,6 +19,11 @@ import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.
   declarations: [AppComponent, AdminLayoutComponent],
   imports: [BrowserModule, CommonModule, HttpClientModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
   providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthTokenInterceptor,
+      multi: true
+    },
     {
       deps: [UserService],
       multi: true,

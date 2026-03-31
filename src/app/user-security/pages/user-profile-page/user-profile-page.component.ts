@@ -97,6 +97,7 @@ export class UserProfilePageComponent {
     campus: ['', Validators.required],
     department: ['', Validators.required],
     email: [{ disabled: true, value: '' }, [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{8,15}$/)]],
     firstName: ['', Validators.required],
     lastName: ['', Validators.required]
   });
@@ -124,6 +125,7 @@ export class UserProfilePageComponent {
         campus: profile.campus,
         department: profile.department,
         email: profile.email,
+        phone: profile.phone,
         firstName: profile.firstName,
         lastName: profile.lastName
       });

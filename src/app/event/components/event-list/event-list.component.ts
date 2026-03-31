@@ -1,17 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import Collection from 'ol/Collection';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-import Translate from 'ol/interaction/Translate';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import Map from 'ol/Map';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import OSM from 'ol/source/OSM';
-import VectorSource from 'ol/source/Vector';
-import View from 'ol/View';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { CategoryDto } from '../../models/category.model';
 import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
@@ -43,10 +33,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   currentUserId: number | null = null;
   createFieldErrors: Record<string, string> = {};
 
-  private map?: Map;
-  private markerFeature?: Feature<Point>;
-  private markerFeatures?: Collection<Feature<Point>>;
-  private markerSource?: VectorSource;
+  private map?: maplibregl.Map;
+  private marker?: maplibregl.Marker;
   private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
   mainImageFile: File | null = null;
   galleryFiles: File[] = [];
@@ -86,7 +74,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.map?.setTarget(undefined);
+    this.map?.remove();
   }
 
   createEvent(): void {
@@ -388,38 +376,30 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initCreateMap(): void {
-    if (!this.createMapContainer?.nativeElement || this.map) {
+    if (!this.createMapContainer?.nativeElement) {
       return;
     }
 
-    this.markerSource = new VectorSource();
-    const markerLayer = new VectorLayer({ source: this.markerSource });
+    const lat = this.createModel.latitude ?? this.defaultCenter[0];
+    const lng = this.createModel.longitude ?? this.defaultCenter[1];
 
-    this.map = new Map({
-      target: this.createMapContainer.nativeElement,
-      layers: [new TileLayer({ source: new OSM() }), markerLayer],
-      view: new View({
-        center: fromLonLat([this.defaultCenter[1], this.defaultCenter[0]]),
-        zoom: 12
-      })
+    this.map?.remove();
+
+    this.map = new maplibregl.Map({
+      container: this.createMapContainer.nativeElement,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [lng, lat],
+      zoom: 12,
+      attributionControl: false
     });
 
-    this.markerFeatures = new Collection<Feature<Point>>();
-    const translate = new Translate({ features: this.markerFeatures });
-    translate.on('translateend', () => {
-      const geometry = this.markerFeature?.getGeometry();
-      if (!geometry) {
-        return;
-      }
-      const [lng, lat] = toLonLat(geometry.getCoordinates());
-      this.setCoordinatesFromMap(lat, lng, false);
+    this.map.on('load', () => {
+      this.initCreateMarker();
+      this.map?.resize();
     });
-    this.map.addInteraction(translate);
-
-    this.initCreateMarker();
 
     this.map.on('click', event => {
-      const [lng, lat] = toLonLat(event.coordinate);
+      const { lng, lat } = event.lngLat;
       this.setCoordinatesFromMap(lat, lng);
     });
   }
@@ -428,28 +408,27 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     const lat = this.createModel.latitude ?? this.defaultCenter[0];
     const lng = this.createModel.longitude ?? this.defaultCenter[1];
 
-    if (!this.map || !this.markerSource || !this.markerFeatures) {
+    if (!this.map) {
       return;
     }
 
-    this.markerFeature = new Feature({
-      geometry: new Point(fromLonLat([lng, lat]))
-    });
-    this.markerFeature.setStyle(new Style({
-      image: new CircleStyle({
-        radius: 7,
-        fill: new Fill({ color: '#0f766e' }),
-        stroke: new Stroke({ color: '#ffffff', width: 2 })
-      })
-    }));
+    if (!this.marker) {
+      this.marker = new maplibregl.Marker({ draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(this.map);
 
-    this.markerSource.clear();
-    this.markerFeatures.clear();
-    this.markerSource.addFeature(this.markerFeature);
-    this.markerFeatures.push(this.markerFeature);
+      this.marker.on('dragend', () => {
+        const markerPosition = this.marker?.getLngLat();
+        if (!markerPosition) {
+          return;
+        }
+        this.setCoordinatesFromMap(markerPosition.lat, markerPosition.lng, false);
+      });
+    } else {
+      this.marker.setLngLat([lng, lat]);
+    }
 
-    this.map.getView().setCenter(fromLonLat([lng, lat]));
-    this.map.getView().setZoom(12);
+    this.map.easeTo({ center: [lng, lat], zoom: 12, duration: 0 });
 
     if (this.hasMapCoordinates()) {
       this.selectedCoordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -461,13 +440,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.createModel.longitude = Number(longitude.toFixed(7));
     this.selectedCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
 
-    if (this.markerFeature) {
-      this.markerFeature.setGeometry(new Point(fromLonLat([this.createModel.longitude, this.createModel.latitude])));
+    if (this.marker) {
+      this.marker.setLngLat([this.createModel.longitude, this.createModel.latitude]);
     }
 
     if (moveMap && this.map) {
-      this.map.getView().animate({
-        center: fromLonLat([this.createModel.longitude, this.createModel.latitude]),
+      this.map.easeTo({
+        center: [this.createModel.longitude, this.createModel.latitude],
         duration: 150
       });
     }
