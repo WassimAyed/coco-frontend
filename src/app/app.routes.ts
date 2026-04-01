@@ -12,6 +12,7 @@ import { OauthCallbackPageComponent } from './user-security/pages/oauth-callback
 import { RegisterPageComponent } from './user-security/pages/register-page/register-page.component';
 import { TwoFactorPageComponent } from './user-security/pages/two-factor-page/two-factor-page.component';
 import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
+import { UserDashboardComponent } from './subs-payment/components/user-dashboard/user-dashboard.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'landing', pathMatch: 'full' },
@@ -42,7 +43,9 @@ export const routes: Routes = [
       { path: 'event', loadChildren: () => import('./event/event.module').then((m) => m.EventModule) },
       { path: 'real-estate', loadChildren: () => import('./real-estate/real-estate.module').then((m) => m.RealEstateModule) },
       { path: 'subs-payment', loadChildren: () => import('./subs-payment/subs-payment.module').then((m) => m.SubsPaymentModule) },
-      { path: 'user-security', loadChildren: () => import('./user-security/user-security.module').then((m) => m.UserSecurityModule) }
+      { path: 'user-dashboard', component: UserDashboardComponent },
+      { path: 'user-security', loadChildren: () => import('./user-security/user-security.module').then((m) => m.UserSecurityModule) },
+      { path: 'lost-found', loadChildren: () => import('./lost-found/lost-found.routes').then((m) => m.LOST_FOUND_ROUTES) }
     ]
   },
   {
@@ -52,3 +55,5 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: 'landing' }
 ];
+
+// End of routes configuration
