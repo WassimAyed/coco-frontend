@@ -6,7 +6,7 @@ import { forkJoin, map, Observable, of } from 'rxjs';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { CategoryDto } from '../../models/category.model';
-import { EventDto, UpdateEventRequest } from '../../models/event.model';
+import { CreateEventRequest, EventDto, UpdateEventRequest } from '../../models/event.model';
 import { REACTION_EMOJI, ReactionType } from '../../models/reaction.model';
 import { CommentService } from '../../services/comment.service';
 import { EventOwnershipService } from '../../services/event-ownership.service';
@@ -26,6 +26,11 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  createFieldErrors: Record<string, string> = {};
+  selectedCreateCoordinates = '';
+  mainImageFile: File | null = null;
+  galleryFiles: File[] = [];
+  isSavingCreate = false;
   editFieldErrors: Record<string, string> = {};
   selectedEditCoordinates = '';
   editExistingMainImageUrl = '';
@@ -44,8 +49,25 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
   editingEventId: number | null = null;
   editingEvent: EventDto | null = null;
+  isCreateModalOpen = false;
+  createModel: CreateEventRequest = {
+    name: '',
+    description: '',
+    location: '',
+    latitude: undefined,
+    longitude: undefined,
+    fullAddress: '',
+    startDate: '',
+    endDate: '',
+    status: 'EN_COURS',
+    categoryId: 0,
+    maxCapacity: 1,
+    currentParticipants: 0
+  };
   editModel: UpdateEventRequest = {};
 
+  private createMap?: maplibregl.Map;
+  private createMarker?: maplibregl.Marker;
   private editMap?: maplibregl.Map;
   private editMarker?: maplibregl.Marker;
   private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
@@ -66,6 +88,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.createMap?.remove();
     this.editMap?.remove();
   }
 
@@ -103,6 +126,114 @@ export class MyEventsComponent implements OnInit, OnDestroy {
         this.categories = [];
       }
     });
+  }
+
+  openCreateModal(): void {
+    this.cancelEdit();
+    this.isCreateModalOpen = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.resetCreateForm();
+    this.createModel.categoryId = this.categories[0]?.id || 0;
+    setTimeout(() => this.initCreateMap(), 0);
+  }
+
+  closeCreateModal(): void {
+    this.isCreateModalOpen = false;
+    this.isSavingCreate = false;
+    this.resetCreateForm();
+    this.createMap?.remove();
+    this.createMap = undefined;
+    this.createMarker = undefined;
+  }
+
+  createEvent(): void {
+    if (this.isSavingCreate) {
+      return;
+    }
+
+    const name = this.cleanString(this.createModel.name) || '';
+    const location = this.cleanString(this.createModel.location) || '';
+    const description = this.cleanString(this.createModel.description);
+    const fullAddress = this.cleanString(this.createModel.fullAddress);
+    const startDate = this.toDate(this.createModel.startDate);
+    const endDate = this.toDate(this.createModel.endDate);
+    const currentUserId = this.ownershipService.getCurrentUserId();
+
+    if (!currentUserId) {
+      this.errorMessage = 'You must be logged in to create an event.';
+      return;
+    }
+
+    this.isSavingCreate = true;
+    this.createFieldErrors = {};
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const payload: CreateEventRequest = {
+      ...this.createModel,
+      name,
+      description,
+      fullAddress,
+      location,
+      startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
+      endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
+      latitude: this.toOptionalNumber(this.createModel.latitude),
+      longitude: this.toOptionalNumber(this.createModel.longitude),
+      categoryId: Number(this.createModel.categoryId),
+      userId: currentUserId,
+      maxCapacity: Number(this.createModel.maxCapacity),
+      currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants)
+    };
+
+    this.eventService.create(payload).subscribe({
+      next: created => {
+        const eventId = created.id;
+        if (!eventId) {
+          this.isSavingCreate = false;
+          this.successMessage = 'Event has been added successfully.';
+          this.closeCreateModal();
+          this.loadMyEvents();
+          return;
+        }
+
+        this.ownershipService.addOwnedEvent(eventId, currentUserId);
+
+        this.uploadCreateImages(eventId).subscribe({
+          next: () => {
+            this.isSavingCreate = false;
+            this.successMessage = 'Event has been added successfully.';
+            this.closeCreateModal();
+            this.loadMyEvents();
+          },
+          error: () => {
+            this.isSavingCreate = false;
+            this.successMessage = 'Event has been added successfully, but some images could not be uploaded.';
+            this.closeCreateModal();
+            this.loadMyEvents();
+          }
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSavingCreate = false;
+        this.handleCreateApiError(error, 'Error while creating event.');
+      }
+    });
+  }
+
+  onMainImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.mainImageFile = input.files?.[0] || null;
+  }
+
+  onGallerySelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const incomingFiles = Array.from(input.files || []);
+    this.galleryFiles = this.mergeUniqueFiles(this.galleryFiles, incomingFiles);
+  }
+
+  removeGalleryFile(index: number): void {
+    this.galleryFiles = this.galleryFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   startEdit(event: EventDto): void {
@@ -392,6 +523,80 @@ export class MyEventsComponent implements OnInit, OnDestroy {
         }).format(date);
   }
 
+  private initCreateMap(): void {
+    const container = document.getElementById('create-map-modal') as HTMLDivElement | null;
+    if (!container || !this.isCreateModalOpen) {
+      return;
+    }
+
+    const lat = this.createModel.latitude ?? this.defaultCenter[0];
+    const lng = this.createModel.longitude ?? this.defaultCenter[1];
+
+    this.createMap?.remove();
+
+    this.createMap = new maplibregl.Map({
+      container,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [lng, lat],
+      zoom: 12,
+      attributionControl: false
+    });
+
+    this.createMap.on('load', () => {
+      this.initCreateMarker();
+      this.createMap?.resize();
+    });
+
+    this.createMap.on('click', event => {
+      const { lng, lat } = event.lngLat;
+      this.setCreateCoordinatesFromMap(lat, lng);
+    });
+  }
+
+  private initCreateMarker(): void {
+    const lat = this.createModel.latitude ?? this.defaultCenter[0];
+    const lng = this.createModel.longitude ?? this.defaultCenter[1];
+
+    if (!this.createMap) {
+      return;
+    }
+
+    if (!this.createMarker) {
+      this.createMarker = new maplibregl.Marker({ draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(this.createMap);
+
+      this.createMarker.on('dragend', () => {
+        const markerPosition = this.createMarker?.getLngLat();
+        if (!markerPosition) {
+          return;
+        }
+        this.setCreateCoordinatesFromMap(markerPosition.lat, markerPosition.lng, false);
+      });
+    } else {
+      this.createMarker.setLngLat([lng, lat]);
+    }
+
+    this.createMap.easeTo({ center: [lng, lat], zoom: 12, duration: 0 });
+  }
+
+  private setCreateCoordinatesFromMap(latitude: number, longitude: number, moveMap = true): void {
+    this.createModel.latitude = Number(latitude.toFixed(7));
+    this.createModel.longitude = Number(longitude.toFixed(7));
+    this.selectedCreateCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
+
+    if (this.createMarker) {
+      this.createMarker.setLngLat([this.createModel.longitude, this.createModel.latitude]);
+    }
+
+    if (moveMap && this.createMap) {
+      this.createMap.easeTo({
+        center: [this.createModel.longitude, this.createModel.latitude],
+        duration: 150
+      });
+    }
+  }
+
   private initEditMap(): void {
     if (!this.editingEventId) {
       return;
@@ -525,6 +730,11 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.errorMessage = this.buildGlobalError(error, fallbackMessage, this.editFieldErrors);
   }
 
+  private handleCreateApiError(error: HttpErrorResponse, fallbackMessage: string): void {
+    this.createFieldErrors = this.extractFieldErrors(error);
+    this.errorMessage = this.buildGlobalError(error, fallbackMessage, this.createFieldErrors);
+  }
+
   private extractFieldErrors(error: HttpErrorResponse): Record<string, string> {
     const source = error?.error;
     if (source && typeof source === 'object' && source.fieldErrors && typeof source.fieldErrors === 'object') {
@@ -593,6 +803,45 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     }
 
     return forkJoin(uploads).pipe(map(() => void 0));
+  }
+
+  private uploadCreateImages(eventId: number): Observable<void> {
+    const uploads: Observable<unknown>[] = [];
+
+    if (this.mainImageFile) {
+      uploads.push(this.eventService.uploadMainImage(eventId, this.mainImageFile));
+    }
+
+    this.galleryFiles.forEach(file => {
+      uploads.push(this.eventService.addGalleryImage(eventId, file));
+    });
+
+    if (uploads.length === 0) {
+      return of(void 0);
+    }
+
+    return forkJoin(uploads).pipe(map(() => void 0));
+  }
+
+  private resetCreateForm(): void {
+    this.createModel = {
+      name: '',
+      description: '',
+      location: '',
+      latitude: undefined,
+      longitude: undefined,
+      fullAddress: '',
+      startDate: '',
+      endDate: '',
+      status: 'EN_COURS',
+      categoryId: this.categories[0]?.id || 0,
+      maxCapacity: 1,
+      currentParticipants: 0
+    };
+    this.createFieldErrors = {};
+    this.selectedCreateCoordinates = '';
+    this.mainImageFile = null;
+    this.galleryFiles = [];
   }
 
   private mergeUniqueFiles(existingFiles: File[], newFiles: File[]): File[] {

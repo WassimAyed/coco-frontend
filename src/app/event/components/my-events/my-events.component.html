@@ -10,6 +10,10 @@
         <p class="text-slate-500">Manage events created from your account.</p>
       </div>
 
+      <div>
+        <button type="button" class="btn-primary !px-4 !py-2" (click)="openCreateModal()">Add Event</button>
+      </div>
+
       <div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
       <div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
       <div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
@@ -55,6 +59,105 @@
       </p>
     </div>
   </section>
+
+  <div *ngIf="isCreateModalOpen" class="event-edit-modal-backdrop" (click)="closeCreateModal()">
+    <section class="event-edit-modal" (click)="$event.stopPropagation()">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-foreground">Add Event</h2>
+        <button type="button" class="rounded-md border border-border px-3 py-1 text-sm" (click)="closeCreateModal()">Close</button>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Name</label>
+          <input class="form-input" placeholder="Name" [(ngModel)]="createModel.name" maxlength="100" />
+          <p *ngIf="createFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['name'] }}</p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
+          <input class="form-input" placeholder="Full address" [(ngModel)]="createModel.fullAddress" />
+          <p *ngIf="createFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['fullAddress'] }}</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Description</label>
+          <input class="form-input" placeholder="Description" [(ngModel)]="createModel.description" maxlength="500" />
+          <p *ngIf="createFieldErrors['description']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['description'] }}</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Location</label>
+          <input class="form-input" placeholder="Location" [(ngModel)]="createModel.location" />
+          <p *ngIf="createFieldErrors['location']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['location'] }}</p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Category</label>
+          <select class="form-input" [ngModel]="createModel.categoryId" (ngModelChange)="createModel.categoryId = $event">
+            <option [ngValue]="0">Select category</option>
+            <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+          </select>
+          <p *ngIf="createFieldErrors['categoryId']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['categoryId'] }}</p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Start Date</label>
+          <input class="form-input" type="datetime-local" [(ngModel)]="createModel.startDate" />
+          <p *ngIf="createFieldErrors['startDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['startDate'] }}</p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">End Date</label>
+          <input class="form-input" type="datetime-local" [(ngModel)]="createModel.endDate" />
+          <p *ngIf="createFieldErrors['endDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['endDate'] }}</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Max Capacity</label>
+          <input class="form-input" type="number" min="1" placeholder="Max capacity" [(ngModel)]="createModel.maxCapacity" />
+          <p *ngIf="createFieldErrors['maxCapacity']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['maxCapacity'] }}</p>
+        </div>
+
+        <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
+          <p class="text-sm font-medium text-slate-700">Main Image</p>
+          <input class="form-input mt-2" type="file" accept="image/*" (change)="onMainImageSelected($event)" />
+          <p class="mt-2 text-xs text-slate-500" *ngIf="mainImageFile">Selected: {{ mainImageFile.name }}</p>
+        </div>
+
+        <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
+          <p class="text-sm font-medium text-slate-700">Gallery Images</p>
+          <input class="form-input mt-2" type="file" accept="image/*" multiple (change)="onGallerySelected($event)" />
+
+          <div class="mt-3 space-y-1" *ngIf="galleryFiles.length > 0">
+            <div *ngFor="let file of galleryFiles; let i = index" class="flex items-center justify-between rounded-lg border border-border bg-white px-2 py-1 text-xs">
+              <span class="truncate pr-2">{{ file.name }}</span>
+              <button type="button" class="text-red-600" (click)="removeGalleryFile(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
+          <p class="mb-2 text-sm font-medium text-slate-700">Position</p>
+          <div id="create-map-modal" class="edit-event-map"></div>
+          <p class="mt-2 text-xs text-slate-500">
+            Click or drag marker to select exact location.
+            <span class="font-semibold text-slate-700" *ngIf="selectedCreateCoordinates">{{ selectedCreateCoordinates }}</span>
+          </p>
+          <p *ngIf="createFieldErrors['latitude'] || createFieldErrors['longitude']" class="mt-1 text-xs text-red-600">
+            {{ createFieldErrors['latitude'] || createFieldErrors['longitude'] }}
+          </p>
+        </div>
+
+        <div class="md:col-span-2 flex gap-2">
+          <button type="button" class="btn-primary !px-3 !py-2 disabled:cursor-not-allowed disabled:opacity-60" [disabled]="isSavingCreate" (click)="createEvent()">
+            {{ isSavingCreate ? 'Saving...' : 'Create' }}
+          </button>
+          <button type="button" class="btn-secondary !px-3 !py-2" (click)="closeCreateModal()">Cancel</button>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <div *ngIf="editingEventId && editingEvent" class="event-edit-modal-backdrop" (click)="cancelEdit()">
     <section class="event-edit-modal" (click)="$event.stopPropagation()">

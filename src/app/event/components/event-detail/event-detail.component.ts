@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Router } from '@angular/router';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CommentDto } from '../../models/comment.model';
@@ -12,9 +11,7 @@ import { CommentService } from '../../services/comment.service';
 import { EventService } from '../../services/event.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
-import { ShareService } from '../../services/share.service';
-import { AuthApiService } from '../../../user-security/services/auth-api.service';
-import { hasValidAuthToken } from '../../../user-security/utils/auth-token.util';
+import { getAuthToken } from '../../../user-security/utils/auth-token.util';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 
 @Component({
@@ -50,24 +47,24 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   currentUserName = '';
   currentUserEmail = '';
   currentUserPhone = '';
-  totalShares = 0;
-  isJoining = false;
+  countdownLabel = "L'événement est terminé";
+  countdownValue = '';
+  countdownStatus: 'before' | 'during' | 'after' = 'after';
+  countdownMessage = "L'événement est terminé";
 
   private detailMap?: maplibregl.Map;
   private detailMarker?: maplibregl.Marker;
+  private countdownIntervalId: ReturnType<typeof setInterval> | null = null;
   private readonly defaultCenter: [number, number] = [36.8065, 10.1815];
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1200&q=80';
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly router: Router,
     private readonly eventService: EventService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
-    private readonly participantService: ParticipantService,
-    private readonly shareService: ShareService,
-    private readonly authApiService: AuthApiService
+    private readonly participantService: ParticipantService
   ) {}
 
   ngOnInit(): void {
@@ -88,7 +85,6 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadComments(id);
     this.loadCommentCount(id);
     this.loadParticipants(id);
-    this.loadShares(id);
     this.selectedReaction = this.readLocalReaction(id, this.currentUserId);
   }
 
@@ -97,6 +93,10 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.countdownIntervalId) {
+      clearInterval(this.countdownIntervalId);
+      this.countdownIntervalId = null;
+    }
     this.detailMap?.remove();
   }
 
@@ -278,86 +278,6 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     return !!this.currentUserId && comment.userId === this.currentUserId;
   }
 
-  async participateInEvent(): Promise<void> {
-    if (this.isJoining) {
-      return;
-    }
-
-    if (!hasValidAuthToken()) {
-      this.errorMessage = 'Your session has expired. Please log in again.';
-      void this.router.navigate(['/login']);
-      return;
-    }
-
-    if (!this.eventId || !this.currentUserId || !this.currentUserEmail) {
-      this.errorMessage = 'You must be logged in to participate.';
-      void this.router.navigate(['/login']);
-      return;
-    }
-
-    if (!this.currentUserPhone?.trim()) {
-      await this.refreshUserContextFromProfileApi();
-    }
-
-    if (!this.currentUserPhone?.trim()) {
-      this.errorMessage = 'Please update your profile phone number before registering for an event.';
-      return;
-    }
-
-    const alreadyParticipant = this.participants.some(participant =>
-      (participant.userId && participant.userId === this.currentUserId)
-      || (!!participant.email && participant.email.toLowerCase() === this.currentUserEmail.toLowerCase())
-    );
-
-    if (alreadyParticipant) {
-      this.errorMessage = 'You are already participating in this event.';
-      return;
-    }
-
-    const payload: ParticipantDto = {
-      eventId: this.eventId,
-      fullName: this.currentUserName,
-      email: this.currentUserEmail,
-      phone: this.currentUserPhone,
-      userId: this.currentUserId
-    };
-
-    console.debug('Participant registration payload', payload);
-
-    this.isJoining = true;
-    this.participantService.add(payload).subscribe({
-      next: () => {
-        this.successMessage = 'You are now participating in this event.';
-        this.errorMessage = '';
-        this.isJoining = false;
-        this.loadParticipants(this.eventId!);
-        this.loadEvent(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to register participation.';
-        this.isJoining = false;
-      }
-    });
-  }
-
-  shareOnFacebook(): void {
-    if (!this.eventId) {
-      return;
-    }
-
-    this.shareService.shareEvent(this.eventId).subscribe({
-      next: response => {
-        if (response?.shareUrl) {
-          window.open(response.shareUrl, '_blank');
-        }
-        this.loadShares(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to share event right now.';
-      }
-    });
-  }
-
   private loadReactionSummary(eventId: number): void {
     this.reactionService.getSummary(eventId).subscribe({
       next: summary => {
@@ -401,17 +321,6 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => {
         this.participants = [];
-      }
-    });
-  }
-
-  private loadShares(eventId: number): void {
-    this.shareService.getSummary(eventId).subscribe({
-      next: summary => {
-        this.totalShares = Number(summary?.totalShares || 0);
-      },
-      error: () => {
-        this.totalShares = 0;
       }
     });
   }
@@ -463,6 +372,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private applyLoadedEvent(event: EventDto): void {
     this.event = event;
+    this.startCountdown();
     this.activeImageUrl = event.imageUrl?.trim() || null;
     this.mapOpenUrl = this.buildMapOpenUrl(event.latitude, event.longitude);
     setTimeout(() => {
@@ -501,6 +411,22 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getGalleryImage(image: EventImageDto): string {
     return image.imageUrl?.trim() || image.url?.trim() || this.fallbackCover;
+  }
+
+  getCategoryDisplayName(): string {
+    if (!this.event) {
+      return 'N/A';
+    }
+
+    const eventWithCategory = this.event as EventDto & {
+      category?: { name?: string };
+      categoryDto?: { name?: string };
+    };
+
+    return this.event.categoryName
+      || eventWithCategory.category?.name
+      || eventWithCategory.categoryDto?.name
+      || 'N/A';
   }
 
   setActiveImage(image: string): void {
@@ -608,74 +534,155 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private bootstrapUserContext(): void {
-    this.currentUserId = Number(localStorage.getItem('userId')) || null;
     const session = loadAuthSession();
+    const tokenPayload = this.decodeJwtPayload(getAuthToken());
+
+    const sessionUserId = Number(session?.user?.id);
+    const localStorageUserId = Number(localStorage.getItem('userId'));
+    const tokenUserId = Number(tokenPayload?.['userId'] || tokenPayload?.['id']);
+    this.currentUserId = sessionUserId || localStorageUserId || tokenUserId || null;
 
     let storedUser: any = null;
-    try {
-      storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-    } catch {
-      storedUser = null;
+    if (session?.user) {
+      storedUser = session.user;
     }
 
-    if (!storedUser && session?.user) {
-      storedUser = session.user;
+    try {
+      if (!storedUser) {
+        storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      }
+    } catch {
+      if (!storedUser) {
+        storedUser = null;
+      }
     }
 
     const firstName = storedUser?.firstName || 'User';
     const lastName = storedUser?.lastName || this.currentUserId || '';
     this.currentUserName = `${firstName} ${lastName}`.trim();
 
-    const email = storedUser?.email?.trim();
+    const email = storedUser?.email?.trim() || this.readEmailFromTokenPayload(tokenPayload);
     const phone = storedUser?.phone?.trim();
-    this.currentUserEmail = email || (this.currentUserId ? `user-${this.currentUserId}@local.user` : '');
+    this.currentUserEmail = email || '';
     this.currentUserPhone = phone || '';
   }
 
-  private async refreshUserContextFromProfileApi(): Promise<void> {
-    try {
-      const profile = await this.authApiService.getCurrentUserProfile();
-      if (!profile) {
-        return;
-      }
-
-      const phone = typeof profile['phone'] === 'string' ? profile['phone'].trim() : '';
-      const email = typeof profile['email'] === 'string' ? profile['email'].trim() : '';
-      const username = typeof profile['username'] === 'string' ? profile['username'].trim() : '';
-      const lastname = typeof profile['lastname'] === 'string' ? profile['lastname'].trim() : '';
-      const id = profile['id'];
-
-      if (phone) {
-        this.currentUserPhone = phone;
-      }
-      if (email) {
-        this.currentUserEmail = email;
-      }
-      if (username || lastname) {
-        this.currentUserName = `${username} ${lastname}`.trim();
-      }
-      if (typeof id === 'number' || typeof id === 'string') {
-        const parsedId = Number(id);
-        if (Number.isFinite(parsedId) && parsedId > 0) {
-          this.currentUserId = parsedId;
-          localStorage.setItem('userId', String(parsedId));
-        }
-      }
-
-      const cachedUserRaw = localStorage.getItem('currentUser');
-      const cachedUser = cachedUserRaw ? JSON.parse(cachedUserRaw) : {};
-      const mergedUser = {
-        ...cachedUser,
-        id: this.currentUserId ?? cachedUser?.id,
-        firstName: username || cachedUser?.firstName,
-        lastName: lastname || cachedUser?.lastName,
-        email: this.currentUserEmail || cachedUser?.email,
-        phone: this.currentUserPhone || cachedUser?.phone
-      };
-      localStorage.setItem('currentUser', JSON.stringify(mergedUser));
-    } catch {
-      // Ignore profile refresh errors and keep existing local context.
+  private parseEventDate(value?: string | null): Date | null {
+    if (!value) {
+      return null;
     }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const normalized = trimmed
+      .replace(' ', 'T')
+      .replace(/\.(\d{3})\d+$/, '.$1')
+      .replace(/\.(\d{1,2})$/, '.$100');
+
+    const date = new Date(normalized);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private decodeJwtPayload(token: string | null): Record<string, unknown> | null {
+    if (!token) {
+      return null;
+    }
+
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    try {
+      const normalized = parts[1]
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(parts[1].length / 4) * 4, '=');
+
+      const payload = atob(normalized);
+      return JSON.parse(payload) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
+  private readEmailFromTokenPayload(payload: Record<string, unknown> | null): string {
+    if (!payload) {
+      return '';
+    }
+
+    const tokenEmail = payload['email'] || payload['mail'] || payload['username'] || payload['sub'];
+    return typeof tokenEmail === 'string' ? tokenEmail.trim().toLowerCase() : '';
+  }
+
+  private startCountdown(): void {
+    if (this.countdownIntervalId) {
+      clearInterval(this.countdownIntervalId);
+      this.countdownIntervalId = null;
+    }
+
+    this.updateCountdownMessage();
+    this.countdownIntervalId = setInterval(() => this.updateCountdownMessage(), 1000);
+  }
+
+  private updateCountdownMessage(): void {
+    if (!this.event) {
+      this.countdownStatus = 'after';
+      this.countdownLabel = "L'événement est terminé";
+      this.countdownValue = '';
+      this.countdownMessage = "L'événement est terminé";
+      return;
+    }
+
+    const rawStartDate = this.event.startDate || (this.event as EventDto & { start_date?: string }).start_date;
+    const rawEndDate = this.event.endDate || (this.event as EventDto & { end_date?: string }).end_date;
+    const startDate = this.parseEventDate(rawStartDate);
+    const endDate = this.parseEventDate(rawEndDate);
+    const now = new Date();
+
+    if (!startDate || !endDate) {
+      this.countdownStatus = 'after';
+      this.countdownLabel = "L'événement est terminé";
+      this.countdownValue = '';
+      this.countdownMessage = "L'événement est terminé";
+      return;
+    }
+
+    if (now < startDate) {
+      this.countdownStatus = 'before';
+      this.countdownLabel = "L'événement va débuter dans";
+      this.countdownValue = this.formatDuration(startDate.getTime() - now.getTime());
+      this.countdownMessage = `L'événement va débuter dans : ${this.countdownValue}`;
+      return;
+    }
+
+    if (now < endDate) {
+      this.countdownStatus = 'during';
+      this.countdownLabel = "L'événement se termine dans";
+      this.countdownValue = this.formatDuration(endDate.getTime() - now.getTime());
+      this.countdownMessage = `L'événement se termine dans : ${this.countdownValue}`;
+      return;
+    }
+
+    this.countdownStatus = 'after';
+    this.countdownLabel = "L'événement est terminé";
+    this.countdownValue = '';
+    this.countdownMessage = "L'événement est terminé";
+  }
+
+  private formatDuration(milliseconds: number): string {
+    const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return [days, hours, minutes, seconds]
+      .map(value => String(value).padStart(2, '0'))
+      .join(':');
   }
 
   private initDetailMap(): void {

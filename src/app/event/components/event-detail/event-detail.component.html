@@ -11,6 +11,21 @@
 
 			<article *ngIf="event" class="rounded-2xl border border-border bg-white p-6 shadow-sm">
 				<div class="space-y-6">
+					<div
+						class="countdown-banner"
+						[ngClass]="{
+							'countdown-before': countdownStatus === 'before',
+							'countdown-during': countdownStatus === 'during',
+							'countdown-after': countdownStatus === 'after'
+						}"
+					>
+						<div class="countdown-header">
+							<span class="countdown-icon" aria-hidden="true">⏱</span>
+							<span class="countdown-label">{{ countdownLabel }}</span>
+						</div>
+						<p *ngIf="countdownStatus !== 'after'" class="countdown-digits">{{ countdownValue }}</p>
+					</div>
+
 					<div class="relative overflow-hidden rounded-2xl border border-border">
 						<img [src]="getDisplayedImage()" [alt]="event.name || 'Event'" class="h-80 w-full object-cover lg:h-[26rem]" />
 						<div class="event-card-overlay"></div>
@@ -50,15 +65,7 @@
 							<p><strong>Max capacity:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</p>
 							<p><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</p>
 							<p><strong>Available seats:</strong> {{ getAvailablePlaces() }}</p>
-							<p><strong>Category:</strong> {{ event.categoryName || ('#' + (event.categoryId ?? 'N/A')) }}</p>
-
-							<div class="mt-4 flex flex-wrap gap-2">
-								<button type="button" class="btn-primary !px-4 !py-2" (click)="participateInEvent()" [disabled]="isJoining">
-									{{ isJoining ? 'Joining...' : 'Participate in this event' }}
-								</button>
-								<button type="button" class="btn-secondary !px-4 !py-2" (click)="shareOnFacebook()">📤 Share on Facebook</button>
-							</div>
-							<p class="text-sm text-slate-600">📊 Shares: {{ totalShares }}</p>
+							<p><strong>Category:</strong> {{ getCategoryDisplayName() }}</p>
 						</div>
 
 						<div class="space-y-3">
@@ -85,7 +92,7 @@
 							</button>
 						</div>
 						<p class="mt-2 text-xs text-slate-500">
-							Facebook mode: click once to react, click same emoji again to remove your reaction.
+							 Click once to react, click same emoji again to remove your reaction.
 						</p>
 					</div>
 
