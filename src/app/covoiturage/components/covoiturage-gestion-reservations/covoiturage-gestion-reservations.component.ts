@@ -13,6 +13,7 @@ export class CovoiturageGestionReservationsComponent implements OnInit {
   reservations: Reservation[] = [];
   filteredReservations: Reservation[] = [];
   covoituragesMap: Map<number, Covoiturage> = new Map();
+  passengerNames: Map<number, string> = new Map();
   loading = false;
   currentUserId: number = 0;
 
@@ -60,12 +61,29 @@ export class CovoiturageGestionReservationsComponent implements OnInit {
         this.reservations = data;
         this.filteredReservations = data;
         this.loading = false;
+        this.loadPassengerNames(data);
       },
       error: (err) => {
         console.error(err);
         this.loading = false;
       }
     });
+  }
+
+  private loadPassengerNames(reservations: Reservation[]): void {
+    const uniqueIds = [...new Set(reservations.map(r => r.idPassenger))];
+    uniqueIds.forEach(id => {
+      if (!this.passengerNames.has(id)) {
+        this.covoiturageService.getUserById(id).subscribe({
+          next: (user) => this.passengerNames.set(id, user.username),
+          error: () => this.passengerNames.set(id, `Utilisateur #${id}`)
+        });
+      }
+    });
+  }
+
+  getPassengerName(id: number): string {
+    return this.passengerNames.get(id) || 'Chargement...';
   }
 
   applyFilters(): void {

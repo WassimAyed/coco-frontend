@@ -16,6 +16,7 @@ export class CovoiturageDetailComponent implements OnInit {
   covoiturage: Covoiturage | null = null;
   vehicule: Vehicule | null = null;
   reservations: Reservation[] = [];
+  passengerNames: Map<number, string> = new Map();
   loading = true;
   error = '';
 
@@ -142,9 +143,28 @@ export class CovoiturageDetailComponent implements OnInit {
 
   loadReservations(covoiturageId: number): void {
     this.covoiturageService.getReservationsByCovoiturage(covoiturageId).subscribe({
-      next: (res) => this.reservations = res,
+      next: (res) => {
+        this.reservations = res;
+        this.loadPassengerNames(res);
+      },
       error: (err) => console.error('Erreur chargement reservations', err)
     });
+  }
+
+  private loadPassengerNames(reservations: Reservation[]): void {
+    const uniqueIds = [...new Set(reservations.map(r => r.idPassenger))];
+    uniqueIds.forEach(id => {
+      if (!this.passengerNames.has(id)) {
+        this.covoiturageService.getUserById(id).subscribe({
+          next: (user) => this.passengerNames.set(id, user.username),
+          error: () => this.passengerNames.set(id, `Utilisateur #${id}`)
+        });
+      }
+    });
+  }
+
+  getPassengerName(id: number): string {
+    return this.passengerNames.get(id) || 'Chargement...';
   }
 
   loadMyReservation(covoiturageId: number): void {

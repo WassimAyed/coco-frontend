@@ -128,4 +128,10 @@ export class CovoiturageService {
   getVehiculeImageUrl(filename: string): string {
     return `http://localhost:8092/imagesVehicules/${filename}`;
   }
+
+  // ========== USER ==========
+
+  getUserById(id: number): Observable<{ id: number; username: string; email: string; imageUrl: string }> {
+    return this.http.get<{ id: number; username: string; email: string; imageUrl: string }>(`http://localhost:8090/users/${id}`);
+  }
 }
