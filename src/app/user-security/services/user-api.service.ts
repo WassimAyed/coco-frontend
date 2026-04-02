@@ -96,4 +96,20 @@ export class UserApiService {
       withCredentials: environment.auth.withCredentials,
     };
   }
+
+async getUserById(id: string): Promise<UserProfile> {
+  const response = await firstValueFrom(
+    this.http.get<unknown>(
+      joinUrl(environment.apiBaseUrl, `/users/${id}`),
+      {
+        ...this.getAuthorizedOptions(),
+      }
+    )
+  );
+
+  return response as UserProfile;
+}
+
+
+
 }

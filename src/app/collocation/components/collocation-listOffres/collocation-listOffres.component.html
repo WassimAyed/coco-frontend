@@ -129,13 +129,12 @@
 
                   <!-- Action Buttons -->
                   <div class="d-flex gap-2">
-                    <button class="btn btn-outline-danger btn-sm rounded-circle"
-                            (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
-                            [class.btn-danger]="favoriteIds.includes(offer.id)"
-                            [class.text-white]="favoriteIds.includes(offer.id)"
-                            [title]="favoriteIds.includes(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
-                      <i [class.fas]="favoriteIds.includes(offer.id)" [class.far]="!favoriteIds.includes(offer.id)" class="fa-heart"></i>
-                    </button>
+                  <button class="btn btn-outline-danger btn-sm rounded-circle"
+        (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
+        [ngClass]="favoriteIds.includes(offer.id) ? 'btn-danger text-white' : 'btn-outline-danger text-danger'"
+        [title]="favoriteIds.includes(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+  <i [ngClass]="favoriteIds.includes(offer.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
+</button>
 
                     <button class="btn btn-outline-secondary btn-sm rounded-circle"
                             (click)="$event.stopPropagation(); viewDetails(offer.id)"
@@ -206,27 +205,10 @@
   </div>
 </footer>
 
-<!-- ===== MODAL DEMANDE ===== -->
-<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form (ngSubmit)="submitRequest()">
-        <div class="modal-header">
-          <h5 class="modal-title" id="requestModalLabel">Envoyer une demande</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="message" class="form-label">Message</label>
-            <textarea id="message" class="form-control" rows="4" [(ngModel)]="requestMessage" name="message"
-                      placeholder="Écris un message à l'auteur de l'offre..." required></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-success">Envoyer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<app-request-offre-modal
+  *ngIf="showRequestModal"
+  [offerId]="selectedOfferId"
+  [userId]="currentUserId"
+  (closed)="showRequestModal = false"
+  (submitted)="onRequestSubmitted()">
+</app-request-offre-modal>

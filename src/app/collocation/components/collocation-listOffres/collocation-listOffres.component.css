@@ -54,3 +54,51 @@
   border-color: #f83441; /* matches the coin icon color */
   box-shadow: 0 0 0 0.2rem rgba(247, 99, 102, 0.25);
 }
+/* Highlight animation for selected card */
+.card-highlight {
+  animation: cardPulse 0.6s ease-in-out;
+  background: linear-gradient(145deg, #fff0f0, #ffffff);
+  border-left: 4px solid #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.4) !important;
+}
+
+@keyframes cardPulse {
+  0% { transform: scale(1); background: white; }
+  50% { transform: scale(1.01); background: #ffe5e5; }
+  100% { transform: scale(1); background: white; }
+}
+
+/* Pulsing effect on the selected marker icon (optional) */
+.leaflet-marker-icon.pulse {
+  animation: markerPulse 1s infinite;
+}
+@keyframes markerPulse {
+  0% { transform: scale(1); opacity: 1; }
+  70% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===============================
+   SELECTED CARD
+================================= */
+.offer-card.active {
+  border-left: 4px solid #dc3545 !important;
+  background: linear-gradient(145deg, #fff5f5, #ffffff);
+  box-shadow: 0 0 0 2px rgba(220,53,69,.25);
+}
+
+/* Smooth scroll focus */
+.offer-card {
+  scroll-margin-top: 120px;
+}
+
+/* Selected marker animation */
+.leaflet-marker-icon.selected-marker {
+  animation: markerPulse 1s infinite;
+}
+
+@keyframes markerPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}

@@ -1,64 +1,84 @@
-:root {
-  --glass-bg: rgba(255,255,255,0.75);
-  --glass-shadow: 0 10px 30px -5px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.02);
-  --hover-shadow: 0 30px 40px -15px rgba(220,38,38,0.3),0 0 0 1px rgba(220,38,38,0.1);
-  --inner-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+/* Smooth fade-in animation */
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
 }
 
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--glass-shadow), var(--inner-shadow);
-  transition: all 0.35s cubic-bezier(0.16,0.8,0.32,1);
-  border: 1px solid rgba(255,255,255,0.3);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.glass-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: var(--hover-shadow), var(--inner-shadow);
+/* Image gallery thumbnail hover & active states */
+.thumbnail-wrapper {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+
+.thumbnail-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 .active-thumb {
-  border: 2px solid var(--bs-danger) !important;
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.2);
-}
-/* ===== Map Card ===== */
-.map-card .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-gray-800);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  border: 2px solid #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
 }
 
-.map-container {
-  height: 240px;
-  border-radius: 18px;
-  background: var(--color-gray-200);
-  transition: var(--transition-default);
-  border: 2px solid transparent;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.02);
+/* Main image hover effect */
+.main-image-container:hover .main-image {
+  transform: scale(1.02);
 }
 
-.map-container:hover,
-.map-container:focus-within {
-  border-color: var(--color-red-400);
-  box-shadow: 0 8px 18px -8px rgba(220, 38, 38, 0.3), inset 0 1px 4px rgba(0, 0, 0, 0.02);
+/* Button hover lift effect */
+.hover-lift {
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-
-@keyframes float {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-.price-badge-float {
-  animation: float 3s ease-in-out infinite;
+/* Avatar wrapper subtle animation */
+.avatar-wrapper img {
+  transition: transform 0.2s;
 }
 
-@media(max-width:768px) {
-  .glass-card { backdrop-filter: blur(8px); }
-  .price-badge-float { animation:none; }
+.avatar-wrapper:hover img {
+  transform: scale(1.02);
+}
+
+/* Card improvements */
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-image-container img {
+    height: 250px !important;
+  }
+
+  .thumbnail-wrapper img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .card-body {
+    padding: 1.25rem !important;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
 }
