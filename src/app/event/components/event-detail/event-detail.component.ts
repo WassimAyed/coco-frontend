@@ -15,6 +15,8 @@ import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { getAuthToken } from '../../../user-security/utils/auth-token.util';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-event-detail',
@@ -51,6 +53,9 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  participationErrorMessage = '';
+  participationSuccessMessage = '';
+  categoryName = '';
   mapOpenUrl: string | null = null;
   activeImageUrl: string | null = null;
   currentUserId: number | null = null;
@@ -119,36 +124,28 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getById(id).subscribe({
-      next: event => {
+    this.eventService.getById(id).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return this.loadEventFallbackFromList(id);
+      })
+    ).subscribe(event => {
+      if (event) {
         this.applyLoadedEvent(event);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.loadEventFallbackFromList(id);
       }
+
+      this.isLoading = false;
     });
   }
 
-  private loadEventFallbackFromList(id: number): void {
-    this.eventService.getAll().subscribe({
-      next: events => {
-        const fallback = events.find(item => item.id === id);
-        if (!fallback) {
-          this.errorMessage = 'Unable to load event details.';
-          this.isLoading = false;
-          return;
-        }
-
-        this.applyLoadedEvent(fallback);
-        this.errorMessage = 'Details endpoint returned an error. Showing fallback event data.';
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Unable to load event details.';
-        this.isLoading = false;
-      }
-    });
+  private loadEventFallbackFromList(id: number): Observable<EventDto | null> {
+    return this.eventService.getAll().pipe(
+      map(events => events.find(item => item.id === id) || null),
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(null);
+      })
+    );
   }
 
   react(type: ReactionType): void {
@@ -159,33 +156,45 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const current = this.selectedReaction;
     if (current === type) {
-      this.reactionService.remove(this.eventId, this.currentUserEmail).subscribe({
-        next: () => {
+      this.errorMessage = '';
+      this.reactionService.remove(this.eventId, this.currentUserEmail).pipe(
+        map(() => true),
+        catchError(err => {
+          this.setBackendErrorMessage(err);
+          return of(false);
+        })
+      ).subscribe(success => {
+        if (!success) {
+          return;
+        }
+
           this.selectedReaction = null;
           this.storeLocalReaction(this.eventId!, this.currentUserId!, null);
           this.loadReactionSummary(this.eventId!);
-        },
-        error: () => {
-          this.errorMessage = 'Unable to remove reaction.';
-        }
       });
       return;
     }
 
+    this.errorMessage = '';
     this.reactionService.addOrUpdate({
       type,
       authorName: this.currentUserName,
       authorEmail: this.currentUserEmail,
       eventId: this.eventId
-    }).subscribe({
-      next: () => {
+    }).pipe(
+      map(() => true),
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(false);
+      })
+    ).subscribe(success => {
+      if (!success) {
+        return;
+      }
+
         this.selectedReaction = type;
         this.storeLocalReaction(this.eventId!, this.currentUserId!, type);
         this.loadReactionSummary(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to save reaction.';
-      }
     });
   }
 
@@ -196,35 +205,42 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.isRatingSaving = true;
+    this.errorMessage = '';
     this.ratingService.rate({
       eventId: this.eventId,
       userId: this.currentUserId,
       rating
-    }).subscribe({
-      next: (response: EventRatingDto) => {
+    }).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        this.isRatingSaving = false;
+        return of(null);
+      })
+    ).subscribe((response: EventRatingDto | null) => {
+      if (!response) {
+        return;
+      }
+
         this.selectedRating = response.rating ?? rating;
         this.averageRating = response.averageRating ?? this.averageRating;
         this.totalRatings = response.totalRatings ?? this.totalRatings;
         this.successMessage = 'Your rating has been saved.';
         this.errorMessage = '';
         this.isRatingSaving = false;
-      },
-      error: () => {
-        this.errorMessage = 'Unable to save rating.';
-        this.isRatingSaving = false;
-      }
     });
   }
 
   participateInEvent(): void {
+    this.participationErrorMessage = '';
+    this.participationSuccessMessage = '';
+
     if (!this.eventId || !this.currentUserEmail) {
-      this.errorMessage = 'You must be logged in to participate.';
+      this.participationErrorMessage = 'You must be logged in to participate.';
       return;
     }
 
     if (this.hasCurrentUserParticipated()) {
-      this.successMessage = 'You are already registered for this event.';
-      this.errorMessage = '';
+      this.participationSuccessMessage = 'You are already registered for this event.';
       return;
     }
 
@@ -234,19 +250,22 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       email: this.currentUserEmail,
       phone: this.currentUserPhone || undefined,
       eventId: this.eventId
-    }).subscribe({
-      next: () => {
-        this.successMessage = 'Your participation has been registered.';
-        this.errorMessage = '';
+    }).pipe(
+      map(() => true),
+      catchError(err => {
+        this.participationErrorMessage = this.extractBackendErrorMessage(err);
+        this.isParticipating = false;
+        return of(false);
+      })
+    ).subscribe(success => {
+      if (!success) {
+        return;
+      }
+
+        this.participationSuccessMessage = 'Your participation has been registered.';
         this.isParticipating = false;
         this.loadParticipants(this.eventId!);
         this.loadParticipantCount(this.eventId!);
-      },
-      error: (err) => {
-        console.log('Participate error:', err);
-        this.errorMessage = 'Unable to register participation.';
-        this.isParticipating = false;
-      }
     });
   }
 
@@ -275,24 +294,29 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.errorMessage = '';
     this.commentService.add({
       content,
       authorName: this.currentUserName,
       authorEmail: this.currentUserEmail,
       eventId: this.eventId,
       userId: this.currentUserId
-    }).subscribe({
-      next: created => {
+    }).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(null);
+      })
+    ).subscribe(created => {
+      if (!created) {
+        return;
+      }
+
         this.commentDraft = '';
         if (created.id && this.currentUserId) {
           this.storeCommentOwner(created.id, this.currentUserId);
         }
         this.loadComments(this.eventId!);
         this.loadCommentCount(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to add comment.';
-      }
     });
   }
 
@@ -317,19 +341,25 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.errorMessage = '';
     this.commentService.update(comment.id, {
       ...comment,
       content,
       eventId: this.eventId,
       userId: comment.userId
-    }).subscribe({
-      next: () => {
+    }).pipe(
+      map(() => true),
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(false);
+      })
+    ).subscribe(success => {
+      if (!success) {
+        return;
+      }
+
         this.cancelEditComment();
         this.loadComments(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to update comment.';
-      }
     });
   }
 
@@ -338,14 +368,20 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.commentService.remove(commentId).subscribe({
-      next: () => {
+    this.errorMessage = '';
+    this.commentService.remove(commentId).pipe(
+      map(() => true),
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(false);
+      })
+    ).subscribe(success => {
+      if (!success) {
+        return;
+      }
+
         this.loadComments(this.eventId!);
         this.loadCommentCount(this.eventId!);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to delete comment.';
-      }
     });
   }
 
@@ -379,73 +415,72 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadReactionSummary(eventId: number): void {
-    this.reactionService.getSummary(eventId).subscribe({
-      next: summary => {
-        this.reactionCounts = summary.reactionCounts || {};
-      },
-      error: () => {
-        this.reactionCounts = {};
-      }
+    this.reactionService.getSummary(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of({ reactionCounts: {} as Partial<Record<ReactionType, number>> });
+      })
+    ).subscribe(summary => {
+      this.reactionCounts = summary.reactionCounts || {};
     });
   }
 
   private loadComments(eventId: number): void {
-    this.commentService.getByEvent(eventId).subscribe({
-      next: items => {
-        this.comments = items.map(item => ({
-          ...item,
-          userId: item.id ? this.readCommentOwner(item.id) : undefined
-        }));
-      },
-      error: () => {
-        this.comments = [];
-      }
+    this.commentService.getByEvent(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of([] as CommentDto[]);
+      })
+    ).subscribe(items => {
+      this.comments = items.map(item => ({
+        ...item,
+        userId: item.id ? this.readCommentOwner(item.id) : undefined
+      }));
     });
   }
 
   private loadCommentCount(eventId: number): void {
-    this.commentService.countByEvent(eventId).subscribe({
-      next: value => {
-        this.commentCount = Number(value || 0);
-      },
-      error: () => {
-        this.commentCount = this.comments.length;
-      }
+    this.commentService.countByEvent(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(this.comments.length);
+      })
+    ).subscribe(value => {
+      this.commentCount = Number(value || 0);
     });
   }
 
   private loadParticipants(eventId: number): void {
-    this.participantService.getByEvent(eventId).subscribe({
-      next: data => {
-        this.participants = data;
-      },
-      error: () => {
-        this.participants = [];
-      }
+    this.participantService.getByEvent(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of([] as ParticipantDto[]);
+      })
+    ).subscribe(data => {
+      this.participants = data;
     });
   }
 
   private loadParticipantCount(eventId: number): void {
-    this.participantService.countByEvent(eventId).subscribe({
-      next: value => {
-        this.participantCount = Number(value || 0);
-      },
-      error: () => {
-        this.participantCount = this.participants.length;
-      }
+    this.participantService.countByEvent(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(this.participants.length);
+      })
+    ).subscribe(value => {
+      this.participantCount = Number(value || 0);
     });
   }
 
   private loadRatingSummary(eventId: number): void {
-    this.ratingService.getStats(eventId).subscribe({
-      next: (summary: EventRatingDto) => {
-        this.averageRating = summary.averageRating ?? 0;
-        this.totalRatings = summary.totalRatings ?? 0;
-      },
-      error: () => {
-        this.averageRating = 0;
-        this.totalRatings = 0;
-      }
+    this.ratingService.getStats(eventId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of({ averageRating: 0, totalRatings: 0 } as EventRatingDto);
+      })
+    ).subscribe((summary: EventRatingDto) => {
+      this.averageRating = summary.averageRating ?? 0;
+      this.totalRatings = summary.totalRatings ?? 0;
     });
   }
 
@@ -455,36 +490,54 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.ratingService.getUserRating(eventId, this.currentUserId).subscribe({
-      next: (rating: EventRatingDto) => {
-        this.selectedRating = rating.rating ?? null;
-      },
-      error: () => {
-        this.selectedRating = null;
-      }
+    this.ratingService.getUserRating(eventId, this.currentUserId).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of(null);
+      })
+    ).subscribe((rating: EventRatingDto | null) => {
+      this.selectedRating = rating?.rating ?? null;
     });
   }
 
   private loadGallery(id: number): void {
-    this.eventService.getGallery(id).subscribe({
-      next: images => {
-        this.gallery = images;
-        if ((!this.event?.imageUrl || !this.event.imageUrl.trim()) && images.length > 0) {
-          const first = images.find(image => !!image.imageUrl || !!image.url);
-          const imageUrl = first?.imageUrl || first?.url;
-          if (this.event && imageUrl) {
-            this.event = { ...this.event, imageUrl };
-            this.activeImageUrl = imageUrl;
-          }
+    this.eventService.getGallery(id).pipe(
+      catchError(err => {
+        this.setBackendErrorMessage(err);
+        return of([] as EventImageDto[]);
+      })
+    ).subscribe(images => {
+      this.gallery = images;
+      if ((!this.event?.imageUrl || !this.event.imageUrl.trim()) && images.length > 0) {
+        const first = images.find(image => !!image.imageUrl || !!image.url);
+        const imageUrl = first?.imageUrl || first?.url;
+        if (this.event && imageUrl) {
+          this.event = { ...this.event, imageUrl };
+          this.activeImageUrl = imageUrl;
         }
-
-        if (!this.activeImageUrl && images.length > 0) {
-          this.activeImageUrl = this.getGalleryImage(images[0]);
-        }
-      },
-      error: () => {
-        this.gallery = [];
       }
+
+      if (!this.activeImageUrl && images.length > 0) {
+        this.activeImageUrl = this.getGalleryImage(images[0]);
+      }
+    });
+  }
+
+  private loadCategoryName(categoryId?: number): void {
+    if (!categoryId) {
+      this.categoryName = '';
+      return;
+    }
+
+    this.eventService.getCategories().pipe(
+      map(categories => categories.find(category => Number(category.id) === Number(categoryId)) || null),
+      catchError(err => {
+        // Category is secondary metadata; avoid blocking the page with a top-level technical error.
+        this.categoryName = '';
+        return of(null);
+      })
+    ).subscribe(category => {
+      this.categoryName = category?.name?.trim() || '';
     });
   }
 
@@ -512,6 +565,8 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private applyLoadedEvent(event: EventDto): void {
     this.event = event;
+    this.categoryName = '';
+    this.loadCategoryName(event.categoryId);
     this.startCountdown();
     this.activeImageUrl = event.imageUrl?.trim() || null;
     this.mapOpenUrl = this.buildMapOpenUrl(event.latitude, event.longitude);
@@ -563,10 +618,23 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       categoryDto?: { name?: string };
     };
 
-    return this.event.categoryName
+    return this.categoryName
+      || this.event.categoryName
       || eventWithCategory.category?.name
       || eventWithCategory.categoryDto?.name
       || 'N/A';
+  }
+
+  private setBackendErrorMessage(err: unknown): void {
+    const backendMessage = this.extractBackendErrorMessage(err);
+    if (backendMessage) {
+      this.errorMessage = backendMessage;
+    }
+  }
+
+  private extractBackendErrorMessage(err: unknown): string {
+    const backendMessage = (err as { error?: { message?: unknown } })?.error?.message;
+    return typeof backendMessage === 'string' ? backendMessage.trim() : '';
   }
 
   setActiveImage(image: string): void {

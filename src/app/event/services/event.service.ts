@@ -74,6 +74,10 @@ export class EventService {
     return this.http.get<CategoryDto[]>(this.categoryUrl);
   }
 
+  getCategoryById(id: number): Observable<CategoryDto> {
+    return this.http.get<CategoryDto>(`${this.categoryUrl}/${id}`);
+  }
+
   getAvailable(query?: EventListQuery): Observable<EventDto[]> {
     return this.http.get<EventDto[]>(`${this.baseUrl}/available`, { params: this.toParams(query) });
   }
