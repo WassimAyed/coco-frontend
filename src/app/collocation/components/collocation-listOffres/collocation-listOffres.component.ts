@@ -1,15 +1,22 @@
-import { UserService } from './../../../user-security/services/user.service';
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  inject,
+  computed,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
+import { UserService } from './../../../user-security/services/user.service';
+
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 
-
-
-
-declare var bootstrap: any; // pour le modal
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-collocation-list',
@@ -18,74 +25,119 @@ declare var bootstrap: any; // pour le modal
 })
 export class CollocationListComponent implements OnInit, AfterViewInit {
 
-
+  /* ===============================
+     DATA
+  ================================= */
   offers: CollocationOffer[] = [];
   filteredOffers: CollocationOffer[] = [];
-  searchTerm: string = '';
+
+  searchTerm = '';
   loading = false;
   error = '';
 
+  /* ===============================
+     MAP
+  ================================= */
   private map!: L.Map;
   private markers: L.Marker[] = [];
 
-  // Filters
-  filterMeublee: string = '';
-  filterVille: string = '';
+  private userMarker!: L.Marker;
+
+  /* ===============================
+     FILTERS
+  ================================= */
+  filterMeublee = '';
+  filterVille = '';
   filterPrixMin: number | null = null;
   filterPrixMax: number | null = null;
   filterRadius: number | null = null;
   availableVilles: string[] = [];
 
-  // GPS
+  /* ===============================
+     GPS
+  ================================= */
   userLat: number | null = null;
   userLng: number | null = null;
 
-  // Favorites
+  /* ===============================
+     FAVORITES
+  ================================= */
   favoriteIds: number[] = [];
 
-  // Modal request
+  /* ===============================
+     MODAL
+  ================================= */
+  @ViewChild('requestModalRef') modalRef!: ElementRef;
+  private modalInstance: any;
+
   selectedOfferId!: number;
-  requestMessage: string = '';
-   currentUserId!: number;
+  requestMessage = '';
+
+  /* ===============================
+     USER
+  ================================= */
+  private readonly userService = inject(UserService);
+  readonly user = computed(() => this.userService.currentUser());
+
+  currentUserId!: number;
 
   constructor(
     private collocationService: CollocationService,
     private router: Router,
-    private userService: UserService,
     private route: ActivatedRoute
   ) {}
 
-
-
-
-
-
+  /* ===============================
+     INIT
+  ================================= */
   ngOnInit(): void {
+    const currentUser = this.user();
 
-     this.currentUserId = Number(localStorage.getItem('userId'));
+    if (!currentUser?.id) {
+      this.error = 'User not authenticated';
+      return;
+    }
+
+    this.currentUserId = Number(currentUser.id);
+
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
   }
 
-  ngAfterViewInit(): void {
-    this.initMap();
+      private userIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png', // or any icon
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35]
+});
+ngAfterViewInit(): void {
+  this.initMap();
+
+  // If location already loaded → show marker
+  if (this.userLat && this.userLng) {
+    this.addUserMarker();
   }
+}
 
   /* ===============================
-     LOAD OFFERS
+     OFFERS
   ================================= */
   loadOffers(): void {
     this.loading = true;
+
     this.collocationService.getAllOffers().subscribe({
-      next: (data) => {
+      next: data => {
         this.offers = data;
         this.filteredOffers = data;
-        this.availableVilles = Array.from(new Set(data.map(o => o.ville))).sort();
+        this.availableVilles = Array.from(
+          new Set(data.map(o => o.ville))
+        ).sort();
+
         this.loading = false;
         this.updateMarkers();
       },
-      error: (err) => {
+      error: err => {
         this.error = 'Failed to load offers.';
         this.loading = false;
         console.error(err);
@@ -97,224 +149,222 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
      FILTERS
   ================================= */
   applyFilters(): void {
-    this.filteredOffers = this.offers.filter(offer => {
-      if (this.filterMeublee === 'true' && !offer.meublee) return false;
-      if (this.filterMeublee === 'false' && offer.meublee) return false;
-      if (this.filterVille && offer.ville !== this.filterVille) return false;
-      if (this.filterPrixMin !== null && offer.prixLoc < this.filterPrixMin) return false;
-      if (this.filterPrixMax !== null && offer.prixLoc > this.filterPrixMax) return false;
+    this.filteredOffers = this.offers.filter(o => {
+      if (this.filterMeublee === 'true' && !o.meublee) return false;
+      if (this.filterMeublee === 'false' && o.meublee) return false;
+      if (this.filterVille && o.ville !== this.filterVille) return false;
+      if (this.filterPrixMin !== null && o.prixLoc < this.filterPrixMin) return false;
+      if (this.filterPrixMax !== null && o.prixLoc > this.filterPrixMax) return false;
       return true;
     });
+
     this.updateMarkers();
   }
 
   filterOffers(): void {
     const term = this.searchTerm.toLowerCase().trim();
-    this.filteredOffers = !term ? this.offers : this.offers.filter(offer =>
-      offer.titre.toLowerCase().includes(term) ||
-      offer.description.toLowerCase().includes(term) ||
-      offer.ville.toLowerCase().includes(term) ||
-      offer.prixLoc.toString().includes(term)
-    );
-    this.updateMarkers();
-  }
 
-  applyProximityFilter(): void {
-    if (!this.filterRadius) {
-      this.filteredOffers = this.offers;
-      this.updateMarkers();
-      return;
-    }
-    if (!this.userLat || !this.userLng) {
-      alert("Location not ready yet.");
-      return;
-    }
-    this.loading = true;
-    this.collocationService.getNearbyOffers(this.userLat, this.userLng, this.filterRadius).subscribe({
-      next: (data) => {
-        this.filteredOffers = data;
-        this.loading = false;
-        this.updateMarkers();
-      },
-      error: (err) => {
-        this.loading = false;
-        console.error(err);
-      }
-    });
+    this.filteredOffers = !term
+      ? this.offers
+      : this.offers.filter(o =>
+          o.titre.toLowerCase().includes(term) ||
+          o.description.toLowerCase().includes(term) ||
+          o.ville.toLowerCase().includes(term)
+        );
+
+    this.updateMarkers();
   }
 
   /* ===============================
      MAP
   ================================= */
   private initMap(): void {
-    const defaultLat = 36.8065;
-    const defaultLng = 10.1815;
-    this.map = L.map('map').setView([defaultLat, defaultLng], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
+    this.map = L.map('map').setView([36.8065, 10.1815], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+      .addTo(this.map);
   }
 
   private updateMarkers(): void {
-    this.markers.forEach(marker => marker.remove());
+    this.markers.forEach(m => m.remove());
     this.markers = [];
-    this.filteredOffers.forEach(offer => {
-      if (offer.latitude && offer.longitude) {
-        const marker = L.marker([offer.latitude, offer.longitude])
+
+    this.filteredOffers.forEach(o => {
+      if (o.latitude && o.longitude) {
+        const marker = L.marker([o.latitude, o.longitude])
           .addTo(this.map)
-          .bindPopup(this.buildPopupContent(offer));
+          .bindPopup(`<b>${o.titre}</b><br>${o.prixLoc} TND`);
+
         this.markers.push(marker);
       }
     });
-    if (this.markers.length > 0) {
-      const group = L.featureGroup(this.markers);
-      this.map.fitBounds(group.getBounds(), { padding: [50, 50] });
+  }
+
+  centerOnOffer(o: CollocationOffer) {
+    if (o.latitude && o.longitude)
+      this.map.setView([o.latitude, o.longitude], 15);
+  }
+
+  /* ===============================
+     GEOLOCATION
+  ================================= */
+ getUserLocation(): void {
+  navigator.geolocation.getCurrentPosition(pos => {
+    this.userLat = pos.coords.latitude;
+    this.userLng = pos.coords.longitude;
+
+    // Wait until map is initialized
+    if (this.map) {
+      this.addUserMarker();
     }
+  }, err => {
+    console.error('Geolocation error:', err);
+  });
+}
+private addUserMarker(): void {
+  if (!this.userLat || !this.userLng) return;
+
+  // Remove old marker if exists
+  if (this.userMarker) {
+    this.userMarker.remove();
   }
 
-  private buildPopupContent(offer: CollocationOffer): string {
-    return `<b>${offer.titre}</b><br>${offer.prixLoc} TND<br>${offer.ville}<br>${offer.chambres} chambre(s) - ${offer.meublee ? 'Meublé' : 'Non meublé'}`;
-  }
+  this.userMarker = L.marker([this.userLat, this.userLng], {
+    icon: this.userIcon
+  })
+    .addTo(this.map)
+    .bindPopup('<b>📍 You are here</b>')
+    .openPopup();
 
-  centerOnOffer(offer: CollocationOffer): void {
-    if (offer.latitude && offer.longitude) this.map.setView([offer.latitude, offer.longitude], 15);
-  }
+    L.circle([this.userLat, this.userLng], {
+  radius: (this.filterRadius || 5) * 1000, // km → meters
+  color: 'red',
+  fillColor: '#f03',
+  fillOpacity: 0.1
+}).addTo(this.map);
 
-  getUserLocation(): void {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { this.userLat = pos.coords.latitude; this.userLng = pos.coords.longitude; },
-      (err) => console.error(err)
-    );
-  }
+  // Optional: center map on user
+  this.map.setView([this.userLat, this.userLng], 13);
+}
 
   /* ===============================
      FAVORITES
   ================================= */
   loadFavorites(): void {
-    const userId = +localStorage.getItem("ownerId")!;
-    if (!userId) return;
-    this.collocationService.getFavorites(userId).subscribe({
-      next: (data: any[]) => { this.favoriteIds = data.map(f => f.offre.id); },
-      error: err => console.error(err)
-    });
-  }
+    const user = this.user();
+    if (!user?.id) return;
 
-  toggleFavorite(offerId: number): void {
-    const userId = +localStorage.getItem("ownerId")!;
-    if (!userId) return;
-    if (this.favoriteIds.includes(offerId)) {
-      this.collocationService.removeFavorite(userId, offerId).subscribe(() => {
-        this.favoriteIds = this.favoriteIds.filter(id => id !== offerId);
+    this.collocationService
+      .getFavorites(Number(user.id))
+      .subscribe(data => {
+        this.favoriteIds = data.map((f: any) => f.offre.id);
       });
-    } else {
-      this.collocationService.addFavorite(userId, offerId).subscribe(() => {
-        this.favoriteIds.push(offerId);
-      });
-    }
   }
 
-  viewDetails(offerId: number): void {
-    this.router.navigate(['/collocation/offres', offerId]);
+toggleFavorite(offerId: number): void {
+  const userId = Number(this.user()?.id);
+
+  if (this.favoriteIds.includes(offerId)) {
+    this.favoriteIds = this.favoriteIds.filter(id => id !== offerId);
+    this.collocationService.removeFavorite(userId, offerId).subscribe();
+  } else {
+    this.favoriteIds.push(offerId);
+    this.collocationService.addFavorite(userId, offerId).subscribe();
+  }
+}
+
+  /* ===============================
+     NAVIGATION
+  ================================= */
+  viewDetails(id: number) {
+    this.router.navigate(['/collocation/offres', id]);
   }
 
-  createOffer(): void {
+  createOffer() {
     this.router.navigate(['/collocation/create-offre']);
   }
 
   /* ===============================
-     REQUEST MODAL
+     MODAL
   ================================= */
-  openRequestModal(offerId: number): void {
-    this.selectedOfferId = offerId;
-    const modalEl = document.getElementById('requestModal');
-    if (modalEl) {
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    }
+
+
+showRequestModal = false;
+
+openRequestModal(offerId: number): void {
+  this.selectedOfferId = offerId;
+  this.showRequestModal = true;
+}
+
+onRequestSubmitted(): void {
+  this.showRequestModal = false;
+  // optionally show a success toast here
+}
+
+  canSendRequest(offer: CollocationOffer): boolean {
+    return offer.ownerId !== this.currentUserId;
   }
 
-submitRequest(): void {
-    const studentId = localStorage.getItem('userId');
-    if (!studentId) {
-        this.showToast('Vous devez être connecté pour envoyer une demande.', 'danger');
-        return;
-    }
 
-    if (!this.selectedOfferId) {
-        this.showToast("Sélectionnez une offre avant d'envoyer la demande.", 'warning');
-        return;
-    }
 
-    const payload = {
-        offer: { id: this.selectedOfferId }, // juste l'ID
-        message: this.requestMessage
-    };
+  applyProximityFilter(): void {
 
-    this.collocationService.createRequest(payload, +studentId).subscribe({
-        next: (res: string) => {
-            console.log(res); // "Request sent"
-            this.showToast('Demande envoyée avec succès !', 'success');
-            this.requestMessage = '';
+  // If no radius or no GPS → show all
+  if (!this.filterRadius || !this.userLat || !this.userLng) {
+    this.filteredOffers = [...this.offers];
+    this.updateMarkers();
+    return;
+  }
 
-            const modalEl = document.getElementById('requestModal');
-            if (modalEl) {
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal?.hide();
-            }
-        },
-        error: (err) => {
-            console.error(err);
-            this.showToast('Erreur lors de l’envoi de la demande.', 'danger');
-        }
-    });
-}
+  const radiusKm = Number(this.filterRadius);
 
-/**
- * Crée et affiche un toast Bootstrap
- * @param message Message à afficher
- * @param type 'success' | 'danger' | 'warning' | 'info'
- */
-showToast(message: string, type: 'success' | 'danger' | 'warning' | 'info' = 'info') {
-    // Crée le conteneur des toasts s'il n'existe pas
-    let container = document.getElementById('toastContainer');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.style.position = 'fixed';
-        container.style.top = '1rem';
-        container.style.right = '1rem';
-        container.style.zIndex = '1080';
-        document.body.appendChild(container);
-    }
+  this.filteredOffers = this.offers.filter(offer => {
 
-    // Crée le toast
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center text-bg-${type} border-0`;
-    toastEl.setAttribute('role', 'alert');
-    toastEl.setAttribute('aria-live', 'assertive');
-    toastEl.setAttribute('aria-atomic', 'true');
-    toastEl.style.minWidth = '200px';
-    toastEl.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+    if (!offer.latitude || !offer.longitude) return false;
 
-    container.appendChild(toastEl);
+    const distance = this.calculateDistance(
+      this.userLat!,
+      this.userLng!,
+      offer.latitude,
+      offer.longitude
+    );
 
-    // Initialise et affiche le toast
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-    toast.show();
+    return distance <= radiusKm;
+  });
 
-    // Supprime le toast du DOM après disparition
-    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+  this.updateMarkers();
 }
 
 
-canSendRequest(offer: any): boolean {
-  return offer.ownerId !== this.currentUserId;
+private calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+
+  const R = 6371; // Earth radius in KM
+
+  const dLat = this.toRad(lat2 - lat1);
+  const dLon = this.toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(this.toRad(lat1)) *
+    Math.cos(this.toRad(lat2)) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
 }
+private toRad(value: number): number {
+  return value * Math.PI / 180;
+}
+
+
+
+
 
 }

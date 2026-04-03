@@ -1,128 +1,132 @@
 <main class="container my-4">
 
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-danger mb-3" role="status"></div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5 fade-in">
+    <div class="spinner-border text-danger mb-3" style="width: 3rem; height: 3rem;"></div>
     <p class="text-secondary">Chargement de l'annonce...</p>
   </div>
 
-  <div *ngIf="error" class="alert alert-danger d-flex align-items-center">
-    <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger shadow-sm fade-in">
+    {{ error }}
   </div>
 
-  <div class="row g-4" *ngIf="!loading && offer">
+  <!-- Content -->
+  <div *ngIf="!loading && offer" class="row g-4 fade-in">
 
-    <!-- Left Column -->
+    <!-- LEFT COLUMN -->
     <div class="col-lg-8">
-      <div class="d-flex flex-column gap-4">
 
-        <!-- Title & Price -->
-        <div class="card glass-card border-0">
-          <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-              <h1 class="card-title h2 fw-bold">{{ offer.titre }}</h1>
-              <p class="text-secondary mb-0">
-                <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ offer.ville }}
-              </p>
-            </div>
-            <span class="badge bg-danger fs-5 py-2 px-3 rounded-pill shadow price-badge-float">
-              {{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}
+      <!-- Title Card -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-body p-4 d-flex justify-content-between align-items-start">
+          <div>
+            <h2 class="h3 mb-2 fw-bold">{{ offer.titre }}</h2>
+            <p class="text-secondary mb-0">
+              <i class="bi bi-geo-alt-fill me-1"></i> {{ offer.ville }}
+            </p>
+          </div>
+          <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill shadow-sm">
+            {{ offer.prixLoc }} TND
+          </span>
+        </div>
+      </div>
+
+      <!-- Images Gallery -->
+      <div *ngIf="offer.imagesColoc && offer.imagesColoc.length > 0" class="mb-4">
+        <!-- Main Image -->
+        <div class="main-image-container rounded-4 overflow-hidden shadow-sm mb-3">
+          <img
+            *ngIf="offer.imagesColoc[selectedImageIndex]"
+            [src]="offer.imagesColoc[selectedImageIndex].url"
+            class="w-100 main-image"
+            style="height: 400px; object-fit: cover; transition: transform 0.3s ease;"
+            alt="Image principale"
+          />
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="d-flex gap-2 flex-wrap">
+          <div
+            *ngFor="let img of offer.imagesColoc; let i = index"
+            class="thumbnail-wrapper rounded-3 overflow-hidden shadow-sm"
+            [class.active-thumb]="i === selectedImageIndex"
+            (click)="selectImage(i)"
+            style="cursor: pointer; transition: all 0.2s;"
+          >
+            <img
+              [src]="img.url"
+              width="80"
+              height="80"
+              style="object-fit: cover; width: 80px; height: 80px; display: block;"
+              [alt]="'Miniature ' + (i+1)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Description Card -->
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-file-text-fill me-2 text-danger"></i> Description
+          </h5>
+          <p class="text-secondary lh-lg mb-0">{{ offer.description }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-4">
+
+      <!-- Map Card -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-body p-3">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-pin-map-fill me-2 text-danger"></i> Localisation
+          </h5>
+          <div #mapContainer class="rounded-3 overflow-hidden" style="height: 280px; background: #f8f9fa;"></div>
+        </div>
+      </div>
+
+      <!-- Owner Card -->
+      <div class="card border-0 shadow-sm rounded-4 text-center" *ngIf="owner">
+        <div class="card-body p-4">
+          <!-- Avatar -->
+          <div class="avatar-wrapper mb-3">
+            <img
+              [src]="owner.avatarUrl || 'https://i.pravatar.cc/120'"
+              class="rounded-circle border border-3 border-white shadow-sm"
+              width="100"
+              height="100"
+              style="object-fit: cover;"
+              alt="Avatar propriétaire"
+            />
+          </div>
+
+          <h6 class="fw-bold mb-1">{{ owner.username }} {{ owner.lastname }}</h6>
+          <small class="text-secondary d-block mb-3">{{ owner.email }}</small>
+
+          <!-- Action Button -->
+          <button
+            *ngIf="!isOwner()"
+            class="btn btn-danger w-100 rounded-pill py-2 fw-semibold shadow-sm hover-lift"
+          >
+            <i class="bi bi-chat-dots-fill me-2"></i> Contacter
+          </button>
+
+          <!-- Owner Badge -->
+          <div *ngIf="isOwner()" class="mt-3">
+            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Votre annonce
             </span>
           </div>
         </div>
-
-        <!-- Features -->
-        <div class="d-flex gap-2 flex-wrap">
-          <span class="badge bg-light text-dark rounded-pill px-3 py-2">
-            <i class="fas fa-bed me-1"></i>{{ offer.chambres }} chambre(s)
-          </span>
-          <span class="badge rounded-pill px-3 py-2" [ngClass]="offer.meublee ? 'bg-danger' : 'bg-light text-dark'">
-            <i class="fas" [ngClass]="offer.meublee ? 'fa-couch' : 'fa-times-circle'"></i>
-            {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
-          </span>
-        </div>
-
-        <!-- Gallery -->
-        <div class="card glass-card border-0" *ngIf="offer.imagesColoc?.[selectedImageIndex] && offer.imagesColoc && offer.imagesColoc.length > 0">
-          <div class="card-body p-0">
-            <img
-              [src]="offer.imagesColoc[selectedImageIndex].url"
-              class="w-100 rounded-top"
-              style="aspect-ratio:16/9;object-fit:cover;"
-            />
-            <div class="p-3">
-              <div class="d-flex gap-2 overflow-auto py-1" *ngIf="offer.imagesColoc.length > 1">
-                <button
-                  *ngFor="let img of offer.imagesColoc; let i=index"
-                  class="btn p-0 border-0 rounded-3 overflow-hidden flex-shrink-0"
-                  style="width:80px;height:60px"
-                  [class.active-thumb]="i===selectedImageIndex"
-                  (click)="selectImage(i)"
-                >
-                  <img [src]="img.url" class="w-100 h-100 object-fit-cover" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div class="card glass-card border-0">
-          <div class="card-body">
-            <h5 class="card-title h5">Description</h5>
-            <p class="card-text">{{ offer.description }}</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Right Column -->
-    <div class="col-lg-4">
-      <div class="position-sticky top-0" style="top:1.5rem;">
-        <div class="d-flex flex-column gap-4">
-
-          <!-- Map -->
-       <section class="map-card glass-card" aria-label="Localisation">
-  <h3 class="card-title">
-    <span aria-hidden="true">📍</span> Localisation
-  </h3>
-
-  <!-- IMPORTANT CHANGE -->
-  <div #mapContainer class="map-container"></div>
-</section>
-
-          <!-- Owner -->
-       <!-- Owner -->
-<div class="card glass-card border-0" *ngIf="ownerId">
-  <div class="card-body">
-    <div class="d-flex gap-3 align-items-center mb-3">
-
-      <!-- Avatar -->
-      <img
-        [src]="ownerAvatar || 'https://i.pravatar.cc/80'"
-        class="rounded-circle border border-2 border-danger"
-        width="70"
-        height="70"
-      />
-
-      <!-- Info -->
-      <div>
-        <h6 class="fw-bold mb-0">{{ ownerName }}</h6>
-        <small class="text-secondary">{{ ownerEmail }}</small>
       </div>
 
-    </div>
-
-    <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold">
-      <i class="fas fa-envelope me-2"></i>
-      Contacter
-    </button>
-  </div>
-</div>
-
-        </div>
-      </div>
     </div>
 
   </div>
+
 </main>

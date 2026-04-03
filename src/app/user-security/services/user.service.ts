@@ -166,9 +166,11 @@ export class UserService {
     authStore.getState().updateProfile(profileUpdates);
   }
 
-  logout(): void {
-    authStore.getState().logout();
-  }
+ logout(): void {
+
+  authStore.getState().logout();
+  this.snapshot.set(authStore.getState());
+}
 
   clearError(): void {
     authStore.getState().clearError();
