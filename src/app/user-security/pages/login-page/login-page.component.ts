@@ -6,7 +6,8 @@ import { UserService } from '../../services/user.service';
 import { environment } from '../../../../environments/environment';
 
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
-const USER_ID_KEY = 'userId'; // new key for storing user ID
+const USER_ID_KEY = 'userId';
+const ACCESS_TOKEN_KEY = 'accessToken';
 
 @Component({
   selector: 'app-login-page',
@@ -34,11 +35,9 @@ export class LoginPageComponent {
 
   get emailError(): string | null {
     const control = this.form.controls.email;
-
     if (!control.touched) return null;
     if (control.hasError('required')) return 'Email is required.';
     if (control.hasError('email')) return 'Enter a valid email address.';
-
     return null;
   }
 
@@ -54,24 +53,18 @@ export class LoginPageComponent {
     try {
       const result = await this.userService.login(this.form.getRawValue());
 
+      // Log the full response to help debug
+      console.log('Login response:', result);
+
       // ===== TWO FACTOR =====
       if (result.requiresTwoFactor) {
-        const email =
-          result.twoFactorEmail ?? this.form.controls.email.value.trim();
-
-        this.persistPendingTwoFactorContext(
-          email,
-          this.form.controls.rememberMe.value
-        );
-
+        const email = result.twoFactorEmail ?? this.form.controls.email.value.trim();
+        this.persistPendingTwoFactorContext(email, this.form.controls.rememberMe.value);
         this.toastService.info(
           result.message ?? 'A 2FA code has been sent to your email address.',
           'Two-Factor Authentication'
         );
-
-        await this.router.navigate(['/login/2fa'], {
-          queryParams: { email },
-        });
+        await this.router.navigate(['/login/2fa'], { queryParams: { email } });
         return;
       }
 
@@ -84,24 +77,35 @@ export class LoginPageComponent {
         return;
       }
 
-      // ✅ STORE USER IN LOCAL STORAGE
-      this.storeUserAndId(result.session.user);
+      // Extract token from common locations
+      const token = (result as any).token
+                 || (result as any).accessToken
+                 || (result.session as any)?.token
+                 || (result.session as any)?.accessToken;
 
-      // (optional) store token if exists
-      // this.userService.storeToken(result.session.token);
+      if (token) {
+        // Token‑based authentication
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+        console.log('Token stored for subsequent API calls.');
+      } else {
+        // Cookie‑based authentication – no token stored
+        console.warn('No token in response – assuming cookie‑based authentication.');
+        // Store a flag to indicate the user is logged in (optional)
+        localStorage.setItem('isAuthenticated', 'true');
+      }
+
+      // Store user ID (always needed)
+      localStorage.setItem(USER_ID_KEY, result.session.user.id);
 
       this.toastService.success(
         result.message ?? 'Signed in successfully.',
         'Login Success'
       );
 
-      // ===== REDIRECT =====
-      await this.router.navigate([
-        result.session.user.role === 'admin' ? '/admin' : '/profile',
-      ]);
+      // Redirect to landing page
+      await this.router.navigate(['/']);
     } catch {
       const errorMessage = this.authError();
-
       if (errorMessage) {
         this.toastService.error(errorMessage, 'Login Failed');
       }
@@ -113,11 +117,7 @@ export class LoginPageComponent {
     const googlePath = environment.auth.googleLoginPath.startsWith('/')
       ? environment.auth.googleLoginPath
       : `/${environment.auth.googleLoginPath}`;
-
-    this.toastService.info(
-      'Redirecting to Google sign-in...',
-      'Google Authentication',
-    );
+    this.toastService.info('Redirecting to Google sign-in...', 'Google Authentication');
     window.location.assign(`${authBaseUrl}${googlePath}`);
   }
 
@@ -133,29 +133,13 @@ export class LoginPageComponent {
     } catch {}
   }
 
-
-  private storeUserAndId(user: any): void {
-    try {
-      // store only the user ID in localStorage
-      localStorage.setItem("userId", user.id);
-    } catch (e) {
-      console.error('Failed to store user or userId', e);
-    }
-  }
-
-  /** Retrieve user ID anywhere in your app */
-  getStoredUserId(): string | null {
-    try {
-      return localStorage.getItem(USER_ID_KEY);
-    } catch {
-      return null;
-    }
-  }
-
-  /** Clear user ID on logout */
-  clearStoredUserId(): void {
+  /** Clear all user data on logout */
+  clearStoredUserData(): void {
     try {
       localStorage.removeItem(USER_ID_KEY);
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('profileCompleted');
     } catch {}
   }
 }

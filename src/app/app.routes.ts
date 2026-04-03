@@ -13,11 +13,16 @@ import { RegisterPageComponent } from './user-security/pages/register-page/regis
 import { TwoFactorPageComponent } from './user-security/pages/two-factor-page/two-factor-page.component';
 import { UserProfilePageComponent } from './user-security/pages/user-profile-page/user-profile-page.component';
 import { UserDashboardComponent } from './subs-payment/components/user-dashboard/user-dashboard.component';
+import { CreateProfileComponent } from './user-security/pages/create-profile/create-profile.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'landing', pathMatch: 'full' },
   { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
   { path: 'auth/register', redirectTo: 'register', pathMatch: 'full' },
+{
+  path: 'create/profile',
+  component: CreateProfileComponent
+},
   { path: 'auth/verify-email', redirectTo: 'verify-email', pathMatch: 'full' },
   { path: 'auth/login/2fa', redirectTo: 'login/2fa', pathMatch: 'full' },
   { path: 'auth/oauth2/callback', redirectTo: 'oauth2/callback', pathMatch: 'full' },
@@ -29,7 +34,7 @@ export const routes: Routes = [
       { path: 'login', canActivate: [guestGuard], component: LoginPageComponent },
       { path: 'register', canActivate: [guestGuard], component: RegisterPageComponent },
       { path: 'verify-email', canActivate: [guestGuard], component: EmailVerificationPageComponent },
-      { path: 'oauth2/callback', canActivate: [guestGuard], component: OauthCallbackPageComponent }
+      { path: 'oauth2/callback', canActivate: [guestGuard], component: OauthCallbackPageComponent },
     ]
   },
   {

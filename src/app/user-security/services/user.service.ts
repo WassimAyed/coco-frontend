@@ -17,6 +17,9 @@ import {
 import { AuthApiService } from './auth-api.service';
 import { UserApiService } from './user-api.service';
 
+import { HttpClient } from '@angular/common/http';
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +36,8 @@ export class UserService {
   readonly isLoading = computed(() => this.snapshot().status === 'loading');
   readonly error = computed(() => this.snapshot().error);
   readonly homeRoute = computed(() => getRoleHomeRoute(this.snapshot().session));
+
+  private readonly http = inject(HttpClient);
 
   constructor() {
     const unsubscribe = authStore.subscribe((state) => {
@@ -175,4 +180,15 @@ export class UserService {
   clearError(): void {
     authStore.getState().clearError();
   }
+
+
+  checkProfileExists(userId: number) {
+  return this.http.get<boolean>(`http://localhost:8090/profiles/exists/${userId}`);
+}
+
+// ✅ Matching API call
+findMatches(userId: number) {
+  return this.http.get<any[]>(`http://localhost:8090/match/${userId}`);
+}
+
 }
