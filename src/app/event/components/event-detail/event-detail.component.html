@@ -209,6 +209,18 @@
 						</div>
 					</div>
 
+					<section *ngIf="similarEvents.length > 0" class="rounded-2xl border border-border bg-gray-50 p-4">
+						<h3 class="text-lg font-semibold text-foreground">Events similaires</h3>
+						<div class="similar-grid mt-4">
+							<div *ngFor="let event of similarEvents" class="event-card">
+								<img [src]="event.imageUrl" [alt]="event.name || 'Event similaire'" />
+								<h4>{{ event.name }}</h4>
+								<p>{{ event.location }}</p>
+								<span class="badge">{{ event.similarityReason }}</span>
+							</div>
+						</div>
+					</section>
+
 
 				</div>
 			</article>

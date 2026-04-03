@@ -62,6 +62,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   currentUserName = '';
   currentUserEmail = '';
   currentUserPhone = '';
+  similarEvents: any[] = [];
   countdownLabel = "L'événement est terminé";
   countdownValue = '';
   countdownStatus: 'before' | 'during' | 'after' = 'after';
@@ -104,7 +105,15 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadCommentCount(id);
     this.loadParticipants(id);
     this.loadParticipantCount(id);
+    this.getSimilarEvents(id);
     this.selectedReaction = this.readLocalReaction(id, this.currentUserId);
+  }
+
+  getSimilarEvents(eventId: number): void {
+    this.eventService.getSimilarEvents(eventId, 3).subscribe({
+      next: (events) => this.similarEvents = events,
+      error: (err) => console.error(err)
+    });
   }
 
   ngAfterViewInit(): void {

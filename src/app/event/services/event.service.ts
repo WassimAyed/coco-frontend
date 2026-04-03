@@ -102,6 +102,12 @@ export class EventService {
     return this.http.delete<void>(`${this.baseUrl}/gallery/${imageId}`);
   }
 
+  getSimilarEvents(eventId: number, limit: number = 3): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.baseUrl}/${eventId}/similar?limit=${limit}`
+    );
+  }
+
   private toParams(query?: object): HttpParams {
     let params = new HttpParams();
 
