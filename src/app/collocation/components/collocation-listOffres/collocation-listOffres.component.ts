@@ -41,6 +41,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private map!: L.Map;
   private markers: L.Marker[] = [];
 
+  private userMarker!: L.Marker;
+
   /* ===============================
      FILTERS
   ================================= */
@@ -103,11 +105,20 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.getUserLocation();
   }
 
-  ngAfterViewInit(): void {
-    this.initMap();
+      private userIcon = L.icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png', // or any icon
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35]
+});
+ngAfterViewInit(): void {
+  this.initMap();
 
-
+  // If location already loaded → show marker
+  if (this.userLat && this.userLng) {
+    this.addUserMarker();
   }
+}
 
   /* ===============================
      OFFERS
@@ -197,12 +208,44 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   /* ===============================
      GEOLOCATION
   ================================= */
-  getUserLocation(): void {
-    navigator.geolocation.getCurrentPosition(pos => {
-      this.userLat = pos.coords.latitude;
-      this.userLng = pos.coords.longitude;
-    });
+ getUserLocation(): void {
+  navigator.geolocation.getCurrentPosition(pos => {
+    this.userLat = pos.coords.latitude;
+    this.userLng = pos.coords.longitude;
+
+    // Wait until map is initialized
+    if (this.map) {
+      this.addUserMarker();
+    }
+  }, err => {
+    console.error('Geolocation error:', err);
+  });
+}
+private addUserMarker(): void {
+  if (!this.userLat || !this.userLng) return;
+
+  // Remove old marker if exists
+  if (this.userMarker) {
+    this.userMarker.remove();
   }
+
+  this.userMarker = L.marker([this.userLat, this.userLng], {
+    icon: this.userIcon
+  })
+    .addTo(this.map)
+    .bindPopup('<b>📍 You are here</b>')
+    .openPopup();
+
+    L.circle([this.userLat, this.userLng], {
+  radius: (this.filterRadius || 5) * 1000, // km → meters
+  color: 'red',
+  fillColor: '#f03',
+  fillOpacity: 0.1
+}).addTo(this.map);
+
+  // Optional: center map on user
+  this.map.setView([this.userLat, this.userLng], 13);
+}
 
   /* ===============================
      FAVORITES
