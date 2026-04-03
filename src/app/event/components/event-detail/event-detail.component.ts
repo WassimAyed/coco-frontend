@@ -5,10 +5,12 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { EventDto } from '../../models/event.model';
+import { EventRatingDto } from '../../models/event-rating.model';
 import { ParticipantDto } from '../../models/participant.model';
 import { REACTION_EMOJI, ReactionType } from '../../models/reaction.model';
 import { CommentService } from '../../services/comment.service';
 import { EventService } from '../../services/event.service';
+import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { getAuthToken } from '../../../user-security/utils/auth-token.util';
@@ -29,10 +31,18 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   comments: CommentDto[] = [];
   commentCount = 0;
   participants: ParticipantDto[] = [];
+  participantCount = 0;
   reactionCounts: Partial<Record<ReactionType, number>> = {};
   selectedReaction: ReactionType | null = null;
   readonly reactionTypes: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
   readonly reactionEmoji = REACTION_EMOJI;
+  readonly ratingScale = [1, 2, 3, 4, 5];
+
+  averageRating = 0;
+  totalRatings = 0;
+  selectedRating: number | null = null;
+  isRatingSaving = false;
+  isParticipating = false;
 
   commentDraft = '';
   editingCommentId: number | null = null;
@@ -64,6 +74,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly eventService: EventService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
+    private readonly ratingService: EventRatingService,
     private readonly participantService: ParticipantService
   ) {}
 
@@ -82,9 +93,12 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadEvent(id);
     this.loadGallery(id);
     this.loadReactionSummary(id);
+    this.loadRatingSummary(id);
+    this.loadCurrentUserRating(id);
     this.loadComments(id);
     this.loadCommentCount(id);
     this.loadParticipants(id);
+    this.loadParticipantCount(id);
     this.selectedReaction = this.readLocalReaction(id, this.currentUserId);
   }
 
@@ -171,6 +185,67 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = 'Unable to save reaction.';
+      }
+    });
+  }
+
+  rateEvent(rating: number): void {
+    if (!this.eventId || !this.currentUserId) {
+      this.errorMessage = 'You must be logged in to rate this event.';
+      return;
+    }
+
+    this.isRatingSaving = true;
+    this.ratingService.rate({
+      eventId: this.eventId,
+      userId: this.currentUserId,
+      rating
+    }).subscribe({
+      next: (response: EventRatingDto) => {
+        this.selectedRating = response.rating ?? rating;
+        this.averageRating = response.averageRating ?? this.averageRating;
+        this.totalRatings = response.totalRatings ?? this.totalRatings;
+        this.successMessage = 'Your rating has been saved.';
+        this.errorMessage = '';
+        this.isRatingSaving = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to save rating.';
+        this.isRatingSaving = false;
+      }
+    });
+  }
+
+  participateInEvent(): void {
+    if (!this.eventId || !this.currentUserEmail) {
+      this.errorMessage = 'You must be logged in to participate.';
+      return;
+    }
+
+    if (this.hasCurrentUserParticipated()) {
+      this.successMessage = 'You are already registered for this event.';
+      this.errorMessage = '';
+      return;
+    }
+
+    this.isParticipating = true;
+    this.participantService.add({
+      fullName: this.currentUserName || 'User',
+      email: this.currentUserEmail,
+      phone: this.currentUserPhone || undefined,
+      eventId: this.eventId
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'Your participation has been registered.';
+        this.errorMessage = '';
+        this.isParticipating = false;
+        this.loadParticipants(this.eventId!);
+        this.loadParticipantCount(this.eventId!);
+      },
+      error: (err) => {
+        console.log('Participate error:', err);
+        this.errorMessage = 'Unable to register participation.';
+        this.isParticipating = false;
       }
     });
   }
@@ -278,6 +353,31 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     return !!this.currentUserId && comment.userId === this.currentUserId;
   }
 
+  canRate(): boolean {
+    return !!this.eventId && !!this.currentUserId;
+  }
+
+  canParticipate(): boolean {
+    return !!this.eventId && !!this.currentUserEmail && !this.hasCurrentUserParticipated();
+  }
+
+  hasCurrentUserParticipated(): boolean {
+    if (!this.currentUserEmail) {
+      return false;
+    }
+
+    const normalizedEmail = this.currentUserEmail.trim().toLowerCase();
+    return this.participants.some(participant => participant.email?.trim().toLowerCase() === normalizedEmail);
+  }
+
+  getRatingLabel(): string {
+    if (!this.totalRatings) {
+      return 'No ratings yet';
+    }
+
+    return `${this.averageRating.toFixed(1)} / 5 from ${this.totalRatings} rating${this.totalRatings > 1 ? 's' : ''}`;
+  }
+
   private loadReactionSummary(eventId: number): void {
     this.reactionService.getSummary(eventId).subscribe({
       next: summary => {
@@ -321,6 +421,46 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => {
         this.participants = [];
+      }
+    });
+  }
+
+  private loadParticipantCount(eventId: number): void {
+    this.participantService.countByEvent(eventId).subscribe({
+      next: value => {
+        this.participantCount = Number(value || 0);
+      },
+      error: () => {
+        this.participantCount = this.participants.length;
+      }
+    });
+  }
+
+  private loadRatingSummary(eventId: number): void {
+    this.ratingService.getStats(eventId).subscribe({
+      next: (summary: EventRatingDto) => {
+        this.averageRating = summary.averageRating ?? 0;
+        this.totalRatings = summary.totalRatings ?? 0;
+      },
+      error: () => {
+        this.averageRating = 0;
+        this.totalRatings = 0;
+      }
+    });
+  }
+
+  private loadCurrentUserRating(eventId: number): void {
+    if (!this.currentUserId) {
+      this.selectedRating = null;
+      return;
+    }
+
+    this.ratingService.getUserRating(eventId, this.currentUserId).subscribe({
+      next: (rating: EventRatingDto) => {
+        this.selectedRating = rating.rating ?? null;
+      },
+      error: () => {
+        this.selectedRating = null;
       }
     });
   }
