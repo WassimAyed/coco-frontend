@@ -1,17 +1,9 @@
 import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {
-  Bell,
-  BookOpen,
-  Clock3,
-  DatabaseZap,
-  MessageCircleMore,
-  Save,
-  Send,
-  Settings2,
-  ShieldCheck,
-  Sparkles,
-  UserRound
+  Bell, BookOpen, Clock3, DatabaseZap, MessageCircleMore,
+  Save, Send, Settings2, ShieldCheck, Sparkles, UserRound
 } from 'lucide-angular';
 import {
   createConversations,
@@ -21,22 +13,45 @@ import {
   ProfileSidebarSection
 } from '../../data/profile-shell.data';
 import { ChatConversation, ProfileSectionId } from '../../models/profile-shell.model';
-import { AuthApiService } from '../../services/auth-api.service';
+import { AuthApiService, UserProfile } from '../../services/auth-api.service';
 import { ProfileImageUploadService } from '../../services/profile-image-upload.service';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
 
+export interface RoommateProfile {
+  id: number;
+  user: any;
+  age: number;
+  gender: string;
+  budget: number;
+  city: string;
+  smoker: boolean;
+  pets: boolean;
+  cleanliness: number;
+  sleepSchedule: string;
+  studyLevel: string;
+  socialLevel: number;
+  acceptsGuests: boolean;
+  noiseTolerance: number;
+  interests: string[];
+  latitude: number;
+  longitude: number;
+}
+
 @Component({
   selector: 'app-user-profile-page',
-  templateUrl: './user-profile-page.component.html'
+  templateUrl: './user-profile-page.component.html',
+  styleUrls: ['./user-profile.component.css']
 })
 export class UserProfilePageComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
   private readonly authApiService = inject(AuthApiService);
   private readonly profileImageUploadService = inject(ProfileImageUploadService);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
 
+  // Icons
   readonly ShieldCheckIcon = ShieldCheck;
   readonly SparklesIcon = Sparkles;
   readonly UserRoundIcon = UserRound;
@@ -49,6 +64,7 @@ export class UserProfilePageComponent implements OnDestroy {
   readonly Clock3Icon = Clock3;
   readonly DatabaseZapIcon = DatabaseZap;
 
+  // Signaux
   readonly user = computed(() => this.userService.currentUser());
   readonly sections = PROFILE_SECTIONS;
   readonly shortcuts = PROFILE_SHORTCUTS;
@@ -60,13 +76,11 @@ export class UserProfilePageComponent implements OnDestroy {
   readonly isSavingSettings = signal(false);
   readonly isUpdatingPassword = signal(false);
   readonly selectedProfileImageFile = signal<File | null>(null);
-  readonly selectedProfileImageFileName = computed(
-    () => this.selectedProfileImageFile()?.name ?? '',
-  );
   readonly profileImagePreviewUrl = signal<string | null>(null);
-  readonly effectiveProfileImageUrl = computed(
-    () => this.profileImagePreviewUrl() || this.user()?.avatarUrl || '',
+  readonly effectiveProfileImageUrl = computed(() =>
+    this.profileImagePreviewUrl() || this.user()?.avatarUrl || ''
   );
+  readonly selectedProfileImageFileName = computed(() => this.selectedProfileImageFile()?.name ?? '');
   readonly messageDraft = signal('');
   readonly chatSearch = signal('');
   readonly conversations = signal<ChatConversation[]>([]);
@@ -77,73 +91,77 @@ export class UserProfilePageComponent implements OnDestroy {
   readonly sortedConversations = computed(() => {
     const selectedId = this.selectedConversationId();
     const query = this.chatSearch().trim().toLowerCase();
-    const conversations = this.conversations().filter((conversation) => {
-      if (!query) {
-        return true;
-      }
-
-      return (
-        conversation.name.toLowerCase().includes(query) ||
-        conversation.role.toLowerCase().includes(query) ||
-        conversation.lastMessage.toLowerCase().includes(query) ||
-        conversation.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    });
-
-    return [...conversations].sort((left, right) => {
-      if (left.id === selectedId) {
-        return -1;
-      }
-      if (right.id === selectedId) {
-        return 1;
-      }
-      return right.unreadCount - left.unreadCount;
+    return [...this.conversations().filter(c => !query ||
+      c.name.toLowerCase().includes(query) ||
+      c.role.toLowerCase().includes(query) ||
+      c.lastMessage.toLowerCase().includes(query) ||
+      c.tags.some(tag => tag.toLowerCase().includes(query))
+    )].sort((a, b) => {
+      if (a.id === selectedId) return -1;
+      if (b.id === selectedId) return 1;
+      return b.unreadCount - a.unreadCount;
     });
   });
   readonly selectedConversation = computed(() =>
-    this.conversations().find((conversation) => conversation.id === this.selectedConversationId()) ?? null
+    this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
   );
 
+  // Roommate Profile Signals
+  readonly roommateProfile = signal<RoommateProfile | null>(null);
+  readonly isEditingProfile = signal(false);
+  readonly roommateProfileId = signal<number | null>(null);
+  readonly interestsArray = signal<string[]>([]);
+  readonly isSavingRoommateProfile = signal(false);
+  readonly roommateForm: FormGroup;
+
+  // Forms existants
   readonly profileForm = this.fb.nonNullable.group({
-    email: [{ disabled: true, value: '' }, [Validators.required, Validators.email]],
+    email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
     imageUrl: [''],
     lastname: ['', Validators.required],
     username: ['', Validators.required],
   });
-
-  readonly settingsForm = this.fb.nonNullable.group({
-    twoFactorEnabled: [false],
-  });
-
+  readonly settingsForm = this.fb.nonNullable.group({ twoFactorEnabled: [false] });
   readonly passwordForm = this.fb.nonNullable.group({
-    confirmPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
     oldPassword: ['', Validators.required],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', Validators.required],
   });
 
   constructor() {
-    this.loadFakeConversations();
+    this.roommateForm = this.fb.group({
+      age: [null, [Validators.required, Validators.min(16)]],
+      gender: ['', Validators.required],
+      budget: [null, [Validators.required, Validators.min(0)]],
+      city: ['', Validators.required],
+      sleepSchedule: ['', Validators.required],
+      studyLevel: ['', Validators.required],
+      smoker: [false],
+      pets: [false],
+      cleanliness: [3],
+      socialLevel: [3],
+      acceptsGuests: [false],
+      noiseTolerance: [3],
+    });
+
     void this.loadProfile();
+    this.loadFakeConversations();
 
     effect(() => {
       const profile = this.user();
-
-      if (!profile) {
-        return;
-      }
-
+      if (!profile) return;
       this.profileForm.patchValue({
         email: profile.email,
         imageUrl: this.toEditableImageUrl(profile.avatarUrl),
         lastname: profile.lastName,
         username: profile.firstName,
       });
-
-      this.settingsForm.patchValue({
-        twoFactorEnabled: profile.twoFactorEnabled ?? false,
-      });
-
+      this.settingsForm.patchValue({ twoFactorEnabled: profile.twoFactorEnabled ?? false });
       this.loadFakeConversations();
+
+      if (profile.id) {
+        this.loadRoommateProfile(Number(profile.id));
+      }
     });
   }
 
@@ -151,16 +169,132 @@ export class UserProfilePageComponent implements OnDestroy {
     this.releaseProfileImagePreviewUrl();
   }
 
+  // === Private Helper for Headers ===
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('accessToken');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
+  // === Gestion profil colocataire ===
+  private loadRoommateProfile(userId: number): void {
+    const headers = this.getAuthHeaders();
+    this.http.get<RoommateProfile>(`http://localhost:8090/profiles/${userId}`, { headers }).subscribe({
+      next: (data) => {
+        if (data) {
+          this.roommateProfile.set(data);
+          this.roommateProfileId.set(data.id);
+          this.patchRoommateForm(data);
+        }
+      },
+      error: (err) => {
+        console.error('Erreur chargement profil colocataire', err);
+        if (err.status === 401) {
+          window.location.href = 'http://localhost:8090/oauth2/authorization/google';
+        } else if (err.status !== 404) {
+          this.toastService.error('Impossible de charger votre profil colocataire', 'Erreur');
+        }
+      }
+    });
+  }
+
+  private patchRoommateForm(data: RoommateProfile): void {
+    this.roommateForm.patchValue({
+      age: data.age,
+      gender: data.gender,
+      budget: data.budget,
+      city: data.city,
+      sleepSchedule: data.sleepSchedule,
+      studyLevel: data.studyLevel,
+      smoker: data.smoker,
+      pets: data.pets,
+      cleanliness: data.cleanliness,
+      socialLevel: data.socialLevel,
+      acceptsGuests: data.acceptsGuests,
+      noiseTolerance: data.noiseTolerance,
+    });
+    this.interestsArray.set(data.interests || []);
+  }
+
+  saveRoommateProfile(): void {
+    if (this.isSavingRoommateProfile()) return;
+    this.roommateForm.markAllAsTouched();
+    if (this.roommateForm.invalid) {
+      this.toastService.error('Veuillez remplir tous les champs obligatoires', 'Formulaire invalide');
+      return;
+    }
+
+    this.isSavingRoommateProfile.set(true);
+    const headers = this.getAuthHeaders();
+    const profileId = this.roommateProfileId();
+    const currentProfile = this.roommateProfile();
+
+    const payload = {
+      id: profileId || 0,
+      user: { id: this.user()?.id },
+      ...this.roommateForm.value,
+      interests: this.interestsArray(),
+      latitude: currentProfile?.latitude || 0,
+      longitude: currentProfile?.longitude || 0,
+    };
+
+    const request$ = profileId
+      ? this.http.put<RoommateProfile>(`http://localhost:8090/profiles/${profileId}`, payload, { headers })
+      : this.http.post<RoommateProfile>(`http://localhost:8090/profiles`, payload, { headers });
+
+    request$.subscribe({
+      next: (savedProfile) => {
+        this.roommateProfile.set(savedProfile);
+        this.roommateProfileId.set(savedProfile.id);
+        this.isEditingProfile.set(false);
+        this.toastService.success('Profil colocataire enregistré avec succès');
+        this.saveMessage.set('Profil colocataire enregistré');
+        this.isSavingRoommateProfile.set(false);
+      },
+      error: (err) => {
+        this.isSavingRoommateProfile.set(false);
+        if (err.status === 401) {
+          window.location.href = 'http://localhost:8090/oauth2/authorization/google';
+        } else {
+          console.error(err);
+          this.toastService.error('Erreur lors de l\'enregistrement', 'Erreur');
+        }
+      }
+    });
+  }
+
+  cancelRoommateProfile(): void {
+    this.isEditingProfile.set(false);
+    this.saveMessage.set(null);
+    const currentData = this.roommateProfile();
+    if (currentData) {
+      this.patchRoommateForm(currentData);
+    } else {
+      this.roommateForm.reset({ cleanliness: 3, socialLevel: 3, noiseTolerance: 3 });
+      this.interestsArray.set([]);
+    }
+  }
+
+  addInterest(interest: string): void {
+    const trimmed = interest.trim();
+    if (trimmed && !this.interestsArray().includes(trimmed)) {
+      this.interestsArray.update(arr => [...arr, trimmed]);
+    }
+  }
+
+  removeInterest(index: number): void {
+    this.interestsArray.update(arr => arr.filter((_, i) => i !== index));
+  }
+
+  // === Méthodes UI & Chat ===
   selectSection(sectionId: ProfileSectionId): void {
     this.activeSection.set(sectionId);
     this.saveMessage.set(null);
-
     if (sectionId === 'chat') {
       this.loadFakeConversations();
-    }
-
-    if (sectionId === 'chat' && !this.selectedConversationId()) {
-      this.selectedConversationId.set(this.conversations()[0]?.id ?? null);
+      if (!this.selectedConversationId()) this.selectedConversationId.set(this.conversations()[0]?.id ?? null);
     }
   }
 
@@ -172,144 +306,71 @@ export class UserProfilePageComponent implements OnDestroy {
     this.selectedConversationId.set(conversationId);
     this.activeSection.set('chat');
     this.saveMessage.set(null);
-    this.conversations.update((conversations) =>
-      conversations.map((conversation) =>
-        conversation.id === conversationId ? { ...conversation, unreadCount: 0 } : conversation
-      )
+    this.conversations.update(convs =>
+      convs.map(c => c.id === conversationId ? { ...c, unreadCount: 0 } : c)
     );
   }
 
   get passwordsMatch(): boolean {
-    return (
-      this.passwordForm.controls.newPassword.value ===
-      this.passwordForm.controls.confirmPassword.value
-    );
-  }
-
-  saveProfile(): void {
-    if (this.isSavingProfile()) {
-      return;
-    }
-
-    this.profileForm.markAllAsTouched();
-
-    if (this.profileForm.invalid) {
-      return;
-    }
-
-    this.isSavingProfile.set(true);
-    this.saveMessage.set(null);
-    void this.persistProfileChanges();
+    return this.passwordForm.controls.newPassword.value === this.passwordForm.controls.confirmPassword.value;
   }
 
   saveSettings(): void {
-    if (this.isSavingSettings()) {
-      return;
-    }
-
+    if (this.isSavingSettings()) return;
     this.isSavingSettings.set(true);
-    this.saveMessage.set(null);
-
-    void this.userService
-      .setTwoFactorEnabled({
-        enabled: this.settingsForm.controls.twoFactorEnabled.value,
+    this.userService.setTwoFactorEnabled({ enabled: this.settingsForm.controls.twoFactorEnabled.value })
+      .then(result => {
+        this.toastService.success(result.message ?? '2FA mis à jour', 'Sécurité');
+        this.saveMessage.set(result.message ?? '2FA mis à jour');
       })
-      .then((result) => {
-        this.saveMessage.set(
-          result.message ?? 'Two-factor authentication updated successfully.',
-        );
-        this.toastService.success(
-          result.message ?? 'Two-factor authentication updated successfully.',
-          'Security Saved',
-        );
+      .catch(err => {
+        const msg = this.authApiService.extractErrorMessage(err, 'Erreur 2FA');
+        this.toastService.error(msg, 'Échec');
+        this.saveMessage.set(msg);
       })
-      .catch((error) => {
-        const message = this.authApiService.extractErrorMessage(
-          error,
-          'Unable to update two-factor authentication right now.',
-        );
-        this.saveMessage.set(message);
-        this.toastService.error(message, 'Security Update Failed');
-      })
-      .finally(() => {
-        this.isSavingSettings.set(false);
-      });
+      .finally(() => this.isSavingSettings.set(false));
   }
 
   updatePassword(): void {
-    if (this.isUpdatingPassword()) {
-      return;
-    }
-
+    if (this.isUpdatingPassword()) return;
     this.passwordForm.markAllAsTouched();
-    this.saveMessage.set(null);
-
-    if (this.passwordForm.invalid || !this.passwordsMatch) {
-      return;
-    }
-
+    if (this.passwordForm.invalid || !this.passwordsMatch) return;
     this.isUpdatingPassword.set(true);
-
-    void this.userService
-      .updatePasswordRequest({
-        newPassword: this.passwordForm.controls.newPassword.value,
-        oldPassword: this.passwordForm.controls.oldPassword.value,
-      })
+    this.userService.updatePasswordRequest({
+      oldPassword: this.passwordForm.controls.oldPassword.value,
+      newPassword: this.passwordForm.controls.newPassword.value,
+    })
       .then(() => {
         this.passwordForm.reset();
-        this.saveMessage.set('Password updated successfully.');
-        this.toastService.success(
-          'Password updated successfully.',
-          'Password Changed',
-        );
+        this.toastService.success('Mot de passe changé', 'Succès');
+        this.saveMessage.set('Mot de passe mis à jour');
       })
-      .catch((error) => {
-        const message = this.authApiService.extractErrorMessage(
-          error,
-          'Unable to update your password right now.',
-        );
-        this.saveMessage.set(message);
-        this.toastService.error(message, 'Password Update Failed');
+      .catch(err => {
+        const msg = this.authApiService.extractErrorMessage(err, 'Erreur mot de passe');
+        this.toastService.error(msg, 'Échec');
+        this.saveMessage.set(msg);
       })
-      .finally(() => {
-        this.isUpdatingPassword.set(false);
-      });
-    }
+      .finally(() => this.isUpdatingPassword.set(false));
+  }
 
   sendMessage(): void {
     const content = this.messageDraft().trim();
-    const conversationId = this.selectedConversationId();
-
-    if (!content || !conversationId) {
-      return;
-    }
-
-    this.conversations.update((conversations) =>
-      conversations.map((conversation) => {
-        if (conversation.id !== conversationId) {
-          return conversation;
-        }
-
+    const convId = this.selectedConversationId();
+    if (!content || !convId) return;
+    this.conversations.update(convs =>
+      convs.map(c => {
+        if (c.id !== convId) return c;
         return {
-          ...conversation,
+          ...c,
           lastMessage: content,
           lastMessageTime: 'now',
-          messages: [
-            ...conversation.messages,
-            {
-              author: 'me',
-              content,
-              id: `${conversation.id}-${conversation.messages.length + 1}`,
-              timestamp: 'now'
-            }
-          ],
-          unreadCount: 0
+          messages: [...c.messages, { id: `${c.id}-${c.messages.length + 1}`, author: 'me', content, timestamp: 'now' }],
+          unreadCount: 0,
         };
       })
     );
-
     this.messageDraft.set('');
-    this.focusConversation(conversationId);
+    this.focusConversation(convId);
   }
 
   onDraftChange(event: Event): void {
@@ -321,57 +382,24 @@ export class UserProfilePageComponent implements OnDestroy {
   }
 
   onProfileImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0] ?? null;
-
-    if (!file) {
-      return;
-    }
-
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
     if (!file.type.startsWith('image/')) {
-      this.saveMessage.set('Please choose a valid image file.');
-      this.toastService.error('Please choose a valid image file.', 'Invalid Image');
-      if (input) {
-        input.value = '';
-      }
+      this.toastService.error('Format image invalide', 'Erreur');
+      input.value = '';
       return;
     }
-
     this.releaseProfileImagePreviewUrl();
     this.selectedProfileImageFile.set(file);
     this.profileImagePreviewUrl.set(URL.createObjectURL(file));
-    this.saveMessage.set(
-      'Image selected. Save your profile to upload it to storage.',
-    );
   }
 
   clearSelectedProfileImage(resetInput = false): void {
     this.selectedProfileImageFile.set(null);
     this.releaseProfileImagePreviewUrl();
-
     if (resetInput) {
-      this.profileForm.controls.imageUrl.setValue(
-        this.toEditableImageUrl(this.user()?.avatarUrl),
-      );
-    }
-  }
-
-  loadFakeConversations(force = false): void {
-    const profile = this.user();
-
-    if (!profile) {
-      return;
-    }
-
-    if (!force && this.conversations().length > 0) {
-      return;
-    }
-
-    const seededConversations = createConversations(profile);
-    this.conversations.set(seededConversations);
-
-    if (!this.selectedConversationId() || force) {
-      this.selectedConversationId.set(seededConversations[0]?.id ?? null);
+      this.profileForm.controls.imageUrl.setValue(this.toEditableImageUrl(this.user()?.avatarUrl));
     }
   }
 
@@ -379,71 +407,28 @@ export class UserProfilePageComponent implements OnDestroy {
     try {
       await this.userService.loadCurrentUserProfile();
     } catch (error) {
-      const message = this.authApiService.extractErrorMessage(
-        error,
-        'Unable to load your profile details right now.',
-      );
-      this.saveMessage.set(message);
-      this.toastService.error(message, 'Profile Load Failed');
-    }
-  }
-
-  private async persistProfileChanges(): Promise<void> {
-    try {
-      let imageUrl = this.normalizeSubmittedImageUrl(
-        this.profileForm.controls.imageUrl.value,
-      );
-
-      if (this.selectedProfileImageFile()) {
-        this.isUploadingProfileImage.set(true);
-        this.saveMessage.set('Uploading your profile image...');
-        imageUrl = await this.profileImageUploadService.uploadProfileImage(
-          this.selectedProfileImageFile() as File,
-        );
-        this.profileForm.controls.imageUrl.setValue(imageUrl);
-      }
-
-      await this.userService.saveCurrentUserProfile({
-        imageUrl,
-        lastname: this.profileForm.controls.lastname.value.trim(),
-        username: this.profileForm.controls.username.value.trim(),
-      });
-
-      this.clearSelectedProfileImage();
-      this.saveMessage.set('Profile updated successfully.');
-      this.toastService.success('Profile updated successfully.', 'Profile Saved');
-    } catch (error) {
-      const message = this.authApiService.extractErrorMessage(
-        error,
-        'Unable to update your profile right now.',
-      );
-      this.saveMessage.set(message);
-      this.toastService.error(message, 'Profile Update Failed');
-    } finally {
-      this.isUploadingProfileImage.set(false);
-      this.isSavingProfile.set(false);
+      const msg = this.authApiService.extractErrorMessage(error, 'Impossible de charger le profil');
+      this.toastService.error(msg, 'Erreur');
     }
   }
 
   private toEditableImageUrl(value: string | null | undefined): string {
-    const normalizedValue = value?.trim() ?? '';
-    return this.isGeneratedAvatarDataUrl(normalizedValue) ? '' : normalizedValue;
-  }
-
-  private normalizeSubmittedImageUrl(value: string | null | undefined): string {
-    const normalizedValue = value?.trim() ?? '';
-    return this.isGeneratedAvatarDataUrl(normalizedValue) ? '' : normalizedValue;
-  }
-
-  private isGeneratedAvatarDataUrl(value: string): boolean {
-    return value.startsWith('data:image/svg+xml');
+    const v = value?.trim() ?? '';
+    return v.startsWith('data:image/svg+xml') ? '' : v;
   }
 
   private releaseProfileImagePreviewUrl(): void {
-    const previewUrl = this.profileImagePreviewUrl();
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    const url = this.profileImagePreviewUrl();
+    if (url) URL.revokeObjectURL(url);
     this.profileImagePreviewUrl.set(null);
+  }
+
+  private loadFakeConversations(force = false): void {
+    const profile = this.user();
+    if (!profile) return;
+    if (!force && this.conversations().length > 0) return;
+    const seeded = createConversations(profile);
+    this.conversations.set(seeded);
+    if (!this.selectedConversationId() || force) this.selectedConversationId.set(seeded[0]?.id ?? null);
   }
 }

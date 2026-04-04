@@ -146,4 +146,9 @@ export class CreateProfileComponent implements OnInit {
       ? input.split(',').map(i => i.trim()).filter(Boolean)
       : [];
   }
+
+  cancel(): void {
+  this.router.navigate(['/landing']);
+}
+
 }

@@ -1,19 +1,20 @@
-@if (user(); as profile) {
-  <div class="section-shell py-8 lg:py-10">
+<div class="section-shell py-8 lg:py-10">
+  @if (user(); as profile) {
     <div class="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)_320px]">
       <aside class="surface-card h-fit p-3 lg:sticky lg:top-28">
-        <div class="rounded-[1.75rem] bg-white ">
+        <div class="rounded-[1.75rem] bg-white p-5">
           <img
             [src]="effectiveProfileImageUrl()"
             [alt]="profile.firstName + ' ' + profile.lastName"
             class="h-20 w-20 rounded-[1.5rem] object-cover shadow-soft"
+            onerror="this.src='/assets/default-avatar.png'"
           />
           <h1 class="mt-4 text-2xl font-black text-foreground">
             {{ profile.firstName }} {{ profile.lastName }}
           </h1>
           <p class="mt-1 text-sm text-muted-foreground">{{ profile.email }}</p>
           <div class="mt-2 inline-flex rounded-full border border-primary/15 bg-primary/10 px-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-            Verified student
+            Étudiant vérifié
           </div>
         </div>
 
@@ -53,534 +54,253 @@
 
       <main class="space-y-6">
         <section class="surface-card overflow-hidden">
-          <div
-            class="relative border-b border-border bg-gradient-to-r from-primary to-sidebar px-6 py-7 text-primary-foreground"
-          >
-            <div
-              class="absolute right-6 top-4 h-20 w-20 rounded-full bg-white/10 blur-2xl"
-            ></div>
-            <p
-              class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/75"
-            >
-              User workspace
+          <div class="relative border-b border-border bg-gradient-to-r from-primary to-sidebar px-6 py-7 text-primary-foreground">
+            <div class="absolute right-6 top-4 h-20 w-20 rounded-full bg-white/10 blur-2xl"></div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/75">
+              Espace utilisateur
             </p>
             <h2 class="mt-2 text-3xl font-black">
               {{ selectedSectionMeta()?.label }}
             </h2>
-            <p
-              class="mt-2 max-w-2xl text-sm leading-6 text-primary-foreground/80"
-            >
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-primary-foreground/80">
               {{ selectedSectionMeta()?.description }}
             </p>
           </div>
 
           <div class="p-6 sm:p-7">
             @if (saveMessage()) {
-              <div
-                class="mb-6 rounded-[1.25rem] border border-primary/15 bg-primary/5 px-4 py-3 text-sm font-medium text-primary"
-              >
+              <div class="mb-6 rounded-[1.25rem] border border-primary/15 bg-primary/5 px-4 py-3 text-sm font-medium text-primary">
                 {{ saveMessage() }}
               </div>
             }
 
-            @if (activeSection() === "profile") {
-              <div class="space-y-6">
-                <div class="grid gap-4 xl:grid-cols-3">
-                  @for (shortcut of shortcuts; track shortcut.title) {
-                    <article
-                      class="rounded-[1.5rem] border border-border bg-card p-5"
-                    >
-                      <p
-                        class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                      >
-                        {{ shortcut.title }}
-                      </p>
-                      <p class="mt-3 text-3xl font-black text-foreground">
-                        {{ shortcut.value }}
-                      </p>
-                      <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                        {{ shortcut.caption }}
-                      </p>
-                    </article>
-                  }
-                </div>
+            @if (activeSection() === 'profile') {
+              <div class="create-profile-container-embedded">
+                <div class="profile-card-embedded">
+                  
+                  @if (isEditingProfile()) {
+                    <form [formGroup]="roommateForm" (ngSubmit)="saveRoommateProfile()" class="profile-form-embedded">
+                      <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h3 class="text-xl font-bold">Modifier le profil colocataire</h3>
+                      </div>
+                      <div class="form-grid-embedded">
+                        <div class="input-group-embedded">
+                          <label>Âge *</label>
+                          <input type="number" formControlName="age" placeholder="ex. 22">
+                        </div>
 
-                <div class="grid gap-4 md:grid-cols-3">
-                  @for (stat of profile.stats; track stat.label) {
-                    <article
-                      class="rounded-[1.5rem] border border-border bg-white/60 p-5"
-                    >
-                      <p class="text-sm text-muted-foreground">
-                        {{ stat.label }}
-                      </p>
-                      <p
-                        class="mt-3 text-3xl font-black tracking-tight text-foreground"
-                      >
-                        {{ stat.value }}
-                      </p>
-                    </article>
-                  }
-                </div>
+                        <div class="input-group-embedded">
+                          <label>Genre *</label>
+                          <select formControlName="gender">
+                            <option value="">Sélectionnez un genre</option>
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                            <option value="other">Autre</option>
+                          </select>
+                        </div>
 
-                <form
-                  class="space-y-5"
-                  [formGroup]="profileForm"
-                  (ngSubmit)="saveProfile()"
-                >
-                  <div class="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label
-                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
-                        >Username</label
-                      >
-                      <input class="form-input" formControlName="username" />
-                    </div>
-                    <div>
-                      <label
-                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
-                        >Last name</label
-                      >
-                      <input class="form-input" formControlName="lastname" />
-                    </div>
-                    <div>
-                      <label
-                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
-                        >Email</label
-                      >
-                      <input
-                        class="form-input opacity-80"
-                        formControlName="email"
-                      />
-                    </div>
-                    <div class="md:col-span-2 rounded-[1.5rem] border border-border bg-card p-5">
-                      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                        <div class="flex items-center gap-4">
-                          <img
-                            [src]="effectiveProfileImageUrl()"
-                            [alt]="profile.firstName + ' ' + profile.lastName"
-                            class="h-20 w-20 rounded-[1.5rem] object-cover shadow-soft"
-                          />
-                          <div>
-                            <p class="text-base font-semibold text-foreground">Profile image</p>
-                            <p class="mt-1 text-sm leading-6 text-muted-foreground">
-                              Choose an image, upload it to storage, then save your profile.
-                            </p>
-                            @if (selectedProfileImageFileName()) {
-                              <p class="mt-2 text-xs font-medium text-primary">
-                                Selected file: {{ selectedProfileImageFileName() }}
-                              </p>
-                            } @else if (profileForm.controls.imageUrl.value) {
-                              <p class="mt-2 break-all text-xs text-muted-foreground">
-                                Current URL: {{ profileForm.controls.imageUrl.value }}
-                              </p>
+                        <div class="input-group-embedded">
+                          <label>Budget (TND/mois) *</label>
+                          <input type="number" formControlName="budget" placeholder="ex. 800">
+                        </div>
+
+                        <div class="input-group-embedded">
+                          <label>Ville *</label>
+                          <input type="text" formControlName="city" placeholder="Tunis, Ariana">
+                        </div>
+
+                        <div class="input-group-embedded">
+                          <label>Rythme de sommeil *</label>
+                          <select formControlName="sleepSchedule">
+                            <option value="">Sélectionnez un rythme</option>
+                            <option value="day">Diurne (lève-tôt)</option>
+                            <option value="night">Nocturne (oiseau de nuit)</option>
+                          </select>
+                        </div>
+
+                        <div class="input-group-embedded">
+                          <label>Niveau d'étude *</label>
+                          <input type="text" formControlName="studyLevel" placeholder="Licence, Master">
+                        </div>
+
+                        <div class="input-group-embedded full-width-embedded">
+                          <label>Centres d'intérêt</label>
+                          <div class="interests-container-embedded">
+                            <div class="tags-list-embedded">
+                              @for (interest of interestsArray(); track $index) {
+                                <span class="interest-tag-embedded">
+                                  {{ interest }}
+                                  <button type="button" (click)="removeInterest($index)">✕</button>
+                                </span>
+                              }
+                            </div>
+                            <div class="add-interest-embedded">
+                              <input
+                                type="text"
+                                placeholder="Ajouter un intérêt (ex: sport)"
+                                #interestInput
+                                (keyup.enter)="addInterest(interestInput.value); interestInput.value = ''"
+                              >
+                              <button type="button" (click)="addInterest(interestInput.value); interestInput.value = ''">
+                                Ajouter
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="switches-group-embedded">
+                        <label class="switch-item-embedded">
+                          <input type="checkbox" formControlName="smoker">
+                          <span>🚬 Fumeur / Fumeuse</span>
+                        </label>
+                        <label class="switch-item-embedded">
+                          <input type="checkbox" formControlName="pets">
+                          <span>🐾 A des animaux</span>
+                        </label>
+                        <label class="switch-item-embedded">
+                          <input type="checkbox" formControlName="acceptsGuests">
+                          <span>🏠 Accepte les invités</span>
+                        </label>
+                      </div>
+
+                      <div class="sliders-group-embedded">
+                        <div class="slider-item-embedded">
+                          <label>🧹 Propreté : <strong>{{ roommateForm.value.cleanliness ?? 3 }}/5</strong></label>
+                          <input type="range" min="1" max="5" step="1" formControlName="cleanliness">
+                        </div>
+                        <div class="slider-item-embedded">
+                          <label>🎉 Sociabilité : <strong>{{ roommateForm.value.socialLevel ?? 3 }}/5</strong></label>
+                          <input type="range" min="1" max="5" step="1" formControlName="socialLevel">
+                        </div>
+                        <div class="slider-item-embedded">
+                          <label>🔊 Tolérance au bruit : <strong>{{ roommateForm.value.noiseTolerance ?? 3 }}/5</strong></label>
+                          <input type="range" min="1" max="5" step="1" formControlName="noiseTolerance">
+                        </div>
+                      </div>
+
+                      <div class="flex gap-4 mt-6">
+                        <button type="submit" class="submit-btn-embedded" [disabled]="isSavingRoommateProfile()">
+                          {{ isSavingRoommateProfile() ? 'Enregistrement...' : '💾 Enregistrer' }}
+                        </button>
+                        <button type="button" class="submit-btn-embedded cancel-btn-embedded" (click)="cancelRoommateProfile()">
+                          Annuler
+                        </button>
+                      </div>
+                    </form>
+                  } @else {
+                    <div class="p-4 sm:p-6 space-y-8">
+                      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
+                        <h3 class="text-xl font-black text-foreground">Vos informations de colocation</h3>
+                        <button (click)="isEditingProfile.set(true)" class="inline-flex items-center justify-center rounded-[1rem] bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20">
+                          ✏️ Modifier le profil
+                        </button>
+                      </div>
+
+                      @if (roommateProfile(); as rp) {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div class="space-y-4">
+                            <div>
+                              <p class="text-sm font-medium text-muted-foreground">Ville de recherche</p>
+                              <p class="text-lg font-semibold text-foreground">{{ rp.city }}</p>
+                            </div>
+                            <div>
+                              <p class="text-sm font-medium text-muted-foreground">Budget mensuel</p>
+                              <p class="text-lg font-semibold text-foreground">{{ rp.budget }} TND</p>
+                            </div>
+                            <div>
+                              <p class="text-sm font-medium text-muted-foreground">Âge / Genre</p>
+                              <p class="text-lg font-semibold text-foreground">{{ rp.age }} ans, {{ rp.gender === 'male' ? 'Homme' : rp.gender === 'female' ? 'Femme' : 'Autre' }}</p>
+                            </div>
+                            <div>
+                              <p class="text-sm font-medium text-muted-foreground">Niveau d'étude</p>
+                              <p class="text-lg font-semibold text-foreground">{{ rp.studyLevel }}</p>
+                            </div>
+                            <div>
+                              <p class="text-sm font-medium text-muted-foreground">Rythme de sommeil</p>
+                              <p class="text-lg font-semibold text-foreground">{{ rp.sleepSchedule === 'day' ? 'Diurne (lève-tôt)' : 'Nocturne (oiseau de nuit)' }}</p>
+                            </div>
+                          </div>
+
+                          <div class="space-y-6">
+                            <div class="flex flex-wrap gap-2">
+                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.smoker ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-700'">
+                                🚬 {{ rp.smoker ? 'Fumeur' : 'Non-fumeur' }}
+                              </span>
+                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.pets ? 'bg-blue-500/10 text-blue-700' : 'bg-muted text-muted-foreground'">
+                                🐾 {{ rp.pets ? 'Animaux acceptés' : 'Pas d\'animaux' }}
+                              </span>
+                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.acceptsGuests ? 'bg-purple-500/10 text-purple-700' : 'bg-muted text-muted-foreground'">
+                                🏠 {{ rp.acceptsGuests ? 'Invités acceptés' : 'Pas d\'invités' }}
+                              </span>
+                            </div>
+
+                            <div class="space-y-4">
+                              <div>
+                                <div class="flex justify-between mb-1">
+                                  <span class="text-sm font-medium text-muted-foreground">🧹 Propreté</span>
+                                  <span class="text-sm font-bold">{{ rp.cleanliness }}/5</span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-muted">
+                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.cleanliness / 5) * 100"></div>
+                                </div>
+                              </div>
+                              <div>
+                                <div class="flex justify-between mb-1">
+                                  <span class="text-sm font-medium text-muted-foreground">🎉 Sociabilité</span>
+                                  <span class="text-sm font-bold">{{ rp.socialLevel }}/5</span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-muted">
+                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.socialLevel / 5) * 100"></div>
+                                </div>
+                              </div>
+                              <div>
+                                <div class="flex justify-between mb-1">
+                                  <span class="text-sm font-medium text-muted-foreground">🔊 Tolérance au bruit</span>
+                                  <span class="text-sm font-bold">{{ rp.noiseTolerance }}/5</span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-muted">
+                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.noiseTolerance / 5) * 100"></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            @if (rp.interests && rp.interests.length > 0) {
+                              <div>
+                                <p class="text-sm font-medium text-muted-foreground mb-2">Centres d'intérêt</p>
+                                <div class="flex flex-wrap gap-2">
+                                  @for (interest of rp.interests; track $index) {
+                                    <span class="rounded-[0.8rem] bg-card border border-border px-3 py-1 text-sm text-foreground shadow-sm">
+                                      #{{ interest }}
+                                    </span>
+                                  }
+                                </div>
+                              </div>
                             }
                           </div>
                         </div>
-
-                        <div class="flex flex-wrap gap-3">
-                          <label class="btn-secondary cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              class="hidden"
-                              [disabled]="isSavingProfile() || isUploadingProfileImage()"
-                              (change)="onProfileImageSelected($event)"
-                            />
-                            Choose image
-                          </label>
-
-                          @if (selectedProfileImageFileName()) {
-                            <button
-                              type="button"
-                              class="rounded-[1.1rem] border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary"
-                              [disabled]="isSavingProfile() || isUploadingProfileImage()"
-                              (click)="clearSelectedProfileImage()"
-                            >
-                              Remove selection
-                            </button>
-                          }
-                        </div>
-                      </div>
-
-                      @if (isUploadingProfileImage()) {
-                        <p class="mt-4 text-sm font-medium text-primary">
-                          Uploading image to storage server...
-                        </p>
-                      }
-                    </div>
-                  </div>
-
-                 
-
-                  <div class="flex justify-end">
-                    <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isSavingProfile() || isUploadingProfileImage()">
-                      <lucide-icon
-                        [img]="SaveIcon"
-                        class="mr-2"
-                        [size]="16"
-                      ></lucide-icon>
-                      {{ isUploadingProfileImage() ? 'Uploading image...' : isSavingProfile() ? 'Saving...' : 'Update profile' }}
-                    </button>
-                  </div>
-                </form>
-
-                <div
-                  class="rounded-[1.5rem] border border-border bg-white/40 p-5"
-                >
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <p class="text-lg font-bold text-foreground">
-                        Recent activity
-                      </p>
-                      <p class="mt-1 text-sm text-muted-foreground">
-                        Fake data to help review spacing, cards, and text
-                        rhythm.
-                      </p>
-                    </div>
-                    <div
-                      class="rounded-full bg-card px-3 py-2 text-xs font-semibold text-muted-foreground"
-                    >
-                      {{ activityFeed.length }} updates
-                    </div>
-                  </div>
-
-                  <div class="mt-5 grid gap-4 xl:grid-cols-2">
-                    @for (activity of activityFeed; track activity.id) {
-                      <article
-                        class="rounded-[1.35rem] border border-border bg-card p-4"
-                      >
-                        <div class="flex items-start justify-between gap-4">
-                          <p class="text-base font-semibold text-foreground">
-                            {{ activity.title }}
+                      } @else {
+                        <div class="text-center py-10">
+                          <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                            <lucide-icon [img]="UserRoundIcon" [size]="32"></lucide-icon>
+                          </div>
+                          <p class="text-lg font-medium text-foreground">Aucun profil de colocation</p>
+                          <p class="text-sm text-muted-foreground mt-2 mb-6">
+                            Créez un profil pour commencer à chercher des colocataires et des logements parfaitement adaptés à vos besoins.
                           </p>
-                          <span
-                            class="shrink-0 text-xs font-medium text-muted-foreground"
-                            >{{ activity.time }}</span
-                          >
-                        </div>
-                        <p class="mt-3 text-sm leading-6 text-muted-foreground">
-                          {{ activity.description }}
-                        </p>
-                      </article>
-                    }
-                  </div>
-                </div>
-              </div>
-            } @else if (activeSection() === "settings") {
-              <div class="space-y-6">
-                <form class="space-y-6" [formGroup]="settingsForm">
-                  <label
-                    class="flex items-start justify-between gap-4 rounded-[1.5rem] border border-border bg-card p-5"
-                  >
-                    <div>
-                      <p class="text-base font-semibold text-foreground">
-                        Enable two-factor authentication
-                      </p>
-                      <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                        When enabled, every login sends a 6-digit security code to your email before access is granted.
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      class="mt-1 h-5 w-5 rounded border-border text-primary focus:ring-primary"
-                      formControlName="twoFactorEnabled"
-                    />
-                  </label>
-
-                  <div class="flex justify-end">
-                    <button
-                      type="button"
-                      class="btn-primary disabled:cursor-not-allowed disabled:opacity-70"
-                      [disabled]="isSavingSettings()"
-                      (click)="saveSettings()"
-                    >
-                      <lucide-icon
-                        [img]="SettingsIcon"
-                        class="mr-2"
-                        [size]="16"
-                      ></lucide-icon>
-                      {{ isSavingSettings() ? 'Saving...' : 'Save security settings' }}
-                    </button>
-                  </div>
-                </form>
-
-                <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
-                  <div>
-                    <p class="text-base font-semibold text-foreground">Update password</p>
-                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                      Change your current password using your existing password and a new secure one.
-                    </p>
-                  </div>
-
-                  <div class="grid gap-5 md:grid-cols-2">
-                    <div class="md:col-span-2">
-                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Current password</label>
-                      <input class="form-input" type="password" formControlName="oldPassword" />
-                    </div>
-
-                    <div>
-                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">New password</label>
-                      <input class="form-input" type="password" formControlName="newPassword" />
-                    </div>
-
-                    <div>
-                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Confirm new password</label>
-                      <input class="form-input" type="password" formControlName="confirmPassword" />
-                    </div>
-                  </div>
-
-                  @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) {
-                    <p class="text-xs font-medium text-destructive">New password must be at least 8 characters.</p>
-                  }
-
-                  @if (passwordForm.controls.confirmPassword.touched && !passwordsMatch) {
-                    <p class="text-xs font-medium text-destructive">Passwords do not match.</p>
-                  }
-
-                  <div class="flex justify-end">
-                    <button
-                      type="submit"
-                      class="btn-primary disabled:cursor-not-allowed disabled:opacity-70"
-                      [disabled]="isUpdatingPassword()"
-                    >
-                      {{ isUpdatingPassword() ? 'Updating...' : 'Update password' }}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            } @else {
-              @if (selectedConversation(); as activeConversation) {
-                <div class="space-y-5">
-                  <div
-                    class="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border bg-white/50 p-4"
-                  >
-                    <div class="flex min-w-0 items-center gap-4">
-                      <div class="relative">
-                        <img
-                          [src]="activeConversation.avatarUrl"
-                          [alt]="activeConversation.name"
-                          class="h-14 w-14 rounded-[1.2rem] object-cover"
-                        />
-                        <span
-                          class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-card"
-                          [ngClass]="
-                            activeConversation.status === 'online'
-                              ? 'bg-primary'
-                              : activeConversation.status === 'away'
-                                ? 'bg-sidebar'
-                                : 'bg-muted-foreground'
-                          "
-                        ></span>
-                      </div>
-                      <div class="min-w-0">
-                        <p
-                          class="truncate text-base font-semibold text-foreground"
-                        >
-                          {{ activeConversation.name }}
-                        </p>
-                        <p class="truncate text-sm text-muted-foreground">
-                          {{
-                            activeConversation.isTyping
-                              ? "Typing now..."
-                              : activeConversation.lastSeen
-                          }}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      class="hidden rounded-full bg-card px-3 py-2 text-xs font-semibold text-muted-foreground sm:inline-flex"
-                    >
-                      {{ activeConversation.messages.length }} messages
-                    </div>
-                  </div>
-
-                  <div
-                    class="space-y-4 rounded-[1.5rem] border border-border bg-background p-4"
-                  >
-                    <div class="max-h-[24rem] space-y-4 overflow-y-auto pr-1">
-                      @for (
-                        message of activeConversation.messages;
-                        track message.id
-                      ) {
-                        @if (message.dayLabel) {
-                          <div class="flex justify-center">
-                            <span
-                              class="rounded-full bg-white px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                            >
-                              {{ message.dayLabel }}
-                            </span>
-                          </div>
-                        }
-
-                        <div
-                          class="flex"
-                          [class.justify-end]="message.author === 'me'"
-                          [class.justify-start]="message.author === 'other'"
-                        >
-                          <div
-                            class="max-w-[85%] rounded-[1.3rem] px-4 py-3 text-sm leading-6 shadow-soft"
-                            [class.bg-primary]="message.author === 'me'"
-                            [class.text-primary-foreground]="
-                              message.author === 'me'
-                            "
-                            [class.bg-white]="message.author === 'other'"
-                            [class.text-foreground]="message.author === 'other'"
-                          >
-                            <p>{{ message.content }}</p>
-                            <p
-                              class="mt-2 text-[0.7rem]"
-                              [ngClass]="
-                                message.author === 'me'
-                                  ? 'text-primary-foreground/70'
-                                  : 'text-muted-foreground'
-                              "
-                            >
-                              {{ message.timestamp }}
-                            </p>
-                          </div>
+                          <button (click)="isEditingProfile.set(true)" class="inline-flex items-center justify-center rounded-[1rem] bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                            Créer mon profil colocataire
+                          </button>
                         </div>
                       }
                     </div>
-                  </div>
-
-                  <div
-                    class="rounded-[1.5rem] border border-border bg-white/40 p-4"
-                  >
-                    <div class="flex gap-3">
-                      <input
-                        class="form-input"
-                        placeholder="Write a message..."
-                        [value]="messageDraft()"
-                        (input)="onDraftChange($event)"
-                      />
-                      <button
-                        type="button"
-                        class="btn-primary shrink-0"
-                        (click)="sendMessage()"
-                      >
-                        <lucide-icon [img]="SendIcon" [size]="16"></lucide-icon>
-                      </button>
-                    </div>
-                  </div>
+                  }
                 </div>
-              } @else {
-                <div
-                  class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center"
-                >
-                  <p class="text-lg font-semibold text-foreground">
-                    No conversation selected
-                  </p>
-                  <p class="mt-2 text-sm text-muted-foreground">
-                    Choose a user from the right sidebar to open the chat
-                    thread.
-                  </p>
-                </div>
-              }
+              </div>
             }
           </div>
         </section>
       </main>
-
-      <aside class="surface-card h-fit p-3 lg:sticky lg:top-28">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-lg font-bold text-foreground">Conversations</p>
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <input
-            class="form-input"
-            placeholder="Search chats, tags, or users..."
-            [value]="chatSearch()"
-            (input)="onChatSearchChange($event)"
-          />
-        </div>
-
-        <div class="mt-5 max-h-[25.5rem] space-y-3 overflow-y-auto pr-2">
-          @for (conversation of sortedConversations(); track conversation.id) {
-            <button
-              type="button"
-              class="flex w-full items-start gap-3 rounded-[1.35rem] border p-4 text-left transition hover:border-primary/30 hover:bg-white/70"
-              [class.border-primary]="selectedConversationId() === conversation.id"
-              [class.bg-white]="selectedConversationId() === conversation.id"
-              [class.border-border]="selectedConversationId() !== conversation.id"
-              (click)="selectConversation(conversation.id)"
-            >
-              <div class="relative">
-                <img
-                  [src]="conversation.avatarUrl"
-                  [alt]="conversation.name"
-                  class="h-12 w-12 rounded-[1rem] object-cover"
-                />
-                <span
-                  class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-card"
-                  [ngClass]="
-                    conversation.status === 'online'
-                      ? 'bg-primary'
-                      : conversation.status === 'away'
-                        ? 'bg-sidebar'
-                        : 'bg-muted-foreground'
-                  "
-                ></span>
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-foreground">
-                      {{ conversation.name }}
-                    </p>
-                    <p class="truncate text-xs text-muted-foreground">
-                      {{
-                        conversation.isTyping
-                          ? "Typing now..."
-                          : conversation.role
-                      }}
-                    </p>
-                  </div>
-                  <span
-                    class="shrink-0 text-[0.7rem] font-medium text-muted-foreground"
-                    >{{ conversation.lastMessageTime }}</span
-                  >
-                </div>
-
-                <p class="mt-2 truncate text-sm text-muted-foreground">
-                  {{ conversation.lastMessage }}
-                </p>
-              </div>
-
-              @if (conversation.unreadCount > 0) {
-                <span
-                  class="rounded-full bg-primary px-2.5 py-1 text-[0.7rem] font-semibold text-primary-foreground"
-                >
-                  {{ conversation.unreadCount }}
-                </span>
-              }
-            </button>
-          }
-
-          @if (sortedConversations().length === 0) {
-            <div
-              class="rounded-[1.35rem] border border-dashed border-border bg-white/30 p-5 text-center"
-            >
-              <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                You don’t have any conversations
-              </p>
-            </div>
-          }
-        </div>
-      </aside>
     </div>
-  </div>
-} @else {
-  <div class="section-shell py-12">
-    <div class="surface-card w-full max-w-lg px-8 py-12">
-      <app-loading
-        label="Loading profile"
-        caption="Restoring your secure student workspace..."
-      />
-    </div>
-  </div>
-}
+  }
+</div>
