@@ -6,8 +6,6 @@ import { UserService } from '../../services/user.service';
 import { environment } from '../../../../environments/environment';
 
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
-const USER_ID_KEY = 'userId';
-const ACCESS_TOKEN_KEY = 'accessToken';
 
 @Component({
   selector: 'app-login-page',
@@ -47,7 +45,6 @@ export class LoginPageComponent {
 
   // ================= LOGIN =================
   async submit(): Promise<void> {
-    this.clearStoredUserData();
     this.clearPendingTwoFactorContext();
 
     this.form.markAllAsTouched();
@@ -57,8 +54,7 @@ export class LoginPageComponent {
 
     try {
       const result = await this.userService.login(this.form.getRawValue());
-
-      console.log('Login response:', result);
+      console.log('Login response processed:', result);
 
       // ================= TWO FACTOR =================
       if (result.requiresTwoFactor) {
@@ -81,19 +77,11 @@ export class LoginPageComponent {
         return;
       }
 
-      // ================= TOKEN STORAGE =================
-      const token = (result as any).token || (result as any).accessToken || (result.session as any)?.token || (result.session as any)?.accessToken;
-      if (token) {
-        localStorage.setItem(ACCESS_TOKEN_KEY, token);
-      } else {
-        localStorage.setItem('isAuthenticated', 'true');
-      }
-
-      // ================= STORE USER ID =================
-      localStorage.setItem(USER_ID_KEY, result.session.user.id);
+      // ================= STORE SESSION IN MEMORY =================
+      this.userService.setCurrentSession(result.session); // <-- store token and user in memory
 
       // ================= LOAD CURRENT USER PROFILE =================
-      await this.userService.loadCurrentUserProfile(); // updates authStore.currentUser automatically
+      await this.userService.loadCurrentUserProfile();
 
       this.toastService.success(
         result.message ?? 'Signed in successfully.',
@@ -132,16 +120,6 @@ export class LoginPageComponent {
   private clearPendingTwoFactorContext(): void {
     try {
       sessionStorage.removeItem(PENDING_TWO_FACTOR_KEY);
-    } catch {}
-  }
-
-  // ================= SESSION CLEANUP =================
-  private clearStoredUserData(): void {
-    try {
-      localStorage.removeItem(USER_ID_KEY);
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('profileCompleted');
     } catch {}
   }
 }

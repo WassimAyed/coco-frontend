@@ -233,6 +233,17 @@
       authStore.getState().clearError();
     }
 
+
+    private sessionSignal = signal<any>(null);
+
+setCurrentSession(session: any) {
+  this.sessionSignal.set(session);
+}
+
+currentSession() {
+  return this.sessionSignal();
+}
+
     // ================= EXTRA API (PROFILES) =================
     checkProfileExists(userId: number) {
       return this.http.get<boolean>(
