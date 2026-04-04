@@ -12,17 +12,33 @@ import { UserService } from './user-security/services/user.service';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
 
 
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
 
 @NgModule({
   bootstrap: [AppComponent],
   declarations: [AppComponent, AdminLayoutComponent],
-  imports: [BrowserModule, CommonModule, HttpClientModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
+  imports: [
+    BrowserModule,
+    CommonModule,
+    HttpClientModule,
+    RouterModule,
+    LucideAngularModule,
+    AppRoutingModule,
+    SharedModule,
+    UserSecurityModule
+  ],
   providers: [
     {
       deps: [UserService],
       multi: true,
       provide: APP_INITIALIZER,
       useFactory: (userService: UserService) => () => userService.restoreSession()
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true // important
     }
   ]
 })

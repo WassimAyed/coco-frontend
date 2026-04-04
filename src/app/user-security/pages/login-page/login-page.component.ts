@@ -14,23 +14,27 @@ const ACCESS_TOKEN_KEY = 'accessToken';
   templateUrl: './login-page.component.html',
 })
 export class LoginPageComponent {
+
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
 
+  // ================= SIGNALS =================
   readonly showPassword = signal(false);
   readonly isLoading = this.userService.isLoading;
   readonly authError = computed(() => this.userService.error());
 
+  // ================= FORM =================
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
     rememberMe: [false],
   });
 
+  // ================= UI =================
   togglePassword(): void {
-    this.showPassword.update((value) => !value);
+    this.showPassword.update(v => !v);
   }
 
   get emailError(): string | null {
@@ -41,34 +45,34 @@ export class LoginPageComponent {
     return null;
   }
 
+  // ================= LOGIN =================
   async submit(): Promise<void> {
-    this.form.markAllAsTouched();
-    this.userService.clearError();
+    this.clearStoredUserData();
     this.clearPendingTwoFactorContext();
 
-    if (this.emailError || this.form.invalid) {
-      return;
-    }
+    this.form.markAllAsTouched();
+    this.userService.clearError();
+
+    if (this.form.invalid || this.emailError) return;
 
     try {
       const result = await this.userService.login(this.form.getRawValue());
 
-      // Log the full response to help debug
       console.log('Login response:', result);
 
-      // ===== TWO FACTOR =====
+      // ================= TWO FACTOR =================
       if (result.requiresTwoFactor) {
         const email = result.twoFactorEmail ?? this.form.controls.email.value.trim();
         this.persistPendingTwoFactorContext(email, this.form.controls.rememberMe.value);
         this.toastService.info(
-          result.message ?? 'A 2FA code has been sent to your email address.',
+          result.message ?? 'A 2FA code has been sent to your email.',
           'Two-Factor Authentication'
         );
         await this.router.navigate(['/login/2fa'], { queryParams: { email } });
         return;
       }
 
-      // ===== SESSION CHECK =====
+      // ================= SESSION VALIDATION =================
       if (!result.session) {
         this.toastService.error(
           result.message ?? 'Unable to complete sign in.',
@@ -77,50 +81,48 @@ export class LoginPageComponent {
         return;
       }
 
-      // Extract token from common locations
-      const token = (result as any).token
-                 || (result as any).accessToken
-                 || (result.session as any)?.token
-                 || (result.session as any)?.accessToken;
-
+      // ================= TOKEN STORAGE =================
+      const token = (result as any).token || (result as any).accessToken || (result.session as any)?.token || (result.session as any)?.accessToken;
       if (token) {
-        // Token‑based authentication
         localStorage.setItem(ACCESS_TOKEN_KEY, token);
-        console.log('Token stored for subsequent API calls.');
       } else {
-        // Cookie‑based authentication – no token stored
-        console.warn('No token in response – assuming cookie‑based authentication.');
-        // Store a flag to indicate the user is logged in (optional)
         localStorage.setItem('isAuthenticated', 'true');
       }
 
-      // Store user ID (always needed)
+      // ================= STORE USER ID =================
       localStorage.setItem(USER_ID_KEY, result.session.user.id);
+
+      // ================= LOAD CURRENT USER PROFILE =================
+      await this.userService.loadCurrentUserProfile(); // updates authStore.currentUser automatically
 
       this.toastService.success(
         result.message ?? 'Signed in successfully.',
         'Login Success'
       );
 
-      // Redirect to landing page
-      await this.router.navigate(['/']);
-    } catch {
-      const errorMessage = this.authError();
-      if (errorMessage) {
-        this.toastService.error(errorMessage, 'Login Failed');
-      }
+      // ================= REDIRECT =================
+      const homeRoute = this.userService.getHomeRoute() || '/';
+      await this.router.navigate([homeRoute]);
+
+    } catch (error) {
+      const message = this.authError();
+      if (message) this.toastService.error(message, 'Login Failed');
+      console.error('Login error:', error);
     }
   }
 
+  // ================= GOOGLE LOGIN =================
   startGoogleLogin(): void {
     const authBaseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
     const googlePath = environment.auth.googleLoginPath.startsWith('/')
       ? environment.auth.googleLoginPath
       : `/${environment.auth.googleLoginPath}`;
+
     this.toastService.info('Redirecting to Google sign-in...', 'Google Authentication');
     window.location.assign(`${authBaseUrl}${googlePath}`);
   }
 
+  // ================= TWO FACTOR STORAGE =================
   private persistPendingTwoFactorContext(email: string, rememberMe: boolean): void {
     try {
       sessionStorage.setItem(PENDING_TWO_FACTOR_KEY, JSON.stringify({ email, rememberMe }));
@@ -133,8 +135,8 @@ export class LoginPageComponent {
     } catch {}
   }
 
-  /** Clear all user data on logout */
-  clearStoredUserData(): void {
+  // ================= SESSION CLEANUP =================
+  private clearStoredUserData(): void {
     try {
       localStorage.removeItem(USER_ID_KEY);
       localStorage.removeItem(ACCESS_TOKEN_KEY);

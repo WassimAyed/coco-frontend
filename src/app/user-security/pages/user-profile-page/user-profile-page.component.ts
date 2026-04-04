@@ -20,7 +20,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 
 export interface RoommateProfile {
   id: number;
-  user: any; 
+  user: any;
   age: number;
   gender: string;
   budget: number;
@@ -158,7 +158,7 @@ export class UserProfilePageComponent implements OnDestroy {
       });
       this.settingsForm.patchValue({ twoFactorEnabled: profile.twoFactorEnabled ?? false });
       this.loadFakeConversations();
-      
+
       if (profile.id) {
         this.loadRoommateProfile(Number(profile.id));
       }

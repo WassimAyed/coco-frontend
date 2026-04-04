@@ -10,7 +10,9 @@ export interface CollocationOffer {
   longitude: number;
   imagesColoc: { url: string }[];
 
-  // ✅ ADD THIS
+  // Add this property
+  matchScore?: number;
+
   user?: {
     id: string;
     firstName: string;
