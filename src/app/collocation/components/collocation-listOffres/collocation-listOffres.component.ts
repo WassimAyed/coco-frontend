@@ -75,12 +75,15 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   favoriteIds: number[] = [];
 
   /* ===============================
-     MODAL
+     MODAL & TOASTS
   ================================= */
   @ViewChild('requestModalRef') modalRef!: ElementRef;
   showRequestModal = false;
   selectedOfferId!: number;
   requestMessage = '';
+
+  toastMessage = '';
+  showToastVisible = false;
 
   /* ===============================
      USER & AI MATCHING
@@ -91,6 +94,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
   readonly user = computed(() => this.userService.currentUser());
   currentUserId!: number;
+  currentUserProfile: any = null; // Stored user profile
 
   matchingEnabled = false;
   isMatchingLoading = false;
@@ -105,22 +109,41 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.matchToggle$.pipe(
       takeUntilDestroyed(this.destroyRef),
       tap(enabled => {
-        this.matchingEnabled = enabled;
-        console.log(`[AI Match] Toggled to: ${enabled}`);
-        if (!enabled) this.clearScores();
+        if (!enabled) {
+          this.matchingEnabled = false;
+          console.log(`[AI Match] Toggled off`);
+          this.clearScores();
+        }
       }),
       filter(enabled => enabled === true),
-      tap(() => this.isMatchingLoading = true),
-      switchMap(() => this.executeMatchingPipeline()),
-      catchError(err => {
-        console.error('[AI Match] Matching pipeline failed:', err);
-        this.isMatchingLoading = false;
-        return of([]);
+      switchMap(() => {
+        // Safe check without breaking the RxJS stream
+        if (!this.isUserProfileComplete()) {
+          this.matchingEnabled = false;
+          this.isMatchingLoading = false;
+          this.showToast('Veuillez compléter votre profil (âge, budget, ville...) pour utiliser le Match IA.');
+          return of(null); // Return null to gracefully skip this execution
+        }
+
+        this.matchingEnabled = true;
+        this.isMatchingLoading = true;
+        console.log(`[AI Match] Toggled on`);
+
+        return this.executeMatchingPipeline().pipe(
+          catchError(err => {
+            console.error('[AI Match] Matching pipeline failed:', err);
+            this.isMatchingLoading = false;
+            this.showToast('Erreur lors du calcul IA. Veuillez réessayer plus tard.');
+            return of(null);
+          })
+        );
       })
     ).subscribe(scores => {
-      console.log('[AI Match] Raw scores received from service:', scores);
-      this.applyScoresAndSort(scores);
-      this.isMatchingLoading = false;
+      if (scores !== null) {
+        console.log('[AI Match] Raw scores received from service:', scores);
+        this.applyScoresAndSort(scores);
+        this.isMatchingLoading = false;
+      }
     });
   }
 
@@ -137,6 +160,14 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
     this.currentUserId = Number(currentUser.id);
 
+    // Fetch user profile on initialization so it's ready for validation
+    this.userService.getProfileByUserId(this.currentUserId).subscribe({
+      next: (profile) => {
+        this.currentUserProfile = profile;
+      },
+      error: (err) => console.warn('Could not load user profile', err)
+    });
+
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
@@ -150,13 +181,41 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
   /* ===============================
+     TOAST UTILITY
+  ================================= */
+  showToast(message: string) {
+    this.toastMessage = message;
+    this.showToastVisible = true;
+    setTimeout(() => {
+      this.showToastVisible = false;
+    }, 4000); // Hides after 4 seconds
+  }
+
+  /* ===============================
      AI MATCHING LOGIC
   ================================= */
   toggleMatchingAI() {
     this.matchToggle$.next(!this.matchingEnabled);
   }
 
- private executeMatchingPipeline() {
+  isUserProfileComplete(): boolean {
+    const profile = this.currentUserProfile;
+    if (!profile) return false;
+
+    // Check required fields based on Python API needs
+    return !!(
+      profile.age &&
+      profile.budget &&
+      profile.cleanliness !== undefined &&
+      profile.pets !== undefined &&
+      profile.city &&
+      profile.gender &&
+      profile.latitude !== undefined &&
+      profile.longitude !== undefined
+    );
+  }
+
+  private executeMatchingPipeline() {
     const currentUserId = this.userService.currentUser()?.id;
     const currentOffers = this.filteredOffers;
 
@@ -197,14 +256,10 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
             if (publisherProfiles.length === 0) return of([]);
             console.log(`[AI Match] Sending ${publisherProfiles.length} profiles to AI...`);
 
-            // Call the AI and map the results to fix the missing ID and decimal score
             return this.matchingService.match(currentUserProfile, publisherProfiles).pipe(
               map((rawScores: any[]) => {
                 return rawScores.map((result, index) => {
-                  // Re-attach the ID from our uniqueIds array since the AI lost it
                   const correctId = uniqueIds[index];
-
-                  // Convert 0.4088... to 41
                   const percentageScore = Math.round((result.score || 0) * 100);
 
                   return {
@@ -247,7 +302,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
       ...offre,
       matchScore: undefined
     }));
-    this.applyFilters(); // Re-sorts back to default without scores
+    this.applyFilters();
   }
 
   /* ===============================

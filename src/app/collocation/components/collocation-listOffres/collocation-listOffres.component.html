@@ -181,6 +181,19 @@
   </div>
 </main>
 
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+  <div class="toast align-items-center text-white bg-danger border-0"
+       [class.show]="showToastVisible"
+       role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ toastMessage }}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="showToastVisible = false" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
 <footer class="bg-dark text-white mt-5 py-5">
   <div class="container">
     <div class="row g-4">
