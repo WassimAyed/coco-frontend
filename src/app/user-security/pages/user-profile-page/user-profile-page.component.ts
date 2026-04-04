@@ -1,6 +1,6 @@
 import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {
   Bell, BookOpen, Clock3, DatabaseZap, MessageCircleMore,
   Save, Send, Settings2, ShieldCheck, Sparkles, UserRound
@@ -18,9 +18,9 @@ import { ProfileImageUploadService } from '../../services/profile-image-upload.s
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
 
-interface RoommateProfile {
+export interface RoommateProfile {
   id: number;
-  userId: any;
+  user: any; 
   age: number;
   gender: string;
   budget: number;
@@ -64,7 +64,7 @@ export class UserProfilePageComponent implements OnDestroy {
   readonly Clock3Icon = Clock3;
   readonly DatabaseZapIcon = DatabaseZap;
 
-  // Signals existants
+  // Signaux
   readonly user = computed(() => this.userService.currentUser());
   readonly sections = PROFILE_SECTIONS;
   readonly shortcuts = PROFILE_SHORTCUTS;
@@ -106,7 +106,9 @@ export class UserProfilePageComponent implements OnDestroy {
     this.conversations().find(c => c.id === this.selectedConversationId()) ?? null
   );
 
-  // Nouveaux signaux pour le profil colocataire
+  // Roommate Profile Signals
+  readonly roommateProfile = signal<RoommateProfile | null>(null);
+  readonly isEditingProfile = signal(false);
   readonly roommateProfileId = signal<number | null>(null);
   readonly interestsArray = signal<string[]>([]);
   readonly isSavingRoommateProfile = signal(false);
@@ -127,11 +129,10 @@ export class UserProfilePageComponent implements OnDestroy {
   });
 
   constructor() {
-    // Formulaire colocataire
     this.roommateForm = this.fb.group({
-      age: [null, Validators.required],
+      age: [null, [Validators.required, Validators.min(16)]],
       gender: ['', Validators.required],
-      budget: [null, Validators.required],
+      budget: [null, [Validators.required, Validators.min(0)]],
       city: ['', Validators.required],
       sleepSchedule: ['', Validators.required],
       studyLevel: ['', Validators.required],
@@ -157,9 +158,9 @@ export class UserProfilePageComponent implements OnDestroy {
       });
       this.settingsForm.patchValue({ twoFactorEnabled: profile.twoFactorEnabled ?? false });
       this.loadFakeConversations();
-      // Charger le profil colocataire associé à cet utilisateur
-      if (profile.id && typeof profile.id === 'number') {
-        this.loadRoommateProfile(profile.id);
+      
+      if (profile.id) {
+        this.loadRoommateProfile(Number(profile.id));
       }
     });
   }
@@ -168,32 +169,53 @@ export class UserProfilePageComponent implements OnDestroy {
     this.releaseProfileImagePreviewUrl();
   }
 
+  // === Private Helper for Headers ===
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('accessToken');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
   // === Gestion profil colocataire ===
   private loadRoommateProfile(userId: number): void {
-    this.http.get<RoommateProfile>(`http://localhost:8090/profiles/${userId}`).subscribe({
+    const headers = this.getAuthHeaders();
+    this.http.get<RoommateProfile>(`http://localhost:8090/profiles/${userId}`, { headers }).subscribe({
       next: (data) => {
-        this.roommateProfileId.set(data.id);
-        this.roommateForm.patchValue({
-          age: data.age,
-          gender: data.gender,
-          budget: data.budget,
-          city: data.city,
-          sleepSchedule: data.sleepSchedule,
-          studyLevel: data.studyLevel,
-          smoker: data.smoker,
-          pets: data.pets,
-          cleanliness: data.cleanliness,
-          socialLevel: data.socialLevel,
-          acceptsGuests: data.acceptsGuests,
-          noiseTolerance: data.noiseTolerance,
-        });
-        this.interestsArray.set(data.interests || []);
+        if (data) {
+          this.roommateProfile.set(data);
+          this.roommateProfileId.set(data.id);
+          this.patchRoommateForm(data);
+        }
       },
       error: (err) => {
         console.error('Erreur chargement profil colocataire', err);
-        this.toastService.error('Impossible de charger votre profil colocataire', 'Erreur');
+        if (err.status === 401) {
+          window.location.href = 'http://localhost:8090/oauth2/authorization/google';
+        } else if (err.status !== 404) {
+          this.toastService.error('Impossible de charger votre profil colocataire', 'Erreur');
+        }
       }
     });
+  }
+
+  private patchRoommateForm(data: RoommateProfile): void {
+    this.roommateForm.patchValue({
+      age: data.age,
+      gender: data.gender,
+      budget: data.budget,
+      city: data.city,
+      sleepSchedule: data.sleepSchedule,
+      studyLevel: data.studyLevel,
+      smoker: data.smoker,
+      pets: data.pets,
+      cleanliness: data.cleanliness,
+      socialLevel: data.socialLevel,
+      acceptsGuests: data.acceptsGuests,
+      noiseTolerance: data.noiseTolerance,
+    });
+    this.interestsArray.set(data.interests || []);
   }
 
   saveRoommateProfile(): void {
@@ -205,53 +227,54 @@ export class UserProfilePageComponent implements OnDestroy {
     }
 
     this.isSavingRoommateProfile.set(true);
+    const headers = this.getAuthHeaders();
+    const profileId = this.roommateProfileId();
+    const currentProfile = this.roommateProfile();
+
     const payload = {
+      id: profileId || 0,
+      user: { id: this.user()?.id },
       ...this.roommateForm.value,
       interests: this.interestsArray(),
-      userId: this.user()?.id,
+      latitude: currentProfile?.latitude || 0,
+      longitude: currentProfile?.longitude || 0,
     };
-    const profileId = this.roommateProfileId();
-    const url = `http://localhost:8090/profiles/${profileId ?? this.user()?.id}`;
-    const request = profileId
-      ? this.http.put(url, payload)
-      : this.http.post(url, payload);
 
-    request.subscribe({
-      next: () => {
-        this.toastService.success('Profil colocataire mis à jour', 'Succès');
+    const request$ = profileId
+      ? this.http.put<RoommateProfile>(`http://localhost:8090/profiles/${profileId}`, payload, { headers })
+      : this.http.post<RoommateProfile>(`http://localhost:8090/profiles`, payload, { headers });
+
+    request$.subscribe({
+      next: (savedProfile) => {
+        this.roommateProfile.set(savedProfile);
+        this.roommateProfileId.set(savedProfile.id);
+        this.isEditingProfile.set(false);
+        this.toastService.success('Profil colocataire enregistré avec succès');
         this.saveMessage.set('Profil colocataire enregistré');
         this.isSavingRoommateProfile.set(false);
       },
       error: (err) => {
-        console.error(err);
-        this.toastService.error('Erreur lors de l\'enregistrement', 'Erreur');
         this.isSavingRoommateProfile.set(false);
+        if (err.status === 401) {
+          window.location.href = 'http://localhost:8090/oauth2/authorization/google';
+        } else {
+          console.error(err);
+          this.toastService.error('Erreur lors de l\'enregistrement', 'Erreur');
+        }
       }
     });
   }
 
   cancelRoommateProfile(): void {
-    const userId = this.user()?.id;
-    if (userId && typeof userId === 'number') {
-      this.loadRoommateProfile(userId);
+    this.isEditingProfile.set(false);
+    this.saveMessage.set(null);
+    const currentData = this.roommateProfile();
+    if (currentData) {
+      this.patchRoommateForm(currentData);
     } else {
-      this.roommateForm.reset({
-        age: null,
-        gender: '',
-        budget: null,
-        city: '',
-        sleepSchedule: '',
-        studyLevel: '',
-        smoker: false,
-        pets: false,
-        cleanliness: 3,
-        socialLevel: 3,
-        acceptsGuests: false,
-        noiseTolerance: 3,
-      });
+      this.roommateForm.reset({ cleanliness: 3, socialLevel: 3, noiseTolerance: 3 });
       this.interestsArray.set([]);
     }
-    this.saveMessage.set(null);
   }
 
   addInterest(interest: string): void {
@@ -265,7 +288,7 @@ export class UserProfilePageComponent implements OnDestroy {
     this.interestsArray.update(arr => arr.filter((_, i) => i !== index));
   }
 
-  // === Méthodes existantes ===
+  // === Méthodes UI & Chat ===
   selectSection(sectionId: ProfileSectionId): void {
     this.activeSection.set(sectionId);
     this.saveMessage.set(null);
@@ -392,10 +415,6 @@ export class UserProfilePageComponent implements OnDestroy {
   private toEditableImageUrl(value: string | null | undefined): string {
     const v = value?.trim() ?? '';
     return v.startsWith('data:image/svg+xml') ? '' : v;
-  }
-
-  private isGeneratedAvatarDataUrl(value: string): boolean {
-    return value.startsWith('data:image/svg+xml');
   }
 
   private releaseProfileImagePreviewUrl(): void {
