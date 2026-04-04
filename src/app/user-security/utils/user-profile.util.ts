@@ -109,10 +109,13 @@ export function buildAuthSessionFromApiResponse(
 ): AuthSession {
   const root = asRecord(response);
   const data = asRecord(root?.['data']);
-  const token = readString(root, ['token', 'accessToken', 'jwt']) ?? readString(data, ['token', 'accessToken', 'jwt']) ?? undefined;
-  const refreshToken = readString(root, ['refreshToken']) ?? readString(data, ['refreshToken']) ?? undefined;
+  const sessionNode = asRecord(root?.['session']);
+  
+  const token = readString(sessionNode, ['token', 'accessToken', 'jwt']) ?? readString(root, ['token', 'accessToken', 'jwt']) ?? readString(data, ['token', 'accessToken', 'jwt']) ?? undefined;
+  const refreshToken = readString(sessionNode, ['refreshToken']) ?? readString(root, ['refreshToken']) ?? readString(data, ['refreshToken']) ?? undefined;
   const tokenPayload = decodeJwtPayload(token);
-  const user = asRecord(root?.['user']) ?? asRecord(data?.['user']) ?? tokenPayload ?? data ?? root;
+  
+  const user = asRecord(sessionNode?.['user']) ?? asRecord(root?.['user']) ?? asRecord(data?.['user']) ?? tokenPayload ?? data ?? root;
 
   const normalizedEmail = (readString(user, ['email', 'mail', 'username', 'sub']) ?? emailHint).trim().toLowerCase();
   const seed = hashValue(normalizedEmail);

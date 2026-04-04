@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ToastService } from '../../../shared/services/toast.service';
 import { UserService } from '../../../user-security/services/user.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-create-profile',
@@ -61,11 +62,9 @@ export class CreateProfileComponent implements OnInit {
       return;
     }
 
-    const token = localStorage.getItem('accessToken');
-
-    if (!token) {
+    if (!this.userService.currentSession()?.accessToken?.trim()) {
       this.toast.error('Session expired');
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
       return;
     }
 
@@ -88,11 +87,17 @@ export class CreateProfileComponent implements OnInit {
         console.log('==============================');
 
         const headers = new HttpHeaders({
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         });
 
-        this.http.post('http://localhost:8090/profiles', payload, { headers })
+        this.http.post(
+          `${environment.apiBaseUrl.replace(/\/+$/, '')}/profiles`,
+          payload,
+          {
+            headers,
+            withCredentials: environment.auth.withCredentials,
+          },
+        )
           .subscribe({
            next: () => {
   console.log('✅ PROFILE CREATED');

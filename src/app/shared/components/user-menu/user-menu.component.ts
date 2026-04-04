@@ -27,9 +27,12 @@ export class UserMenuComponent {
   readonly MesOffresRequestIcon = Clipboard;
 
   readonly menuOpen = signal(false);
-  readonly user = computed(() => this.userService.currentUser());
+  /** Direct reference to session user signal (same source as login / landing). */
+  readonly user = this.userService.currentUser;
   readonly homeRoute = this.userService.homeRoute;
-  readonly homeLabel = computed(() => (this.user()?.role === 'admin' ? 'Admin Dashboard' : 'DProfileisplay '));
+  readonly homeLabel = computed(() =>
+    this.user()?.role === 'admin' ? 'Admin Dashboard' : 'Display Profile',
+  );
 
   // New routes
   readonly mesOffresRoute = '/collocation/mesOffres';

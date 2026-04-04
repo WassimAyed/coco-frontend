@@ -77,8 +77,10 @@ export class LoginPageComponent {
         return;
       }
 
-      // ================= STORE SESSION IN MEMORY =================
-      this.userService.setCurrentSession(result.session); // <-- store token and user in memory
+      // HARD FORCE PROFILE COMPLETION AFTER LOGIN
+      try {
+        localStorage.setItem(`coco_profile_ok_${result.session.user.id}`, 'true');
+      } catch {}
 
       // ================= LOAD CURRENT USER PROFILE =================
       await this.userService.loadCurrentUserProfile();

@@ -17,6 +17,7 @@ import { AuthApiService, UserProfile } from '../../services/auth-api.service';
 import { ProfileImageUploadService } from '../../services/profile-image-upload.service';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 export interface RoommateProfile {
   id: number;
@@ -169,19 +170,20 @@ export class UserProfilePageComponent implements OnDestroy {
     this.releaseProfileImagePreviewUrl();
   }
 
-  // === Private Helper for Headers ===
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('accessToken');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
+  /** JSON calls: Bearer comes from AuthInterceptor + in-memory session (not localStorage). */
+  private jsonApiOptions(): { headers: HttpHeaders; withCredentials: boolean } {
+    return {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      withCredentials: environment.auth.withCredentials,
+    };
   }
 
   // === Gestion profil colocataire ===
   private loadRoommateProfile(userId: number): void {
-    const headers = this.getAuthHeaders();
-    this.http.get<RoommateProfile>(`http://localhost:8090/profiles/${userId}`, { headers }).subscribe({
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
+    this.http
+      .get<RoommateProfile>(`${base}/profiles/${userId}`, this.jsonApiOptions())
+      .subscribe({
       next: (data) => {
         if (data) {
           this.roommateProfile.set(data);
@@ -227,7 +229,7 @@ export class UserProfilePageComponent implements OnDestroy {
     }
 
     this.isSavingRoommateProfile.set(true);
-    const headers = this.getAuthHeaders();
+    const opts = this.jsonApiOptions();
     const profileId = this.roommateProfileId();
     const currentProfile = this.roommateProfile();
 
@@ -240,9 +242,10 @@ export class UserProfilePageComponent implements OnDestroy {
       longitude: currentProfile?.longitude || 0,
     };
 
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
     const request$ = profileId
-      ? this.http.put<RoommateProfile>(`http://localhost:8090/profiles/${profileId}`, payload, { headers })
-      : this.http.post<RoommateProfile>(`http://localhost:8090/profiles`, payload, { headers });
+      ? this.http.put<RoommateProfile>(`${base}/profiles/${profileId}`, payload, opts)
+      : this.http.post<RoommateProfile>(`${base}/profiles`, payload, opts);
 
     request$.subscribe({
       next: (savedProfile) => {
