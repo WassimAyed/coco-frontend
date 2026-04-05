@@ -1,304 +1,293 @@
-<div class="section-shell py-8 lg:py-10">
+<div class="profile-page-wrapper">
   @if (user(); as profile) {
-    <div class="grid gap-6 xl:grid-cols-[270px_minmax(0,1fr)_320px]">
-      <aside class="surface-card h-fit p-3 lg:sticky lg:top-28">
-        <div class="rounded-[1.75rem] bg-white p-5">
-          <img
-            [src]="effectiveProfileImageUrl()"
-            [alt]="profile.firstName + ' ' + profile.lastName"
-            class="h-20 w-20 rounded-[1.5rem] object-cover shadow-soft"
-            onerror="this.src='/assets/default-avatar.png'"
-          />
-          <h1 class="mt-4 text-2xl font-black text-foreground">
+    <div class="profile-layout">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="profile-overview">
+          <div class="profile-img-wrap">
+            <img
+              [src]="effectiveProfileImageUrl()"
+              [alt]="profile.firstName + ' ' + profile.lastName"
+              onerror="this.src='/assets/default-avatar.png'"
+            />
+          </div>
+          <h1 class="profile-name">
             {{ profile.firstName }} {{ profile.lastName }}
           </h1>
-          <p class="mt-1 text-sm text-muted-foreground">{{ profile.email }}</p>
-          <div class="mt-2 inline-flex rounded-full border border-primary/15 bg-primary/10 px-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-            Étudiant vérifié
+          <p class="profile-email">{{ profile.email }}</p>
+          <div class="badge-verified">
+            Profil Vérifié
           </div>
         </div>
 
-        <nav class="mt-5 space-y-2">
+        <nav class="nav-menu">
           @for (section of sections; track section.id) {
             <button
               type="button"
-              class="w-full rounded-[1.4rem] border px-4 py-4 text-left transition"
-              [class.border-primary]="activeSection() === section.id"
-              [class.bg-primary]="activeSection() === section.id"
-              [class.text-primary-foreground]="activeSection() === section.id"
-              [class.border-border]="activeSection() !== section.id"
-              [class.bg-card]="activeSection() !== section.id"
-              [class.text-foreground]="activeSection() !== section.id"
+              class="nav-item"
+              [class.active]="activeSection() === section.id"
               (click)="selectSection(section.id)"
             >
-              <div class="flex items-center gap-3">
-                <lucide-icon [img]="section.icon" [size]="18"></lucide-icon>
-                <div>
-                  <p class="text-sm font-semibold">{{ section.label }}</p>
-                  <p
-                    class="mt-1 text-xs"
-                    [ngClass]="
-                      activeSection() === section.id
-                        ? 'text-primary-foreground/80'
-                        : 'text-muted-foreground'
-                    "
-                  >
-                    {{ section.description }}
-                  </p>
-                </div>
+              <div class="nav-icon-wrap">
+                <lucide-icon [img]="section.icon" [size]="20"></lucide-icon>
+              </div>
+              <div class="nav-text">
+                <p class="nav-item-title">{{ section.label }}</p>
+                <p class="nav-item-desc">{{ section.description }}</p>
               </div>
             </button>
           }
         </nav>
       </aside>
 
-      <main class="space-y-6">
-        <section class="surface-card overflow-hidden">
-          <div class="relative border-b border-border bg-gradient-to-r from-primary to-sidebar px-6 py-7 text-primary-foreground">
-            <div class="absolute right-6 top-4 h-20 w-20 rounded-full bg-white/10 blur-2xl"></div>
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/75">
-              Espace utilisateur
-            </p>
-            <h2 class="mt-2 text-3xl font-black">
-              {{ selectedSectionMeta()?.label }}
-            </h2>
-            <p class="mt-2 max-w-2xl text-sm leading-6 text-primary-foreground/80">
-              {{ selectedSectionMeta()?.description }}
-            </p>
-          </div>
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <header class="banner">
+          <p class="banner-subtitle">Espace Utilisateur</p>
+          <h2 class="banner-title">{{ selectedSectionMeta()?.label }}</h2>
+          <p class="banner-desc">{{ selectedSectionMeta()?.description }}</p>
+        </header>
 
-          <div class="p-6 sm:p-7">
-            @if (saveMessage()) {
-              <div class="mb-6 rounded-[1.25rem] border border-primary/15 bg-primary/5 px-4 py-3 text-sm font-medium text-primary">
-                {{ saveMessage() }}
-              </div>
-            }
+        <section class="content-body">
+          @if (saveMessage()) {
+            <div class="alert-box">
+              {{ saveMessage() }}
+            </div>
+          }
 
-            @if (activeSection() === 'profile') {
-              <div class="create-profile-container-embedded">
-                <div class="profile-card-embedded">
+          @if (activeSection() === 'profile') {
+            <div class="create-profile-container-embedded">
+              
+              @if (isEditingProfile()) {
+                <form [formGroup]="roommateForm" (ngSubmit)="saveRoommateProfile()" class="form-block">
+                  <div class="section-title">
+                    <h3>Modifier le profil colocataire</h3>
+                  </div>
                   
-                  @if (isEditingProfile()) {
-                    <form [formGroup]="roommateForm" (ngSubmit)="saveRoommateProfile()" class="profile-form-embedded">
-                      <div class="flex justify-between items-center mb-6 border-b pb-4">
-                        <h3 class="text-xl font-bold">Modifier le profil colocataire</h3>
+                  <div class="form-grid-embedded">
+                    <div class="input-group-embedded">
+                      <label>Âge *</label>
+                      <input type="number" formControlName="age" placeholder="ex. 22">
+                    </div>
+
+                    <div class="input-group-embedded">
+                      <label>Genre *</label>
+                      <select formControlName="gender">
+                        <option value="">Sélectionnez un genre</option>
+                        <option value="male">Homme</option>
+                        <option value="female">Femme</option>
+                        <option value="other">Autre</option>
+                      </select>
+                    </div>
+
+                    <div class="input-group-embedded">
+                      <label>Budget (TND/mois) *</label>
+                      <input type="number" formControlName="budget" placeholder="ex. 800">
+                    </div>
+
+                    <div class="input-group-embedded">
+                      <label>Ville *</label>
+                      <input type="text" formControlName="city" placeholder="Tunis, Ariana">
+                    </div>
+
+                    <div class="input-group-embedded">
+                      <label>Rythme de sommeil *</label>
+                      <select formControlName="sleepSchedule">
+                        <option value="">Sélectionnez un rythme</option>
+                        <option value="day">Diurne (lève-tôt)</option>
+                        <option value="night">Nocturne (oiseau de nuit)</option>
+                      </select>
+                    </div>
+
+                    <div class="input-group-embedded">
+                      <label>Niveau d'étude *</label>
+                      <input type="text" formControlName="studyLevel" placeholder="Licence, Master">
+                    </div>
+
+                    <div class="input-group-embedded full-width-embedded">
+                      <label>Centres d'intérêt</label>
+                      <div class="interests-container-embedded">
+                        <div class="tags-list-embedded">
+                          @for (interest of interestsArray(); track $index) {
+                            <span class="interest-tag-embedded">
+                              {{ interest }}
+                              <button type="button" (click)="removeInterest($index)">✕</button>
+                            </span>
+                          }
+                        </div>
+                        <div class="add-interest-embedded">
+                          <input
+                            type="text"
+                            placeholder="Ajouter un intérêt (ex: sport)"
+                            #interestInput
+                            (keyup.enter)="addInterest(interestInput.value); interestInput.value = ''"
+                          >
+                          <button type="button" class="btn-dark" (click)="addInterest(interestInput.value); interestInput.value = ''">
+                            Ajouter
+                          </button>
+                        </div>
                       </div>
-                      <div class="form-grid-embedded">
-                        <div class="input-group-embedded">
-                          <label>Âge *</label>
-                          <input type="number" formControlName="age" placeholder="ex. 22">
+                    </div>
+                  </div>
+
+                  <div class="switches-group-embedded">
+                    <label class="switch-item-embedded">
+                      <input type="checkbox" formControlName="smoker">
+                      <span>Fumeur / Fumeuse</span>
+                    </label>
+                    <label class="switch-item-embedded">
+                      <input type="checkbox" formControlName="pets">
+                      <span>A des animaux</span>
+                    </label>
+                    <label class="switch-item-embedded">
+                      <input type="checkbox" formControlName="acceptsGuests">
+                      <span>Accepte les invités</span>
+                    </label>
+                  </div>
+
+                  <div class="sliders-group-embedded">
+                    <div class="slider-item-embedded">
+                      <label>Propreté <strong>{{ roommateForm.value.cleanliness ?? 3 }}/5</strong></label>
+                      <input type="range" min="1" max="5" step="1" formControlName="cleanliness">
+                    </div>
+                    <div class="slider-item-embedded">
+                      <label>Sociabilité <strong>{{ roommateForm.value.socialLevel ?? 3 }}/5</strong></label>
+                      <input type="range" min="1" max="5" step="1" formControlName="socialLevel">
+                    </div>
+                    <div class="slider-item-embedded">
+                      <label>Tolérance au bruit <strong>{{ roommateForm.value.noiseTolerance ?? 3 }}/5</strong></label>
+                      <input type="range" min="1" max="5" step="1" formControlName="noiseTolerance">
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="submit" class="btn-primary" [disabled]="isSavingRoommateProfile()">
+                      {{ isSavingRoommateProfile() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+                    </button>
+                    <button type="button" class="btn-secondary" (click)="cancelRoommateProfile()">
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <div class="details-block">
+                  <div class="section-title">
+                    <h3>Vos informations de colocation</h3>
+                    <button (click)="isEditingProfile.set(true)" class="btn-secondary btn-sm">
+                      <lucide-icon [img]="SettingsIcon" [size]="16" style="margin-right: 6px;"></lucide-icon> Modifier
+                    </button>
+                  </div>
+
+                  @if (roommateProfile(); as rp) {
+                    <div class="info-grid">
+                      <div class="info-column">
+                        <div class="info-block">
+                          <p class="label">Ville de recherche</p>
+                          <p class="value">{{ rp.city }}</p>
+                        </div>
+                        <div class="info-block">
+                          <p class="label">Budget mensuel</p>
+                          <p class="value">{{ rp.budget }} TND</p>
+                        </div>
+                        <div class="info-block">
+                          <p class="label">Âge & Genre</p>
+                          <p class="value">{{ rp.age }} ans, {{ rp.gender === 'male' ? 'Homme' : rp.gender === 'female' ? 'Femme' : 'Autre' }}</p>
+                        </div>
+                        <div class="info-block">
+                          <p class="label">Niveau d'étude</p>
+                          <p class="value">{{ rp.studyLevel }}</p>
+                        </div>
+                        <div class="info-block">
+                          <p class="label">Rythme de sommeil</p>
+                          <p class="value">{{ rp.sleepSchedule === 'day' ? 'Diurne (lève-tôt)' : 'Nocturne (oiseau de nuit)' }}</p>
+                        </div>
+                      </div>
+
+                      <div class="info-column styling-column">
+                        <div class="tags-group">
+                          <span class="tag" [class.danger]="rp.smoker" [class.highlight]="!rp.smoker">
+                            {{ rp.smoker ? 'Fumeur' : 'Non-fumeur' }}
+                          </span>
+                          <span class="tag" [class.highlight]="rp.pets">
+                            {{ rp.pets ? 'Animaux acceptés' : 'Pas d\'animaux' }}
+                          </span>
+                          <span class="tag" [class.highlight]="rp.acceptsGuests">
+                            {{ rp.acceptsGuests ? 'Invités acceptés' : 'Pas d\'invités' }}
+                          </span>
                         </div>
 
-                        <div class="input-group-embedded">
-                          <label>Genre *</label>
-                          <select formControlName="gender">
-                            <option value="">Sélectionnez un genre</option>
-                            <option value="male">Homme</option>
-                            <option value="female">Femme</option>
-                            <option value="other">Autre</option>
-                          </select>
+                        <div class="progress-section">
+                          <div class="progress-container">
+                            <div class="progress-header">
+                              <span>Propreté</span>
+                              <span>{{ rp.cleanliness }}/5</span>
+                            </div>
+                            <div class="progress-track">
+                              <div class="progress-fill" [style.width.%]="(rp.cleanliness / 5) * 100"></div>
+                            </div>
+                          </div>
+                          <div class="progress-container">
+                            <div class="progress-header">
+                              <span>Sociabilité</span>
+                              <span>{{ rp.socialLevel }}/5</span>
+                            </div>
+                            <div class="progress-track">
+                              <div class="progress-fill" [style.width.%]="(rp.socialLevel / 5) * 100"></div>
+                            </div>
+                          </div>
+                          <div class="progress-container">
+                            <div class="progress-header">
+                              <span>Tolérance au bruit</span>
+                              <span>{{ rp.noiseTolerance }}/5</span>
+                            </div>
+                            <div class="progress-track">
+                              <div class="progress-fill" [style.width.%]="(rp.noiseTolerance / 5) * 100"></div>
+                            </div>
+                          </div>
                         </div>
 
-                        <div class="input-group-embedded">
-                          <label>Budget (TND/mois) *</label>
-                          <input type="number" formControlName="budget" placeholder="ex. 800">
-                        </div>
-
-                        <div class="input-group-embedded">
-                          <label>Ville *</label>
-                          <input type="text" formControlName="city" placeholder="Tunis, Ariana">
-                        </div>
-
-                        <div class="input-group-embedded">
-                          <label>Rythme de sommeil *</label>
-                          <select formControlName="sleepSchedule">
-                            <option value="">Sélectionnez un rythme</option>
-                            <option value="day">Diurne (lève-tôt)</option>
-                            <option value="night">Nocturne (oiseau de nuit)</option>
-                          </select>
-                        </div>
-
-                        <div class="input-group-embedded">
-                          <label>Niveau d'étude *</label>
-                          <input type="text" formControlName="studyLevel" placeholder="Licence, Master">
-                        </div>
-
-                        <div class="input-group-embedded full-width-embedded">
-                          <label>Centres d'intérêt</label>
-                          <div class="interests-container-embedded">
-                            <div class="tags-list-embedded">
-                              @for (interest of interestsArray(); track $index) {
-                                <span class="interest-tag-embedded">
-                                  {{ interest }}
-                                  <button type="button" (click)="removeInterest($index)">✕</button>
+                        @if (rp.interests && rp.interests.length > 0) {
+                          <div class="interests-display">
+                            <p class="label-heading">Centres d'intérêt</p>
+                            <div class="tags-group">
+                              @for (interest of rp.interests; track $index) {
+                                <span class="tag base-tag">
+                                  #{{ interest }}
                                 </span>
                               }
                             </div>
-                            <div class="add-interest-embedded">
-                              <input
-                                type="text"
-                                placeholder="Ajouter un intérêt (ex: sport)"
-                                #interestInput
-                                (keyup.enter)="addInterest(interestInput.value); interestInput.value = ''"
-                              >
-                              <button type="button" (click)="addInterest(interestInput.value); interestInput.value = ''">
-                                Ajouter
-                              </button>
-                            </div>
                           </div>
-                        </div>
+                        }
                       </div>
-
-                      <div class="switches-group-embedded">
-                        <label class="switch-item-embedded">
-                          <input type="checkbox" formControlName="smoker">
-                          <span>🚬 Fumeur / Fumeuse</span>
-                        </label>
-                        <label class="switch-item-embedded">
-                          <input type="checkbox" formControlName="pets">
-                          <span>🐾 A des animaux</span>
-                        </label>
-                        <label class="switch-item-embedded">
-                          <input type="checkbox" formControlName="acceptsGuests">
-                          <span>🏠 Accepte les invités</span>
-                        </label>
-                      </div>
-
-                      <div class="sliders-group-embedded">
-                        <div class="slider-item-embedded">
-                          <label>🧹 Propreté : <strong>{{ roommateForm.value.cleanliness ?? 3 }}/5</strong></label>
-                          <input type="range" min="1" max="5" step="1" formControlName="cleanliness">
-                        </div>
-                        <div class="slider-item-embedded">
-                          <label>🎉 Sociabilité : <strong>{{ roommateForm.value.socialLevel ?? 3 }}/5</strong></label>
-                          <input type="range" min="1" max="5" step="1" formControlName="socialLevel">
-                        </div>
-                        <div class="slider-item-embedded">
-                          <label>🔊 Tolérance au bruit : <strong>{{ roommateForm.value.noiseTolerance ?? 3 }}/5</strong></label>
-                          <input type="range" min="1" max="5" step="1" formControlName="noiseTolerance">
-                        </div>
-                      </div>
-
-                      <div class="flex gap-4 mt-6">
-                        <button type="submit" class="submit-btn-embedded" [disabled]="isSavingRoommateProfile()">
-                          {{ isSavingRoommateProfile() ? 'Enregistrement...' : '💾 Enregistrer' }}
-                        </button>
-                        <button type="button" class="submit-btn-embedded cancel-btn-embedded" (click)="cancelRoommateProfile()">
-                          Annuler
-                        </button>
-                      </div>
-                    </form>
+                    </div>
                   } @else {
-                    <div class="p-4 sm:p-6 space-y-8">
-                      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
-                        <h3 class="text-xl font-black text-foreground">Vos informations de colocation</h3>
-                        <button (click)="isEditingProfile.set(true)" class="inline-flex items-center justify-center rounded-[1rem] bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20">
-                          ✏️ Modifier le profil
-                        </button>
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <lucide-icon [img]="UserRoundIcon" [size]="32"></lucide-icon>
                       </div>
-
-                      @if (roommateProfile(); as rp) {
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <div class="space-y-4">
-                            <div>
-                              <p class="text-sm font-medium text-muted-foreground">Ville de recherche</p>
-                              <p class="text-lg font-semibold text-foreground">{{ rp.city }}</p>
-                            </div>
-                            <div>
-                              <p class="text-sm font-medium text-muted-foreground">Budget mensuel</p>
-                              <p class="text-lg font-semibold text-foreground">{{ rp.budget }} TND</p>
-                            </div>
-                            <div>
-                              <p class="text-sm font-medium text-muted-foreground">Âge / Genre</p>
-                              <p class="text-lg font-semibold text-foreground">{{ rp.age }} ans, {{ rp.gender === 'male' ? 'Homme' : rp.gender === 'female' ? 'Femme' : 'Autre' }}</p>
-                            </div>
-                            <div>
-                              <p class="text-sm font-medium text-muted-foreground">Niveau d'étude</p>
-                              <p class="text-lg font-semibold text-foreground">{{ rp.studyLevel }}</p>
-                            </div>
-                            <div>
-                              <p class="text-sm font-medium text-muted-foreground">Rythme de sommeil</p>
-                              <p class="text-lg font-semibold text-foreground">{{ rp.sleepSchedule === 'day' ? 'Diurne (lève-tôt)' : 'Nocturne (oiseau de nuit)' }}</p>
-                            </div>
-                          </div>
-
-                          <div class="space-y-6">
-                            <div class="flex flex-wrap gap-2">
-                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.smoker ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-700'">
-                                🚬 {{ rp.smoker ? 'Fumeur' : 'Non-fumeur' }}
-                              </span>
-                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.pets ? 'bg-blue-500/10 text-blue-700' : 'bg-muted text-muted-foreground'">
-                                🐾 {{ rp.pets ? 'Animaux acceptés' : 'Pas d\'animaux' }}
-                              </span>
-                              <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [ngClass]="rp.acceptsGuests ? 'bg-purple-500/10 text-purple-700' : 'bg-muted text-muted-foreground'">
-                                🏠 {{ rp.acceptsGuests ? 'Invités acceptés' : 'Pas d\'invités' }}
-                              </span>
-                            </div>
-
-                            <div class="space-y-4">
-                              <div>
-                                <div class="flex justify-between mb-1">
-                                  <span class="text-sm font-medium text-muted-foreground">🧹 Propreté</span>
-                                  <span class="text-sm font-bold">{{ rp.cleanliness }}/5</span>
-                                </div>
-                                <div class="h-2 w-full rounded-full bg-muted">
-                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.cleanliness / 5) * 100"></div>
-                                </div>
-                              </div>
-                              <div>
-                                <div class="flex justify-between mb-1">
-                                  <span class="text-sm font-medium text-muted-foreground">🎉 Sociabilité</span>
-                                  <span class="text-sm font-bold">{{ rp.socialLevel }}/5</span>
-                                </div>
-                                <div class="h-2 w-full rounded-full bg-muted">
-                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.socialLevel / 5) * 100"></div>
-                                </div>
-                              </div>
-                              <div>
-                                <div class="flex justify-between mb-1">
-                                  <span class="text-sm font-medium text-muted-foreground">🔊 Tolérance au bruit</span>
-                                  <span class="text-sm font-bold">{{ rp.noiseTolerance }}/5</span>
-                                </div>
-                                <div class="h-2 w-full rounded-full bg-muted">
-                                  <div class="h-2 rounded-full bg-primary" [style.width.%]="(rp.noiseTolerance / 5) * 100"></div>
-                                </div>
-                              </div>
-                            </div>
-
-                            @if (rp.interests && rp.interests.length > 0) {
-                              <div>
-                                <p class="text-sm font-medium text-muted-foreground mb-2">Centres d'intérêt</p>
-                                <div class="flex flex-wrap gap-2">
-                                  @for (interest of rp.interests; track $index) {
-                                    <span class="rounded-[0.8rem] bg-card border border-border px-3 py-1 text-sm text-foreground shadow-sm">
-                                      #{{ interest }}
-                                    </span>
-                                  }
-                                </div>
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      } @else {
-                        <div class="text-center py-10">
-                          <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                            <lucide-icon [img]="UserRoundIcon" [size]="32"></lucide-icon>
-                          </div>
-                          <p class="text-lg font-medium text-foreground">Aucun profil de colocation</p>
-                          <p class="text-sm text-muted-foreground mt-2 mb-6">
-                            Créez un profil pour commencer à chercher des colocataires et des logements parfaitement adaptés à vos besoins.
-                          </p>
-                          <button (click)="isEditingProfile.set(true)" class="inline-flex items-center justify-center rounded-[1rem] bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90">
-                            Créer mon profil colocataire
-                          </button>
-                        </div>
-                      }
+                      <h4 class="empty-title">Aucun profil de colocation</h4>
+                      <p class="empty-desc">
+                        Créez un profil professionnel pour trouver des colocataires et des logements parfaitement adaptés à vos besoins.
+                      </p>
+                      <button (click)="isEditingProfile.set(true)" class="btn-primary">
+                        Créer mon profil
+                      </button>
                     </div>
                   }
                 </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <div class="empty-icon" style="color: var(--gray-dark);">
+                <lucide-icon [img]="Clock3Icon" [size]="32"></lucide-icon>
               </div>
-            }
-          </div>
+              <h4 class="empty-title">Section en construction</h4>
+              <p class="empty-desc">
+                Le contenu de cette section n'est pas encore disponible.
+              </p>
+            </div>
+          }
         </section>
       </main>
     </div>
