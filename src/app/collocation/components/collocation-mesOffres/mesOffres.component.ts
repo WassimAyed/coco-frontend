@@ -10,10 +10,16 @@ import { CollocationService } from '../../services/collocation.service';
 export class MesOffresComponent implements OnInit {
 
   myOffers: any[] = [];
+  filteredOffers: any[] = [];
   paginatedOffers: any[] = [];
+  searchTerm = '';
   currentPage = 1;
-  itemsPerPage = 7;
+  itemsPerPage = 6;
   totalPages = 0;
+
+  get activeOffersCount(): number {
+    return this.myOffers.filter(o => !o.expired).length;
+  }
 
   selectedOffer: any = {};
   selectedOfferId: number | null = null;
@@ -49,11 +55,30 @@ export class MesOffresComponent implements OnInit {
     this.collocationService.getMyOffers(ownerId).subscribe({
       next: data => {
         this.myOffers = data || [];
-        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
-        this.setPage(1);
+        this.filteredOffers = [...this.myOffers];
+        this.updatePagination();
       },
       error: err => console.error(err)
     });
+  }
+
+  filterOffers() {
+    const term = this.searchTerm.toLowerCase().trim();
+    if (!term) {
+      this.filteredOffers = [...this.myOffers];
+    } else {
+      this.filteredOffers = this.myOffers.filter(o =>
+        o.titre?.toLowerCase().includes(term) ||
+        o.ville?.toLowerCase().includes(term) ||
+        o.description?.toLowerCase().includes(term)
+      );
+    }
+    this.updatePagination();
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredOffers.length / this.itemsPerPage);
+    this.setPage(1);
   }
 
   setPage(page: number) {
@@ -61,7 +86,7 @@ export class MesOffresComponent implements OnInit {
     this.currentPage = page;
     const start = (page - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-    this.paginatedOffers = this.myOffers.slice(start, end);
+    this.paginatedOffers = this.filteredOffers.slice(start, end);
   }
 
   openDeleteModal(id: number) {
@@ -79,9 +104,7 @@ export class MesOffresComponent implements OnInit {
     this.collocationService.deleteOffer(this.selectedOfferId).subscribe({
       next: () => {
         this.myOffers = this.myOffers.filter(o => o.id !== this.selectedOfferId);
-        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
-        if (this.currentPage > this.totalPages) this.currentPage = this.totalPages || 1;
-        this.setPage(this.currentPage);
+        this.filterOffers(); // re-apply search filter & pagination
         this.showDeleteModal = false;
       },
       error: err => console.error(err)
