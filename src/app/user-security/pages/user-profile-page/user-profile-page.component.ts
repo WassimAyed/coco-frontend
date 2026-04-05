@@ -233,24 +233,40 @@ export class UserProfilePageComponent implements OnDestroy {
     const profileId = this.roommateProfileId();
     const currentProfile = this.roommateProfile();
 
+    const v = this.roommateForm.getRawValue();
     const payload = {
       id: profileId || 0,
-      user: { id: this.user()?.id },
-      ...this.roommateForm.value,
+      userId: this.user()?.id,
+      age: Number(v.age),
+      gender: v.gender,
+      budget: Number(v.budget),
+      city: v.city,
+      smoker: !!v.smoker,
+      pets: !!v.pets,
+      cleanliness: Number(v.cleanliness),
+      sleepSchedule: v.sleepSchedule,
+      studyLevel: v.studyLevel,
       interests: this.interestsArray(),
+      socialLevel: Number(v.socialLevel),
+      acceptsGuests: !!v.acceptsGuests,
+      noiseTolerance: Number(v.noiseTolerance),
       latitude: currentProfile?.latitude || 0,
       longitude: currentProfile?.longitude || 0,
     };
 
     const base = environment.apiBaseUrl.replace(/\/+$/, '');
+    const userId = this.user()?.id;
     const request$ = profileId
-      ? this.http.put<RoommateProfile>(`${base}/profiles/${profileId}`, payload, opts)
-      : this.http.post<RoommateProfile>(`${base}/profiles`, payload, opts);
+      ? this.http.put<any>(`${base}/profiles/${userId}`, payload, opts)
+      : this.http.post<any>(`${base}/profiles`, payload, opts);
 
     request$.subscribe({
-      next: (savedProfile) => {
-        this.roommateProfile.set(savedProfile);
-        this.roommateProfileId.set(savedProfile.id);
+      next: (response) => {
+        // Since backend now returns {"message": "PROFILE_UPDATED", "profileId": 1}
+        // we can just reload the full profile using the GET request to refresh the UI properly
+        if (userId) {
+          this.loadRoommateProfile(Number(userId));
+        }
         this.isEditingProfile.set(false);
         this.toastService.success('Profil colocataire enregistré avec succès');
         this.saveMessage.set('Profil colocataire enregistré');
