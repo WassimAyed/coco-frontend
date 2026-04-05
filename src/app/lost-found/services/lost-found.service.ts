@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LostItem } from '../models/lost-item.model';
+import { LostItemCreateRequest, LostItemResponse, LostItemUpdateRequest } from '../models/lost-item.model';
 
 @Injectable({
     providedIn: 'root'
@@ -26,19 +26,19 @@ export class LostAndFoundService {
     }
 
     getAllItems(): Observable<any> {
-        return this.http.get<LostItem[]>(this.apiUrl, this.buildHeaders());
+        return this.http.get<LostItemResponse[]>(this.apiUrl, this.buildHeaders());
     }
 
-    getItemById(id: number): Observable<LostItem> {
-        return this.http.get<LostItem>(`${this.apiUrl}/${id}`, this.buildHeaders());
+    getItemById(id: number): Observable<LostItemResponse> {
+        return this.http.get<LostItemResponse>(`${this.apiUrl}/${id}`, this.buildHeaders());
     }
 
-    createItem(item: LostItem): Observable<LostItem> {
-        return this.http.post<LostItem>(this.apiUrl, item, this.buildHeaders());
+    createItem(item: LostItemCreateRequest): Observable<LostItemResponse> {
+        return this.http.post<LostItemResponse>(this.apiUrl, item, this.buildHeaders());
     }
 
-    updateItem(id: number, item: LostItem): Observable<LostItem> {
-        return this.http.put<LostItem>(`${this.apiUrl}/${id}`, item, this.buildHeaders());
+    updateItem(id: number, item: LostItemUpdateRequest): Observable<LostItemResponse> {
+        return this.http.put<LostItemResponse>(`${this.apiUrl}/${id}`, item, this.buildHeaders());
     }
 
     deleteItem(id: number): Observable<void> {

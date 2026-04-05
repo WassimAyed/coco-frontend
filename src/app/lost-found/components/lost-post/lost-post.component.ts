@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
-import { LostItem } from '../../models/lost-item.model';
+import { LostItemCreateRequest, LostItemResponse, LostItemUpdateRequest } from '../../models/lost-item.model';
 
 @Component({
   selector: 'app-lost-post',
@@ -126,17 +126,14 @@ export class LostPostComponent {
   isEditMode = false;
   editingItemId: number | null = null;
 
-  item: LostItem = {
+  item: LostItemCreateRequest = {
     title: '',
     description: '',
     type: 'LOST',
     category: '',
     location: '',
-    dateTime: new Date().toISOString().split('T')[0],
     contactInfo: '',
-    imageUrl: '',
-    status: 'ACTIVE',
-    userId: Number(localStorage.getItem('userId') || 0)
+    imageUrl: ''
   };
 
   constructor(
@@ -151,10 +148,15 @@ export class LostPostComponent {
       this.editingItemId = Number(editIdParam);
 
       this.lostService.getItemById(this.editingItemId).subscribe({
-        next: (data) => {
+        next: (data: LostItemResponse) => {
           this.item = {
-            ...data,
-            userId: Number(localStorage.getItem('userId') || data.userId || 0)
+            title: data.title,
+            description: data.description,
+            type: data.type,
+            category: data.category,
+            location: data.location,
+            contactInfo: data.contactInfo,
+            imageUrl: data.imageUrl || ''
           };
         },
         error: () => {
@@ -176,8 +178,18 @@ export class LostPostComponent {
   }
 
   onSubmit() {
+    const payload: LostItemUpdateRequest = {
+      title: this.item.title,
+      description: this.item.description,
+      type: this.item.type,
+      category: this.item.category,
+      location: this.item.location,
+      contactInfo: this.item.contactInfo,
+      imageUrl: this.item.imageUrl
+    };
+
     if (this.isEditMode && this.editingItemId) {
-      this.lostService.updateItem(this.editingItemId, this.item).subscribe({
+      this.lostService.updateItem(this.editingItemId, payload).subscribe({
         next: () => {
           this.router.navigate(['/lost-found/my-items']);
         },
@@ -189,7 +201,7 @@ export class LostPostComponent {
       return;
     }
 
-    this.lostService.createItem(this.item).subscribe({
+    this.lostService.createItem(payload).subscribe({
       next: () => {
         this.router.navigate(['/lost-found']);
       },
