@@ -54,6 +54,13 @@
         My Items (Lost & Found)
       </a>
 
+      <a [routerLink]="'/subs-payment/dashboard'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+        Posts Quota
+      </a>
+
 
 
       <button type="button"

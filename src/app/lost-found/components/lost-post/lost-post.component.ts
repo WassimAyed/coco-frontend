@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
 import { LostItem } from '../../models/lost-item.model';
 
@@ -16,8 +16,8 @@ import { LostItem } from '../../models/lost-item.model';
           <div class="icon-circle">
             <i class="bi bi-megaphone-fill"></i>
           </div>
-          <h1>New Listing</h1>
-          <p>Provide as many details as possible to increase your chances.</p>
+          <h1>{{ isEditMode ? 'Edit Listing' : 'New Listing' }}</h1>
+          <p>{{ isEditMode ? 'Update the details of your listing.' : 'Provide as many details as possible to increase your chances.' }}</p>
         </header>
         
         <form (ngSubmit)="onSubmit()" #postForm="ngForm" class="post-form">
@@ -79,7 +79,7 @@ import { LostItem } from '../../models/lost-item.model';
           <div class="form-actions">
             <button type="button" class="btn-ghost" routerLink="/lost-found">Cancel</button>
             <button type="submit" class="btn-submit" [disabled]="!postForm.form.valid">
-              Publish listing
+              {{ isEditMode ? 'Save changes' : 'Publish listing' }}
             </button>
           </div>
         </form>
@@ -123,6 +123,9 @@ import { LostItem } from '../../models/lost-item.model';
   `]
 })
 export class LostPostComponent {
+  isEditMode = false;
+  editingItemId: number | null = null;
+
   item: LostItem = {
     title: '',
     description: '',
@@ -136,7 +139,30 @@ export class LostPostComponent {
     userId: Number(localStorage.getItem('userId') || 0)
   };
 
-  constructor(private lostService: LostAndFoundService, private router: Router) { }
+  constructor(
+    private lostService: LostAndFoundService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    const editIdParam = this.route.snapshot.queryParamMap.get('editId');
+
+    if (editIdParam) {
+      this.isEditMode = true;
+      this.editingItemId = Number(editIdParam);
+
+      this.lostService.getItemById(this.editingItemId).subscribe({
+        next: (data) => {
+          this.item = {
+            ...data,
+            userId: Number(localStorage.getItem('userId') || data.userId || 0)
+          };
+        },
+        error: () => {
+          this.router.navigate(['/lost-found/my-items']);
+        }
+      });
+    }
+  }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -150,8 +176,27 @@ export class LostPostComponent {
   }
 
   onSubmit() {
-    this.lostService.createItem(this.item).subscribe(() => {
-      this.router.navigate(['/lost-found']);
+    if (this.isEditMode && this.editingItemId) {
+      this.lostService.updateItem(this.editingItemId, this.item).subscribe({
+        next: () => {
+          this.router.navigate(['/lost-found/my-items']);
+        },
+        error: (err) => {
+          const message = err?.error?.message || 'Unable to update this listing.';
+          window.alert(message);
+        }
+      });
+      return;
+    }
+
+    this.lostService.createItem(this.item).subscribe({
+      next: () => {
+        this.router.navigate(['/lost-found']);
+      },
+      error: (err) => {
+        const message = err?.error?.message || 'Unable to create this listing.';
+        window.alert(message);
+      }
     });
   }
 }

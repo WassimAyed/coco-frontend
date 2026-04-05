@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
 import { LostItem } from '../../models/lost-item.model';
 
@@ -35,6 +35,15 @@ import { LostItem } from '../../models/lost-item.model';
               <div class="item-info">
                 <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
                 <span><i class="bi bi-clock"></i> {{ item.dateTime }}</span>
+              </div>
+
+              <div class="item-actions">
+                <button class="btn-action btn-edit" (click)="onEditItem($event, item)">
+                  <i class="bi bi-pencil-square"></i> Edit
+                </button>
+                <button class="btn-action btn-delete" (click)="onDeleteItem($event, item)">
+                  <i class="bi bi-trash3"></i> Delete
+                </button>
               </div>
             </div>
           </div>
@@ -77,6 +86,12 @@ import { LostItem } from '../../models/lost-item.model';
     .item-category { font-size: 0.75rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; margin-bottom: 0.5rem; }
     .item-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; }
     .item-info { display: flex; flex-direction: column; gap: 0.5rem; color: #64748b; font-size: 0.9rem; }
+    .item-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    .btn-action { flex: 1; border: none; border-radius: 10px; padding: 0.6rem 0.9rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s ease; }
+    .btn-edit { background: #e0f2fe; color: #0369a1; }
+    .btn-edit:hover { background: #bae6fd; }
+    .btn-delete { background: #fee2e2; color: #b91c1c; }
+    .btn-delete:hover { background: #fecaca; }
     
     .empty-state { text-align: center; padding: 4rem; background: white; border-radius: 32px; border: 2px dashed #e2e8f0; }
     .empty-state h3 { font-size: 1.5rem; margin-top: 1rem; color: #1e293b; }
@@ -94,7 +109,7 @@ export class UserLostItemsComponent implements OnInit {
     FOUND: this.buildFallbackImage('FOUND', '#10b981')
   };
 
-    constructor(private lostService: LostAndFoundService) { }
+    constructor(private lostService: LostAndFoundService, private router: Router) { }
 
     ngOnInit(): void {
         const storedId = localStorage.getItem('userId');
@@ -121,6 +136,33 @@ export class UserLostItemsComponent implements OnInit {
         img.src = this.getFallbackByType(type);
         img.classList.add('fallback-mode');
       }
+
+        onEditItem(event: Event, item: LostItem): void {
+          event.stopPropagation();
+          event.preventDefault();
+
+          if (!item.id) return;
+          this.router.navigate(['/lost-found/post'], { queryParams: { editId: item.id } });
+        }
+
+        onDeleteItem(event: Event, item: LostItem): void {
+          event.stopPropagation();
+          event.preventDefault();
+
+          if (!item.id) return;
+
+          const confirmed = window.confirm('Are you sure you want to delete this listing?');
+          if (!confirmed) return;
+
+          this.lostService.deleteItem(item.id).subscribe({
+            next: () => {
+              this.myItems = this.myItems.filter(i => i.id !== item.id);
+            },
+            error: () => {
+              window.alert('Unable to delete this item. Please try again.');
+            }
+          });
+        }
 
       private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {
           const badgeText = label === 'LOST' ? 'LOST' : 'FOUND';
