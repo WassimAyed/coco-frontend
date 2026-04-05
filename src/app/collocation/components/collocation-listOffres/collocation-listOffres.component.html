@@ -9,13 +9,19 @@
         </button>
 
         <button
-          class="btn rounded-pill px-4"
-          [class.btn-success]="matchingEnabled"
-          [class.btn-outline-primary]="!matchingEnabled"
+          class="ia-match-btn"
+          [class.ia-match-btn--active]="matchingEnabled"
+          [class.ia-match-btn--loading]="isMatchingLoading"
           (click)="toggleMatchingAI()"
           [disabled]="isMatchingLoading">
-          <span *ngIf="isMatchingLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          {{ isMatchingLoading ? 'Calcul en cours...' : (matchingEnabled ? 'Désactiver IA Match' : '✨ Activer IA Match') }}
+          <span class="ia-match-btn__orbit" *ngIf="!isMatchingLoading"></span>
+          <span class="ia-match-btn__spinner" *ngIf="isMatchingLoading"></span>
+          <span class="ia-match-btn__icon" *ngIf="!isMatchingLoading && !matchingEnabled">✨</span>
+          <span class="ia-match-btn__icon" *ngIf="!isMatchingLoading && matchingEnabled">🤖</span>
+          <span class="ia-match-btn__label">
+            {{ isMatchingLoading ? 'Calcul IA...' : (matchingEnabled ? 'Désactiver IA Match' : 'Activer IA Match') }}
+          </span>
+          <span class="ia-match-btn__badge" *ngIf="matchingEnabled && !isMatchingLoading">ON</span>
         </button>
       </div>
 
@@ -102,8 +108,8 @@
         <div *ngIf="!loading && filteredOffers.length > 0" class="d-flex flex-column gap-3">
 
           <div class="card offer-card border-0 shadow-sm transition-all"
-               [class.border]="matchingEnabled && offer.matchScore && offer.matchScore >= 80"
-               [class.border-success]="matchingEnabled && offer.matchScore && offer.matchScore >= 80"
+               [class.offer-card--top-match]="matchingEnabled && offer.matchScore !== undefined && offer.matchScore >= 80"
+               [class.offer-card--mid-match]="matchingEnabled && offer.matchScore !== undefined && offer.matchScore >= 50 && offer.matchScore < 80"
                *ngFor="let offer of filteredOffers" (click)="centerOnOffer(offer)">
             <div class="row g-0">
               <div class="col-md-4">
@@ -122,14 +128,27 @@
                 <div class="card-body">
                   <h5 class="card-title fw-bold">{{ offer.titre }}</h5>
 
-                  <div *ngIf="matchingEnabled && !isMatchingLoading && offer.matchScore !== undefined" class="mb-2">
-                    <span class="badge"
-                          [ngClass]="{
-                            'bg-success': offer.matchScore >= 80,
-                            'bg-warning text-dark': offer.matchScore >= 50 && offer.matchScore < 80,
-                            'bg-danger': offer.matchScore < 50
-                          }">
-                      ✨ {{ offer.matchScore }}% Match
+                  <div *ngIf="matchingEnabled && !isMatchingLoading && offer.matchScore !== undefined" class="ia-score-wrapper mb-2">
+                    <div class="ia-score-ring"
+                         [class.ia-score-ring--high]="offer.matchScore >= 80"
+                         [class.ia-score-ring--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                         [class.ia-score-ring--low]="offer.matchScore < 50">
+                      <svg class="ia-score-ring__svg" viewBox="0 0 36 36">
+                        <circle class="ia-score-ring__bg" cx="18" cy="18" r="15.9" />
+                        <circle class="ia-score-ring__fill" cx="18" cy="18" r="15.9"
+                                [style.stroke-dasharray]="(offer.matchScore | number:'1.0-0') + ' 100'"
+                                [class.ia-score-ring__fill--high]="offer.matchScore >= 80"
+                                [class.ia-score-ring__fill--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                                [class.ia-score-ring__fill--low]="offer.matchScore < 50" />
+                      </svg>
+                      <span class="ia-score-ring__value">{{ offer.matchScore }}%</span>
+                    </div>
+                    <span class="ia-score-label"
+                          [class.ia-score-label--high]="offer.matchScore >= 80"
+                          [class.ia-score-label--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                          [class.ia-score-label--low]="offer.matchScore < 50">
+                      <span class="ia-score-label__dot"></span>
+                      {{ offer.matchScore >= 80 ? '✨ Top Match' : offer.matchScore >= 50 ? '👍 Bon Match' : '🔍 Match Faible' }}
                     </span>
                   </div>
 

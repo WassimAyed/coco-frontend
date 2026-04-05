@@ -90,3 +90,239 @@
   70% { transform: scale(1.2); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* ===============================
+   IA MATCH BUTTON
+================================= */
+.ia-match-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px 8px 14px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  color: #e0e0ff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 3px 12px rgba(30, 80, 200, 0.25);
+}
+
+.ia-match-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 52px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #6366f1);
+  background-size: 300% 300%;
+  z-index: -1;
+  animation: iaBorderSpin 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ia-match-btn:hover::before,
+.ia-match-btn--active::before {
+  opacity: 1;
+}
+
+.ia-match-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+.ia-match-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Active (ON) state */
+.ia-match-btn--active {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #3c1f8a 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+}
+
+/* Orbit ring decoration */
+.ia-match-btn__orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150%;
+  height: 150%;
+  border-radius: 50%;
+  border: 1px dashed rgba(139, 92, 246, 0.35);
+  animation: iaOrbit 6s linear infinite;
+  pointer-events: none;
+}
+
+.ia-match-btn__icon {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.8));
+}
+
+.ia-match-btn__label {
+  position: relative;
+  z-index: 1;
+}
+
+.ia-match-btn__badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: iaBadgePulse 2s ease-in-out infinite;
+}
+
+.ia-match-btn__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes iaBorderSpin {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes iaOrbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes iaBadgePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+  50%       { box-shadow: 0 0 14px rgba(16, 185, 129, 0.9); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===============================
+   IA SCORE RING
+================================= */
+.ia-score-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: iaScoreFadeIn 0.5s ease forwards;
+}
+
+@keyframes iaScoreFadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ia-score-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.ia-score-ring__svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ia-score-ring__bg {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 3;
+}
+
+.ia-score-ring__fill {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.8s ease;
+}
+
+/* Color variants */
+.ia-score-ring--high .ia-score-ring__fill--high { stroke: #10b981; }
+.ia-score-ring--mid  .ia-score-ring__fill--mid  { stroke: #f59e0b; }
+.ia-score-ring--low  .ia-score-ring__fill--low  { stroke: #ef4444; }
+
+.ia-score-ring--high { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); }
+.ia-score-ring--mid  { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); }
+.ia-score-ring--low  { filter: drop-shadow(0 0 6px rgba(239, 68, 68,  0.4)); }
+
+.ia-score-ring__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Label chip */
+.ia-score-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.ia-score-label--high {
+  background: rgba(16,185,129,0.1);
+  color: #065f46;
+  border: 1px solid rgba(16,185,129,0.3);
+}
+.ia-score-label--mid {
+  background: rgba(245,158,11,0.1);
+  color: #78350f;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+.ia-score-label--low {
+  background: rgba(239,68,68,0.08);
+  color: #991b1b;
+  border: 1px solid rgba(239,68,68,0.25);
+}
+
+.ia-score-label__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+/* ===============================
+   CARD MATCH HIGHLIGHT BORDERS
+================================= */
+.offer-card--top-match {
+  border-top: 3px solid #10b981 !important;
+  background: linear-gradient(180deg, rgba(16,185,129,0.04) 0%, #fff 40%) !important;
+  box-shadow: 0 6px 20px rgba(16,185,129,0.15) !important;
+}
+
+.offer-card--mid-match {
+  border-top: 3px solid #f59e0b !important;
+  background: linear-gradient(180deg, rgba(245,158,11,0.04) 0%, #fff 40%) !important;
+  box-shadow: 0 6px 20px rgba(245,158,11,0.12) !important;
+}

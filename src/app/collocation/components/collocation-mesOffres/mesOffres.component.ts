@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
 
 @Component({
@@ -22,9 +22,21 @@ export class MesOffresComponent implements OnInit {
   showUpdateModal = false;
   isUpdating = false;
 
-  @ViewChild('updateForm') updateForm!: NgForm;
+  updateForm: FormGroup;
 
-  constructor(private collocationService: CollocationService) {}
+  constructor(
+    private collocationService: CollocationService,
+    private fb: FormBuilder
+  ) {
+    this.updateForm = this.fb.group({
+      titre: ['', [Validators.required, Validators.minLength(3)]],
+      ville: ['', [Validators.required]],
+      prixLoc: [0, [Validators.required, Validators.min(1)]],
+      chambres: [1, [Validators.required, Validators.min(1)]],
+      meublee: [false],
+      description: ['', [Validators.required, Validators.minLength(10)]]
+    });
+  }
 
   ngOnInit(): void {
     this.loadMyOffers();
@@ -78,7 +90,14 @@ export class MesOffresComponent implements OnInit {
 
   openUpdateModal(offer: any) {
     this.selectedOffer = { ...offer };
-    setTimeout(() => this.updateForm?.resetForm(this.selectedOffer));
+    this.updateForm.patchValue({
+      titre: offer.titre,
+      ville: offer.ville,
+      prixLoc: offer.prixLoc,
+      chambres: offer.chambres,
+      meublee: offer.meublee,
+      description: offer.description
+    });
     this.showUpdateModal = true;
   }
 
@@ -89,10 +108,7 @@ export class MesOffresComponent implements OnInit {
 
   confirmUpdate() {
     if (this.updateForm.invalid) {
-      Object.keys(this.updateForm.controls).forEach(field => {
-        const control = this.updateForm.controls[field];
-        control.markAsTouched({ onlySelf: true });
-      });
+      this.updateForm.markAllAsTouched();
       return;
     }
 
@@ -100,13 +116,28 @@ export class MesOffresComponent implements OnInit {
 
     this.isUpdating = true;
 
-    this.collocationService.updateOffer(this.selectedOffer.id, this.selectedOffer)
+    // Ensure numbers are properly typed before sending to backend
+    const formVals = this.updateForm.value;
+    const payload = {
+      ...this.selectedOffer,
+      ...formVals,
+      prixLoc: Number(formVals.prixLoc),
+      chambres: Number(formVals.chambres),
+      meublee: !!formVals.meublee
+    };
+
+    this.collocationService.updateOffer(this.selectedOffer.id, payload)
       .subscribe({
-        next: () => {
+        next: (response) => {
+          // If the backend returns the full object we use it, otherwise fallback to our payload
+          const resAny = response as any;
+          const updated = (resAny && resAny.id) ? resAny : payload;
           const index = this.myOffers.findIndex(o => o.id === this.selectedOffer.id);
+          
           if (index !== -1) {
-            this.myOffers[index] = { ...this.selectedOffer };
+            this.myOffers[index] = { ...updated };
           }
+          
           this.setPage(this.currentPage);
           this.isUpdating = false;
           this.showUpdateModal = false;
