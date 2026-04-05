@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
 
 @Component({
@@ -10,10 +10,16 @@ import { CollocationService } from '../../services/collocation.service';
 export class MesOffresComponent implements OnInit {
 
   myOffers: any[] = [];
+  filteredOffers: any[] = [];
   paginatedOffers: any[] = [];
+  searchTerm = '';
   currentPage = 1;
-  itemsPerPage = 7;
+  itemsPerPage = 6;
   totalPages = 0;
+
+  get activeOffersCount(): number {
+    return this.myOffers.filter(o => !o.expired).length;
+  }
 
   selectedOffer: any = {};
   selectedOfferId: number | null = null;
@@ -22,9 +28,21 @@ export class MesOffresComponent implements OnInit {
   showUpdateModal = false;
   isUpdating = false;
 
-  @ViewChild('updateForm') updateForm!: NgForm;
+  updateForm: FormGroup;
 
-  constructor(private collocationService: CollocationService) {}
+  constructor(
+    private collocationService: CollocationService,
+    private fb: FormBuilder
+  ) {
+    this.updateForm = this.fb.group({
+      titre: ['', [Validators.required, Validators.minLength(3)]],
+      ville: ['', [Validators.required]],
+      prixLoc: [0, [Validators.required, Validators.min(1)]],
+      chambres: [1, [Validators.required, Validators.min(1)]],
+      meublee: [false],
+      description: ['', [Validators.required, Validators.minLength(10)]]
+    });
+  }
 
   ngOnInit(): void {
     this.loadMyOffers();
@@ -37,11 +55,30 @@ export class MesOffresComponent implements OnInit {
     this.collocationService.getMyOffers(ownerId).subscribe({
       next: data => {
         this.myOffers = data || [];
-        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
-        this.setPage(1);
+        this.filteredOffers = [...this.myOffers];
+        this.updatePagination();
       },
       error: err => console.error(err)
     });
+  }
+
+  filterOffers() {
+    const term = this.searchTerm.toLowerCase().trim();
+    if (!term) {
+      this.filteredOffers = [...this.myOffers];
+    } else {
+      this.filteredOffers = this.myOffers.filter(o =>
+        o.titre?.toLowerCase().includes(term) ||
+        o.ville?.toLowerCase().includes(term) ||
+        o.description?.toLowerCase().includes(term)
+      );
+    }
+    this.updatePagination();
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.filteredOffers.length / this.itemsPerPage);
+    this.setPage(1);
   }
 
   setPage(page: number) {
@@ -49,7 +86,7 @@ export class MesOffresComponent implements OnInit {
     this.currentPage = page;
     const start = (page - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-    this.paginatedOffers = this.myOffers.slice(start, end);
+    this.paginatedOffers = this.filteredOffers.slice(start, end);
   }
 
   openDeleteModal(id: number) {
@@ -67,9 +104,7 @@ export class MesOffresComponent implements OnInit {
     this.collocationService.deleteOffer(this.selectedOfferId).subscribe({
       next: () => {
         this.myOffers = this.myOffers.filter(o => o.id !== this.selectedOfferId);
-        this.totalPages = Math.ceil(this.myOffers.length / this.itemsPerPage);
-        if (this.currentPage > this.totalPages) this.currentPage = this.totalPages || 1;
-        this.setPage(this.currentPage);
+        this.filterOffers(); // re-apply search filter & pagination
         this.showDeleteModal = false;
       },
       error: err => console.error(err)
@@ -78,7 +113,14 @@ export class MesOffresComponent implements OnInit {
 
   openUpdateModal(offer: any) {
     this.selectedOffer = { ...offer };
-    setTimeout(() => this.updateForm?.resetForm(this.selectedOffer));
+    this.updateForm.patchValue({
+      titre: offer.titre,
+      ville: offer.ville,
+      prixLoc: offer.prixLoc,
+      chambres: offer.chambres,
+      meublee: offer.meublee,
+      description: offer.description
+    });
     this.showUpdateModal = true;
   }
 
@@ -89,10 +131,7 @@ export class MesOffresComponent implements OnInit {
 
   confirmUpdate() {
     if (this.updateForm.invalid) {
-      Object.keys(this.updateForm.controls).forEach(field => {
-        const control = this.updateForm.controls[field];
-        control.markAsTouched({ onlySelf: true });
-      });
+      this.updateForm.markAllAsTouched();
       return;
     }
 
@@ -100,13 +139,28 @@ export class MesOffresComponent implements OnInit {
 
     this.isUpdating = true;
 
-    this.collocationService.updateOffer(this.selectedOffer.id, this.selectedOffer)
+    // Ensure numbers are properly typed before sending to backend
+    const formVals = this.updateForm.value;
+    const payload = {
+      ...this.selectedOffer,
+      ...formVals,
+      prixLoc: Number(formVals.prixLoc),
+      chambres: Number(formVals.chambres),
+      meublee: !!formVals.meublee
+    };
+
+    this.collocationService.updateOffer(this.selectedOffer.id, payload)
       .subscribe({
-        next: () => {
+        next: (response) => {
+          // If the backend returns the full object we use it, otherwise fallback to our payload
+          const resAny = response as any;
+          const updated = (resAny && resAny.id) ? resAny : payload;
           const index = this.myOffers.findIndex(o => o.id === this.selectedOffer.id);
+          
           if (index !== -1) {
-            this.myOffers[index] = { ...this.selectedOffer };
+            this.myOffers[index] = { ...updated };
           }
+          
           this.setPage(this.currentPage);
           this.isUpdating = false;
           this.showUpdateModal = false;

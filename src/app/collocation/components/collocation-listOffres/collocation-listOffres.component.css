@@ -1,92 +1,393 @@
-/* Custom scrollbar for left column */
+/* ============================================================
+   COLLOCATION LIST — Light UX Enhancement
+   Palette: #dc2626 (red) | #111827 (dark) | #f9fafb (light)
+============================================================ */
+
+/* ── Page background ─────────────────────────────── */
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
+/* Subtle warm tint for the page body */
+main.container {
+  position: relative;
+}
+
+/* ── Filter cards ────────────────────────────────── */
+.filter-card {
+  border-color: #e5e7eb !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.filter-card:hover {
+  border-color: rgba(220, 38, 38, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.06) !important;
+}
+
+/* ── Form selects ────────────────────────────────── */
+.form-select {
+  border-color: #d1d5db;
+  border-radius: 10px !important;
+  font-size: 0.88rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-select:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* ── Form controls (price inputs) ───────────────── */
+.form-control {
+  border-color: #d1d5db;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* ── Search input group ──────────────────────────── */
+.input-group.rounded-pill .form-control {
+  border-radius: 50px 0 0 50px !important;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+.input-group.rounded-pill .btn {
+  border-radius: 0 50px 50px 0 !important;
+  padding: 0 22px;
+}
+
+/* ── White scrollable container ──────────────────── */
+.bg-white.rounded-4.shadow.p-4.list-column-custom {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05) !important;
+  border: 1px solid #e5e7eb;
+}
+
+/* ── List scroll container ───────────────────────── */
 .list-column-custom {
-  max-height: 800px;
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #dee2e6 #f8f9fa;
+  scrollbar-color: #dc2626 #f3f4f6;
+}
+.list-column-custom::-webkit-scrollbar { width: 5px; }
+.list-column-custom::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 10px; }
+.list-column-custom::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 10px; }
+
+@media (max-width: 768px) {
+  .list-column-custom { max-height: none; overflow-y: visible; }
 }
 
-.list-column-custom::-webkit-scrollbar {
-  width: 6px;
-}
-.list-column-custom::-webkit-scrollbar-track {
-  background: #f8f9fa;
-}
-.list-column-custom::-webkit-scrollbar-thumb {
-  background: #dee2e6;
-  border-radius: 20px;
-}
-
-/* Offer card hover effect */
+/* ── Offer cards ─────────────────────────────────── */
 .offer-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-  scroll-margin-top: 120px; /* Smooth scroll focus */
-}
-.offer-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px rgba(225, 29, 72, 0.1) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid #e5e7eb !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
   cursor: pointer;
 }
 
-/* Map container */
+.offer-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(220, 38, 38, 0.3) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.09) !important;
+}
+
+/* Active/selected card */
+.offer-card.selected {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+}
+
+/* IA match borders */
+.offer-card--top-match {
+  border-top: 3px solid #10b981 !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12) !important;
+}
+.offer-card--mid-match {
+  border-top: 3px solid #f59e0b !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1) !important;
+}
+
+/* Card image — ensure it fills the column nicely */
+.offer-card .img-fluid.rounded-start {
+  min-height: 160px;
+  max-height: 220px;
+  width: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+.offer-card:hover .img-fluid.rounded-start {
+  transform: scale(1.04);
+}
+/* Clip the image overshoot on hover */
+.offer-card .col-md-4 {
+  overflow: hidden;
+}
+
+/* Card no-image placeholder */
+.offer-card .bg-light.d-flex.align-items-center {
+  min-height: 160px;
+  background: #f9fafb !important;
+  border-right: 1px solid #f3f4f6;
+}
+
+/* Card body spacing */
+.offer-card .card-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Card title */
+.offer-card .card-title {
+  font-size: 1rem;
+  color: #111827;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Price */
+.offer-card .card-text.text-danger.fw-bold.fs-4 {
+  font-size: 1.25rem !important;
+  letter-spacing: -0.5px;
+}
+
+/* Description truncation */
+.offer-card .card-text.text-truncate {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+/* Location row */
+.offer-card .card-text:has(.fa-map-marker-alt) {
+  font-size: 0.85rem;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+/* Badges */
+.offer-card .badge.bg-light {
+  background-color: #f3f4f6 !important;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.offer-card .badge.bg-danger {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* Action buttons */
+.offer-card .btn.rounded-circle {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.offer-card .btn.rounded-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+/* ── Map container ───────────────────────────────── */
 .map-container {
-  background: #f0f0f0; /* fallback */
-  border: 1px solid #dee2e6;
+  height: 600px !important;
+  width: 100%;
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
+}
+.leaflet-container { border-radius: 16px; }
+
+/* ── Radius pill buttons ─────────────────────────── */
+.btn-outline-danger.rounded-pill,
+.btn-outline-secondary.rounded-pill {
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+.btn-check:checked + .btn-outline-danger {
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.3);
 }
 
-/* Ensure Leaflet tiles load properly */
-.leaflet-container {
-  border-radius: 16px;
+/* ── Create offer button ──────────────────────────── */
+.btn.btn-danger.rounded-pill {
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-weight: 600;
+}
+.btn.btn-danger.rounded-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(220, 38, 38, 0.45);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .list-column-custom {
-    max-height: none;
-    overflow-y: visible;
-  }
+/* ── Card appear animation ───────────────────────── */
+.offer-card {
+  animation: fadeInUp 0.3s ease both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.form-control {
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.form-control:focus {
-  border-color: #f83441; /* matches the coin icon color */
-  box-shadow: 0 0 0 0.2rem rgba(247, 99, 102, 0.25);
-}
-
-/* Highlight animation for selected card */
+/* Card highlight animation */
 .card-highlight {
-  animation: cardPulse 0.6s ease-in-out;
-  background: linear-gradient(145deg, #fff0f0, #ffffff);
-  border-left: 4px solid #dc3545 !important;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.4) !important;
+  animation: cardPulse 0.5s ease-in-out;
 }
-
 @keyframes cardPulse {
-  0% { transform: scale(1); background: white; }
-  50% { transform: scale(1.01); background: #ffe5e5; }
-  100% { transform: scale(1); background: white; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2); }
 }
 
-/* ===============================
-   SELECTED CARD
-================================= */
-.offer-card.active {
-  border-left: 4px solid #dc3545 !important;
-  background: linear-gradient(145deg, #fff5f5, #ffffff);
-  box-shadow: 0 0 0 2px rgba(220,53,69,.25);
+/* ── IA Match Button ─────────────────────────────── */
+.ia-match-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px 10px 16px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  color: #e0e0ff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 3px 12px rgba(30, 80, 200, 0.25);
+}
+.ia-match-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 52px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #3b82f6, #6366f1);
+  background-size: 300% 300%;
+  z-index: -1;
+  animation: iaBorderSpin 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.ia-match-btn:hover::before,
+.ia-match-btn--active::before { opacity: 1; }
+.ia-match-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+.ia-match-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+.ia-match-btn--active {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #3c1f8a 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+}
+.ia-match-btn__orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150%; height: 150%;
+  border-radius: 50%;
+  border: 1px dashed rgba(139, 92, 246, 0.35);
+  animation: iaOrbit 6s linear infinite;
+  pointer-events: none;
+}
+.ia-match-btn__icon { font-size: 1rem; line-height: 1; filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.8)); }
+.ia-match-btn__label { position: relative; z-index: 1; }
+.ia-match-btn__badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: iaBadgePulse 2s ease-in-out infinite;
+}
+.ia-match-btn__spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
-/* Selected/Pulsing marker animation */
+/* ── IA Score Ring ───────────────────────────────── */
+.ia-score-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: iaScoreFadeIn 0.5s ease forwards;
+}
+@keyframes iaScoreFadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.ia-score-ring {
+  position: relative;
+  width: 50px; height: 50px;
+  flex-shrink: 0;
+}
+.ia-score-ring__svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ia-score-ring__bg { fill: none; stroke: #e5e7eb; stroke-width: 3; }
+.ia-score-ring__fill { fill: none; stroke-width: 3.5; stroke-linecap: round; transition: stroke-dasharray 0.8s ease; }
+.ia-score-ring--high .ia-score-ring__fill--high { stroke: #10b981; }
+.ia-score-ring--mid  .ia-score-ring__fill--mid  { stroke: #f59e0b; }
+.ia-score-ring--low  .ia-score-ring__fill--low  { stroke: #ef4444; }
+.ia-score-ring--high { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); }
+.ia-score-ring--mid  { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); }
+.ia-score-ring--low  { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4)); }
+.ia-score-ring__value {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 800; color: #111827;
+}
+.ia-score-label {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px; letter-spacing: 0.3px;
+}
+.ia-score-label--high { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.25); }
+.ia-score-label--mid  { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.25); }
+.ia-score-label--low  { background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+.ia-score-label__dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── Keyframes ───────────────────────────────────── */
+@keyframes iaBorderSpin {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes iaOrbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes iaBadgePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+  50%       { box-shadow: 0 0 14px rgba(16, 185, 129, 0.9); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Leaflet markers ─────────────────────────────── */
 .leaflet-marker-icon.pulse,
 .leaflet-marker-icon.selected-marker {
   animation: markerPulse 1s infinite;
 }
-
 @keyframes markerPulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.25); opacity: 0.85; }
-  70% { transform: scale(1.2); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.25); opacity: 0.85; }
 }
