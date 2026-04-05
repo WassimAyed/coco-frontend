@@ -150,7 +150,7 @@
         Previous
       </button>
       <span class="flex items-center px-4">
-        Page {{ currentPage + 1 }} of {{ Math.ceil(totalItems / pageSize) }}
+        Page {{ currentPage + 1 }} of {{ totalPages }}
       </span>
       <button 
         [disabled]="(currentPage + 1) * pageSize >= totalItems" 

@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PaymentService, Payment } from '../../services/payment.service';
+import { PaymentService, Payment } from '../../../services/payment.service';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './payment-history.component.html',
-  styleUrls: ['./payment-history.component.css']
+  templateUrl: './payment-history.component.html'
 })
 export class PaymentHistoryComponent implements OnInit {
   payments: Payment[] = [];

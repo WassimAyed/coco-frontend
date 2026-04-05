@@ -1,15 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { LostFoundService, LostItem, LostItemRequest } from '../../services/lost-found.service';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { LostFoundService, LostItem } from '../../../services/lost-found.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-lost-found-list',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './lost-found-list.component.html',
-  styleUrls: ['./lost-found-list.component.css']
+  templateUrl: './lost-found-list.component.html'
 })
 export class LostFoundListComponent implements OnInit {
   items: LostItem[] = [];
@@ -46,13 +45,13 @@ export class LostFoundListComponent implements OnInit {
     this.error = null;
 
     this.lostFoundService.getAllItems(this.currentPage, this.pageSize).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.items = response.content || response;
         this.totalItems = response.totalElements || response.length;
         this.applyFilters();
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.error = 'Failed to load items';
         console.error(error);
         this.loading = false;
@@ -102,7 +101,7 @@ export class LostFoundListComponent implements OnInit {
           this.loadItems();
           setTimeout(() => this.successMessage = null, 3000);
         },
-        error: (error) => {
+        error: (error: unknown) => {
           this.error = 'Failed to delete item';
           console.error(error);
         }
@@ -122,7 +121,7 @@ export class LostFoundListComponent implements OnInit {
         this.loadItems();
         setTimeout(() => this.successMessage = null, 3000);
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.error = 'Failed to mark item as resolved';
         console.error(error);
       }
@@ -143,5 +142,9 @@ export class LostFoundListComponent implements OnInit {
     this.filterLocation = '';
     this.searchQuery = '';
     this.applyFilters();
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
   }
 }

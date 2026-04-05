@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PaymentService, SubscriptionPlan, UserSubscription } from '../../services/payment.service';
+import { PaymentService, SubscriptionPlan, UserSubscription } from '../../../services/payment.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-subscription',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './subscription.component.html',
-  styleUrls: ['./subscription.component.css']
+  templateUrl: './subscription.component.html'
 })
 export class SubscriptionComponent implements OnInit {
   plans: SubscriptionPlan[] = [];

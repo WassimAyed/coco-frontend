@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { LostFoundService, LostItem } from '../../services/lost-found.service';
+import { LostFoundService, LostItem } from '../../../services/lost-found.service';
 
 @Component({
   selector: 'app-my-items',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './my-items.component.html',
-  styleUrls: ['./my-items.component.css']
+  templateUrl: './my-items.component.html'
 })
 export class MyItemsComponent implements OnInit {
   items: LostItem[] = [];

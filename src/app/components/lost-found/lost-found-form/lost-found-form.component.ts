@@ -2,14 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LostFoundService, LostItem, LostItemRequest } from '../../services/lost-found.service';
+import { LostFoundService, LostItem, LostItemRequest } from '../../../services/lost-found.service';
 
 @Component({
   selector: 'app-lost-found-form',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './lost-found-form.component.html',
-  styleUrls: ['./lost-found-form.component.css']
+  templateUrl: './lost-found-form.component.html'
 })
 export class LostFoundFormComponent implements OnInit {
   form!: FormGroup;
@@ -56,7 +55,7 @@ export class LostFoundFormComponent implements OnInit {
   loadItem(id: number): void {
     this.loading = true;
     this.lostFoundService.getItemById(id).subscribe({
-      next: (item) => {
+      next: (item: LostItem) => {
         this.form.patchValue({
           title: item.title,
           description: item.description,
@@ -68,7 +67,7 @@ export class LostFoundFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.error = 'Failed to load item';
         console.error(error);
         this.loading = false;
@@ -92,13 +91,13 @@ export class LostFoundFormComponent implements OnInit {
       : this.lostFoundService.createItem(request);
 
     operation.subscribe({
-      next: (response) => {
+      next: () => {
         this.loading = false;
         const message = this.isEditMode ? 'Item updated successfully!' : 'Item created successfully!';
         alert(message);
         this.router.navigate(['/lost-found']);
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.loading = false;
         this.error = this.isEditMode ? 'Failed to update item' : 'Failed to create item';
         console.error(error);

@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LostFoundService, LostItem } from '../../services/lost-found.service';
+import { LostFoundService, LostItem } from '../../../services/lost-found.service';
 
 @Component({
   selector: 'app-lost-found-detail',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './lost-found-detail.component.html',
-  styleUrls: ['./lost-found-detail.component.css']
+  templateUrl: './lost-found-detail.component.html'
 })
 export class LostFoundDetailComponent implements OnInit {
   item: LostItem | null = null;
