@@ -12,10 +12,10 @@ import { LostItem } from '../../models/lost-item.model';
     <div class="user-items-container">
       <header class="page-header">
         <div class="header-content">
-          <h1 class="gradient-text">Mes Annonces</h1>
-          <p>La liste de tous les objets que vous avez déclarés.</p>
+          <h1 class="gradient-text">My Listings</h1>
+          <p>A list of all items you have posted.</p>
           <button class="btn-primary mt-4" routerLink="/lost-found/post">
-            <i class="bi bi-plus-circle"></i> Créer une annonce
+            <i class="bi bi-plus-circle"></i> Create listing
           </button>
         </div>
       </header>
@@ -24,9 +24,9 @@ import { LostItem } from '../../models/lost-item.model';
         <main class="items-grid" *ngIf="myItems.length > 0; else noItems">
           <div class="item-card" *ngFor="let item of myItems" [routerLink]="['/lost-found/details', item.id]">
             <div class="card-image">
-              <img [src]="item.imageUrl || 'https://images.unsplash.com/photo-1594498653385-d5172c532c00?q=80&w=600&auto=format&fit=crop'" alt="Item">
+              <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
               <span class="type-badge" [class.lost]="item.type === 'LOST'">
-                {{ item.type === 'LOST' ? 'Perdu' : 'Trouvé' }}
+                {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
               </span>
             </div>
             <div class="card-body">
@@ -43,9 +43,9 @@ import { LostItem } from '../../models/lost-item.model';
         <ng-template #noItems>
           <div class="empty-state">
             <i class="bi bi-folder-x" style="font-size: 4rem; color: #cbd5e1;"></i>
-            <h3>Aucune annonce trouvée</h3>
-            <p>Vous n'avez pas encore publié d'objets perdus ou trouvés.</p>
-            <button class="btn-primary mt-4" routerLink="/lost-found/post">Publier maintenant</button>
+            <h3>No listings found</h3>
+            <p>You have not posted any lost or found items yet.</p>
+            <button class="btn-primary mt-4" routerLink="/lost-found/post">Post now</button>
           </div>
         </ng-template>
       </div>
@@ -65,9 +65,10 @@ import { LostItem } from '../../models/lost-item.model';
     .item-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
     .item-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #3b82f6; }
     
-    .card-image { height: 200px; position: relative; overflow: hidden; }
+    .card-image { height: 200px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
     .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
     .item-card:hover .card-image img { transform: scale(1.1); }
+    .card-image img.fallback-mode { object-fit: contain; padding: 1rem; transform: none !important; }
     
     .type-badge { position: absolute; top: 1rem; left: 1rem; padding: 0.5rem 1rem; border-radius: 12px; background: #10b981; color: white; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .type-badge.lost { background: #ef4444; }
@@ -88,6 +89,10 @@ import { LostItem } from '../../models/lost-item.model';
 export class UserLostItemsComponent implements OnInit {
     myItems: LostItem[] = [];
     userId!: number;
+  readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
+    LOST: this.buildFallbackImage('LOST', '#ef4444'),
+    FOUND: this.buildFallbackImage('FOUND', '#10b981')
+  };
 
     constructor(private lostService: LostAndFoundService) { }
 
@@ -96,9 +101,51 @@ export class UserLostItemsComponent implements OnInit {
         if (storedId) {
             this.userId = Number(storedId);
             this.lostService.getAllItems().subscribe(data => {
-                this.myItems = data.filter(item => item.userId === this.userId)
-                    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+          const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
+
+          this.myItems = items
+              .filter((item: LostItem) => item.userId === this.userId)
+              .sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
             });
         }
     }
+
+      getFallbackByType(type: 'LOST' | 'FOUND'): string {
+        return this.fallbackImages[type] ?? this.fallbackImages.LOST;
+      }
+
+      onImageError(event: Event, type: 'LOST' | 'FOUND'): void {
+        const img = event.target as HTMLImageElement;
+        if (!img) return;
+
+        img.src = this.getFallbackByType(type);
+        img.classList.add('fallback-mode');
+      }
+
+      private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {
+          const badgeText = label === 'LOST' ? 'LOST' : 'FOUND';
+          const icon = label === 'LOST' ? '!' : '✓';
+
+          const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f8fafc"/>
+              <stop offset="100%" stop-color="#e2e8f0"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="675" fill="url(#bg)"/>
+          <rect x="455" y="170" width="290" height="320" rx="46" fill="#1e293b"/>
+          <rect x="470" y="190" width="260" height="230" rx="30" fill="#334155"/>
+          <rect x="515" y="450" width="170" height="18" rx="9" fill="#64748b" opacity="0.55"/>
+          <circle cx="600" cy="92" r="34" fill="${accent}" opacity="0.2"/>
+          <text x="600" y="104" text-anchor="middle" font-size="40" font-family="Arial" font-weight="700" fill="${accent}">${icon}</text>
+          <rect x="70" y="70" width="170" height="54" rx="16" fill="${accent}"/>
+          <text x="155" y="105" text-anchor="middle" font-size="24" font-family="Arial" font-weight="700" fill="#ffffff">${badgeText}</text>
+          <text x="600" y="600" text-anchor="middle" font-size="46" font-family="Arial" font-weight="700" fill="#1e293b">COCO</text>
+        </svg>
+      `;
+
+          return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      }
 }

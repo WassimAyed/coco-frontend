@@ -11,7 +11,7 @@ export class LostAndFoundService {
 
     constructor(private http: HttpClient) { }
 
-    getAllItems(): Observable<LostItem[]> {
+    getAllItems(): Observable<any> {
         return this.http.get<LostItem[]>(this.apiUrl);
     }
 

@@ -14,11 +14,11 @@ import { LostItem } from '../../models/lost-item.model';
       <header class="page-header">
         <div class="header-content">
           <h1 class="gradient-text">Lost & Found Hub</h1>
-          <p>La plateforme communautaire pour retrouver vos objets préférés.</p>
+          <p>The community platform to help recover your belongings.</p>
           <div class="header-actions">
             <button class="btn-primary" routerLink="post">
               <i class="bi bi-plus-circle"></i>
-              Publier une annonce
+              Post a listing
             </button>
           </div>
         </div>
@@ -26,13 +26,13 @@ import { LostItem } from '../../models/lost-item.model';
 
       <div class="content-wrapper">
         <aside class="filters-sidebar">
-          <h3>Filtres</h3>
+          <h3>Filters</h3>
           <div class="filter-group">
             <label>Type</label>
             <select class="form-select" [(ngModel)]="selectedType" (change)="applyFilter()">
-              <option value="ALL">Tous</option>
-              <option value="LOST">Perdu</option>
-              <option value="FOUND">Trouvé</option>
+              <option value="ALL">All</option>
+              <option value="LOST">Lost</option>
+              <option value="FOUND">Found</option>
             </select>
           </div>
         </aside>
@@ -40,9 +40,9 @@ import { LostItem } from '../../models/lost-item.model';
         <main class="items-grid" *ngIf="filteredItems.length > 0; else noItems">
           <div class="item-card" *ngFor="let item of filteredItems" [routerLink]="['/lost-found/details', item.id]">
             <div class="card-image">
-              <img [src]="item.imageUrl || 'https://images.unsplash.com/photo-1594498653385-d5172c532c00?q=80&w=600&auto=format&fit=crop'" alt="Item">
+              <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
               <span class="type-badge" [class.lost]="item.type === 'LOST'">
-                {{ item.type === 'LOST' ? 'Perdu' : 'Trouvé' }}
+                {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
               </span>
             </div>
             <div class="card-body">
@@ -59,8 +59,8 @@ import { LostItem } from '../../models/lost-item.model';
         <ng-template #noItems>
           <div class="empty-state">
             <img src="https://illustrations.popsy.co/amber/searching.svg" alt="Empty">
-            <h3>Aucun objet pour le moment</h3>
-            <p>Soyez le premier à poster une annonce !</p>
+            <h3>No items yet</h3>
+            <p>Be the first to post a listing.</p>
           </div>
         </ng-template>
       </div>
@@ -82,9 +82,10 @@ import { LostItem } from '../../models/lost-item.model';
     .item-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
     .item-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #3b82f6; }
     
-    .card-image { height: 200px; position: relative; overflow: hidden; }
-    .card-image img { width: 100%; height: 100%; object-fit: crop; transition: transform 0.5s; }
+    .card-image { height: 200px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
     .item-card:hover .card-image img { transform: scale(1.1); }
+    .card-image img.fallback-mode { object-fit: contain; padding: 1rem; transform: none !important; }
     
     .type-badge { position: absolute; top: 1rem; left: 1rem; padding: 0.5rem 1rem; border-radius: 12px; background: #10b981; color: white; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .type-badge.lost { background: #ef4444; }
@@ -105,13 +106,19 @@ export class LostListComponent implements OnInit {
   items: LostItem[] = [];
   filteredItems: LostItem[] = [];
   selectedType: string = 'ALL';
+  readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
+    LOST: this.buildFallbackImage('LOST', '#ef4444'),
+    FOUND: this.buildFallbackImage('FOUND', '#10b981')
+  };
 
   constructor(private lostService: LostAndFoundService) { }
 
   ngOnInit(): void {
     this.lostService.getAllItems().subscribe((data) => {
-      // Trier du plus récent au plus ancien par défaut
-      this.items = data.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+      const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
+
+      // Sort by newest first by default
+      this.items = items.sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
       this.filteredItems = this.items;
     });
   }
@@ -122,5 +129,44 @@ export class LostListComponent implements OnInit {
     } else {
       this.filteredItems = this.items.filter(item => item.type === this.selectedType);
     }
+  }
+
+  getFallbackByType(type: 'LOST' | 'FOUND'): string {
+    return this.fallbackImages[type] ?? this.fallbackImages.LOST;
+  }
+
+  onImageError(event: Event, type: 'LOST' | 'FOUND'): void {
+    const img = event.target as HTMLImageElement;
+    if (!img) return;
+
+    img.src = this.getFallbackByType(type);
+    img.classList.add('fallback-mode');
+  }
+
+  private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {
+    const badgeText = label === 'LOST' ? 'LOST' : 'FOUND';
+    const icon = label === 'LOST' ? '!' : '✓';
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f8fafc"/>
+            <stop offset="100%" stop-color="#e2e8f0"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="675" fill="url(#bg)"/>
+        <rect x="455" y="170" width="290" height="320" rx="46" fill="#1e293b"/>
+        <rect x="470" y="190" width="260" height="230" rx="30" fill="#334155"/>
+        <rect x="515" y="450" width="170" height="18" rx="9" fill="#64748b" opacity="0.55"/>
+        <circle cx="600" cy="92" r="34" fill="${accent}" opacity="0.2"/>
+        <text x="600" y="104" text-anchor="middle" font-size="40" font-family="Arial" font-weight="700" fill="${accent}">${icon}</text>
+        <rect x="70" y="70" width="170" height="54" rx="16" fill="${accent}"/>
+        <text x="155" y="105" text-anchor="middle" font-size="24" font-family="Arial" font-weight="700" fill="#ffffff">${badgeText}</text>
+        <text x="600" y="600" text-anchor="middle" font-size="46" font-family="Arial" font-weight="700" fill="#1e293b">COCO</text>
+      </svg>
+    `;
+
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 }

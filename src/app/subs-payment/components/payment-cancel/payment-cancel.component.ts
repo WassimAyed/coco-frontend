@@ -16,18 +16,18 @@ import { RouterModule } from '@angular/router';
           <div class="icon-wrapper cancel">
             <i class="bi bi-x-circle-fill"></i>
           </div>
-          <h1>Paiement Annulé</h1>
-          <p>Le processus de paiement a été interrompu. Aucune transaction n'a été effectuée. Vous pouvez réessayer quand vous le souhaitez.</p>
+          <h1>Payment Cancelled</h1>
+          <p>The payment process was interrupted. No transaction was completed. You can try again at any time.</p>
           
           <div class="divider"></div>
 
-          <button class="btn btn-dark" routerLink="/subs-payment">Retour aux abonnements</button>
+          <button class="btn btn-dark" routerLink="/subs-payment">Back to subscriptions</button>
         </div>
 
         <div class="trust-bar">
           <div class="trust-item">
             <i class="bi bi-shield-lock"></i>
-            <span>Sécurisé par Stripe</span>
+            <span>Secured by Stripe</span>
           </div>
         </div>
       </div>

@@ -12,14 +12,14 @@ import { LostItem } from '../../models/lost-item.model';
     <div class="details-container" *ngIf="item">
       <div class="details-wrapper">
         <button class="btn-back" routerLink="/lost-found">
-          <i class="bi bi-arrow-left"></i> Retour aux annonces
+          <i class="bi bi-arrow-left"></i> Back to listings
         </button>
         
         <div class="card-details">
           <div class="image-section">
-            <img [src]="item.imageUrl || 'https://images.unsplash.com/photo-1594498653385-d5172c532c00?q=80&w=600&auto=format&fit=crop'" alt="Item">
+            <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
             <div class="hero-badge" [class.lost]="item.type === 'LOST'">
-              {{ item.type === 'LOST' ? 'Objet Perdu' : 'Objet Trouvé' }}
+              {{ item.type === 'LOST' ? 'Lost item' : 'Found item' }}
             </div>
           </div>
           
@@ -31,7 +31,7 @@ import { LostItem } from '../../models/lost-item.model';
               <div class="meta-item">
                 <i class="bi bi-geo-alt-fill text-blue"></i>
                 <div>
-                  <strong>Lieu</strong>
+                  <strong>Location</strong>
                   <p>{{ item.location }}</p>
                 </div>
               </div>
@@ -45,18 +45,18 @@ import { LostItem } from '../../models/lost-item.model';
             </div>
 
             <div class="description-box">
-              <h3>Description Détailée</h3>
-              <p>{{ item.description || 'Aucune description additionnelle fournie.' }}</p>
+              <h3>Detailed description</h3>
+              <p>{{ item.description || 'No additional description provided.' }}</p>
             </div>
 
             <div class="contact-card">
-              <h3>Contactez le déclarant</h3>
+              <h3>Contact owner</h3>
               <div class="contact-info">
                 <i class="bi bi-person-lines-fill"></i>
                 <span>{{ item.contactInfo }}</span>
               </div>
               <button class="btn-contact">
-                Contacter maintenant
+                Contact now
               </button>
             </div>
           </div>
@@ -66,7 +66,7 @@ import { LostItem } from '../../models/lost-item.model';
     
     <div class="loading-state" *ngIf="!item">
       <div class="spinner"></div>
-      <p>Chargement des détails...</p>
+      <p>Loading details...</p>
     </div>
   `,
     styles: [`
@@ -78,8 +78,9 @@ import { LostItem } from '../../models/lost-item.model';
     
     .card-details { background: white; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #e2e8f0; }
     
-    .image-section { position: relative; height: 100%; min-height: 400px; }
+    .image-section { position: relative; height: 100%; min-height: 400px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
     .image-section img { width: 100%; height: 100%; object-fit: cover; }
+    .image-section img.fallback-mode { object-fit: contain; padding: 1.25rem; }
     
     .hero-badge { position: absolute; top: 1.5rem; left: 1.5rem; background: #10b981; color: white; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
     .hero-badge.lost { background: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
@@ -119,6 +120,10 @@ import { LostItem } from '../../models/lost-item.model';
 })
 export class LostDetailsComponent implements OnInit {
     item: LostItem | null = null;
+  readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
+    LOST: this.buildFallbackImage('LOST', '#ef4444'),
+    FOUND: this.buildFallbackImage('FOUND', '#10b981')
+  };
 
     constructor(
         private route: ActivatedRoute,
@@ -134,5 +139,44 @@ export class LostDetailsComponent implements OnInit {
                 error: () => this.router.navigate(['/lost-found'])
             });
         }
+    }
+
+    getFallbackByType(type: 'LOST' | 'FOUND'): string {
+        return this.fallbackImages[type] ?? this.fallbackImages.LOST;
+    }
+
+    onImageError(event: Event, type: 'LOST' | 'FOUND'): void {
+        const img = event.target as HTMLImageElement;
+        if (!img) return;
+
+        img.src = this.getFallbackByType(type);
+        img.classList.add('fallback-mode');
+    }
+
+    private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {
+      const badgeText = label === 'LOST' ? 'LOST' : 'FOUND';
+        const icon = label === 'LOST' ? '!' : '✓';
+
+        const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f8fafc"/>
+            <stop offset="100%" stop-color="#e2e8f0"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="675" fill="url(#bg)"/>
+        <rect x="455" y="170" width="290" height="320" rx="46" fill="#1e293b"/>
+        <rect x="470" y="190" width="260" height="230" rx="30" fill="#334155"/>
+        <rect x="515" y="450" width="170" height="18" rx="9" fill="#64748b" opacity="0.55"/>
+        <circle cx="600" cy="92" r="34" fill="${accent}" opacity="0.2"/>
+        <text x="600" y="104" text-anchor="middle" font-size="40" font-family="Arial" font-weight="700" fill="${accent}">${icon}</text>
+        <rect x="70" y="70" width="170" height="54" rx="16" fill="${accent}"/>
+        <text x="155" y="105" text-anchor="middle" font-size="24" font-family="Arial" font-weight="700" fill="#ffffff">${badgeText}</text>
+        <text x="600" y="600" text-anchor="middle" font-size="46" font-family="Arial" font-weight="700" fill="#1e293b">COCO</text>
+      </svg>
+    `;
+
+        return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     }
 }

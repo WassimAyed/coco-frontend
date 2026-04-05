@@ -16,70 +16,70 @@ import { LostItem } from '../../models/lost-item.model';
           <div class="icon-circle">
             <i class="bi bi-megaphone-fill"></i>
           </div>
-          <h1>Nouvelle Annonce</h1>
-          <p>Donnez un maximum de détails pour maximiser les chances.</p>
+          <h1>New Listing</h1>
+          <p>Provide as many details as possible to increase your chances.</p>
         </header>
         
         <form (ngSubmit)="onSubmit()" #postForm="ngForm" class="post-form">
           <div class="form-grid">
             <div class="form-group full-width">
-              <label>Type de signalement</label>
+              <label>Listing type</label>
               <div class="type-selector">
                 <div class="type-option" [class.active]="item.type === 'LOST'" (click)="item.type = 'LOST'">
-                  <i class="bi bi-search"></i> Perdu
+                  <i class="bi bi-search"></i> Lost
                 </div>
                 <div class="type-option" [class.active]="item.type === 'FOUND'" (click)="item.type = 'FOUND'">
-                  <i class="bi bi-hand-thumbs-up"></i> Trouvé
+                  <i class="bi bi-hand-thumbs-up"></i> Found
                 </div>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Titre de l'annonce</label>
-              <input type="text" [(ngModel)]="item.title" name="title" placeholder="Ex: iPhone 13 Pro bleu..." required>
+              <label>Listing title</label>
+              <input type="text" [(ngModel)]="item.title" name="title" placeholder="e.g. Blue iPhone 13 Pro..." required>
             </div>
 
             <div class="form-group">
-              <label>Catégorie</label>
+              <label>Category</label>
               <select [(ngModel)]="item.category" name="category" required>
-                <option value="" disabled selected>Choisir...</option>
-                <option value="Électronique">Électronique</option>
+                <option value="" disabled selected>Select...</option>
+                <option value="Électronique">Electronics</option>
                 <option value="Documents">Documents</option>
-                <option value="Vêtements">Vêtements</option>
-                <option value="Clés">Clés</option>
-                <option value="Autre">Autre</option>
+                <option value="Vêtements">Clothing</option>
+                <option value="Clés">Keys</option>
+                <option value="Autre">Other</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label>Lieu précis</label>
-              <input type="text" [(ngModel)]="item.location" name="location" placeholder="Ex: Bibliothèque RDC..." required>
+              <label>Exact location</label>
+              <input type="text" [(ngModel)]="item.location" name="location" placeholder="e.g. Ground floor library..." required>
             </div>
 
             <div class="form-group image-upload-group">
-              <label>Image (Lien web ou Fichier local)</label>
-              <input type="text" [(ngModel)]="item.imageUrl" name="imageUrl" placeholder="Ou coller un lien https://...">
+              <label>Image (web link or local file)</label>
+              <input type="text" [(ngModel)]="item.imageUrl" name="imageUrl" placeholder="Or paste a link: https://...">
               <input type="file" (change)="onFileSelected($event)" accept="image/*" class="file-input">
               <div class="image-preview" *ngIf="item.imageUrl">
-                <img [src]="item.imageUrl" alt="Aperçu de l'objet">
+                <img [src]="item.imageUrl" alt="Item preview">
               </div>
             </div>
 
             <div class="form-group full-width">
-              <label>Description détaillée</label>
-              <textarea [(ngModel)]="item.description" name="description" rows="4" placeholder="Couleur, signes distinctifs, marque..."></textarea>
+              <label>Detailed description</label>
+              <textarea [(ngModel)]="item.description" name="description" rows="4" placeholder="Color, unique marks, brand..."></textarea>
             </div>
 
             <div class="form-group full-width">
-              <label>Contact pour vous joindre</label>
-              <input type="text" [(ngModel)]="item.contactInfo" name="contactInfo" placeholder="Email ou Téléphone" required>
+              <label>Contact information</label>
+              <input type="text" [(ngModel)]="item.contactInfo" name="contactInfo" placeholder="Email or phone" required>
             </div>
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn-ghost" routerLink="/lost-found">Annuler</button>
+            <button type="button" class="btn-ghost" routerLink="/lost-found">Cancel</button>
             <button type="submit" class="btn-submit" [disabled]="!postForm.form.valid">
-              Diffuser l'annonce
+              Publish listing
             </button>
           </div>
         </form>
@@ -143,7 +143,7 @@ export class LostPostComponent {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.item.imageUrl = e.target.result; // Met l'image en Base64 dans le champ url
+        this.item.imageUrl = e.target.result; // Store image as Base64 in imageUrl
       };
       reader.readAsDataURL(file);
     }
