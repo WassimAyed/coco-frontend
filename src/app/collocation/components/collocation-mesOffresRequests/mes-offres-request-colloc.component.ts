@@ -1,6 +1,7 @@
 import { Component, inject, effect, OnInit } from '@angular/core';
 import { CollocationService } from '../../services/collocation.service';
 import { UserService } from '../../../user-security/services/user.service';
+import { UserApiService } from '../../../user-security/services/user-api.service';
 
 declare const bootstrap: any;
 
@@ -14,9 +15,13 @@ export class MesOffresRequestsComponent implements OnInit {
   selectedMessage: string = '';
 
   private readonly userService = inject(UserService);
+  private readonly userApiService = inject(UserApiService);
   private readonly collocationService = inject(CollocationService);
 
   readonly user = this.userService.currentUser;
+
+  /** Map of studentId -> { firstName, lastName, email, avatarUrl } */
+  senderProfiles: Map<number, any> = new Map();
 
   ownerId!: number;
   error = '';
@@ -64,6 +69,7 @@ export class MesOffresRequestsComponent implements OnInit {
       this.collocationService.getRequestsByOfferIds(offerIds).subscribe(requests => {
         this.myRequests = requests;
         this.setPage(1);
+        this.loadSenderProfiles(requests);
       });
     });
   }
@@ -84,6 +90,26 @@ export class MesOffresRequestsComponent implements OnInit {
 
   get pagesArray(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  // ============================
+  // LOAD SENDER USER INFO
+  // ============================
+  private loadSenderProfiles(requests: any[]): void {
+    const uniqueIds = [...new Set<number>(requests.map(r => r.studentId).filter(Boolean))];
+    uniqueIds.forEach(id => {
+      if (!this.senderProfiles.has(id)) {
+        this.userApiService.getUserById(String(id)).then(profile => {
+          this.senderProfiles.set(id, profile);
+        }).catch(() => {
+          this.senderProfiles.set(id, { firstName: 'Utilisateur', lastName: '#' + id, email: '', avatarUrl: '' });
+        });
+      }
+    });
+  }
+
+  getSenderProfile(studentId: number): any {
+    return this.senderProfiles.get(studentId) ?? null;
   }
 
   // ============================

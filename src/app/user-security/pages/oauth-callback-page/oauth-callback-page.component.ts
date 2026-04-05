@@ -40,6 +40,13 @@ export class OauthCallbackPageComponent {
 
     this.userService.completeOAuthLogin(accessToken, refreshToken || undefined);
     this.toastService.success('Signed in with Google successfully.', 'Google Login');
-    void this.router.navigate([this.userService.getHomeRoute()]);
+    void (async () => {
+      try {
+        await this.userService.loadCurrentUserProfile();
+      } catch {
+        // Continue to home with session built from tokens
+      }
+      await this.router.navigate([this.userService.getHomeRoute()]);
+    })();
   }
 }

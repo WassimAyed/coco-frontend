@@ -6,76 +6,69 @@ import { UserService } from '../../services/user.service';
 import { environment } from '../../../../environments/environment';
 
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
-const USER_ID_KEY = 'userId'; // new key for storing user ID
 
 @Component({
   selector: 'app-login-page',
   templateUrl: './login-page.component.html',
 })
 export class LoginPageComponent {
+
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
 
+  // ================= SIGNALS =================
   readonly showPassword = signal(false);
   readonly isLoading = this.userService.isLoading;
   readonly authError = computed(() => this.userService.error());
 
+  // ================= FORM =================
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
     rememberMe: [false],
   });
 
+  // ================= UI =================
   togglePassword(): void {
-    this.showPassword.update((value) => !value);
+    this.showPassword.update(v => !v);
   }
 
   get emailError(): string | null {
     const control = this.form.controls.email;
-
     if (!control.touched) return null;
     if (control.hasError('required')) return 'Email is required.';
     if (control.hasError('email')) return 'Enter a valid email address.';
-
     return null;
   }
 
+  // ================= LOGIN =================
   async submit(): Promise<void> {
-    this.form.markAllAsTouched();
-    this.userService.clearError();
     this.clearPendingTwoFactorContext();
 
-    if (this.emailError || this.form.invalid) {
-      return;
-    }
+    this.form.markAllAsTouched();
+    this.userService.clearError();
+
+    if (this.form.invalid || this.emailError) return;
 
     try {
       const result = await this.userService.login(this.form.getRawValue());
+      console.log('Login response processed:', result);
 
-      // ===== TWO FACTOR =====
+      // ================= TWO FACTOR =================
       if (result.requiresTwoFactor) {
-        const email =
-          result.twoFactorEmail ?? this.form.controls.email.value.trim();
-
-        this.persistPendingTwoFactorContext(
-          email,
-          this.form.controls.rememberMe.value
-        );
-
+        const email = result.twoFactorEmail ?? this.form.controls.email.value.trim();
+        this.persistPendingTwoFactorContext(email, this.form.controls.rememberMe.value);
         this.toastService.info(
-          result.message ?? 'A 2FA code has been sent to your email address.',
+          result.message ?? 'A 2FA code has been sent to your email.',
           'Two-Factor Authentication'
         );
-
-        await this.router.navigate(['/login/2fa'], {
-          queryParams: { email },
-        });
+        await this.router.navigate(['/login/2fa'], { queryParams: { email } });
         return;
       }
 
-      // ===== SESSION CHECK =====
+      // ================= SESSION VALIDATION =================
       if (!result.session) {
         this.toastService.error(
           result.message ?? 'Unable to complete sign in.',
@@ -84,43 +77,42 @@ export class LoginPageComponent {
         return;
       }
 
-      // ✅ STORE USER IN LOCAL STORAGE
-      this.storeUserAndId(result.session.user);
+      // HARD FORCE PROFILE COMPLETION AFTER LOGIN
+      try {
+        localStorage.setItem(`coco_profile_ok_${result.session.user.id}`, 'true');
+      } catch {}
 
-      // (optional) store token if exists
-      // this.userService.storeToken(result.session.token);
+      // ================= LOAD CURRENT USER PROFILE =================
+      await this.userService.loadCurrentUserProfile();
 
       this.toastService.success(
         result.message ?? 'Signed in successfully.',
         'Login Success'
       );
 
-      // ===== REDIRECT =====
-      await this.router.navigate([
-        result.session.user.role === 'admin' ? '/admin' : '/profile',
-      ]);
-    } catch {
-      const errorMessage = this.authError();
+      // ================= REDIRECT =================
+      const homeRoute = this.userService.getHomeRoute() || '/';
+      await this.router.navigate([homeRoute]);
 
-      if (errorMessage) {
-        this.toastService.error(errorMessage, 'Login Failed');
-      }
+    } catch (error) {
+      const message = this.authError();
+      if (message) this.toastService.error(message, 'Login Failed');
+      console.error('Login error:', error);
     }
   }
 
+  // ================= GOOGLE LOGIN =================
   startGoogleLogin(): void {
     const authBaseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
     const googlePath = environment.auth.googleLoginPath.startsWith('/')
       ? environment.auth.googleLoginPath
       : `/${environment.auth.googleLoginPath}`;
 
-    this.toastService.info(
-      'Redirecting to Google sign-in...',
-      'Google Authentication',
-    );
+    this.toastService.info('Redirecting to Google sign-in...', 'Google Authentication');
     window.location.assign(`${authBaseUrl}${googlePath}`);
   }
 
+  // ================= TWO FACTOR STORAGE =================
   private persistPendingTwoFactorContext(email: string, rememberMe: boolean): void {
     try {
       sessionStorage.setItem(PENDING_TWO_FACTOR_KEY, JSON.stringify({ email, rememberMe }));
@@ -130,32 +122,6 @@ export class LoginPageComponent {
   private clearPendingTwoFactorContext(): void {
     try {
       sessionStorage.removeItem(PENDING_TWO_FACTOR_KEY);
-    } catch {}
-  }
-
-
-  private storeUserAndId(user: any): void {
-    try {
-      // store only the user ID in localStorage
-      localStorage.setItem("userId", user.id);
-    } catch (e) {
-      console.error('Failed to store user or userId', e);
-    }
-  }
-
-  /** Retrieve user ID anywhere in your app */
-  getStoredUserId(): string | null {
-    try {
-      return localStorage.getItem(USER_ID_KEY);
-    } catch {
-      return null;
-    }
-  }
-
-  /** Clear user ID on logout */
-  clearStoredUserId(): void {
-    try {
-      localStorage.removeItem(USER_ID_KEY);
     } catch {}
   }
 }

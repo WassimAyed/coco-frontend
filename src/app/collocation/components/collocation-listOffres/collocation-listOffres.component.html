@@ -1,33 +1,43 @@
-
-
-<!-- ===== MAIN CONTENT ===== -->
 <main class="container my-4">
   <div class="row g-4">
 
-    <!-- Left column: list & filters -->
     <div class="col-lg-6">
 
-      <!-- ===== FILTERS & CREATE BUTTON ===== -->
       <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
         <button class="btn btn-danger rounded-pill px-4" (click)="createOffer()">
           <i class="fas fa-plus me-2"></i> Créer offre coloc
         </button>
 
-        <!-- Filter: Meublée / Non Meublée -->
+        <button
+          class="ia-match-btn"
+          [class.ia-match-btn--active]="matchingEnabled"
+          [class.ia-match-btn--loading]="isMatchingLoading"
+          (click)="toggleMatchingAI()"
+          [disabled]="isMatchingLoading">
+          <span class="ia-match-btn__orbit" *ngIf="!isMatchingLoading"></span>
+          <span class="ia-match-btn__spinner" *ngIf="isMatchingLoading"></span>
+          <span class="ia-match-btn__icon" *ngIf="!isMatchingLoading && !matchingEnabled">✨</span>
+          <span class="ia-match-btn__icon" *ngIf="!isMatchingLoading && matchingEnabled">🤖</span>
+          <span class="ia-match-btn__label">
+            {{ isMatchingLoading ? 'Calcul IA...' : (matchingEnabled ? 'Désactiver IA Match' : 'Activer IA Match') }}
+          </span>
+          <span class="ia-match-btn__badge" *ngIf="matchingEnabled && !isMatchingLoading">ON</span>
+        </button>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
         <select class="form-select w-auto" [(ngModel)]="filterMeublee" (change)="applyFilters()">
           <option value="">Toutes</option>
           <option value="true">Meublé</option>
           <option value="false">Non meublé</option>
         </select>
 
-        <!-- Filter: Ville -->
         <select class="form-select w-auto" [(ngModel)]="filterVille" (change)="applyFilters()">
           <option value="">Toutes les villes</option>
           <option *ngFor="let ville of availableVilles" [value]="ville">{{ ville }}</option>
         </select>
       </div>
 
-      <!-- Price Range Filter -->
       <div class="filter-card bg-white p-3 rounded-4 shadow-sm border mb-3">
         <div class="d-flex align-items-center gap-3 flex-wrap">
           <span class="fw-bold text-dark">
@@ -49,7 +59,6 @@
         </div>
       </div>
 
-      <!-- Radius Filter -->
       <div class="filter-card bg-white p-3 rounded-4 shadow-sm border mb-3">
         <div class="d-flex align-items-center gap-3 flex-wrap">
           <span class="fw-bold text-dark"><i class="fas fa-location-dot text-danger me-1"></i> Rayon de recherche</span>
@@ -77,15 +86,13 @@
         </div>
       </div>
 
-      <!-- Search -->
-      <div class="bg-white rounded-4 shadow p-4" style="max-height: 800px; overflow-y: auto;">
+      <div class="bg-white rounded-4 shadow p-4 list-column-custom">
         <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden">
           <input type="text" class="form-control border-0 bg-light" placeholder="Recherche par titre, ville, prix..."
                  [(ngModel)]="searchTerm" (input)="filterOffers()">
           <button class="btn btn-danger" type="button"><i class="fas fa-search"></i></button>
         </div>
 
-        <!-- Loading / Error / Empty -->
         <div *ngIf="loading" class="text-center py-5">
           <div class="spinner-border text-danger mb-3" role="status"><span class="visually-hidden">Chargement...</span></div>
           <p class="text-muted">Chargement des offres...</p>
@@ -98,18 +105,21 @@
           <p class="fs-5">Aucune offre trouvée.</p>
         </div>
 
-        <!-- Offers List -->
         <div *ngIf="!loading && filteredOffers.length > 0" class="d-flex flex-column gap-3">
-          <div class="card offer-card border-0 shadow-sm" *ngFor="let offer of filteredOffers" (click)="centerOnOffer(offer)">
+
+          <div class="card offer-card border-0 shadow-sm transition-all"
+               [class.offer-card--top-match]="matchingEnabled && offer.matchScore !== undefined && offer.matchScore >= 80"
+               [class.offer-card--mid-match]="matchingEnabled && offer.matchScore !== undefined && offer.matchScore >= 50 && offer.matchScore < 80"
+               *ngFor="let offer of filteredOffers" (click)="centerOnOffer(offer)">
             <div class="row g-0">
               <div class="col-md-4">
                <img
-  *ngIf="offer.imagesColoc && offer.imagesColoc.length > 0"
-  [src]="offer.imagesColoc[0].url"
-  [alt]="offer.imagesColoc[0].filename || 'Offer image'"
-  class="img-fluid rounded-start h-100"
-  style="object-fit: cover;"
-/>
+                  *ngIf="offer.imagesColoc && offer.imagesColoc.length > 0"
+                  [src]="offer.imagesColoc[0].url"
+                  alt="Offer image"
+                  class="img-fluid rounded-start h-100"
+                  style="object-fit: cover;"
+                />
                 <div *ngIf="!offer.imagesColoc?.length" class="bg-light d-flex align-items-center justify-content-center h-100">
                   <i class="fas fa-camera fa-3x text-secondary"></i>
                 </div>
@@ -117,6 +127,31 @@
               <div class="col-md-8">
                 <div class="card-body">
                   <h5 class="card-title fw-bold">{{ offer.titre }}</h5>
+
+                  <div *ngIf="matchingEnabled && !isMatchingLoading && offer.matchScore !== undefined" class="ia-score-wrapper mb-2">
+                    <div class="ia-score-ring"
+                         [class.ia-score-ring--high]="offer.matchScore >= 80"
+                         [class.ia-score-ring--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                         [class.ia-score-ring--low]="offer.matchScore < 50">
+                      <svg class="ia-score-ring__svg" viewBox="0 0 36 36">
+                        <circle class="ia-score-ring__bg" cx="18" cy="18" r="15.9" />
+                        <circle class="ia-score-ring__fill" cx="18" cy="18" r="15.9"
+                                [style.stroke-dasharray]="(offer.matchScore | number:'1.0-0') + ' 100'"
+                                [class.ia-score-ring__fill--high]="offer.matchScore >= 80"
+                                [class.ia-score-ring__fill--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                                [class.ia-score-ring__fill--low]="offer.matchScore < 50" />
+                      </svg>
+                      <span class="ia-score-ring__value">{{ offer.matchScore }}%</span>
+                    </div>
+                    <span class="ia-score-label"
+                          [class.ia-score-label--high]="offer.matchScore >= 80"
+                          [class.ia-score-label--mid]="offer.matchScore >= 50 && offer.matchScore < 80"
+                          [class.ia-score-label--low]="offer.matchScore < 50">
+                      <span class="ia-score-label__dot"></span>
+                      {{ offer.matchScore >= 80 ? '✨ Top Match' : offer.matchScore >= 50 ? '👍 Bon Match' : '🔍 Match Faible' }}
+                    </span>
+                  </div>
+
                   <p class="card-text text-danger fw-bold fs-4">{{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}</p>
                   <p class="card-text"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ offer.ville }}</p>
                   <p class="card-text text-truncate">{{ offer.description }}</p>
@@ -127,25 +162,24 @@
                     </span>
                   </div>
 
-                  <!-- Action Buttons -->
                   <div class="d-flex gap-2">
-                  <button class="btn btn-outline-danger btn-sm rounded-circle"
-        (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
-        [ngClass]="favoriteIds.includes(offer.id) ? 'btn-danger text-white' : 'btn-outline-danger text-danger'"
-        [title]="favoriteIds.includes(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
-  <i [ngClass]="favoriteIds.includes(offer.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
-</button>
+                    <button class="btn btn-outline-danger btn-sm rounded-circle"
+                            (click)="$event.stopPropagation(); toggleFavorite(offer.id)"
+                            [ngClass]="favoriteIds.includes(offer.id) ? 'btn-danger text-white' : 'btn-outline-danger text-danger'"
+                            [title]="favoriteIds.includes(offer.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                      <i [ngClass]="favoriteIds.includes(offer.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
+                    </button>
 
                     <button class="btn btn-outline-secondary btn-sm rounded-circle"
                             (click)="$event.stopPropagation(); viewDetails(offer.id)"
                             title="Voir les détails"><i class="fas fa-eye"></i></button>
 
-                   <button *ngIf="canSendRequest(offer)"
-        class="btn btn-outline-success btn-sm rounded-circle"
-        (click)="$event.stopPropagation(); openRequestModal(offer.id)"
-        title="Envoyer une demande">
-  <i class="fas fa-paper-plane"></i>
-</button>
+                    <button *ngIf="canSendRequest(offer)"
+                            class="btn btn-outline-success btn-sm rounded-circle"
+                            (click)="$event.stopPropagation(); openRequestModal(offer.id)"
+                            title="Envoyer une demande">
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
                   </div>
 
                 </div>
@@ -157,7 +191,6 @@
       </div>
     </div>
 
-    <!-- Right column: map -->
     <div class="col-lg-6">
       <div class="sticky-top" style="top: 100px;">
         <div id="map" class="map-container rounded-4 shadow" style="height: 600px;"></div>
@@ -167,7 +200,19 @@
   </div>
 </main>
 
-<!-- ===== FOOTER ===== -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+  <div class="toast align-items-center text-white bg-danger border-0"
+       [class.show]="showToastVisible"
+       role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ toastMessage }}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="showToastVisible = false" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
 <footer class="bg-dark text-white mt-5 py-5">
   <div class="container">
     <div class="row g-4">
