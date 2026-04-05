@@ -3,6 +3,7 @@ import { NgForm } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
 
 @Component({
+  standalone: false,
   selector: 'app-mes-offres',
   templateUrl: './mesOffres.component.html',
   styleUrls: ['./mesOffres.component.css']
@@ -118,3 +119,4 @@ export class MesOffresComponent implements OnInit {
       });
   }
 }
+

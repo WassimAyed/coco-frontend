@@ -6,9 +6,9 @@ import { UserService } from '../../services/user.service';
 import { environment } from '../../../../environments/environment';
 
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
-const USER_ID_KEY = 'userId'; // new key for storing user ID
 
 @Component({
+  standalone: false,
   selector: 'app-login-page',
   templateUrl: './login-page.component.html',
 })
@@ -85,11 +85,6 @@ export class LoginPageComponent {
       }
 
       // ✅ STORE USER IN LOCAL STORAGE
-      this.storeUserAndId(result.session.user);
-
-      // (optional) store token if exists
-      // this.userService.storeToken(result.session.token);
-
       this.toastService.success(
         result.message ?? 'Signed in successfully.',
         'Login Success'
@@ -132,30 +127,5 @@ export class LoginPageComponent {
       sessionStorage.removeItem(PENDING_TWO_FACTOR_KEY);
     } catch {}
   }
-
-
-  private storeUserAndId(user: any): void {
-    try {
-      // store only the user ID in localStorage
-      localStorage.setItem("userId", user.id);
-    } catch (e) {
-      console.error('Failed to store user or userId', e);
-    }
-  }
-
-  /** Retrieve user ID anywhere in your app */
-  getStoredUserId(): string | null {
-    try {
-      return localStorage.getItem(USER_ID_KEY);
-    } catch {
-      return null;
-    }
-  }
-
-  /** Clear user ID on logout */
-  clearStoredUserId(): void {
-    try {
-      localStorage.removeItem(USER_ID_KEY);
-    } catch {}
-  }
 }
+

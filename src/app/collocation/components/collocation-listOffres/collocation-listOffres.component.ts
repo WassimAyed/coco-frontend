@@ -12,6 +12,7 @@ import 'leaflet-defaulticon-compatibility';
 declare var bootstrap: any; // pour le modal
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
   styleUrls: ['./collocation-listOffres.component.css']
@@ -318,3 +319,4 @@ canSendRequest(offer: any): boolean {
 }
 
 }
+

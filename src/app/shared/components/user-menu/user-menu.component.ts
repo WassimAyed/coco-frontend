@@ -4,6 +4,7 @@ import { ChevronDown, LogOut, UserRound, Clipboard } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 import { Home, Briefcase, FileText } from 'lucide-angular';
 @Component({
+  standalone: false,
   selector: 'app-user-menu',
   templateUrl: './user-menu.component.html'
 })
@@ -57,3 +58,4 @@ readonly FileTextIcon = FileText;
     event.stopPropagation();
   }
 }
+

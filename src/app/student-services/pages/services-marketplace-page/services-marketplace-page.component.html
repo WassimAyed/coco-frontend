@@ -1,0 +1,101 @@
+<div class="section-shell py-8 lg:py-10">
+  <section class="surface-card overflow-hidden">
+    <div class="relative overflow-hidden bg-gradient-to-r from-primary to-sidebar px-6 py-8 text-primary-foreground">
+      <div class="absolute -right-10 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
+      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/80">
+        Student Services
+      </p>
+        <div class="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div class="max-w-3xl">
+            <h1 class="text-3xl font-black sm:text-4xl">Student help marketplace</h1>
+            <p class="mt-3 text-sm leading-7 text-primary-foreground/80 sm:text-base">
+              Explore approved service posts published by students, compare offers,
+              and filter by need across the live moderated marketplace.
+            </p>
+          </div>
+        <div class="flex flex-wrap gap-3">
+          @if (isAuthenticated()) {
+            <a routerLink="/student-services/new" class="btn-secondary">Create post</a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-6 p-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <app-service-filter-panel
+        [filtersForm]="filtersForm"
+        [categories]="categories()"
+        (resetClicked)="resetFilters()"
+      />
+
+      <div class="space-y-6">
+        <div class="grid gap-4 md:grid-cols-3">
+          <article class="rounded-[1.5rem] border border-border bg-card p-5">
+            <p class="text-sm text-muted-foreground">Available posts</p>
+            <p class="mt-3 text-3xl font-black text-foreground">{{ services().length }}</p>
+          </article>
+          <article class="rounded-[1.5rem] border border-border bg-card p-5">
+            <p class="text-sm text-muted-foreground">Featured offers</p>
+            <p class="mt-3 text-3xl font-black text-foreground">{{ highlightedCount() }}</p>
+          </article>
+          <!-- <article class="rounded-[1.5rem] border border-border bg-card p-5">
+            <p class="text-sm text-muted-foreground">Moderation flow</p>
+            <p class="mt-3 text-lg font-bold text-foreground">Admin-approved only</p>
+            @if (myPendingServicesCount() > 0) {
+              <p class="mt-2 text-sm leading-6 text-amber-700">
+                {{ myPendingServicesCount() }} of your posts are still pending review.
+              </p>
+            }
+          </article> -->
+        </div>
+
+        @if (isLoading()) {
+          <div class="surface-card p-8">
+            <app-loading label="Loading services" caption="Preparing the services marketplace..." />
+          </div>
+        } @else if (services().length === 0) {
+          <div class="surface-card p-8 text-center">
+            <p class="text-xl font-bold text-foreground">No services match your filters</p>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground">
+              Try widening the category, lowering the rating filter, or resetting the search.
+            </p>
+            <p class="mt-3 text-sm leading-6 text-muted-foreground">
+              Only approved posts appear here. Pending or rejected posts stay hidden from the marketplace.
+            </p>
+            @if (myPendingServicesCount() > 0) {
+              <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <p class="text-sm font-medium text-amber-700">
+                  {{ myPendingServicesCount() }} of your service posts are still waiting for admin review.
+                </p>
+                <a routerLink="/student-services/my-posts" class="btn-secondary">
+                  View my posts
+                </a>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="grid gap-6 lg:grid-cols-2">
+            @for (service of paginatedServices(); track service.id) {
+              <app-service-card
+                [service]="service"
+                [detailLink]="['/student-services', service.id]"
+                [categoryClass]="getCategory(service)?.accentClass ?? ''"
+                [categoryLabel]="getCategory(service)?.label ?? service.categoryId"
+                [showContactAction]="false"
+              />
+            }
+          </div>
+
+          <app-services-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="totalPages()"
+            [totalItems]="services().length"
+            [pageSize]="pageSize"
+            itemLabel="services"
+            (pageChange)="setPage($event)"
+          />
+        }
+      </div>
+    </div>
+  </section>
+</div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-angular';
 
 @Component({
+  standalone: false,
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html'
 })
@@ -190,3 +191,4 @@ export class LandingPageComponent {
     return Array.from({ length: rating }, (_, index) => index);
   }
 }
+

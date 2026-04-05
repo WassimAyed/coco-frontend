@@ -4,6 +4,7 @@ import { ToastService } from '../../services/toast.service';
 import { ToastVariant } from '../../services/toast.service';
 
 @Component({
+  standalone: false,
   selector: 'app-toast-outlet',
   template: `
     <div class="pointer-events-none fixed right-4 top-4 z-[120] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-3">
@@ -67,3 +68,4 @@ export class AppToastOutletComponent {
     }
   }
 }
+

@@ -9,6 +9,7 @@ import {
   UserUpdatePayload,
 } from '../models/auth-api.model';
 import { UserProfile } from '../models/user.model';
+import { authStore } from '../state/auth.store';
 import { loadAuthSession } from '../utils/auth-session.util';
 import { buildAuthSessionFromApiResponse } from '../utils/user-profile.util';
 
@@ -85,7 +86,18 @@ export class UserApiService {
     headers: HttpHeaders;
     withCredentials: boolean;
   } {
-    const session = loadAuthSession();
+    const cookieSession = loadAuthSession();
+    const storeSession = authStore.getState().session;
+    const cookieToken = cookieSession?.accessToken?.trim() ?? '';
+    const storeToken = storeSession?.accessToken?.trim() ?? '';
+
+    if (cookieToken && storeToken && cookieToken !== storeToken) {
+      console.warn(
+        '[UserApiService] Authorization token mismatch between cookie session and auth store. Using cookie token.',
+      );
+    }
+
+    const session = cookieSession ?? storeSession;
     const accessToken = session?.accessToken?.trim();
     const headers = accessToken
       ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })

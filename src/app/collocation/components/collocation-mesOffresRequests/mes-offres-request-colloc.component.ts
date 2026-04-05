@@ -4,6 +4,7 @@ import { CollocationService } from '../../services/collocation.service';
 declare const bootstrap: any; // <-- pour utiliser Bootstrap JS
 
 @Component({
+  standalone: false,
   selector: 'app-mes-offres-requests',
   templateUrl: './mes-offres-request-colloc.component.html',
   styleUrls: ['./mes-offres-request-colloc.component.css']
@@ -136,3 +137,4 @@ export class MesOffresRequestsComponent implements OnInit {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 }
+

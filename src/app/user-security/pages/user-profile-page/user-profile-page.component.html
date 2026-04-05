@@ -85,43 +85,6 @@
 
             @if (activeSection() === "profile") {
               <div class="space-y-6">
-                <div class="grid gap-4 xl:grid-cols-3">
-                  @for (shortcut of shortcuts; track shortcut.title) {
-                    <article
-                      class="rounded-[1.5rem] border border-border bg-card p-5"
-                    >
-                      <p
-                        class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
-                      >
-                        {{ shortcut.title }}
-                      </p>
-                      <p class="mt-3 text-3xl font-black text-foreground">
-                        {{ shortcut.value }}
-                      </p>
-                      <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                        {{ shortcut.caption }}
-                      </p>
-                    </article>
-                  }
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-3">
-                  @for (stat of profile.stats; track stat.label) {
-                    <article
-                      class="rounded-[1.5rem] border border-border bg-white/60 p-5"
-                    >
-                      <p class="text-sm text-muted-foreground">
-                        {{ stat.label }}
-                      </p>
-                      <p
-                        class="mt-3 text-3xl font-black tracking-tight text-foreground"
-                      >
-                        {{ stat.value }}
-                      </p>
-                    </article>
-                  }
-                </div>
-
                 <form
                   class="space-y-5"
                   [formGroup]="profileForm"
@@ -152,7 +115,7 @@
                         formControlName="email"
                       />
                     </div>
-                    <div class="md:col-span-2 rounded-[1.5rem] border border-border bg-card p-5">
+                    <div class="md:col-span-2 rounded-[1.5rem] border border-border bg-card p-2">
                       <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                         <div class="flex items-center gap-4">
                           <img
@@ -168,10 +131,6 @@
                             @if (selectedProfileImageFileName()) {
                               <p class="mt-2 text-xs font-medium text-primary">
                                 Selected file: {{ selectedProfileImageFileName() }}
-                              </p>
-                            } @else if (profileForm.controls.imageUrl.value) {
-                              <p class="mt-2 break-all text-xs text-muted-foreground">
-                                Current URL: {{ profileForm.controls.imageUrl.value }}
                               </p>
                             }
                           </div>
@@ -224,47 +183,22 @@
                   </div>
                 </form>
 
-                <div
-                  class="rounded-[1.5rem] border border-border bg-white/40 p-5"
-                >
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <p class="text-lg font-bold text-foreground">
-                        Recent activity
-                      </p>
-                      <p class="mt-1 text-sm text-muted-foreground">
-                        Fake data to help review spacing, cards, and text
-                        rhythm.
-                      </p>
-                    </div>
-                    <div
-                      class="rounded-full bg-card px-3 py-2 text-xs font-semibold text-muted-foreground"
-                    >
-                      {{ activityFeed.length }} updates
-                    </div>
-                  </div>
-
-                  <div class="mt-5 grid gap-4 xl:grid-cols-2">
-                    @for (activity of activityFeed; track activity.id) {
-                      <article
-                        class="rounded-[1.35rem] border border-border bg-card p-4"
-                      >
-                        <div class="flex items-start justify-between gap-4">
-                          <p class="text-base font-semibold text-foreground">
-                            {{ activity.title }}
-                          </p>
-                          <span
-                            class="shrink-0 text-xs font-medium text-muted-foreground"
-                            >{{ activity.time }}</span
-                          >
-                        </div>
-                        <p class="mt-3 text-sm leading-6 text-muted-foreground">
-                          {{ activity.description }}
-                        </p>
-                      </article>
-                    }
-                  </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <a routerLink="/student-services/my-posts" class="block rounded-[1.5rem] border-1 border-transparent bg-card p-5 transition-colors duration-200 hover:border-primary">
+                    <p class="text-lg font-bold text-foreground">My service posts</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                      Review, update, or delete the student service posts you published.
+                    </p>
+                  </a>
+                  <a routerLink="/student-services/provider-requests" class="block rounded-[1.5rem] border-1 border-transparent bg-card p-5 transition-colors duration-200 hover:border-primary">
+                    <p class="text-lg font-bold text-foreground">Received requests</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                      Open the provider-side request inbox and continue the conversation in messages.
+                    </p>
+                  </a>
                 </div>
+
+          
               </div>
             } @else if (activeSection() === "settings") {
               <div class="space-y-6">
@@ -348,6 +282,108 @@
                   </div>
                 </form>
               </div>
+            } @else if (activeSection() === "signals") {
+              <div class="space-y-6">
+                <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="signalForm" (ngSubmit)="saveSignal()">
+                  <div>
+                    <p class="text-base font-semibold text-foreground">
+                      {{ editingSignalId() ? 'Update signal' : 'Create signal' }}
+                    </p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                      Report a problem or flag content to review it later from your profile space.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Description</label>
+                    <textarea class="form-input min-h-32 resize-none" formControlName="description" placeholder="Describe the issue you want to report..."></textarea>
+                  </div>
+
+                  <div class="rounded-[1.5rem] border border-border bg-white/60 p-5">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p class="text-sm font-semibold text-foreground">Signal image</p>
+                        <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                          Add an optional screenshot or image to make the signal clearer.
+                        </p>
+                      </div>
+
+                      <div class="flex flex-wrap gap-3">
+                        <label class="btn-secondary cursor-pointer">
+                          <input type="file" accept="image/*" class="hidden" (change)="onSignalImageSelected($event)" />
+                          <lucide-icon [img]="ImagePlusIcon" class="mr-2" [size]="16"></lucide-icon>
+                          Choose image
+                        </label>
+
+                        @if (signalImagePreviewUrl()) {
+                          <button type="button" class="rounded-[1.1rem] border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary" (click)="clearSelectedSignalImage()">
+                            Remove image
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    @if (signalImagePreviewUrl()) {
+                      <img [src]="signalImagePreviewUrl()!" alt="Signal preview" class="mt-4 h-40 rounded-[1.2rem] object-cover shadow-soft" />
+                    }
+                  </div>
+
+                  <div class="flex justify-end gap-3">
+                    @if (editingSignalId()) {
+                      <button type="button" class="btn-secondary" (click)="cancelSignalEdit()">
+                        Cancel edit
+                      </button>
+                    }
+                    <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isSavingSignal()">
+                      <lucide-icon [img]="BellRingIcon" class="mr-2" [size]="16"></lucide-icon>
+                      {{ isSavingSignal() ? 'Saving...' : editingSignalId() ? 'Update signal' : 'Send signal' }}
+                    </button>
+                  </div>
+                </form>
+
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-lg font-bold text-foreground">My signals</p>
+                    @if (isLoadingSignals()) {
+                      <p class="text-sm text-muted-foreground">Loading...</p>
+                    }
+                  </div>
+
+                  @for (signal of userSignals(); track signal.id) {
+                    <article class="rounded-[1.5rem] border border-border bg-card p-3">
+                      <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div class="flex-1">
+                          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            {{ signal.createdAt || 'Signal' }}
+                          </p>
+                          <p class="mt-3 text-sm leading-7 text-foreground">{{ signal.description }}</p>
+                          @if (signal.imageUrl) {
+                            <img [src]="signal.imageUrl" alt="Signal image" class="mt-4 max-h-56 rounded-[1.2rem] object-cover shadow-soft" />
+                          }
+                        </div>
+
+                        <div class="flex gap-2">
+                          <button type="button" class="rounded-[1.1rem] border border-border px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary" (click)="editSignal(signal)">
+                            <lucide-icon [img]="PencilIcon" [size]="16"></lucide-icon>
+                          </button>
+                          <button type="button" class="rounded-[1.1rem] border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50" (click)="deleteSignal(signal.id)">
+                            <lucide-icon [img]="Trash2Icon" [size]="16"></lucide-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  } @empty {
+                    @if (!isLoadingSignals()) {
+                      <div class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center">
+                        <p class="text-lg font-semibold text-foreground">No signals yet</p>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                          Create your first signal from here and track it in the same profile page.
+                        </p>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
             } @else {
               @if (selectedConversation(); as activeConversation) {
                 <div class="space-y-5">
@@ -418,26 +454,94 @@
                           [class.justify-end]="message.author === 'me'"
                           [class.justify-start]="message.author === 'other'"
                         >
-                          <div
-                            class="max-w-[85%] rounded-[1.3rem] px-4 py-3 text-sm leading-6 shadow-soft"
-                            [class.bg-primary]="message.author === 'me'"
-                            [class.text-primary-foreground]="
-                              message.author === 'me'
-                            "
-                            [class.bg-white]="message.author === 'other'"
-                            [class.text-foreground]="message.author === 'other'"
-                          >
-                            <p>{{ message.content }}</p>
-                            <p
-                              class="mt-2 text-[0.7rem]"
-                              [ngClass]="
-                                message.author === 'me'
-                                  ? 'text-primary-foreground/70'
-                                  : 'text-muted-foreground'
+                          <div class="max-w-[85%] space-y-2">
+                            <div
+                              class="rounded-[1.3rem] px-4 py-3 text-sm leading-6 shadow-soft"
+                              [class.bg-primary]="message.author === 'me' && !message.isDeleted"
+                              [class.text-primary-foreground]="
+                                message.author === 'me' && !message.isDeleted
                               "
+                              [class.bg-white]="message.author === 'other' && !message.isDeleted"
+                              [class.text-foreground]="message.author === 'other' && !message.isDeleted"
+                              [class.border]="message.isDeleted"
+                              [class.border-border]="message.isDeleted"
+                              [class.bg-white/70]="message.isDeleted"
+                              [class.text-muted-foreground]="message.isDeleted"
                             >
-                              {{ message.timestamp }}
-                            </p>
+                              @if (editingMessageId() === message.id) {
+                                <div class="space-y-3">
+                                  <textarea
+                                    class="form-input min-h-[88px] resize-none bg-white text-foreground"
+                                    [value]="messageEditDraft()"
+                                    (input)="onMessageEditDraftChange($event)"
+                                  ></textarea>
+                                  <div class="flex justify-end gap-2">
+                                    <button type="button" class="btn-secondary" (click)="cancelEditingMessage()">
+                                      Cancel
+                                    </button>
+                                    <button type="button" class="btn-primary" (click)="saveEditedMessage(message.id)">
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              } @else {
+                                @if (message.imageUrl) {
+                                  <img
+                                    [src]="message.imageUrl"
+                                    alt="Conversation image"
+                                    class="mb-3 max-h-64 w-full rounded-[1rem] object-cover"
+                                  />
+                                }
+                                @if (message.isDeleted) {
+                                  <p class="italic">Message removed</p>
+                                } @else if (message.content) {
+                                  <p>{{ message.content }}</p>
+                                }
+                                <div class="mt-2 flex items-center gap-2">
+                                  <p
+                                    class="text-[0.7rem]"
+                                    [ngClass]="
+                                      message.author === 'me' && !message.isDeleted
+                                        ? 'text-primary-foreground/70'
+                                        : 'text-muted-foreground'
+                                    "
+                                  >
+                                    {{ message.timestamp }}
+                                  </p>
+                                  @if (message.isEdited && !message.isDeleted) {
+                                    <span
+                                      class="text-[0.7rem]"
+                                      [ngClass]="
+                                        message.author === 'me'
+                                          ? 'text-primary-foreground/70'
+                                          : 'text-muted-foreground'
+                                      "
+                                    >
+                                      edited
+                                    </span>
+                                  }
+                                </div>
+                              }
+                            </div>
+
+                            @if (message.author === 'me' && !message.isDeleted && editingMessageId() !== message.id) {
+                              <div class="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  class="rounded-full border border-border bg-white px-3 py-1 text-[0.7rem] font-semibold text-muted-foreground transition hover:border-primary hover:text-primary"
+                                  (click)="startEditingMessage(message)"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  class="rounded-full border border-red-200 bg-white px-3 py-1 text-[0.7rem] font-semibold text-red-600 transition hover:bg-red-50"
+                                  (click)="deleteMessage(message.id)"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            }
                           </div>
                         </div>
                       }
@@ -447,20 +551,53 @@
                   <div
                     class="rounded-[1.5rem] border border-border bg-white/40 p-4"
                   >
-                    <div class="flex gap-3">
-                      <input
-                        class="form-input"
-                        placeholder="Write a message..."
-                        [value]="messageDraft()"
-                        (input)="onDraftChange($event)"
-                      />
-                      <button
-                        type="button"
-                        class="btn-primary shrink-0"
-                        (click)="sendMessage()"
-                      >
-                        <lucide-icon [img]="SendIcon" [size]="16"></lucide-icon>
-                      </button>
+                    <div class="space-y-3">
+                      @if (chatImagePreviewUrl()) {
+                        <div class="rounded-[1.2rem] border border-border bg-white p-3">
+                          <div class="flex items-start justify-between gap-3">
+                            <img
+                              [src]="chatImagePreviewUrl()!"
+                              alt="Message upload preview"
+                              class="max-h-40 rounded-[1rem] object-cover"
+                            />
+                            <button
+                              type="button"
+                              class="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-secondary"
+                              (click)="clearSelectedChatImage()"
+                            >
+                              Remove image
+                            </button>
+                          </div>
+                        </div>
+                      }
+
+                      <div class="flex gap-3">
+                        <input
+                          class="form-input"
+                          placeholder="Write a message..."
+                          [value]="messageDraft()"
+                          (blur)="onMessageComposerBlur()"
+                          (input)="onDraftChange($event)"
+                        />
+                        <label
+                          class="flex shrink-0 cursor-pointer items-center justify-center rounded-[1.1rem] border border-border bg-white px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary"
+                        >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            (change)="onChatImageSelected($event)"
+                          />
+                          <lucide-icon [img]="ImagePlusIcon" [size]="16"></lucide-icon>
+                        </label>
+                        <button
+                          type="button"
+                          class="btn-primary shrink-0"
+                          (click)="sendMessage()"
+                        >
+                          <lucide-icon [img]="SendIcon" [size]="16"></lucide-icon>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'app-event-list',
   templateUrl: './event-list.component.html',
   styleUrl: './event-list.component.scss'
@@ -8,3 +9,4 @@ import { Component } from '@angular/core';
 export class EventListComponent {
 
 }
+

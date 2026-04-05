@@ -42,8 +42,18 @@ export class UserService {
     this.destroyRef.onDestroy(unsubscribe);
   }
 
-  restoreSession(): void {
+  async restoreSession(): Promise<void> {
     authStore.getState().restoreSession();
+
+    if (!authStore.getState().session) {
+      return;
+    }
+
+    try {
+      await this.loadCurrentUserProfile();
+    } catch {
+      authStore.getState().logout();
+    }
   }
 
   async login(credentials: LoginCredentials): Promise<LoginResult> {
@@ -96,7 +106,11 @@ export class UserService {
     return this.authApiService.resendTwoFactorCode(payload);
   }
 
-  completeOAuthLogin(accessToken: string, refreshToken?: string, rememberMe = true): void {
+  async completeOAuthLogin(
+    accessToken: string,
+    refreshToken?: string,
+    rememberMe = true,
+  ): Promise<void> {
     const result = this.authApiService.buildSessionFromTokens(
       accessToken,
       refreshToken,
@@ -105,6 +119,11 @@ export class UserService {
 
     if (result.session) {
       authStore.getState().setSession(result.session);
+      try {
+        await this.loadCurrentUserProfile();
+      } catch {
+        // Keep the authenticated session even if profile hydration fails.
+      }
     }
   }
 

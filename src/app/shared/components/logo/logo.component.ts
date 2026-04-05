@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'app-logo',
   template: `
     <a [routerLink]="link" class="inline-flex items-center gap-2">
@@ -23,3 +24,4 @@ export class LogoComponent {
   @Input() title = 'LIFE';
   @Input() link: string | any[] = '/';
 }
+

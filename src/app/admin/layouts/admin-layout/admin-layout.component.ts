@@ -1,163 +1,272 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
-  AlertTriangle,
-  BarChart3,
-  Bell,
-  Briefcase,
-  Calendar,
-  Car,
-  CheckCircle,
-  ChevronDown,
-  Clock,
-  CreditCard,
-  Download,
-  Edit,
-  Eye,
-  Filter,
-  Home,
-  LogOut,
-  LucideIconData,
-  MoreVertical,
-  Search,
-  Settings,
-  Shield,
-  ShoppingBag,
-  TrendingDown,
-  TrendingUp,
-  User,
-  Users,
-  XCircle,
-  MessageCircle
-} from 'lucide-angular';
+  ServiceModerationStatus,
+  StudentService,
+} from '../../../student-services/models/student-service.model';
+import { StudentServicesApiService } from '../../../student-services/services/student-services-api.service';
 import { UserService } from '../../../user-security/services/user.service';
-
-interface DashboardModule {
-  id: string;
-  name: string;
-  icon: LucideIconData;
-}
+import {
+  ADMIN_DASHBOARD_MODULES,
+  AdminDashboardModuleId,
+} from '../../data/admin-dashboard.data';
+import { AdminSignal } from '../../models/admin-signal.model';
+import { AdminUser } from '../../models/admin-user.model';
+import { AdminSignalApiService } from '../../services/admin-signal-api.service';
+import { AdminUserApiService } from '../../services/admin-user-api.service';
 
 @Component({
+  standalone: false,
   selector: 'app-admin-layout',
-  templateUrl: './admin-layout.component.html'
+  templateUrl: './admin-layout.component.html',
 })
 export class AdminLayoutComponent {
+  private readonly adminSignalApiService = inject(AdminSignalApiService);
+  private readonly adminUserApiService = inject(AdminUserApiService);
   private readonly router = inject(Router);
+  private readonly studentServicesApiService = inject(StudentServicesApiService);
+  private readonly toastService = inject(ToastService);
   private readonly userService = inject(UserService);
 
-  readonly selectedModule = signal('overview');
-  readonly searchQuery = signal('');
+  readonly adminUser = computed(() => this.userService.currentUser());
+  readonly busyUserIds = signal<number[]>([]);
+  readonly isLoadingServices = signal(false);
+  readonly isLoadingSignals = signal(false);
+  readonly isLoadingUsers = signal(false);
+  readonly signalsError = signal<string | null>(null);
+  readonly modules = ADMIN_DASHBOARD_MODULES;
+  readonly selectedModule = signal<AdminDashboardModuleId>('overview');
+  readonly services = signal<StudentService[]>([]);
+  readonly servicesModerationFilter =
+    signal<ServiceModerationStatus | 'all'>('all');
+  readonly signals = signal<AdminSignal[]>([]);
+  readonly usersError = signal<string | null>(null);
+  readonly users = signal<AdminUser[]>([]);
 
-  readonly modules: DashboardModule[] = [
-    { id: 'overview', name: 'Overview', icon: BarChart3 },
-    { id: 'users', name: 'User Management', icon: Users },
-    { id: 'roles', name: 'Roles & Permissions', icon: Shield },
-    { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
-    { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
-    { id: 'carpooling', name: 'Carpooling', icon: Car },
-    { id: 'colocation', name: 'Colocation', icon: Home },
-    { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag },
-    { id: 'services', name: 'Services', icon: Briefcase },
-    { id: 'events', name: 'Events', icon: Calendar },
-    { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3 }
-  ];
-
-  readonly kpiCards = [
-    {
-      title: 'Total Users',
-      value: '2,547',
-      change: '+12.5%',
-      trend: 'up',
-      icon: Users,
-      color: 'text-primary'
-    },
-    {
-      title: 'Active Listings',
-      value: '1,234',
-      change: '+8.2%',
-      trend: 'up',
-      icon: ShoppingBag,
-      color: 'text-blue-600'
-    },
-    {
-      title: 'Monthly Revenue',
-      value: '45,678 DT',
-      change: '+23.1%',
-      trend: 'up',
-      icon: CreditCard,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Pending Approvals',
-      value: '47',
-      change: '-5.3%',
-      trend: 'down',
-      icon: Clock,
-      color: 'text-orange-600'
-    }
-  ];
-
-  readonly pendingUsers = [
-    { id: 1, name: 'Ahmed Ben Ali', email: 'ahmed.benali@esprit.tn', registeredDate: '2026-03-15', status: 'pending' },
-    { id: 2, name: 'Sarah Tounsi', email: 'sarah.tounsi@esprit.tn', registeredDate: '2026-03-16', status: 'pending' },
-    { id: 3, name: 'Mohamed Karim', email: 'mohamed.karim@esprit.tn', registeredDate: '2026-03-17', status: 'pending' },
-    { id: 4, name: 'Leila Mansour', email: 'leila.mansour@esprit.tn', registeredDate: '2026-03-17', status: 'pending' },
-    { id: 5, name: 'Youssef Gharbi', email: 'youssef.gharbi@esprit.tn', registeredDate: '2026-03-18', status: 'pending' }
-  ];
-
-  readonly recentActivity = [
-    { id: 1, user: 'Ahmed K.', action: 'Created carpooling offer', time: '5 min ago', type: 'carpooling', icon: Car },
-    { id: 2, user: 'Sarah M.', action: 'Listed apartment for colocation', time: '12 min ago', type: 'colocation', icon: Home },
-    { id: 3, user: 'Mohamed A.', action: 'Sold laptop on marketplace', time: '1 hour ago', type: 'marketplace', icon: ShoppingBag },
-    { id: 4, user: 'Leila B.', action: 'Registered for event', time: '2 hours ago', type: 'event', icon: Calendar },
-    { id: 5, user: 'Youssef T.', action: 'Subscribed to premium', time: '3 hours ago', type: 'subscription', icon: CreditCard }
-  ];
-
-  readonly fraudAlerts = [
-    { id: 1, user: 'suspicious_user_123', reason: 'Multiple failed login attempts', severity: 'high', time: '10 min ago' },
-    { id: 2, user: 'fake_listing_456', reason: 'Duplicate marketplace listings', severity: 'medium', time: '1 hour ago' },
-    { id: 3, user: 'spam_account_789', reason: 'Spam messages detected', severity: 'high', time: '2 hours ago' }
-  ];
-
-  readonly SearchIcon = Search;
-  readonly BellIcon = Bell;
-  readonly ChevronDownIcon = ChevronDown;
-  readonly TrendingUpIcon = TrendingUp;
-  readonly TrendingDownIcon = TrendingDown;
-  readonly ClockIcon = Clock;
-  readonly FilterIcon = Filter;
-  readonly CheckCircleIcon = CheckCircle;
-  readonly XCircleIcon = XCircle;
-  readonly AlertTriangleIcon = AlertTriangle;
-  readonly EyeIcon = Eye;
-  readonly DownloadIcon = Download;
-  readonly UsersIcon = Users;
-  readonly MoreVerticalIcon = MoreVertical;
-  readonly UserIcon = User;
-  readonly EditIcon = Edit;
-  readonly SettingsIcon = Settings;
-  readonly LogOutIcon = LogOut;
-
-  selectModule(moduleId: string): void {
-    this.selectedModule.set(moduleId);
+  constructor() {
+    void this.loadAdminUsers();
+    void this.loadAdminSignals();
+    this.loadAdminServices();
   }
 
   get selectedModuleName(): string {
-    return this.modules.find((module) => module.id === this.selectedModule())?.name ?? 'Dashboard';
+    return (
+      this.modules.find((module) => module.id === this.selectedModule())?.name ??
+      'Dashboard'
+    );
   }
 
-  get selectedModuleIcon(): LucideIconData {
-    return this.modules.find((module) => module.id === this.selectedModule())?.icon ?? BarChart3;
+  selectModule(moduleId: AdminDashboardModuleId): void {
+    this.selectedModule.set(moduleId);
+
+    if (moduleId === 'services') {
+      this.loadAdminServices();
+      return;
+    }
+
+    if (moduleId === 'users' && this.users().length === 0) {
+      void this.loadAdminUsers();
+      return;
+    }
+
+    if (moduleId === 'signals' && this.signals().length === 0) {
+      void this.loadAdminSignals();
+    }
   }
 
-  get mobileModules(): DashboardModule[] {
-    return this.modules.slice(0, 5);
+  setServicesModerationFilter(
+    filter: ServiceModerationStatus | 'all',
+  ): void {
+    this.servicesModerationFilter.set(filter);
+    this.loadAdminServices();
+  }
+
+  async disableUser(userId: number): Promise<void> {
+    this.setUserBusy(userId, true);
+
+    try {
+      await this.adminUserApiService.disableUser(userId);
+      this.users.update((users) =>
+        users.map((user) =>
+          user.id === userId ? { ...user, enabled: false } : user,
+        ),
+      );
+      this.toastService.success('User disabled successfully.', 'User Updated');
+    } catch {
+      this.toastService.error(
+        'Unable to disable this user right now.',
+        'Update Failed',
+      );
+    } finally {
+      this.setUserBusy(userId, false);
+    }
+  }
+
+  async enableUser(userId: number): Promise<void> {
+    this.setUserBusy(userId, true);
+
+    try {
+      await this.adminUserApiService.enableUser(userId);
+      this.users.update((users) =>
+        users.map((user) =>
+          user.id === userId ? { ...user, enabled: true } : user,
+        ),
+      );
+      this.toastService.success('User enabled successfully.', 'User Updated');
+    } catch {
+      this.toastService.error(
+        'Unable to enable this user right now.',
+        'Update Failed',
+      );
+    } finally {
+      this.setUserBusy(userId, false);
+    }
+  }
+
+  approveService(serviceId: string): void {
+    this.studentServicesApiService
+      .updateServiceModerationStatus(serviceId, 'approved')
+      .subscribe((service) => {
+        if (!service) {
+          this.toastService.error(
+            'Unable to approve this service.',
+            'Approve Failed',
+          );
+          return;
+        }
+
+        this.toastService.success(
+          'Service approved successfully.',
+          'Service Approved',
+        );
+        this.loadAdminServices();
+      });
+  }
+
+  rejectService(serviceId: string): void {
+    this.studentServicesApiService
+      .updateServiceModerationStatus(serviceId, 'rejected')
+      .subscribe((service) => {
+        if (!service) {
+          this.toastService.error(
+            'Unable to reject this service.',
+            'Reject Failed',
+          );
+          return;
+        }
+
+        this.toastService.info('Service rejected.', 'Service Updated');
+        this.loadAdminServices();
+      });
+  }
+
+  updateServiceTags(payload: { serviceId: string; tags: string[] }): void {
+    this.studentServicesApiService
+      .updateServiceTags(payload.serviceId, payload.tags)
+      .subscribe((service) => {
+        if (!service) {
+          this.toastService.error(
+            'Unable to update service tags.',
+            'Tags Update Failed',
+          );
+          return;
+        }
+
+        this.services.update((services) =>
+          services.map((item) =>
+            item.id === payload.serviceId ? { ...item, tags: service.tags } : item,
+          ),
+        );
+        this.toastService.success(
+          'Service tags updated successfully.',
+          'Tags Updated',
+        );
+      });
+  }
+
+  deleteServicePost(serviceId: string): void {
+    this.studentServicesApiService.deleteService(serviceId).subscribe((deleted) => {
+      if (!deleted) {
+        this.toastService.error(
+          'Unable to delete this service.',
+          'Delete Failed',
+        );
+        return;
+      }
+
+      this.toastService.success(
+        'Service deleted successfully.',
+        'Service Removed',
+      );
+      this.loadAdminServices();
+    });
   }
 
   async logout(): Promise<void> {
     this.userService.logout();
     await this.router.navigate(['/']);
   }
+
+  private loadAdminServices(): void {
+    this.isLoadingServices.set(true);
+    this.studentServicesApiService
+      .getAdminServices(this.servicesModerationFilter())
+      .subscribe({
+        next: (services) => {
+          this.services.set(services);
+          this.isLoadingServices.set(false);
+        },
+        error: () => {
+          this.toastService.error(
+            'Unable to load services moderation right now.',
+            'Services Unavailable',
+          );
+          this.isLoadingServices.set(false);
+        },
+      });
+  }
+
+  private async loadAdminSignals(): Promise<void> {
+    this.isLoadingSignals.set(true);
+    this.signalsError.set(null);
+
+    try {
+      const signals = await this.adminSignalApiService.getAllSignals();
+      this.signals.set(signals);
+    } catch {
+      this.signals.set([]);
+      this.signalsError.set('Unable to load signals. Check admin authorization.');
+      this.toastService.error(
+        'Unable to load platform signals right now.',
+        'Signals Unavailable',
+      );
+    } finally {
+      this.isLoadingSignals.set(false);
+    }
+  }
+
+  private async loadAdminUsers(): Promise<void> {
+    this.isLoadingUsers.set(true);
+    this.usersError.set(null);
+
+    try {
+      const users = await this.adminUserApiService.getAllUsers();
+      this.users.set(users);
+    } catch {
+      this.users.set([]);
+      this.usersError.set('Unable to load users. Check admin authorization.');
+      this.toastService.error('Unable to load users right now.', 'Users Unavailable');
+    } finally {
+      this.isLoadingUsers.set(false);
+    }
+  }
+
+  private setUserBusy(userId: number, busy: boolean): void {
+    this.busyUserIds.update((ids) =>
+      busy ? [...ids, userId] : ids.filter((id) => id !== userId),
+    );
+  }
 }
+

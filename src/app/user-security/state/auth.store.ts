@@ -47,7 +47,10 @@ export const authStore = createStore<AuthStoreState>((set) => ({
         user: {
           ...state.session.user,
           ...updates,
-          avatarUrl: updates.avatarUrl ?? createAvatarDataUrl(`${firstName} ${lastName}`)
+          avatarUrl:
+            updates.avatarUrl ??
+            state.session.user.avatarUrl ??
+            createAvatarDataUrl(`${firstName} ${lastName}`)
         }
       };
 

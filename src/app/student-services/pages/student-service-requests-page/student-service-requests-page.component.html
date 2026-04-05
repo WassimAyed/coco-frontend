@@ -1,0 +1,56 @@
+<div class="section-shell py-8 lg:py-10">
+  <section class="surface-card overflow-hidden">
+    <div class="bg-gradient-to-r from-primary to-sidebar px-6 py-8 text-primary-foreground">
+      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/80">
+        Student Requests
+      </p>
+      <h1 class="mt-3 text-3xl font-black">Requests I sent</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-7 text-primary-foreground/80">
+        Track your service requests, follow provider replies, and keep the flow visible during demo mode.
+      </p>
+    </div>
+
+    <div class="space-y-4 p-6">
+      @for (request of requests(); track request.id) {
+        <article class="rounded-[1.5rem] border border-border bg-card p-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="max-w-3xl">
+              <p class="text-lg font-black text-foreground">{{ request.serviceTitle }}</p>
+              <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ request.message }}</p>
+              <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                <span class="rounded-full bg-white px-3 py-1 text-muted-foreground">{{ request.preferredDate }}</span>
+                <span class="rounded-full bg-white px-3 py-1 text-muted-foreground">{{ request.budgetLabel }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-start gap-3 lg:items-end">
+              <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase text-primary">
+                {{ request.status }}
+              </span>
+              @if (request.status === 'accepted' || request.status === 'completed') {
+                <a
+                  routerLink="/profile"
+                  [queryParams]="{ section: 'chat', requestId: request.id }"
+                  class="btn-secondary"
+                >
+                  Open messages
+                </a>
+              } @else {
+                <div class="rounded-[1.15rem] border border-dashed border-border bg-white px-4 py-3 text-sm text-muted-foreground">
+                  Messaging unlocks after the provider accepts your request.
+                </div>
+              }
+            </div>
+          </div>
+        </article>
+      } @empty {
+        <div class="rounded-[1.5rem] border border-dashed border-border bg-card p-8 text-center">
+          <p class="text-xl font-bold text-foreground">No requests sent yet</p>
+          <p class="mt-2 text-sm leading-6 text-muted-foreground">
+            Browse the marketplace, open a service post, and start testing the student request flow.
+          </p>
+        </div>
+      }
+    </div>
+  </section>
+</div>

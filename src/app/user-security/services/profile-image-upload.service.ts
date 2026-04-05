@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { authStore } from '../state/auth.store';
 import { loadAuthSession } from '../utils/auth-session.util';
 
 function resolveUploadUrl(baseUrl: string, pathOrUrl: string): string {
@@ -110,7 +111,18 @@ export class ProfileImageUploadService {
   }
 
   private getAuthorizationHeaders(): HttpHeaders {
-    const session = loadAuthSession();
+    const cookieSession = loadAuthSession();
+    const storeSession = authStore.getState().session;
+    const cookieToken = cookieSession?.accessToken?.trim() ?? '';
+    const storeToken = storeSession?.accessToken?.trim() ?? '';
+
+    if (cookieToken && storeToken && cookieToken !== storeToken) {
+      console.warn(
+        '[ProfileImageUploadService] Authorization token mismatch between cookie session and auth store. Using cookie token.',
+      );
+    }
+
+    const session = cookieSession ?? storeSession;
     const accessToken = session?.accessToken?.trim();
 
     return accessToken
