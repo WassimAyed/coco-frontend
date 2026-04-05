@@ -1,15 +1,26 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SubscriptionPlan, UserSubscription, Payment } from '../models/subscription.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SubsService {
-  private apiUrl = 'http://localhost:9092/api/payment';
+  private apiUrl = environment.paymentApiBaseUrl;
 
   constructor(private http: HttpClient) { }
+
+  private userHeaders(userId?: number): { headers?: HttpHeaders } {
+    const effectiveUserId = userId ?? Number(localStorage.getItem('userId') || 0);
+    if (!effectiveUserId) return {};
+    return {
+      headers: new HttpHeaders({
+        'X-User-Id': String(effectiveUserId)
+      })
+    };
+  }
 
   // Gestion des Plans (Admin)
   getAllPlans(): Observable<SubscriptionPlan[]> {
@@ -35,31 +46,34 @@ export class SubsService {
 
   // Quotas et Abonnements Utilisateur (User)
   getUserQuota(userId: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/quota/${userId}`);
+    return this.http.get<any>(`${this.apiUrl}/quota/${userId}`, this.userHeaders(userId));
   }
 
   getUserSubscriptions(userId: number): Observable<UserSubscription[]> {
-    return this.http.get<UserSubscription[]>(`${this.apiUrl}/user-subscriptions/user/${userId}`);
+    return this.http.get<UserSubscription[]>(`${this.apiUrl}/user-subscriptions/user/${userId}`, this.userHeaders(userId));
   }
 
   createUserSubscription(userId: number): Observable<UserSubscription> {
-    return this.http.post<UserSubscription>(`${this.apiUrl}/user-subscriptions`, userId);
+    return this.http.post<UserSubscription>(`${this.apiUrl}/user-subscriptions`, userId, this.userHeaders(userId));
   }
 
   // Paiement
   initiatePayment(userId: number, planId: number): Observable<string> {
     return this.http.post(`${this.apiUrl}/payments`, null, {
       params: { userId, planId },
+      headers: this.userHeaders(userId).headers,
       responseType: 'text'
     });
   }
 
   getUserPayments(userId: number): Observable<Payment[]> {
-    return this.http.get<Payment[]>(`${this.apiUrl}/payments/user/${userId}`);
+    return this.http.get<Payment[]>(`${this.apiUrl}/payments/user/${userId}`, this.userHeaders(userId));
   }
 
   downloadInvoice(paymentId: number): Observable<Blob> {
+    const userId = Number(localStorage.getItem('userId') || 0);
     return this.http.get(`${this.apiUrl}/payments/${paymentId}/invoice`, {
+      headers: this.userHeaders(userId).headers,
       responseType: 'blob'
     });
   }

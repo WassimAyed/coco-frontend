@@ -125,6 +125,7 @@ import { LostItemCreateRequest, LostItemResponse, LostItemUpdateRequest } from '
 export class LostPostComponent {
   isEditMode = false;
   editingItemId: number | null = null;
+  selectedImageFile: File | null = null;
 
   item: LostItemCreateRequest = {
     title: '',
@@ -169,6 +170,7 @@ export class LostPostComponent {
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
+      this.selectedImageFile = file;
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.item.imageUrl = e.target.result; // Store image as Base64 in imageUrl
@@ -188,27 +190,43 @@ export class LostPostComponent {
       imageUrl: this.item.imageUrl
     };
 
-    if (this.isEditMode && this.editingItemId) {
-      this.lostService.updateItem(this.editingItemId, payload).subscribe({
+    const submitWithPayload = (finalPayload: LostItemUpdateRequest) => {
+      if (this.isEditMode && this.editingItemId) {
+        this.lostService.updateItem(this.editingItemId, finalPayload).subscribe({
+          next: () => {
+            this.router.navigate(['/lost-found/my-items']);
+          },
+          error: (err) => {
+            const message = err?.error?.message || 'Unable to update this listing.';
+            window.alert(message);
+          }
+        });
+        return;
+      }
+
+      this.lostService.createItem(finalPayload).subscribe({
         next: () => {
-          this.router.navigate(['/lost-found/my-items']);
+          this.router.navigate(['/lost-found']);
         },
         error: (err) => {
-          const message = err?.error?.message || 'Unable to update this listing.';
+          const message = err?.error?.message || 'Unable to create this listing.';
           window.alert(message);
+        }
+      });
+    };
+
+    if (this.selectedImageFile) {
+      this.lostService.uploadImage(this.selectedImageFile).subscribe({
+        next: (res) => {
+          submitWithPayload({ ...payload, imageUrl: res.imageUrl });
+        },
+        error: () => {
+          window.alert('Unable to upload image. Please try again.');
         }
       });
       return;
     }
 
-    this.lostService.createItem(payload).subscribe({
-      next: () => {
-        this.router.navigate(['/lost-found']);
-      },
-      error: (err) => {
-        const message = err?.error?.message || 'Unable to create this listing.';
-        window.alert(message);
-      }
-    });
+    submitWithPayload(payload);
   }
 }

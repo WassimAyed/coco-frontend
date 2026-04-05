@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-payment-success',
@@ -188,6 +189,7 @@ import { HttpClient } from '@angular/common/http';
 export class PaymentSuccessComponent implements OnInit {
   status: 'processing' | 'success' | 'error' = 'processing';
   sessionId: string | null = null;
+  private readonly paymentApiBaseUrl = environment.paymentApiBaseUrl;
 
   constructor(
     private route: ActivatedRoute,
@@ -205,7 +207,7 @@ export class PaymentSuccessComponent implements OnInit {
   }
 
   confirmPayment() {
-    this.http.get(`http://localhost:9092/api/payment/payments/confirm?sessionId=${this.sessionId}`)
+    this.http.get(`${this.paymentApiBaseUrl}/payments/confirm?sessionId=${this.sessionId}`)
       .subscribe({
         next: () => {
           this.status = 'success';

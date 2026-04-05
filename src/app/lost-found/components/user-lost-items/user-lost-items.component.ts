@@ -115,11 +115,8 @@ export class UserLostItemsComponent implements OnInit {
         const storedId = localStorage.getItem('userId');
         if (storedId) {
             this.userId = Number(storedId);
-            this.lostService.getAllItems().subscribe(data => {
-          const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
-
+            this.lostService.getMyItems().subscribe(items => {
           this.myItems = items
-              .filter((item: LostItem) => item.userId === this.userId)
               .sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
             });
         }

@@ -29,6 +29,10 @@ export class LostAndFoundService {
         return this.http.get<LostItemResponse[]>(this.apiUrl, this.buildHeaders());
     }
 
+    getMyItems(): Observable<LostItemResponse[]> {
+        return this.http.get<LostItemResponse[]>(`${this.apiUrl}/user/my-items`, this.buildHeaders());
+    }
+
     getItemById(id: number): Observable<LostItemResponse> {
         return this.http.get<LostItemResponse>(`${this.apiUrl}/${id}`, this.buildHeaders());
     }
@@ -43,5 +47,11 @@ export class LostAndFoundService {
 
     deleteItem(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`, this.buildHeaders());
+    }
+
+    uploadImage(file: File): Observable<{ imageUrl: string }> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<{ imageUrl: string }>(`${this.apiUrl}/images/upload`, formData, this.buildHeaders());
     }
 }

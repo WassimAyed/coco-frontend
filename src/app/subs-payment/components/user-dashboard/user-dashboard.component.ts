@@ -15,32 +15,32 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
 
       <div class="dashboard-container">
         <div class="header" *ngIf="activeSubscription">
-          <h1>Mon Abonnement</h1>
-          <p>Gérez vos avantages et suivez votre consommation.</p>
+          <h1>My Subscription</h1>
+          <p>Manage your benefits and track your usage.</p>
         </div>
 
         <div class="dashboard-content" *ngIf="activeSubscription; else noSub">
-          <!-- Banner Alerte -->
+          <!-- Alert Banner -->
           <div class="alert-banner" *ngIf="showWarning()" class="fade-in">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span>{{ getWarningMessage() }}</span>
-            <button class="upgrade-link" routerLink="/subs-payment">Renouveler / Améliorer</button>
+            <button class="upgrade-link" routerLink="/subs-payment">Renew / Upgrade</button>
           </div>
 
-          <!-- Widget Plan Actuel -->
+          <!-- Current Plan Widget -->
           <div class="card plan-card">
             <div class="card-header">
-              <span class="plan-tag">PLAN ACTUEL</span>
+              <span class="plan-tag">CURRENT PLAN</span>
               <h2>{{ activeSubscription.plan.name }}</h2>
             </div>
             
             <div class="stats-grid">
               <div class="stat-item">
-                <span class="label">Jours Restants</span>
+                <span class="label">Days Remaining</span>
                 <span class="value">{{ getRemainingDays() }}</span>
               </div>
               <div class="stat-item">
-                <span class="label">Quota Posts</span>
+                <span class="label">Post Quota</span>
                 <span class="value">{{ activeSubscription.remainingPosts ?? '∞' }}</span>
               </div>
             </div>
@@ -50,37 +50,37 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
                 <div class="fill" [style.width.%]="getProgress()"></div>
               </div>
               <div class="dates">
-                <span>Début: {{ activeSubscription.startDate | date:'dd/MM/yyyy' }}</span>
-                <span>Fin: {{ activeSubscription.endDate | date:'dd/MM/yyyy' }}</span>
+                <span>Start: {{ activeSubscription.startDate | date:'dd/MM/yyyy' }}</span>
+                <span>End: {{ activeSubscription.endDate | date:'dd/MM/yyyy' }}</span>
               </div>
             </div>
 
-            <button class="btn btn-outline" routerLink="/subs-payment">Changer de plan</button>
+            <button class="btn btn-outline" routerLink="/subs-payment">Change plan</button>
           </div>
 
-          <!-- Section Avantages -->
+          <!-- Benefits Section -->
           <div class="card benefits-card">
-            <h3>Mes Avantages</h3>
+            <h3>My Benefits</h3>
             <ul class="benefits-list">
-              <li><i class="bi bi-check-circle"></i> Support prioritaire 24/7</li>
-              <li><i class="bi bi-check-circle"></i> Visibilité Boostée</li>
-              <li><i class="bi bi-check-circle"></i> Badge certifié sur vos offres</li>
+              <li><i class="bi bi-check-circle"></i> Priority support 24/7</li>
+              <li><i class="bi bi-check-circle"></i> Boosted visibility</li>
+              <li><i class="bi bi-check-circle"></i> Verified badge on your offers</li>
             </ul>
           </div>
         </div>
 
-        <!-- Section Historique -->
+        <!-- History Section -->
         <div class="history-section" *ngIf="payments.length > 0">
-          <h3>Historique des Paiements</h3>
+          <h3>Payment History</h3>
           <div class="table-card">
             <table class="history-table">
               <thead>
                 <tr>
                   <th>Date</th>
                   <th>Plan</th>
-                  <th>Montant</th>
-                  <th>Statut</th>
-                  <th>Facture</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Invoice</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,9 +105,9 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
         <ng-template #noSub>
           <div class="empty-state">
             <i class="bi bi-credit-card-2-back"></i>
-            <h2>Aucun abonnement actif</h2>
-            <p>Souscrivez à un plan pour débloquer toutes les fonctionnalités.</p>
-            <button class="btn btn-red" routerLink="/subs-payment">Voir les Plans</button>
+            <h2>No active subscription</h2>
+            <p>Subscribe to a plan to unlock all features.</p>
+            <button class="btn btn-red" routerLink="/subs-payment">View Plans</button>
           </div>
         </ng-template>
       </div>
@@ -233,7 +233,7 @@ export class UserDashboardComponent implements OnInit {
   ngOnInit() {
     const storedId = localStorage.getItem('userId');
     if (!storedId) {
-      console.warn('Utilisateur non connecté, redirection vers /login');
+      console.warn('User not logged in, redirecting to /login');
       this.router.navigate(['/login']);
       return;
     }
@@ -288,8 +288,8 @@ export class UserDashboardComponent implements OnInit {
   getWarningMessage(): string {
     const sub = this.activeSubscription;
     if (sub?.remainingPosts !== null && (sub?.remainingPosts ?? 0) <= 5) {
-      return "Attention : Votre quota de posts est presque épuisé ! (" + sub?.remainingPosts + " restants)";
+      return 'Warning: your post quota is almost exhausted! (' + sub?.remainingPosts + ' left)';
     }
-    return "Attention : Votre abonnement expire dans " + this.getRemainingDays() + " jours.";
+    return 'Warning: your subscription expires in ' + this.getRemainingDays() + ' days.';
   }
 }
