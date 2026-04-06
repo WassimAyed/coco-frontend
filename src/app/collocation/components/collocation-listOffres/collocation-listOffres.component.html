@@ -87,10 +87,20 @@
       </div>
 
       <div class="bg-white rounded-4 shadow p-4 list-column-custom">
-        <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden">
-          <input type="text" class="form-control border-0 bg-light" placeholder="Recherche par titre, ville, prix..."
+        <div class="input-group mb-4 shadow-sm rounded-pill bg-light overflow-visible" style="border: 1px solid #e9ecef;">
+          <input type="text" class="form-control border-0 bg-light rounded-start-pill ps-4" placeholder="Recherche par titre, ville, prix..."
                  [(ngModel)]="searchTerm" (input)="filterOffers()">
-          <button class="btn btn-danger" type="button"><i class="fas fa-search"></i></button>
+
+          <button class="btn btn-light border-0 px-3 voice-btn d-flex align-items-center justify-content-center" 
+                  type="button" 
+                  (click)="toggleVoiceSearch()"
+                  [title]="isListening ? 'Arrêter l\'écoute' : 'Recherche vocale'"
+                  [class.listening]="isListening">
+            <i class="fas fa-microphone" [ngClass]="isListening ? 'text-danger' : 'text-secondary'"></i>
+            <span *ngIf="isListening" class="pulse-ring"></span>
+          </button>
+
+          <button class="btn btn-danger rounded-end-pill px-4" type="button"><i class="fas fa-search"></i></button>
         </div>
 
         <div *ngIf="loading" class="text-center py-5">

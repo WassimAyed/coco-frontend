@@ -15,6 +15,7 @@ import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import { UserService } from './../../../user-security/services/user.service';
 import { MatchingService } from '../../../user-security/services/matchingColloc.service';
+import { VoiceSearchService } from '../../services/voice-search.service';
 
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
@@ -38,6 +39,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   searchTerm = '';
   loading = false;
   error = '';
+  isListening = false;
 
   /* ===============================
      MAP
@@ -91,6 +93,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private readonly userService = inject(UserService);
   private readonly matchingService = inject(MatchingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly voiceSearchService = inject(VoiceSearchService);
 
   readonly user = computed(() => this.userService.currentUser());
   currentUserId!: number;
@@ -171,6 +174,34 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
+
+    // Voice Search Subscriptions
+    this.voiceSearchService.setLanguage('fr-FR');
+
+    this.voiceSearchService.isListening$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(isListening => {
+      this.isListening = isListening;
+    });
+
+    this.voiceSearchService.text$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(text => {
+      this.searchTerm = text;
+      this.filterOffers();
+    });
+
+    this.voiceSearchService.error$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(errorCode => {
+      if (errorCode === 'not_supported') {
+        this.showToast('Recherche vocale non supportée par votre navigateur.');
+      } else if (errorCode === 'not-allowed') {
+        this.showToast('Accès au microphone refusé. Vérifiez vos permissions.');
+      } else {
+        this.showToast(`Erreur micro: ${errorCode}`);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -366,6 +397,14 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     }
 
     this.updateMarkers();
+  }
+
+  toggleVoiceSearch(): void {
+    if (this.isListening) {
+      this.voiceSearchService.stopListening();
+    } else {
+      this.voiceSearchService.startListening();
+    }
   }
 
   /* ===============================
