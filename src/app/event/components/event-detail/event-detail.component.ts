@@ -13,7 +13,6 @@ import { EventService } from '../../services/event.service';
 import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
-import { getAuthToken } from '../../../user-security/utils/auth-token.util';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -233,7 +232,6 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedRating = response.rating ?? rating;
         this.averageRating = response.averageRating ?? this.averageRating;
         this.totalRatings = response.totalRatings ?? this.totalRatings;
-        this.successMessage = 'Your rating has been saved.';
         this.errorMessage = '';
         this.isRatingSaving = false;
     });
@@ -253,11 +251,26 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const normalizedPhone = this.currentUserPhone?.trim();
+    const phoneAlreadyUsed = normalizedPhone
+      ? this.participants.some(p => p.phone?.trim() === normalizedPhone)
+      : false;
+
+    if (phoneAlreadyUsed) {
+      this.participationSuccessMessage = 'You are already registered for this event.';
+      return;
+    }
+
+    if (!normalizedPhone) {
+      this.participationErrorMessage = 'Please add a phone number to your profile before participating.';
+      return;
+    }
+
     this.isParticipating = true;
     this.participantService.add({
       fullName: this.currentUserName || 'User',
       email: this.currentUserEmail,
-      phone: this.currentUserPhone || undefined,
+      phone: normalizedPhone,
       eventId: this.eventId
     }).pipe(
       map(() => true),
@@ -752,36 +765,18 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private bootstrapUserContext(): void {
     const session = loadAuthSession();
-    const tokenPayload = this.decodeJwtPayload(getAuthToken());
+    const tokenPayload = this.decodeJwtPayload(session?.accessToken ?? null);
 
-    const sessionUserId = Number(session?.user?.id);
-    const localStorageUserId = Number(localStorage.getItem('userId'));
-    const tokenUserId = Number(tokenPayload?.['userId'] || tokenPayload?.['id']);
-    this.currentUserId = sessionUserId || localStorageUserId || tokenUserId || null;
+    this.currentUserId = Number(session?.user?.id) || Number(tokenPayload?.['userId']) || null;
 
-    let storedUser: any = null;
-    if (session?.user) {
-      storedUser = session.user;
-    }
-
-    try {
-      if (!storedUser) {
-        storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-      }
-    } catch {
-      if (!storedUser) {
-        storedUser = null;
-      }
-    }
-
-    const firstName = storedUser?.firstName || 'User';
-    const lastName = storedUser?.lastName || this.currentUserId || '';
+    const user = session?.user;
+    const firstName = user?.firstName || 'User';
+    const lastName = user?.lastName || '';
     this.currentUserName = `${firstName} ${lastName}`.trim();
 
-    const email = storedUser?.email?.trim() || this.readEmailFromTokenPayload(tokenPayload);
-    const phone = storedUser?.phone?.trim();
+    const email = user?.email?.trim() || this.readEmailFromTokenPayload(tokenPayload);
+    this.currentUserPhone = user?.phone?.trim() || '';
     this.currentUserEmail = email || '';
-    this.currentUserPhone = phone || '';
   }
 
   private parseEventDate(value?: string | null): Date | null {

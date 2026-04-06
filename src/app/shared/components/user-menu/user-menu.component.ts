@@ -35,6 +35,7 @@ readonly CalendarDaysIcon = CalendarDays;
   readonly mesOffresRoute = '/collocation/mesOffres';
   readonly mesOffresRequestRoute = '/collocation/mesOffresRequest';
   readonly myEventsRoute = '/event/my-events';
+  readonly participatedEventsRoute = '/event/participated-events';
 
   toggleMenu(): void {
     this.menuOpen.update((value) => !value);
