@@ -1,60 +1,90 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError, of, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { LoginCredentials, UserProfile } from '../models/user.model';
-import { AuthStoreState, authStore } from '../state/auth.store';
 import { getRoleHomeRoute } from '../utils/auth-route.util';
 import {
   LoginResult,
   MessageResponse,
+  PasswordUpdatePayload,
   RegisterPayload,
   RegisterResult,
   ResendVerificationCodePayload,
+  ToggleTwoFactorPayload,
+  UserUpdatePayload,
   VerifyEmailPayload,
   VerifyTwoFactorPayload,
 } from '../models/auth-api.model';
 import { AuthApiService } from './auth-api.service';
+import { UserApiService } from './user-api.service';
+import { AuthSessionService } from './auth-session.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly authSession = inject(AuthSessionService);
   private readonly authApiService = inject(AuthApiService);
-  private readonly snapshot = signal<AuthStoreState>(authStore.getState());
+  private readonly userApiService = inject(UserApiService);
+  private readonly http = inject(HttpClient);
 
-  readonly state = computed(() => this.snapshot());
-  readonly session = computed(() => this.snapshot().session);
-  readonly currentUser = computed<UserProfile | null>(() => this.snapshot().session?.user ?? null);
-  readonly isAuthenticated = computed(() => this.snapshot().status === 'authenticated' && !!this.snapshot().session);
-  readonly isLoading = computed(() => this.snapshot().status === 'loading');
-  readonly error = computed(() => this.snapshot().error);
-  readonly homeRoute = computed(() => getRoleHomeRoute(this.snapshot().session));
+  private readonly profileCache = new Map<number, any>();
 
-  constructor() {
-    const unsubscribe = authStore.subscribe((state) => {
-      this.snapshot.set(state);
-    });
+  readonly currentUser = this.authSession.currentUser;
+  readonly session = this.authSession.session;
+  readonly isAuthenticated = this.authSession.isAuthenticated;
+  readonly isLoading = this.authSession.isLoading;
+  readonly error = this.authSession.error;
+  readonly homeRoute = this.authSession.homeRoute;
 
-    this.destroyRef.onDestroy(unsubscribe);
+  /**
+   * Old builds stored JWT in localStorage and a global profile flag; that breaks
+   * cookie-based session and shows the wrong user/banner after account switch.
+   */
+  clearLegacyBrowserAuthCaches(): void {
+    try {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('profileCompleted');
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith('coco_profile_ok_')) {
+          keys.push(k);
+        }
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // ignore private mode / quota
+    }
   }
 
   restoreSession(): void {
-    authStore.getState().restoreSession();
+    this.authSession.restoreFromCookie();
   }
 
   async login(credentials: LoginCredentials): Promise<LoginResult> {
-    authStore.getState().setLoading();
+    this.authSession.setLoading();
 
     try {
       const result = await this.authApiService.login(credentials);
+
       if (result.session) {
-        authStore.getState().setSession(result.session);
+        this.clearLegacyBrowserAuthCaches();
+        this.profileCache.clear();
+        this.authSession.setSession(result.session);
       } else {
-        authStore.getState().clearError();
+        this.authSession.clearError();
       }
+
       return result;
     } catch (error) {
-      const message = this.authApiService.extractErrorMessage(error, 'Unable to sign in right now.');
-      authStore.getState().setError(message);
+      const message = this.authApiService.extractErrorMessage(
+        error,
+        'Unable to sign in right now.',
+      );
+      this.authSession.setError(message);
       throw error;
     }
   }
@@ -67,31 +97,45 @@ export class UserService {
     return this.authApiService.verifyEmail(payload);
   }
 
-  async verifyTwoFactor(payload: VerifyTwoFactorPayload, rememberMe: boolean): Promise<LoginResult> {
-    authStore.getState().setLoading();
+  async verifyTwoFactor(
+    payload: VerifyTwoFactorPayload,
+    rememberMe: boolean,
+  ): Promise<LoginResult> {
+    this.authSession.setLoading();
 
     try {
       const result = await this.authApiService.verifyTwoFactor(payload, rememberMe);
+
       if (result.session) {
-        authStore.getState().setSession(result.session);
+        this.clearLegacyBrowserAuthCaches();
+        this.profileCache.clear();
+        this.authSession.setSession(result.session);
       }
+
       return result;
     } catch (error) {
-      const message = this.authApiService.extractErrorMessage(error, 'Unable to verify the 2FA code right now.');
-      authStore.getState().setError(message);
+      const message = this.authApiService.extractErrorMessage(
+        error,
+        'Unable to verify the 2FA code right now.',
+      );
+      this.authSession.setError(message);
       throw error;
     }
   }
 
-  resendVerificationCode(payload: ResendVerificationCodePayload): Promise<MessageResponse> {
+  resendVerificationCode(payload: ResendVerificationCodePayload) {
     return this.authApiService.resendVerificationCode(payload);
   }
 
-  resendTwoFactorCode(payload: ResendVerificationCodePayload): Promise<MessageResponse> {
+  resendTwoFactorCode(payload: ResendVerificationCodePayload) {
     return this.authApiService.resendTwoFactorCode(payload);
   }
 
-  completeOAuthLogin(accessToken: string, refreshToken?: string, rememberMe = true): void {
+  completeOAuthLogin(
+    accessToken: string,
+    refreshToken?: string,
+    rememberMe = true,
+  ): void {
     const result = this.authApiService.buildSessionFromTokens(
       accessToken,
       refreshToken,
@@ -99,48 +143,110 @@ export class UserService {
     );
 
     if (result.session) {
-      authStore.getState().setSession(result.session);
+      this.clearLegacyBrowserAuthCaches();
+      this.profileCache.clear();
+      this.authSession.setSession(result.session);
     }
   }
 
+  async loadCurrentUserProfile(): Promise<UserProfile> {
+    const currentUser = this.currentUser();
+
+    const profile = await this.userApiService.getCurrentUser(currentUser?.email ?? '');
+
+    const resolvedProfile: UserProfile = {
+      ...profile,
+      avatarUrl: profile.avatarUrl || currentUser?.avatarUrl || '',
+      firstName: profile.firstName || currentUser?.firstName || '',
+      lastName: profile.lastName || currentUser?.lastName || '',
+      twoFactorEnabled:
+        profile.twoFactorEnabled ?? currentUser?.twoFactorEnabled ?? false,
+    };
+
+    this.authSession.updateProfile(resolvedProfile);
+
+    return resolvedProfile;
+  }
+
+  async saveCurrentUserProfile(payload: UserUpdatePayload): Promise<UserProfile> {
+    const currentUser = this.currentUser();
+
+    const profile = await this.userApiService.updateCurrentUser(
+      payload,
+      currentUser?.email ?? '',
+    );
+
+    const resolvedProfile: UserProfile = {
+      ...profile,
+      avatarUrl: payload.imageUrl.trim() || profile.avatarUrl || currentUser?.avatarUrl || '',
+      firstName: payload.username.trim() || profile.firstName || currentUser?.firstName || '',
+      lastName: payload.lastname.trim() || profile.lastName || currentUser?.lastName || '',
+      twoFactorEnabled:
+        profile.twoFactorEnabled ?? currentUser?.twoFactorEnabled ?? false,
+    };
+
+    this.authSession.updateProfile(resolvedProfile);
+
+    return resolvedProfile;
+  }
+
+  updatePasswordRequest(payload: PasswordUpdatePayload) {
+    return this.userApiService.updatePassword(payload);
+  }
+
+  async setTwoFactorEnabled(payload: ToggleTwoFactorPayload) {
+    const result = await this.userApiService.setTwoFactorEnabled(payload);
+
+    this.authSession.updateProfile({
+      twoFactorEnabled: payload.enabled,
+    });
+
+    return result;
+  }
+
   getHomeRoute(): string {
-    return getRoleHomeRoute(this.snapshot().session);
+    return getRoleHomeRoute(this.authSession.session());
   }
 
   updateProfile(profileUpdates: Partial<UserProfile>): void {
-    authStore.getState().updateProfile(profileUpdates);
+    this.authSession.updateProfile(profileUpdates);
   }
 
   logout(): void {
-    authStore.getState().logout();
+    this.authSession.logout();
+    this.profileCache.clear();
+    this.clearLegacyBrowserAuthCaches();
+  }
+
+  setCurrentSession(session: unknown): void {
+    if (!session) {
+      this.profileCache.clear();
+    }
   }
 
   clearError(): void {
-    authStore.getState().clearError();
+    this.authSession.clearError();
   }
 
-
-  private readonly USER_KEY = 'currentUser';
-
-storeUser(user: any): void {
-  try {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-  } catch (e) {
-    console.error('Failed to store user', e);
+  currentSession() {
+    return this.authSession.session();
   }
-}
 
-getStoredUser(): any | null {
-  try {
-    const data = localStorage.getItem(this.USER_KEY);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
+  checkProfileExists(userId: number) {
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
+    return this.http.get<boolean>(`${base}/profiles/exists/${userId}`, {
+      withCredentials: environment.auth.withCredentials,
+    });
   }
-}
 
-clearStoredUser(): void {
-  localStorage.removeItem(this.USER_KEY);
-}
+  getProfileByUserId(userId: number) {
+    if (this.profileCache.has(userId)) {
+      return of(this.profileCache.get(userId));
+    }
 
+    return this.http.get<any>(`http://localhost:8090/profiles/${userId}`).pipe(
+      tap((profile) => this.profileCache.set(userId, profile)),
+      catchError(() => of(null)),
+    );
+  }
 }

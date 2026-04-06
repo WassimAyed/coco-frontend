@@ -34,14 +34,14 @@
       @if (form.controls.code.touched && form.controls.code.invalid) {
         <p class="mt-2 text-xs font-medium text-destructive">Enter a valid 6-digit code.</p>
       }
-      @if (!hasAttemptsLeft()) {
+      <!-- @if (!hasAttemptsLeft()) {
         <p class="mt-2 text-xs font-medium text-destructive">
           You reached the maximum of 3 attempts. Please resend a new code to continue.
         </p>
-      }
+      } -->
     </div>
 
-    <div class="rounded-3xl bg-secondary p-5 text-sm leading-7 text-muted-foreground">
+    <div class="rounded-3xl bg-white p-5 text-sm leading-7 text-muted-foreground">
       If you do not receive the code, check your spam folder or resend a new 2FA code.
     </div>
 

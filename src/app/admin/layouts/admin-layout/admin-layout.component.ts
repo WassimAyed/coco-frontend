@@ -48,6 +48,7 @@ export class AdminLayoutComponent {
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
+  readonly user = this.userService.currentUser;
 
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },

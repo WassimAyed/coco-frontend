@@ -23,6 +23,21 @@ export interface ResendVerificationCodePayload {
   email: string;
 }
 
+export interface UserUpdatePayload {
+  username: string;
+  lastname: string;
+  imageUrl: string;
+}
+
+export interface PasswordUpdatePayload {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface ToggleTwoFactorPayload {
+  enabled: boolean;
+}
+
 export interface LoginResult {
   message?: string;
   requiresTwoFactor?: boolean;

@@ -1,143 +1,143 @@
-  import { Injectable } from '@angular/core';
-  import { HttpClient } from '@angular/common/http';
-  import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { UserService } from '../../user-security/services/user.service';
 
-  @Injectable({
-    providedIn: 'root'
-  })
-  export class CollocationService {
+@Injectable({
+  providedIn: 'root'
+})
+export class CollocationService {
 
-    private apiUrl = 'http://localhost:8091/collocation';
+  private apiUrl = 'http://localhost:8091/collocation';
+  private readonly userService = inject(UserService);
 
-    constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) { }
 
- createOffer(offer: any, selectedFiles: File[]): Observable<any> {
-  const formData = new FormData();
+  // Create a new offer
+  createOffer(offre: any, files: File[], userId?: string): Observable<any> {
+    const formData = new FormData();
 
-  // JSON offer
-  formData.append(
-    'offre',
-    new Blob([JSON.stringify(offer)], { type: 'application/json' })
-  );
+    formData.append(
+      'offre',
+      new Blob([JSON.stringify(offre)], { type: 'application/json' })
+    );
 
-  // Images
-  selectedFiles.forEach(file => {
-    formData.append('imagesColloc', file);
-  });
+    // Use provided userId or fallback to current user
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+    formData.append('userId', id.toString());
 
-  const userId = localStorage.getItem('userId');
-  if (userId) {
-    formData.append('userId', userId);
+    files.forEach(file => formData.append('imagesColloc', file));
+
+    return this.http.post(`${this.apiUrl}/offresCollocCreate`, formData, {
+      responseType: 'text'
+    });
   }
 
-  return this.http.post(`${this.apiUrl}/offresCollocCreate`, formData, {
-    responseType: 'text'
-  });
-}
+  // Get all collocation offers
+  getAllOffers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/offresCollocGetAll`);
+  }
 
-    // Get all collocation offers
-    getAllOffers(): Observable<any[]> {
-      return this.http.get<any[]>(`${this.apiUrl}/offresCollocGetAll`);
-    }
-
-
-    // Get a single offer by ID
+  // Get a single offer by ID
   getOfferById(id: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/offresColloc/${id}`);
   }
 
-  getMyOffers(ownerId:number){
-    return this.http.get<any[]>(`${this.apiUrl}/myOffresColloc/${ownerId}`);
+  // Get offers for the current user (owner)
+  getMyOffers(ownerId?: number) {
+    const id = ownerId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+    return this.http.get<any[]>(`${this.apiUrl}/myOffresColloc/${id}`);
   }
 
-  deleteOffer(id:number){
-    return this.http.delete(`${this.apiUrl}/deleteOffreColloc/${id}`,{responseType:'text'});
+  deleteOffer(id: number) {
+    return this.http.delete(`${this.apiUrl}/deleteOffreColloc/${id}`, { responseType: 'text' });
   }
 
   updateOffer(id: number, data: any) {
     return this.http.put(`${this.apiUrl}/updateOffreColloc/${id}`, data);
   }
 
-  // Get user's favorites
-  getFavorites(userId: number) {
-    return this.http.get<number[]>(`${this.apiUrl}/favorites/${userId}`);
+  // Favorites
+  getFavorites(userId?: number) {
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+    return this.http.get<number[]>(`${this.apiUrl}/favorites/${id}`);
   }
 
-  // Add favorite
-  addFavorite(userId: number, offerId: number) {
-    return this.http.post(`${this.apiUrl}/favorites/${userId}/${offerId}`, {});
-  }
+addFavorite(userId: number, offerId: number) {
+  return this.http.post(
+    `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
+  );
+}
 
-  // Remove favorite
-  removeFavorite(userId: number, offerId: number) {
-    return this.http.delete(`${this.apiUrl}/favorites/${userId}/${offerId}`);
+  removeFavorite(offerId: number, userId?: number) {
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+    return this.http.delete(`${this.apiUrl}/favorites/${offerId}/${id}`);
   }
 
   getNearbyOffers(lat: number, lng: number, radius: number) {
-    return this.http.get<any[]>(
-      `${this.apiUrl}/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
-    );
+    return this.http.get<any[]>(`${this.apiUrl}/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
   }
 
-
-  getMyRequests() {
-    const userId = localStorage.getItem("ownerId");
-
+  // Requests
+  getMyRequests(userId?: number) {
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
     return this.http.get<any[]>(`${this.apiUrl}/requests/my`, {
-      headers: {
-        userId: userId!
-      }
+      headers: { userId: id.toString() }
     });
-
   }
 
-  updateRequestStatus(id: number, status: string) {
-    const userId = localStorage.getItem("ownerId");
+  updateRequestStatus(id: number, status: string, userId?: number) {
+    const idUser = userId ?? this.userService.currentUser()?.id;
+    if (!idUser) throw new Error('User not authenticated');
 
     return this.http.put(`${this.apiUrl}/requests/${id}/status`,
       { status },
-      {
-        headers: {
-          userId: userId!
-        }
-      }
+      { headers: { userId: idUser.toString() } }
     );
   }
 
-// Create a new request
-createRequest(request: any, studentId: number): Observable<string> {
+  createRequest(request: any, studentId?: number): Observable<string> {
+    const id = studentId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+
     return this.http.post(`${this.apiUrl}/requests/create`, request, {
-        headers: { 'X-USER-ID': studentId.toString() }, // Must be string
-        responseType: 'text' // <-- retourne du texte, pas du JSON
+      headers: { 'X-USER-ID': id.toString() },
+      responseType: 'text'
     }) as Observable<string>;
-}
-  // Add method to fetch requests for offers owned by current user
-  getRequestsForMyOffers(): Observable<any[]> {
-    const userId = localStorage.getItem("ownerId");
+  }
+
+  getRequestsForMyOffers(userId?: number): Observable<any[]> {
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+
     return this.http.get<any[]>(`${this.apiUrl}/requests/forOwner`, {
-      headers: { userId: userId! }
+      headers: { userId: id.toString() }
     });
   }
 
-  // Add method to delete request
-  deleteRequest(id: number) {
+  deleteRequest(id: number, userId?: number) {
+    const idUser = userId ?? this.userService.currentUser()?.id;
+    if (!idUser) throw new Error('User not authenticated');
+
     return this.http.delete(`${this.apiUrl}/requests/${id}`, {
-      headers: { userId: localStorage.getItem("ownerId")! }
+      headers: { userId: idUser.toString() }
     });
   }
 
-  // Get requests by multiple offer IDs
-  getRequestsByOfferIds(offerIds: number[]): Observable<any[]> {
+  getRequestsByOfferIds(offerIds: number[], userId?: number): Observable<any[]> {
+    const id = userId ?? this.userService.currentUser()?.id;
+    if (!id) throw new Error('User not authenticated');
+
     return this.http.post<any[]>(`${this.apiUrl}/requests/byOfferIds`, offerIds, {
       headers: {
         'Content-Type': 'application/json',
-        'userId': localStorage.getItem('ownerId')!
+        userId: id.toString()
       }
     });
   }
-
-
-
-
-
-  }
+}

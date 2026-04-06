@@ -5,10 +5,12 @@ import { SubsListComponent } from './components/subs-list/subs-list.component';
 import { SubsPaymentRoutingModule } from './subs-payment-routing.module';
 
 @NgModule({
-  declarations: [SubsDetailComponent, SubsListComponent],
+  declarations: [],
   imports: [
     CommonModule,
-    SubsPaymentRoutingModule
+    SubsPaymentRoutingModule,
+    SubsDetailComponent,
+    SubsListComponent
   ]
 })
 export class SubsPaymentModule { }

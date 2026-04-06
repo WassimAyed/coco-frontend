@@ -1,1 +1,93 @@
-<p>subs-list works!</p>
+<div class="pricing-page">
+  <div class="mesh-gradient"></div>
+  <div class="noise-overlay"></div>
+
+  <div class="pricing-container">
+    <div class="header">
+      <h1>Choisissez votre Plan CoCo</h1>
+      <p>Des solutions flexibles pour booster votre visibilité sur la plateforme.</p>
+    </div>
+
+    <!-- Top Row: 3 Cards -->
+    <div class="plans-grid top-row" *ngIf="!loading; else loadingTemplate">
+      <div class="plan-card" *ngFor="let plan of getTopPlans()" [ngClass]="{'featured': plan.name === 'MONTHLY'}"
+        [style.animation-delay]="getDelay(plan.name)">
+        <div class="badge" *ngIf="plan.name === 'MONTHLY'">Recommandé</div>
+
+        <div class="card-header">
+          <span class="plan-tag">{{ plan.name }}</span>
+          <div class="price">
+            <span class="currency">TND</span>
+            <span class="amount">{{ plan.price }}</span>
+            <span class="period" *ngIf="plan.durationDays">/{{ plan.durationDays === 30 ? 'mois' : 'an' }}</span>
+          </div>
+          <p class="description">{{ getDescription(plan.name) }}</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <ul class="features">
+          <li *ngFor="let feature of getFeatures(plan.name)">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ feature }}
+          </li>
+        </ul>
+
+        <button class="btn" [ngClass]="plan.name === 'MONTHLY' ? 'btn-red' : 'btn-outline'"
+          (click)="onSubscribe(plan.id!)">
+          {{ getButtonText(plan.name) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Row: 1 Card (Pay Per Post) -->
+    <div class="plans-grid bottom-row" *ngIf="!loading">
+      <div class="plan-card pay-per-post" *ngIf="getBottomPlan() as plan" [style.animation-delay]="'0.4s'">
+        <div class="card-header">
+          <span class="plan-tag">{{ plan.name }}</span>
+          <div class="price">
+            <span class="currency">TND</span>
+            <span class="amount">{{ plan.price }}</span>
+            <span class="period">/post</span>
+          </div>
+          <p class="description">{{ getDescription(plan.name) }}</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <ul class="features horizontal">
+          <li *ngFor="let feature of getFeatures(plan.name)">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ feature }}
+          </li>
+        </ul>
+
+        <button class="btn btn-outline" (click)="onSubscribe(plan.id!)">
+          {{ getButtonText(plan.name) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Trust Bar -->
+    <div class="trust-bar" *ngIf="!loading">
+      <div class="trust-item">
+        <i class="bi bi-shield-lock"></i>
+        <span>Paiement sécurisé</span>
+      </div>
+      <div class="trust-item">
+        <i class="bi bi-calendar-x"></i>
+        <span>Annulation à tout moment</span>
+      </div>
+      <div class="trust-item">
+        <i class="bi bi-patch-check"></i>
+        <span>Sans engagement</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-overlay">
+      <div class="loader"></div>
+    </div>
+  </ng-template>
+</div>

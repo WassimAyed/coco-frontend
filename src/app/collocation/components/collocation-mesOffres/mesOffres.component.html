@@ -1,339 +1,319 @@
-<div class="container my-5">
+<div class="offres-page">
 
-  <!-- Page Title -->
-  <h1 class="mes-title text-center mb-4">Mes Offres de collocation</h1>
-
-  <!-- Empty State -->
-  <div *ngIf="myOffers.length === 0" class="alert alert-info text-center py-4">
-    <i class="fas fa-inbox fa-2x mb-3"></i>
-    <h5>Vous n'avez aucune annonce pour le moment.</h5>
-    <p class="mb-0">Créez votre première annonce dès maintenant !</p>
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <span class="header-eyebrow">
+          <i class="fas fa-layer-group me-2"></i>Tableau de bord
+        </span>
+        <h1 class="header-title">Mes Offres</h1>
+        <p class="header-subtitle">Gérez et suivez toutes vos annonces de collocation</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill">
+          <span class="stat-num">{{ myOffers.length }}</span>
+          <span class="stat-label">Annonce{{ myOffers.length > 1 ? 's' : '' }}</span>
+        </div>
+        <div class="stat-pill stat-pill--active">
+          <span class="stat-num">{{ activeOffersCount }}</span>
+          <span class="stat-label">Active{{ activeOffersCount > 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-decoration">
+      <div class="deco-circle deco-circle--1"></div>
+      <div class="deco-circle deco-circle--2"></div>
+    </div>
   </div>
 
-  <!-- Offers Table & Cards -->
-  <div *ngIf="myOffers.length > 0">
+  <!-- ===== SEARCH BAR ===== -->
+  <div class="content-area" *ngIf="myOffers.length > 0">
+    <div class="search-bar-wrap">
+      <div class="search-bar">
+        <i class="fas fa-search search-bar__icon"></i>
+        <input
+          type="text"
+          class="search-bar__input"
+          placeholder="Rechercher par titre, ville, description..."
+          [(ngModel)]="searchTerm"
+          (input)="filterOffers()"
+        />
+        <button *ngIf="searchTerm" class="search-bar__clear" (click)="searchTerm = ''; filterOffers()" title="Effacer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <span class="search-result-count" *ngIf="searchTerm">
+        {{ filteredOffers.length }} résultat{{ filteredOffers.length !== 1 ? 's' : '' }} pour
+        <strong>"{{ searchTerm }}"</strong>
+      </span>
+    </div>
+  </div>
 
-    <!-- Desktop Table -->
-    <div class="d-none d-md-block table-responsive">
-      <table class="table table-hover align-middle shadow-sm rounded-3">
-        <thead class="table-success">
-          <tr>
-            <th>Image</th>
-            <th>Titre</th>
-            <th>Ville</th>
-            <th>Prix</th>
-            <th>Chambres</th>
-            <th>Meublé</th>
-            <th>Expiration</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let offer of paginatedOffers">
-            <td>
-              <img *ngIf="offer.imagesColoc?.length" [src]="offer.imagesColoc[0].url"
-                   class="img-thumbnail shadow-sm" style="width:80px; height:80px; object-fit:cover;">
-              <span *ngIf="!offer.imagesColoc?.length" class="text-muted">
-                <i class="fas fa-image fa-2x"></i>
-              </span>
-            </td>
-            <td class="fw-semibold">{{ offer.titre }}</td>
-            <td>{{ offer.ville }}</td>
-            <td>{{ offer.prixLoc | currency:'TND':'symbol':'1.0-0' }}</td>
-            <td>{{ offer.chambres }}</td>
-            <td>
-              <span class="badge rounded-pill" [ngClass]="offer.meublee ? 'bg-success' : 'bg-secondary'">
-                <i class="fas" [ngClass]="offer.meublee ? 'fa-check-circle' : 'fa-times-circle'"></i>
-                {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
-              </span>
-            </td>
-            <td>{{ offer.expiryDate | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <span class="badge rounded-pill" [ngClass]="offer.expired ? 'bg-danger' : 'bg-success'">
-                <i class="fas" [ngClass]="offer.expired ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
-                {{ offer.expired ? 'Expirée' : 'Active' }}
-              </span>
-            </td>
-            <td>
-              <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary" (click)="openUpdateModal(offer)">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="openDeleteModal(offer.id)">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- ===== CONTENT AREA ===== -->
+  <div class="content-area">
+
+    <!-- EMPTY STATE (no offers at all) -->
+    <div *ngIf="myOffers.length === 0" class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-ring"></div>
+        <i class="fas fa-home"></i>
+      </div>
+      <h3 class="empty-title">Aucune offre pour le moment</h3>
+      <p class="empty-desc">Vous n'avez pas encore publié d'annonce de collocation.<br>Créez votre première annonce et trouvez le colocataire idéal !</p>
     </div>
 
-    <!-- Mobile Cards -->
-    <div class="d-md-none">
-      <div class="row g-3">
-        <div class="col-12" *ngFor="let offer of paginatedOffers">
-          <div class="card offer-card shadow-sm h-100">
-            <div class="row g-0">
-              <div class="col-4">
-                <img *ngIf="offer.imagesColoc?.length" [src]="offer.imagesColoc[0].url"
-                     class="img-fluid rounded-start h-100" style="object-fit:cover;">
-                <div *ngIf="!offer.imagesColoc?.length"
-                     class="bg-light d-flex align-items-center justify-content-center h-100">
-                  <i class="fas fa-image fa-3x text-muted"></i>
-                </div>
-              </div>
-              <div class="col-8">
-                <div class="card-body">
-                  <h5 class="card-title">{{ offer.titre }}</h5>
-                  <p class="card-text mb-1"><i class="fas fa-map-marker-alt me-2 text-success"></i>{{ offer.ville }}</p>
-                  <p class="card-text mb-1"><i class="fas fa-tag me-2 text-success"></i>{{ offer.prixLoc }} TND</p>
-                  <p class="card-text mb-1"><i class="fas fa-bed me-2 text-success"></i>{{ offer.chambres }} chambre(s)</p>
-                  <p class="card-text mb-1">
-                    <span class="badge rounded-pill" [ngClass]="offer.meublee ? 'bg-success' : 'bg-secondary'">
-                      <i class="fas" [ngClass]="offer.meublee ? 'fa-check-circle' : 'fa-times-circle'"></i>
-                      {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
-                    </span>
-                  </p>
-                  <p class="card-text mb-1"><small class="text-muted">Expire le {{ offer.expiryDate | date:'dd/MM/yyyy' }}</small></p>
-                  <p class="card-text">
-                    <span class="badge rounded-pill" [ngClass]="offer.expired ? 'bg-danger' : 'bg-success'">
-                      <i class="fas" [ngClass]="offer.expired ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
-                      {{ offer.expired ? 'Expirée' : 'Active' }}
-                    </span>
-                  </p>
-                  <div class="d-flex gap-2 mt-2">
-                    <button class="btn btn-outline-primary flex-fill btn-sm" (click)="openUpdateModal(offer)">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger flex-fill btn-sm" (click)="openDeleteModal(offer.id)">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
+    <!-- EMPTY SEARCH RESULTS -->
+    <div *ngIf="myOffers.length > 0 && filteredOffers.length === 0" class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-ring"></div>
+        <i class="fas fa-search"></i>
+      </div>
+      <h3 class="empty-title">Aucun résultat</h3>
+      <p class="empty-desc">Aucune offre ne correspond à <strong>"{{ searchTerm }}"</strong>.<br>Essayez un autre mot-clé.</p>
+      <button class="search-reset-btn" (click)="searchTerm = ''; filterOffers()">
+        <i class="fas fa-undo me-2"></i>Réinitialiser la recherche
+      </button>
+    </div>
+
+    <!-- OFFERS GRID -->
+    <div *ngIf="myOffers.length > 0" class="offers-grid">
+      <div *ngFor="let offer of paginatedOffers" class="offer-card">
+
+        <!-- Card Image -->
+        <div class="card-img-wrap">
+          <img *ngIf="offer.imagesColoc?.length"
+               [src]="offer.imagesColoc[0].url"
+               class="card-img"
+               alt="{{ offer.titre }}">
+          <div *ngIf="!offer.imagesColoc?.length" class="card-img card-img--placeholder">
+            <i class="fas fa-home fa-2x"></i>
+          </div>
+          <!-- Status floating badge -->
+          <span class="floating-badge" [ngClass]="offer.expired ? 'badge-expired' : 'badge-active'">
+            <i [class]="offer.expired ? 'fas fa-clock' : 'fas fa-check-circle'"></i>
+            {{ offer.expired ? 'Expirée' : 'Active' }}
+          </span>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">{{ offer.titre }}</h3>
+            <div class="card-price">
+              <span class="price-amount">{{ offer.prixLoc | number:'1.0-0' }}</span>
+              <span class="price-currency">TND<span class="price-period">/mois</span></span>
             </div>
+          </div>
+
+          <div class="card-meta">
+            <span class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ offer.ville }}
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-bed"></i>
+              {{ offer.chambres }} chambre{{ offer.chambres > 1 ? 's' : '' }}
+            </span>
+          </div>
+
+          <div class="card-tags">
+            <span class="tag" [ngClass]="offer.meublee ? 'tag--furnished' : 'tag--unfurnished'">
+              <i [class]="offer.meublee ? 'fas fa-couch' : 'fas fa-times'"></i>
+              {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+            </span>
+          </div>
+
+          <div class="card-actions">
+            <button class="action-btn action-btn--edit" (click)="openUpdateModal(offer)" title="Modifier">
+              <i class="fas fa-pen"></i>
+              <span>Modifier</span>
+            </button>
+            <button class="action-btn action-btn--delete" (click)="openDeleteModal(offer.id)" title="Supprimer">
+              <i class="fas fa-trash-alt"></i>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- DESKTOP TABLE (hidden on mobile, shows above 768px) -->
+    <!-- Replaced by card grid for all breakpoints for better UX -->
+
+    <!-- PAGINATION -->
+    <nav *ngIf="totalPages > 1" class="pagination-wrap">
+      <button class="page-btn page-btn--nav"
+              [disabled]="currentPage === 1"
+              (click)="setPage(currentPage - 1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+
+      <div class="page-numbers">
+        <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                class="page-btn"
+                [class.page-btn--active]="currentPage === i + 1"
+                (click)="setPage(i + 1)">
+          {{ i + 1 }}
+        </button>
+      </div>
+
+      <button class="page-btn page-btn--nav"
+              [disabled]="currentPage === totalPages"
+              (click)="setPage(currentPage + 1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </nav>
+
   </div>
-
-  <!-- Pagination -->
-  <nav *ngIf="totalPages > 1" class="d-flex justify-content-center mt-4">
-    <ul class="pagination pagination-sm">
-      <!-- Previous -->
-      <li class="page-item" [class.disabled]="currentPage === 1">
-        <button class="page-link" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-      </li>
-
-      <!-- Pages -->
-      <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" [class.active]="currentPage === i + 1">
-        <button class="page-link" (click)="setPage(i + 1)">{{ i + 1 }}</button>
-      </li>
-
-      <!-- Next -->
-      <li class="page-item" [class.disabled]="currentPage === totalPages">
-        <button class="page-link" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </li>
-    </ul>
-  </nav>
-
 </div>
 
-<!-- DELETE MODAL -->
-<div *ngIf="showDeleteModal" class="modal-backdrop d-flex align-items-center justify-content-center">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 shadow-lg border-0">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5>
-        <button type="button" class="btn-close btn-close-white" (click)="closeDeleteModal()"></button>
-      </div>
-      <div class="modal-body py-4 text-center">
-        <p class="fs-5">Êtes-vous sûr de vouloir supprimer cette annonce ?</p>
-        <p class="text-muted small">Cette action est irréversible.</p>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-outline-secondary px-4" (click)="closeDeleteModal()">Annuler</button>
-        <button type="button" class="btn btn-danger px-4" (click)="confirmDelete()">Supprimer</button>
-      </div>
+<!-- ===== DELETE MODAL ===== -->
+<div *ngIf="showDeleteModal" class="modal-overlay" (click)="closeDeleteModal()">
+  <div class="modal-box modal-box--sm" (click)="$event.stopPropagation()">
+    <div class="modal-close-btn" (click)="closeDeleteModal()">
+      <i class="fas fa-times"></i>
+    </div>
+    <div class="modal-icon modal-icon--danger">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h4 class="modal-title">Confirmer la suppression</h4>
+    <p class="modal-desc">Êtes-vous sûr de vouloir supprimer cette annonce ?<br>
+      <span class="text-muted-small">Cette action est irréversible.</span>
+    </p>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--ghost" (click)="closeDeleteModal()">Annuler</button>
+      <button class="modal-btn modal-btn--danger" (click)="confirmDelete()">
+        <i class="fas fa-trash-alt me-1"></i> Supprimer
+      </button>
     </div>
   </div>
 </div>
-<!-- MODAL AMÉLIORÉE - Palette Dark Red / Gray / Black -->
-<div *ngIf="showUpdateModal"
-     class="modal-backdrop show d-flex align-items-center justify-content-center"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="updateModalTitle">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content rounded-4 shadow-lg border-0 overflow-hidden bg-dark-gray">
 
-      <!-- HEADER : fond rouge foncé, texte blanc -->
-      <div class="modal-header bg-dark-red text-white py-3 border-0">
-        <h5 class="modal-title fw-semibold" id="updateModalTitle">
-          <i class="fas fa-edit me-2"></i>Modifier l'annonce
-        </h5>
-        <button type="button"
-                class="btn-close btn-close-white"
-                (click)="closeUpdateModal()"
-                aria-label="Fermer"></button>
+<!-- ===== UPDATE MODAL ===== -->
+<div *ngIf="showUpdateModal" class="modal-overlay" (click)="closeUpdateModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="modal-header-bar">
+      <div class="modal-header-icon">
+        <i class="fas fa-pen"></i>
       </div>
-
-      <!-- BODY : fond gris très clair, texte presque noir -->
-      <div class="modal-body p-4 bg-light-gray text-dark">
-
-        <form #updateForm="ngForm" (ngSubmit)="confirmUpdate()" class="needs-validation" novalidate>
-
-          <!-- Titre -->
-          <div class="mb-4">
-            <label class="form-label fw-semibold text-dark-red">
-              <i class="fas fa-heading me-1"></i>Titre
-            </label>
-            <input type="text"
-                   class="form-control form-control-lg bg-black-soft text-white border-dark-red"
-                   [class.is-invalid]="titre.invalid && (titre.dirty || titre.touched)"
-                   [(ngModel)]="selectedOffer.titre"
-                   name="titre"
-                   required
-                   minlength="3"
-                   #titre="ngModel"
-                   placeholder="Ex: Appartement lumineux centre-ville">
-            <div *ngIf="titre.invalid && (titre.dirty || titre.touched)" class="invalid-feedback d-block text-danger">
-              <span *ngIf="titre.errors?.['required']">Le titre est requis.</span>
-              <span *ngIf="titre.errors?.['minlength']">Minimum 3 caractères.</span>
-            </div>
-          </div>
-
-          <!-- Ligne Ville / Prix -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold text-dark-red">
-                <i class="fas fa-city me-1"></i>Ville
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-black-soft text-white border-dark-red"><i class="fas fa-map-marker-alt"></i></span>
-                <input type="text"
-                       class="form-control bg-black-soft text-white border-dark-red"
-                       [class.is-invalid]="ville.invalid && (ville.dirty || ville.touched)"
-                       [(ngModel)]="selectedOffer.ville"
-                       name="ville"
-                       required
-                       #ville="ngModel"
-                       placeholder="Paris">
-              </div>
-              <div *ngIf="ville.invalid && (ville.dirty || ville.touched)" class="invalid-feedback d-block text-danger">
-                La ville est requise.
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold text-dark-red">
-                <i class="fas fa-euro-sign me-1"></i>Prix mensuel (dt)
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-black-soft text-white border-dark-red"><i class="fas fa-money-bill"></i></span>
-                <input type="number"
-                       class="form-control bg-black-soft text-white border-dark-red"
-                       [class.is-invalid]="prix.invalid && (prix.dirty || prix.touched)"
-                       [(ngModel)]="selectedOffer.prixLoc"
-                       name="prixLoc"
-                       required
-                       min="0"
-                       #prix="ngModel"
-                       placeholder="750">
-                <span class="input-group-text bg-black-soft text-white border-dark-red">/mois</span>
-              </div>
-              <div *ngIf="prix.invalid && (prix.dirty || prix.touched)" class="invalid-feedback d-block text-danger">
-                <span *ngIf="prix.errors?.['required']">Le prix est requis.</span>
-                <span *ngIf="prix.errors?.['min']">Le prix doit être positif.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ligne Chambres / Meublé -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold text-dark-red">
-                <i class="fas fa-bed me-1"></i>Chambres
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-black-soft text-white border-dark-red"><i class="fas fa-bed"></i></span>
-                <input type="number"
-                       class="form-control bg-black-soft text-white border-dark-red"
-                       [class.is-invalid]="chambres.invalid && (chambres.dirty || chambres.touched)"
-                       [(ngModel)]="selectedOffer.chambres"
-                       name="chambres"
-                       required
-                       min="1"
-                       #chambres="ngModel"
-                       placeholder="2">
-              </div>
-              <div *ngIf="chambres.invalid && (chambres.dirty || chambres.touched)" class="invalid-feedback d-block text-danger">
-                <span *ngIf="chambres.errors?.['required']">Nombre de chambres requis.</span>
-                <span *ngIf="chambres.errors?.['min']">Au moins 1 chambre.</span>
-              </div>
-            </div>
-            <div class="col-md-6 d-flex align-items-end">
-              <div class="form-check form-switch mb-3">
-                <input class="form-check-input"
-                       type="checkbox"
-                       role="switch"
-                       [(ngModel)]="selectedOffer.meublee"
-                       name="meublee"
-                       id="meubleeSwitch"
-                       style="background-color: #8B0000; border-color: #8B0000;">
-                <label class="form-check-label fw-semibold text-dark-red" for="meubleeSwitch">
-                  <i class="fas fa-couch me-1"></i>Meublé
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div class="mb-4">
-            <label class="form-label fw-semibold text-dark-red">
-              <i class="fas fa-align-left me-1"></i>Description
-            </label>
-            <textarea class="form-control bg-black-soft text-white border-dark-red"
-                      rows="4"
-                      [class.is-invalid]="description.invalid && (description.dirty || description.touched)"
-                      [(ngModel)]="selectedOffer.description"
-                      name="description"
-                      required
-                      minlength="10"
-                      #description="ngModel"
-                      placeholder="Décrivez votre bien..."></textarea>
-            <div *ngIf="description.invalid && (description.dirty || description.touched)" class="invalid-feedback d-block text-danger">
-              <span *ngIf="description.errors?.['required']">La description est requise.</span>
-              <span *ngIf="description.errors?.['minlength']">Minimum 10 caractères.</span>
-            </div>
-          </div>
-
-          <!-- FOOTER -->
-          <div class="d-flex justify-content-end gap-2 border-0 pt-3">
-            <button type="button"
-                    class="btn btn-outline-dark-red px-4"
-                    (click)="closeUpdateModal()">
-              <i class="fas fa-times me-2"></i>Annuler
-            </button>
-            <button type="submit"
-                    class="btn btn-dark-red px-4"
-                    [disabled]="updateForm.invalid || isUpdating">
-              <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              <i *ngIf="!isUpdating" class="fas fa-save me-2"></i>
-              {{ isUpdating ? 'Enregistrement...' : 'Enregistrer' }}
-            </button>
-          </div>
-
-        </form>
+      <div>
+        <h4 class="modal-title mb-0">Modifier l'annonce</h4>
+        <p class="modal-subtitle">Mettez à jour les informations de votre offre</p>
       </div>
+      <button class="modal-close-btn modal-close-btn--inline" (click)="closeUpdateModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
 
+    <!-- Modal Body -->
+    <div class="modal-body-scroll">
+      <form [formGroup]="updateForm" (ngSubmit)="confirmUpdate()">
+
+        <!-- Titre -->
+        <div class="form-field">
+          <label class="field-label">
+            <i class="fas fa-tag field-icon"></i>
+            Titre de l'annonce
+          </label>
+          <input type="text" class="field-input" formControlName="titre"
+                 placeholder="Ex : Appartement lumineux centre-ville"
+                 [class.field-error]="updateForm.get('titre')?.invalid && updateForm.get('titre')?.touched">
+          <span *ngIf="updateForm.get('titre')?.invalid && updateForm.get('titre')?.touched" class="error-msg">
+            Le titre est requis (min. 3 caractères).
+          </span>
+        </div>
+
+        <div class="form-row">
+          <!-- Ville -->
+          <div class="form-field">
+            <label class="field-label">
+              <i class="fas fa-map-marker-alt field-icon"></i>
+              Ville
+            </label>
+            <input type="text" class="field-input" formControlName="ville" placeholder="Tunis"
+                   [class.field-error]="updateForm.get('ville')?.invalid && updateForm.get('ville')?.touched">
+            <span *ngIf="updateForm.get('ville')?.invalid && updateForm.get('ville')?.touched" class="error-msg">
+              La ville est requise.
+            </span>
+          </div>
+
+          <!-- Prix -->
+          <div class="form-field">
+            <label class="field-label">
+              <i class="fas fa-money-bill-wave field-icon"></i>
+              Prix mensuel (TND)
+            </label>
+            <div class="field-input-wrap">
+              <input type="number" class="field-input field-input--suffix" formControlName="prixLoc" placeholder="750"
+                     [class.field-error]="updateForm.get('prixLoc')?.invalid && updateForm.get('prixLoc')?.touched">
+              <span class="field-suffix">/mois</span>
+            </div>
+            <span *ngIf="updateForm.get('prixLoc')?.invalid && updateForm.get('prixLoc')?.touched" class="error-msg">
+              Un prix valide est requis.
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Chambres -->
+          <div class="form-field">
+            <label class="field-label">
+              <i class="fas fa-bed field-icon"></i>
+              Chambres disponibles
+            </label>
+            <input type="number" class="field-input" formControlName="chambres" placeholder="2"
+                   [class.field-error]="updateForm.get('chambres')?.invalid && updateForm.get('chambres')?.touched">
+            <span *ngIf="updateForm.get('chambres')?.invalid && updateForm.get('chambres')?.touched" class="error-msg">
+              Le nombre de chambres est requis.
+            </span>
+          </div>
+
+          <!-- Meublé Toggle -->
+          <div class="form-field form-field--centered">
+            <label class="field-label">
+              <i class="fas fa-couch field-icon"></i>
+              Meublé
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="meublee">
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span class="toggle-label">
+                {{ updateForm.get('meublee')?.value ? 'Logement Meublé' : 'Non Meublé' }}
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-field">
+          <label class="field-label">
+            <i class="fas fa-align-left field-icon"></i>
+            Description
+          </label>
+          <textarea class="field-input field-textarea" formControlName="description" rows="4"
+                    placeholder="Décrivez votre bien, les commodités, la localisation..."
+                    [class.field-error]="updateForm.get('description')?.invalid && updateForm.get('description')?.touched">
+          </textarea>
+          <span *ngIf="updateForm.get('description')?.invalid && updateForm.get('description')?.touched" class="error-msg">
+            La description est requise (min. 10 caractères).
+          </span>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer-bar">
+      <button class="modal-btn modal-btn--ghost" (click)="closeUpdateModal()">Annuler</button>
+      <button class="modal-btn modal-btn--primary" (click)="confirmUpdate()"
+              [disabled]="updateForm.invalid || isUpdating">
+        <span *ngIf="isUpdating"><i class="fas fa-circle-notch fa-spin me-2"></i>Enregistrement...</span>
+        <span *ngIf="!isUpdating"><i class="fas fa-save me-2"></i>Enregistrer</span>
+      </button>
     </div>
   </div>
 </div>

@@ -13,6 +13,7 @@ import { EventService } from '../../services/event.service';
 import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
+import { UserService } from '../../../user-security/services/user.service';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -80,11 +81,13 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
     private readonly ratingService: EventRatingService,
-    private readonly participantService: ParticipantService
+    private readonly participantService: ParticipantService,
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {
     this.bootstrapUserContext();
+    this.loadCurrentUserPhone();
 
     const rawId = this.route.snapshot.paramMap.get('id');
     const id = rawId ? Number(rawId) : NaN;
@@ -251,6 +254,8 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const eventId = this.eventId;
+
     const normalizedPhone = this.currentUserPhone?.trim();
     const phoneAlreadyUsed = normalizedPhone
       ? this.participants.some(p => p.phone?.trim() === normalizedPhone)
@@ -261,17 +266,12 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!normalizedPhone) {
-      this.participationErrorMessage = 'Please add a phone number to your profile before participating.';
-      return;
-    }
-
     this.isParticipating = true;
     this.participantService.add({
       fullName: this.currentUserName || 'User',
       email: this.currentUserEmail,
-      phone: normalizedPhone,
-      eventId: this.eventId
+      phone: normalizedPhone || undefined,
+      eventId
     }).pipe(
       map(() => true),
       catchError(err => {
@@ -777,6 +777,14 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     const email = user?.email?.trim() || this.readEmailFromTokenPayload(tokenPayload);
     this.currentUserPhone = user?.phone?.trim() || '';
     this.currentUserEmail = email || '';
+
+    if (!this.currentUserPhone && this.currentUserId) {
+      this.userService.getProfileByUserId(this.currentUserId).subscribe((profile: any) => {
+        if (profile?.phone?.trim()) {
+          this.currentUserPhone = profile.phone.trim();
+        }
+      });
+    }
   }
 
   private parseEventDate(value?: string | null): Date | null {
@@ -828,6 +836,18 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const tokenEmail = payload['email'] || payload['mail'] || payload['username'] || payload['sub'];
     return typeof tokenEmail === 'string' ? tokenEmail.trim().toLowerCase() : '';
+  }
+
+  private loadCurrentUserPhone(): void {
+    if (!this.currentUserId) {
+      return;
+    }
+
+    this.userService.getProfileByUserId(this.currentUserId).subscribe((profile: any) => {
+      if (profile?.phone?.trim()) {
+        this.currentUserPhone = profile.phone.trim();
+      }
+    });
   }
 
   private startCountdown(): void {
