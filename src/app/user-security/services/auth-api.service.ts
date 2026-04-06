@@ -157,6 +157,17 @@ export class AuthApiService {
     return { session: buildAuthSessionFromApiResponse(response, rememberMe, '') };
   }
 
+  /** LOGOUT HTTP SESSION (server-side) */
+  async logoutSession(): Promise<void> {
+    await firstValueFrom(
+      this.http.post<void>(
+        joinUrl(environment.apiBaseUrl, '/auth/logout-session'),
+        {},
+        { withCredentials: environment.auth.withCredentials }
+      )
+    );
+  }
+
   /** EXTRACT ERROR MESSAGE */
   extractErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof HttpErrorResponse) {

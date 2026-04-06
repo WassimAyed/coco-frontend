@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
-import { LostItem } from '../../models/lost-item.model';
+import { ItemClaimResponse, LostItem } from '../../models/lost-item.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
     selector: 'app-lost-details',
     standalone: true,
-    imports: [CommonModule, RouterModule],
+    imports: [CommonModule, RouterModule, FormsModule],
     template: `
     <div class="details-container" *ngIf="item">
       <div class="details-wrapper">
@@ -55,9 +57,55 @@ import { LostItem } from '../../models/lost-item.model';
                 <i class="bi bi-person-lines-fill"></i>
                 <span>{{ item.contactInfo }}</span>
               </div>
-              <button class="btn-contact">
-                Contact now
-              </button>
+              <div class="status-banner" *ngIf="showApprovedBadge()">
+                <span class="status-badge approved">Claim approved • Item found</span>
+              </div>
+
+              <div class="actions-grid" *ngIf="!item.isOwner && !showApprovedBadge()">
+                <button class="btn-contact" [disabled]="!canCreateClaim()" (click)="toggleClaimForm()">Claim this item</button>
+                <button class="btn-report" (click)="toggleReportForm()">Report this listing</button>
+              </div>
+
+              <div class="claim-state" *ngIf="!item.isOwner && myClaimStatus && !showApprovedBadge()">
+                <span class="claim-badge" [class.pending]="myClaimStatus === 'PENDING'">Your request: {{ myClaimStatus }}</span>
+              </div>
+
+              <div class="inline-form" *ngIf="showClaimForm && !item.isOwner && canCreateClaim() && !showApprovedBadge()">
+                <label>Proof message</label>
+                <textarea [(ngModel)]="claimMessage" rows="3" placeholder="Describe proof of ownership..."></textarea>
+                <button class="btn-contact" (click)="submitClaim(item.id)">Submit claim</button>
+              </div>
+
+              <div class="inline-form" *ngIf="showReportForm && !item.isOwner && !showApprovedBadge()">
+                <label>Reason</label>
+                <input [(ngModel)]="reportReason" placeholder="Spam, scam, inappropriate...">
+                <label>Details</label>
+                <textarea [(ngModel)]="reportDetails" rows="3" placeholder="Additional context"></textarea>
+                <button class="btn-report" (click)="submitReport(item.id)">Submit report</button>
+              </div>
+
+              <p class="status-msg" *ngIf="actionMessage">{{ actionMessage }}</p>
+            </div>
+
+            <div class="owner-claims" *ngIf="item.isOwner">
+              <div class="owner-claims-head">
+                <h3>Claim requests</h3>
+                <button class="btn-refresh" (click)="loadOwnerClaims(item.id)">Refresh</button>
+              </div>
+
+              <div *ngIf="ownerClaims.length === 0" class="owner-empty">No claim requests yet.</div>
+
+              <div class="owner-claim-row" *ngFor="let claim of ownerClaims">
+                <div>
+                  <strong>{{ getUserDisplayName(claim.claimantUserId) }}</strong>
+                  <p>{{ claim.proofMessage }}</p>
+                </div>
+                <div class="owner-claim-actions">
+                  <span class="claim-badge" [class.pending]="claim.status === 'PENDING'">{{ claim.status }}</span>
+                  <button class="btn-approve" *ngIf="claim.status === 'PENDING'" (click)="approveClaim(claim.id, item.id)">Approve</button>
+                  <button class="btn-reject" *ngIf="claim.status === 'PENDING'" (click)="rejectClaim(claim.id, item.id)">Reject</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -103,9 +151,34 @@ import { LostItem } from '../../models/lost-item.model';
     .contact-card { margin-top: 2.5rem; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 2rem; border-radius: 20px; color: white; }
     .contact-card h3 { color: #f8fafc; margin-bottom: 1.5rem; font-size: 1.2rem; }
     .contact-info { display: flex; align-items: center; gap: 1rem; font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; }
+    .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
     
     .btn-contact { width: 100%; background: white; color: #1e293b; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
     .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+    .btn-report { width: 100%; background: #fecaca; color: #7f1d1d; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; }
+    .inline-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.8rem; }
+    .inline-form label { font-size: 0.85rem; font-weight: 700; color: #cbd5e1; }
+    .inline-form textarea, .inline-form input { border-radius: 10px; border: 1px solid rgba(255,255,255,0.3); padding: 0.65rem 0.8rem; background: rgba(255,255,255,0.08); color: white; }
+    .inline-form textarea::placeholder, .inline-form input::placeholder { color: #cbd5e1; }
+    .status-msg { margin-top: 0.8rem; font-size: 0.9rem; color: #bfdbfe; }
+    .status-banner { margin-bottom: 1rem; }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.2px; }
+    .status-badge.approved { background: #dcfce7; color: #166534; }
+    .claim-state { margin-bottom: 0.8rem; }
+
+    .owner-claims { margin-top: 1.25rem; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; background: #f8fafc; }
+    .owner-claims-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+    .owner-claims-head h3 { margin: 0; font-size: 1.05rem; color: #0f172a; }
+    .btn-refresh { border: 1px solid #cbd5e1; background: white; color: #334155; border-radius: 8px; padding: 0.4rem 0.7rem; font-weight: 600; cursor: pointer; }
+    .owner-empty { color: #64748b; font-size: 0.9rem; }
+    .owner-claim-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; border-top: 1px solid #e2e8f0; padding: 0.7rem 0; }
+    .owner-claim-row p { margin: 0.2rem 0 0; color: #475569; font-size: 0.92rem; }
+    .owner-claim-actions { display: flex; align-items: center; gap: 0.45rem; }
+    .claim-badge { background: #e2e8f0; color: #0f172a; border-radius: 999px; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+    .claim-badge.pending { background: #fef3c7; color: #92400e; }
+    .btn-approve, .btn-reject { border: none; border-radius: 8px; padding: 0.4rem 0.7rem; font-weight: 700; cursor: pointer; }
+    .btn-approve { background: #dcfce7; color: #166534; }
+    .btn-reject { background: #fee2e2; color: #991b1b; }
     
     .loading-state { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; }
     .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -119,7 +192,16 @@ import { LostItem } from '../../models/lost-item.model';
   `]
 })
 export class LostDetailsComponent implements OnInit {
-    item: LostItem | null = null;
+  item: LostItem | null = null;
+  showClaimForm = false;
+  showReportForm = false;
+  claimMessage = '';
+  reportReason = '';
+  reportDetails = '';
+  actionMessage = '';
+  ownerClaims: ItemClaimResponse[] = [];
+  myClaimStatus: ItemClaimResponse['status'] | null = null;
+  userNames: Record<number, string> = {};
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
     FOUND: this.buildFallbackImage('FOUND', '#10b981')
@@ -128,6 +210,7 @@ export class LostDetailsComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private lostService: LostAndFoundService,
+        private userService: UserService,
         private router: Router
     ) { }
 
@@ -135,10 +218,55 @@ export class LostDetailsComponent implements OnInit {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.lostService.getItemById(Number(id)).subscribe({
-                next: (data) => this.item = data,
+                next: (data) => {
+                  this.item = data;
+                  if (data?.isOwner && data?.id) {
+                    this.loadOwnerClaims(data.id);
+                  } else if (data?.id) {
+                    this.loadMyClaimStatus(data.id);
+                  }
+                },
                 error: () => this.router.navigate(['/lost-found'])
             });
         }
+    }
+
+    loadOwnerClaims(itemId: number): void {
+      this.lostService.getClaimsForMyItem(itemId).subscribe({
+        next: (claims) => {
+          this.ownerClaims = claims || [];
+          this.resolveClaimantNames(this.ownerClaims);
+        },
+        error: (err) => {
+          this.actionMessage = err?.error?.message || 'Unable to load claim requests.';
+        }
+      });
+    }
+
+    approveClaim(claimId: number, itemId: number): void {
+      const comment = window.prompt('Optional approval comment:') || '';
+      this.lostService.approveClaim(claimId, { comment }).subscribe({
+        next: () => {
+          this.actionMessage = 'Claim approved.';
+          this.loadOwnerClaims(itemId);
+        },
+        error: (err) => {
+          this.actionMessage = err?.error?.message || 'Unable to approve claim.';
+        }
+      });
+    }
+
+    rejectClaim(claimId: number, itemId: number): void {
+      const comment = window.prompt('Optional rejection comment:') || '';
+      this.lostService.rejectClaim(claimId, { comment }).subscribe({
+        next: () => {
+          this.actionMessage = 'Claim rejected.';
+          this.loadOwnerClaims(itemId);
+        },
+        error: (err) => {
+          this.actionMessage = err?.error?.message || 'Unable to reject claim.';
+        }
+      });
     }
 
     getFallbackByType(type: 'LOST' | 'FOUND'): string {
@@ -151,6 +279,144 @@ export class LostDetailsComponent implements OnInit {
 
         img.src = this.getFallbackByType(type);
         img.classList.add('fallback-mode');
+    }
+
+    toggleClaimForm(): void {
+      this.showClaimForm = !this.showClaimForm;
+      if (this.showClaimForm) {
+        this.showReportForm = false;
+      }
+    }
+
+    toggleReportForm(): void {
+      this.showReportForm = !this.showReportForm;
+      if (this.showReportForm) {
+        this.showClaimForm = false;
+      }
+    }
+
+    submitClaim(itemId: number): void {
+      if (!this.canCreateClaim()) {
+        this.actionMessage = this.getClaimDisabledReason();
+        return;
+      }
+
+      if (!this.claimMessage.trim()) {
+        this.actionMessage = 'Please provide a proof message.';
+        return;
+      }
+
+      this.lostService.createClaim(itemId, { proofMessage: this.claimMessage.trim() }).subscribe({
+        next: () => {
+          this.actionMessage = 'Claim submitted successfully.';
+          this.claimMessage = '';
+          this.showClaimForm = false;
+          this.loadMyClaimStatus(itemId);
+        },
+        error: (err) => {
+          this.actionMessage = err?.error?.message || 'Unable to submit claim.';
+        }
+      });
+    }
+
+    submitReport(itemId: number): void {
+      if (!this.reportReason.trim()) {
+        this.actionMessage = 'Please provide a reason for report.';
+        return;
+      }
+
+      this.lostService.createReport(itemId, {
+        reason: this.reportReason.trim(),
+        details: this.reportDetails?.trim() || undefined
+      }).subscribe({
+        next: () => {
+          this.actionMessage = 'Report submitted. Thank you.';
+          this.reportReason = '';
+          this.reportDetails = '';
+          this.showReportForm = false;
+        },
+        error: (err) => {
+          this.actionMessage = err?.error?.message || 'Unable to submit report.';
+        }
+      });
+    }
+
+    private loadMyClaimStatus(itemId: number): void {
+      this.lostService.getMyClaims().subscribe({
+        next: (claims) => {
+          const itemClaims = (claims || []).filter(c => c.itemId === itemId);
+          if (itemClaims.length === 0) {
+            this.myClaimStatus = null;
+            return;
+          }
+
+          const priority: Record<ItemClaimResponse['status'], number> = {
+            APPROVED: 4,
+            PENDING: 3,
+            REJECTED: 2,
+            CANCELED: 1
+          };
+
+          const top = itemClaims.sort((a, b) => priority[b.status] - priority[a.status])[0];
+          this.myClaimStatus = top?.status || null;
+        },
+        error: () => {
+          this.myClaimStatus = null;
+        }
+      });
+    }
+
+    canCreateClaim(): boolean {
+      if (!this.item || this.item.isOwner) {
+        return false;
+      }
+      if (this.item.status !== 'ACTIVE') {
+        return false;
+      }
+      return this.myClaimStatus !== 'APPROVED' && this.myClaimStatus !== 'PENDING';
+    }
+
+    showApprovedBadge(): boolean {
+      return !this.item?.isOwner && (this.myClaimStatus === 'APPROVED' || this.item?.status === 'RESOLVED');
+    }
+
+    private getClaimDisabledReason(): string {
+      if (!this.item) {
+        return 'Item not loaded.';
+      }
+      if (this.item.status !== 'ACTIVE') {
+        return 'This item is not active anymore.';
+      }
+      if (this.myClaimStatus === 'APPROVED') {
+        return 'Your request is already approved.';
+      }
+      if (this.myClaimStatus === 'PENDING') {
+        return 'You already have a pending request for this item.';
+      }
+      return 'You cannot submit a new request.';
+    }
+
+    private resolveClaimantNames(claims: ItemClaimResponse[]): void {
+      const ids = Array.from(new Set((claims || []).map(c => c.claimantUserId).filter(Boolean)));
+      ids.forEach((id) => {
+        if (this.userNames[id]) {
+          return;
+        }
+        this.userService.getProfileByUserId(id).subscribe((profile) => {
+          if (profile) {
+            const first = profile.firstName || profile.username || '';
+            const last = profile.lastName || profile.lastname || '';
+            const full = `${first} ${last}`.trim();
+            this.userNames[id] = full || profile.email || `User ${id}`;
+          } else {
+            this.userNames[id] = `User ${id}`;
+          }
+        });
+      });
+    }
+
+    getUserDisplayName(userId: number): string {
+      return this.userNames[userId] || `User ${userId}`;
     }
 
     private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {

@@ -20,6 +20,10 @@ import { LostItem } from '../../models/lost-item.model';
               <i class="bi bi-plus-circle"></i>
               Post a listing
             </button>
+            <button class="btn-secondary-header" routerLink="my-actions">
+              <i class="bi bi-collection"></i>
+              Claims & reports
+            </button>
           </div>
         </div>
       </header>
@@ -28,12 +32,36 @@ import { LostItem } from '../../models/lost-item.model';
         <aside class="filters-sidebar">
           <h3>Filters</h3>
           <div class="filter-group">
+            <label>Keyword</label>
+            <input class="form-input" type="text" [(ngModel)]="keyword" placeholder="title, description...">
+          </div>
+          <div class="filter-group">
             <label>Type</label>
-            <select class="form-select" [(ngModel)]="selectedType" (change)="applyFilter()">
+            <select class="form-select" [(ngModel)]="selectedType">
               <option value="ALL">All</option>
               <option value="LOST">Lost</option>
               <option value="FOUND">Found</option>
             </select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="ALL">All</option>
+              <option value="ACTIVE">Active</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Category</label>
+            <input class="form-input" type="text" [(ngModel)]="category" placeholder="electronics, keys...">
+          </div>
+          <div class="filter-group">
+            <label>Location</label>
+            <input class="form-input" type="text" [(ngModel)]="location" placeholder="campus, library...">
+          </div>
+          <div class="filter-actions">
+            <button class="btn-primary filter-btn" (click)="runAdvancedSearch()">Search</button>
+            <button class="btn-secondary filter-btn" (click)="resetFilters()">Reset</button>
           </div>
         </aside>
 
@@ -76,6 +104,12 @@ import { LostItem } from '../../models/lost-item.model';
     .content-wrapper { max-width: 1400px; margin: -2rem auto 2rem; padding: 0 2rem; display: grid; grid-template-columns: 280px 1fr; gap: 2rem; }
     
     .filters-sidebar { background: white; padding: 1.5rem; border-radius: 20px; border: 1px solid #e2e8f0; height: fit-content; position: sticky; top: 2rem; }
+    .filter-group { margin-bottom: 0.9rem; }
+    .filter-group label { display: block; font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 0.35rem; }
+    .form-select, .form-input { width: 100%; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0.55rem 0.65rem; }
+    .filter-actions { display: flex; gap: 0.55rem; margin-top: 0.8rem; }
+    .filter-btn { margin: 0 !important; width: 100%; justify-content: center; }
+    .btn-secondary { background: #e2e8f0; color: #1e293b; padding: 0.8rem 1.1rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
     
     .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     
@@ -100,12 +134,18 @@ import { LostItem } from '../../models/lost-item.model';
     
     .btn-primary { background: #1e293b; color: white; padding: 0.8rem 2rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin: 2rem auto 0; transition: all 0.3s; }
     .btn-primary:hover { background: #334155; transform: scale(1.05); }
+    .header-actions { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+    .btn-secondary-header { background: #e2e8f0; color: #1e293b; padding: 0.8rem 1.2rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.45rem; margin-top: 2rem; }
   `]
 })
 export class LostListComponent implements OnInit {
   items: LostItem[] = [];
   filteredItems: LostItem[] = [];
   selectedType: string = 'ALL';
+  selectedStatus: string = 'ALL';
+  keyword = '';
+  category = '';
+  location = '';
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
     FOUND: this.buildFallbackImage('FOUND', '#10b981')
@@ -114,6 +154,10 @@ export class LostListComponent implements OnInit {
   constructor(private lostService: LostAndFoundService) { }
 
   ngOnInit(): void {
+    this.loadItems();
+  }
+
+  loadItems(): void {
     this.lostService.getAllItems().subscribe((data) => {
       const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
 
@@ -123,12 +167,37 @@ export class LostListComponent implements OnInit {
     });
   }
 
-  applyFilter(): void {
-    if (this.selectedType === 'ALL') {
-      this.filteredItems = this.items;
-    } else {
-      this.filteredItems = this.items.filter(item => item.type === this.selectedType);
-    }
+  runAdvancedSearch(): void {
+    const payload = {
+      keyword: this.keyword || undefined,
+      type: this.selectedType !== 'ALL' ? this.selectedType as 'LOST' | 'FOUND' : undefined,
+      status: this.selectedStatus !== 'ALL' ? this.selectedStatus as 'ACTIVE' | 'RESOLVED' : undefined,
+      category: this.category || undefined,
+      location: this.location || undefined,
+      page: 0,
+      size: 40,
+      sortBy: 'createdAt',
+      sortDir: 'desc' as const
+    };
+
+    this.lostService.advancedSearch(payload).subscribe({
+      next: (data) => {
+        const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
+        this.filteredItems = items;
+      },
+      error: () => {
+        window.alert('Unable to apply advanced filters.');
+      }
+    });
+  }
+
+  resetFilters(): void {
+    this.keyword = '';
+    this.category = '';
+    this.location = '';
+    this.selectedType = 'ALL';
+    this.selectedStatus = 'ALL';
+    this.loadItems();
   }
 
   getFallbackByType(type: 'LOST' | 'FOUND'): string {
