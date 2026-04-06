@@ -54,6 +54,22 @@
         Mes Objets (Lost & Found)
       </a>
 
+      <!-- Mes Événements -->
+      <a [routerLink]="myEventsRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
+        Mes Événements
+      </a>
+
+      <!-- Événements Participés -->
+      <a [routerLink]="participatedEventsRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
+        Événements Participés
+      </a>
+
 
 
       <button type="button"

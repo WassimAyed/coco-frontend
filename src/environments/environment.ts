@@ -1,5 +1,6 @@
 export const environment = {
   apiBaseUrl: 'http://localhost:8090/',
+  eventApiBaseUrl: 'http://localhost:8093/api/events',
   auth: {
     loginPath: '/auth/login',
     registerPath: '/auth/register',

@@ -24,6 +24,7 @@
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lucide": "^0.577.0",
     "lucide-angular": "^0.577.0",
+    "maplibre-gl": "^5.21.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "webgl-fluid": "^0.3.9",
