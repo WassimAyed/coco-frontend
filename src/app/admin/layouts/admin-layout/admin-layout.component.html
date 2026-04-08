@@ -259,6 +259,8 @@
 
         <p class="py-12 text-center text-slate-500">User management table would be displayed here...</p>
       </article>
+      } @else if (selectedModule() === 'events') {
+      <app-admin-events />
       } @else {
       <article class="rounded-2xl bg-white p-12 text-center">
         <div class="mx-auto max-w-md">

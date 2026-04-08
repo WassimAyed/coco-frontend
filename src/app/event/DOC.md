@@ -146,7 +146,7 @@ interface EventDto {
   fullAddress?: string;             // Auto-filled by Nominatim geocoding
   startDate?: string;               // ISO datetime, must be future
   endDate?: string;                 // ISO datetime, after startDate
-  status?: EventStatus;             // 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'ANNULE'
+  status?: EventStatus;             // 'PENDING' | 'ACCEPTED' | 'REFUSED'
   categoryId?: number;              // Foreign key to Category
   categoryName?: string;            // Denormalized category name
   userId?: number;                  // Event creator's user ID

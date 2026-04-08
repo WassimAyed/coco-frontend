@@ -749,17 +749,27 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getStatusBadgeClass(status?: string): string {
     switch ((status || '').toUpperCase()) {
-      case 'EN_COURS':
-      case 'ONGOING':
+      case 'PENDING':
         return 'status-badge status-ongoing';
-      case 'TERMINE':
-      case 'COMPLETED':
+      case 'ACCEPTED':
         return 'status-badge status-completed';
-      case 'ANNULE':
-      case 'CANCELLED':
+      case 'REFUSED':
         return 'status-badge status-cancelled';
       default:
         return 'status-badge status-planned';
+    }
+  }
+
+  getStatusLabel(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'En attente';
+      case 'ACCEPTED':
+        return 'Accepté';
+      case 'REFUSED':
+        return 'Refusé';
+      default:
+        return status || 'N/A';
     }
   }
 

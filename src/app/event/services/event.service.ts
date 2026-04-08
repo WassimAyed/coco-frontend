@@ -28,6 +28,12 @@ export class EventService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  updateStatus(id: number, status: EventStatus): Observable<EventDto> {
+    return this.http.patch<EventDto>(
+      `${this.baseUrl}/${id}/status?status=${status}`, {}
+    );
+  }
+
   getAll(query?: EventListQuery): Observable<EventDto[]> {
     return this.http.get<EventDto[]>(this.baseUrl, { params: this.toParams(query) });
   }

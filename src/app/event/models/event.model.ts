@@ -1,4 +1,4 @@
-export type EventStatus = 'PLANNED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | string;
+export type EventStatus = 'PENDING' | 'ACCEPTED' | 'REFUSED' | string;
 
 export interface EventDto {
 	id?: number;

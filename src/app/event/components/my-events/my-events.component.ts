@@ -59,7 +59,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     fullAddress: '',
     startDate: '',
     endDate: '',
-    status: 'EN_COURS',
+    status: 'PENDING',
     categoryId: 0,
     maxCapacity: 1,
     currentParticipants: 0
@@ -509,6 +509,40 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     return this.categories.find(category => category.id === categoryId)?.name || `#${categoryId}`;
   }
 
+  isAcceptedStatus(status?: string): boolean {
+    return String(status || '').toUpperCase() === 'ACCEPTED';
+  }
+
+  isRefusedStatus(status?: string): boolean {
+    return String(status || '').toUpperCase() === 'REFUSED';
+  }
+
+  getStatusBadgeClass(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'badge-yellow';
+      case 'ACCEPTED':
+        return 'badge-green';
+      case 'REFUSED':
+        return 'badge-red';
+      default:
+        return 'badge-blue';
+    }
+  }
+
+  getStatusLabel(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'En attente';
+      case 'ACCEPTED':
+        return 'Accepté';
+      case 'REFUSED':
+        return 'Refusé';
+      default:
+        return status || 'N/A';
+    }
+  }
+
   formatDate(value?: string): string {
     if (!value) {
       return 'N/A';
@@ -833,7 +867,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       fullAddress: '',
       startDate: '',
       endDate: '',
-      status: 'EN_COURS',
+      status: 'PENDING',
       categoryId: this.categories[0]?.id || 0,
       maxCapacity: 1,
       currentParticipants: 0

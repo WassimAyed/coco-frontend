@@ -48,13 +48,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     fullAddress: '',
     startDate: '',
     endDate: '',
-    status: 'EN_COURS',
+    status: 'PENDING',
     categoryId: 0,
     maxCapacity: 1,
     currentParticipants: 0
   };
 
-  readonly statuses: EventStatus[] = ['PLANIFIE', 'EN_COURS', 'TERMINE', 'ANNULE'];
+  readonly statuses: EventStatus[] = ['PENDING', 'ACCEPTED', 'REFUSED'];
 
   constructor(
     private readonly eventService: EventService,
@@ -155,8 +155,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.getAll().subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -179,8 +179,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.searchByName(name).subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -202,8 +202,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.getByStatus(this.selectedStatus).subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -232,8 +232,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.getByCategory(categoryId).subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -258,8 +258,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       endDate: `${this.dateEnd}T23:59:59`
     }).subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -285,8 +285,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       radiusKm: this.nearbyRadiusKm
     }).subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -303,8 +303,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.eventService.getAvailable().subscribe({
       next: events => {
-        this.events = events;
-        this.hydrateEventImages(events);
+        this.events = this.toPublicEvents(events);
+        this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
       error: () => {
@@ -336,7 +336,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       fullAddress: '',
       startDate: '',
       endDate: '',
-      status: 'EN_COURS',
+      status: 'PENDING',
       categoryId: this.categories[0]?.id || 0,
       userId: this.currentUserId || undefined,
       maxCapacity: 1,
@@ -582,17 +582,27 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getStatusBadgeClass(status?: string): string {
     switch ((status || '').toUpperCase()) {
-      case 'EN_COURS':
-      case 'ONGOING':
+      case 'PENDING':
         return 'status-badge status-ongoing';
-      case 'TERMINE':
-      case 'COMPLETED':
+      case 'ACCEPTED':
         return 'status-badge status-completed';
-      case 'ANNULE':
-      case 'CANCELLED':
+      case 'REFUSED':
         return 'status-badge status-cancelled';
       default:
         return 'status-badge status-planned';
+    }
+  }
+
+  getStatusLabel(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'En attente';
+      case 'ACCEPTED':
+        return 'Accepté';
+      case 'REFUSED':
+        return 'Refusé';
+      default:
+        return status || 'N/A';
     }
   }
 
@@ -643,5 +653,9 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return forkJoin(uploads).pipe(map(() => void 0));
+  }
+
+  private toPublicEvents(events: EventDto[]): EventDto[] {
+    return (events || []).filter(event => String(event.status || '').toUpperCase() === 'ACCEPTED');
   }
 }
