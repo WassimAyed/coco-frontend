@@ -258,8 +258,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     return this.userService.getProfileByUserId(Number(currentUserId)).pipe(
       switchMap(currentUserProfile => {
         if (!currentUserProfile) {
-           console.warn('[AI Match] Current user profile not found.');
-           return of([]);
+          console.warn('[AI Match] Current user profile not found.');
+          return of([]);
         }
 
         const publisherIds = currentOffers
@@ -268,8 +268,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
         const uniqueIds = [...new Set(publisherIds)];
         if (uniqueIds.length === 0) {
-            console.log('[AI Match] No other publishers to match with.');
-            return of([]);
+          console.log('[AI Match] No other publishers to match with.');
+          return of([]);
         }
 
         const profileRequests = uniqueIds.map(id =>
@@ -308,8 +308,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
   private applyScoresAndSort(scores: any[]) {
     if (!scores || scores.length === 0) {
-        console.warn('[AI Match] No scores to apply.');
-        return;
+      console.warn('[AI Match] No scores to apply.');
+      return;
     }
 
     const scoreMap = new Map<number, number>(
@@ -375,7 +375,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     });
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();
@@ -387,13 +387,13 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.filteredOffers = !term
       ? this.offers
       : this.offers.filter(o =>
-          o.titre.toLowerCase().includes(term) ||
-          o.description.toLowerCase().includes(term) ||
-          o.ville.toLowerCase().includes(term)
-        );
+        o.titre.toLowerCase().includes(term) ||
+        o.description.toLowerCase().includes(term) ||
+        o.ville.toLowerCase().includes(term)
+      );
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();
@@ -498,7 +498,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     });
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();
