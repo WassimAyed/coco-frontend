@@ -54,6 +54,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     name: '',
     description: '',
     location: '',
+    price: undefined,
     latitude: undefined,
     longitude: undefined,
     fullAddress: '',
@@ -156,6 +157,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     const location = this.cleanString(this.createModel.location) || '';
     const description = this.cleanString(this.createModel.description);
     const fullAddress = this.cleanString(this.createModel.fullAddress);
+    const price = this.toOptionalNumber(this.createModel.price);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
     const currentUserId = this.ownershipService.getCurrentUserId();
@@ -183,7 +185,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       categoryId: Number(this.createModel.categoryId),
       userId: currentUserId,
       maxCapacity: Number(this.createModel.maxCapacity),
-      currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants)
+      currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants),
+      price
     };
 
     this.eventService.create(payload).subscribe({
@@ -260,7 +263,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       status: event.status,
       categoryId: event.categoryId,
       maxCapacity: event.maxCapacity ?? event.capacity,
-      currentParticipants: event.currentParticipants ?? event.occupiedPlaces
+      currentParticipants: event.currentParticipants ?? event.occupiedPlaces,
+      price: event.price
     };
 
     if (event.latitude !== undefined && event.longitude !== undefined) {
@@ -385,7 +389,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       longitude: this.toOptionalNumber(this.editModel.longitude),
       categoryId: this.toOptionalNumber(this.editModel.categoryId),
       maxCapacity: this.toOptionalNumber(this.editModel.maxCapacity),
-      currentParticipants: this.toOptionalNumber(this.editModel.currentParticipants)
+      currentParticipants: this.toOptionalNumber(this.editModel.currentParticipants),
+      price: this.toOptionalNumber(this.editModel.price)
     };
 
     this.editFieldErrors = {};
@@ -862,6 +867,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: '',
       description: '',
       location: '',
+      price: undefined,
       latitude: undefined,
       longitude: undefined,
       fullAddress: '',

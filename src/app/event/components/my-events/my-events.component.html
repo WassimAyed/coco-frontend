@@ -131,6 +131,12 @@
           <p *ngIf="createFieldErrors['maxCapacity']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['maxCapacity'] }}</p>
         </div>
 
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Price (TND)</label>
+          <input class="form-input" type="number" min="0" step="0.01" placeholder="Price" [(ngModel)]="createModel.price" />
+          <p *ngIf="createFieldErrors['price']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['price'] }}</p>
+        </div>
+
         <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
           <p class="text-sm font-medium text-slate-700">Main Image</p>
           <input class="form-input mt-2" type="file" accept="image/*" (change)="onMainImageSelected($event)" />
@@ -228,6 +234,12 @@
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Max Capacity</label>
           <input class="form-input" type="number" min="1" placeholder="Max capacity" [(ngModel)]="editModel.maxCapacity" />
           <p *ngIf="editFieldErrors['maxCapacity']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['maxCapacity'] }}</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Price (TND)</label>
+          <input class="form-input" type="number" min="0" step="0.01" placeholder="Price" [(ngModel)]="editModel.price" />
+          <p *ngIf="editFieldErrors['price']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['price'] }}</p>
         </div>
 
         <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">

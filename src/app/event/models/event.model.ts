@@ -5,9 +5,13 @@ export interface EventDto {
 	name?: string;
 	description?: string;
 	location?: string;
+	price?: number;
 	latitude?: number;
 	longitude?: number;
 	fullAddress?: string;
+	temperature?: number;
+	weatherCode?: number;
+	weatherLabel?: string;
 	startDate?: string;
 	endDate?: string;
 	status?: EventStatus;
@@ -39,6 +43,7 @@ export interface CreateEventRequest {
 	userId?: number;
 	maxCapacity: number;
 	currentParticipants?: number;
+	price?: number;
 }
 
 export interface UpdateEventRequest {
@@ -56,4 +61,5 @@ export interface UpdateEventRequest {
 	userId?: number;
 	maxCapacity?: number;
 	currentParticipants?: number;
+	price?: number;
 }
