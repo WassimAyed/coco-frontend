@@ -14,9 +14,12 @@
           <h1 class="profile-name">
             {{ profile.firstName }} {{ profile.lastName }}
           </h1>
-          <p class="profile-email">{{ profile.email }}</p>
-          <div class="badge-verified">
-            Profil Vérifié
+          <p class="mt-1 text-sm text-muted-foreground">{{ profile.email }}</p>
+          <p class="mt-1 text-sm text-muted-foreground">{{ profile.phone || 'No phone set' }}</p>
+          <div
+            class="mt-4 inline-flex rounded-full border border-primary/15 bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
+          >
+            Verified student
           </div>
         </div>
 
@@ -127,6 +130,13 @@
                           </button>
                         </div>
                       </div>
+                    </div>
+                    <div>
+                      <label
+                        class="mb-2 block text-sm font-semibold text-secondary-foreground"
+                        >Phone</label
+                      >
+                      <input class="form-input" formControlName="phone" placeholder="+21612345678" />
                     </div>
                   </div>
 

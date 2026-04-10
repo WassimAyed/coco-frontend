@@ -1,1 +1,93 @@
-<p>event-list works!</p>
+<div class="min-h-screen bg-background">
+	<section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
+		<div class="section-shell space-y-8">
+			<div class="space-y-3">
+				<span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+					Event Service
+				</span>
+				<h1 class="text-3xl font-bold text-foreground sm:text-4xl">
+					All Events
+				</h1>
+				<p class="text-lg text-slate-500">
+					Explore upcoming events, join, and create your own.
+				</p>
+			</div>
+
+			<div class="grid gap-6 lg:grid-cols-1">
+				<article class="event-panel rounded-2xl border border-border bg-white p-6 shadow-sm">
+					<h2 class="mb-4 text-xl font-bold text-foreground">Quick Filters</h2>
+
+					<div class="space-y-3">
+						<div class="flex gap-2">
+							<input class="form-input" type="text" placeholder="Search by name" [(ngModel)]="searchTerm" (keyup.enter)="search()" />
+							<button type="button" class="btn-secondary" (click)="search()">Search</button>
+						</div>
+
+						<div class="flex gap-2">
+							<select class="form-input" [(ngModel)]="selectedStatus">
+								<option value="">Status</option>
+								<option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+							</select>
+							<button type="button" class="btn-secondary" (click)="filterByStatus()">Filter status</button>
+						</div>
+
+						<div class="flex gap-2">
+							<select class="form-input" [(ngModel)]="categoryFilterName">
+								<option value="">Category (name)</option>
+								<option *ngFor="let category of categories" [value]="category.name">{{ category.name }}</option>
+							</select>
+							<button type="button" class="btn-secondary" (click)="filterByCategory()">Filter category</button>
+						</div>
+
+						<div class="grid gap-2 md:grid-cols-3">
+							<input class="form-input" type="date" [(ngModel)]="dateStart" />
+							<input class="form-input" type="date" [(ngModel)]="dateEnd" />
+							<button type="button" class="btn-secondary" (click)="filterByDateRange()">GET /date-range</button>
+						</div>
+
+						
+
+						<div class="flex flex-wrap gap-2">
+							<button type="button" class="btn-primary" (click)="loadAll()">All events</button>
+							<button type="button" class="btn-secondary" (click)="loadAvailable()">Available</button>
+							<button type="button" class="btn-secondary" (click)="resetFilters()">Reset</button>
+						</div>
+					</div>
+				</article>
+			</div>
+
+			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
+			<div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
+			<div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+
+			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				<article *ngFor="let event of events" class="event-card overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:shadow-md">
+					<div class="relative h-44 w-full">
+						<img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-full w-full object-cover" />
+						<div class="event-card-overlay"></div>
+						<span class="absolute left-3 top-3" [ngClass]="getStatusBadgeClass(event.status)">
+							{{ event.status || 'PLANNED' }}
+						</span>
+					</div>
+					<div class="p-5">
+						<h3 class="text-lg font-bold text-foreground">{{ event.name || 'Untitled event' }}</h3>
+						<p class="mt-2 line-clamp-2 text-sm text-slate-500">{{ event.description || 'No description.' }}</p>
+						<div class="mt-3 space-y-1 text-sm text-slate-600">
+							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
+							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
+							<p><strong>End:</strong> {{ formatDate(event.endDate) }}</p>
+							<p><strong>Available seats:</strong> {{ getAvailablePlaces(event) }}</p>
+						</div>
+						<div class="mt-4">
+							<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-primary !px-4 !py-2">View details</a>
+						</div>
+					</div>
+				</article>
+			</div>
+
+			<p *ngIf="!isLoading && events.length === 0" class="rounded-2xl border border-border bg-white p-4 text-slate-500">
+				No events found.
+			</p>
+		</div>
+	</section>
+</div>

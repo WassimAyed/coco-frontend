@@ -15,6 +15,7 @@ import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import { UserService } from './../../../user-security/services/user.service';
 import { MatchingService } from '../../../user-security/services/matchingColloc.service';
+import { VoiceSearchService } from '../../services/voice-search.service';
 
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
@@ -38,6 +39,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   searchTerm = '';
   loading = false;
   error = '';
+  isListening = false;
 
   /* ===============================
      MAP
@@ -91,6 +93,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private readonly userService = inject(UserService);
   private readonly matchingService = inject(MatchingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly voiceSearchService = inject(VoiceSearchService);
 
   readonly user = computed(() => this.userService.currentUser());
   currentUserId!: number;
@@ -171,6 +174,34 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
+
+    // Voice Search Subscriptions
+    this.voiceSearchService.setLanguage('fr-FR');
+
+    this.voiceSearchService.isListening$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(isListening => {
+      this.isListening = isListening;
+    });
+
+    this.voiceSearchService.text$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(text => {
+      this.searchTerm = text;
+      this.filterOffers();
+    });
+
+    this.voiceSearchService.error$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(errorCode => {
+      if (errorCode === 'not_supported') {
+        this.showToast('Recherche vocale non supportée par votre navigateur.');
+      } else if (errorCode === 'not-allowed') {
+        this.showToast('Accès au microphone refusé. Vérifiez vos permissions.');
+      } else {
+        this.showToast(`Erreur micro: ${errorCode}`);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -227,8 +258,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     return this.userService.getProfileByUserId(Number(currentUserId)).pipe(
       switchMap(currentUserProfile => {
         if (!currentUserProfile) {
-           console.warn('[AI Match] Current user profile not found.');
-           return of([]);
+          console.warn('[AI Match] Current user profile not found.');
+          return of([]);
         }
 
         const publisherIds = currentOffers
@@ -237,8 +268,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
         const uniqueIds = [...new Set(publisherIds)];
         if (uniqueIds.length === 0) {
-            console.log('[AI Match] No other publishers to match with.');
-            return of([]);
+          console.log('[AI Match] No other publishers to match with.');
+          return of([]);
         }
 
         const profileRequests = uniqueIds.map(id =>
@@ -260,7 +291,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
               map((rawScores: any[]) => {
                 return rawScores.map((result, index) => {
                   const correctId = uniqueIds[index];
-                  const percentageScore = Math.round((result.score || 0) * 100);
+                  // Use totalScore from the updated backend, fallback to score if old API
+                  const percentageScore = Math.round((result.totalScore || result.score || 0) * 100);
 
                   return {
                     candidateUserId: Number(correctId),
@@ -277,19 +309,40 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
 
   private applyScoresAndSort(scores: any[]) {
     if (!scores || scores.length === 0) {
-        console.warn('[AI Match] No scores to apply.');
-        return;
+      console.warn('[AI Match] No scores to apply.');
+      return;
     }
 
     const scoreMap = new Map<number, number>(
       scores.map(s => [s.candidateUserId, s.score])
     );
 
+    const userBudget = this.currentUserProfile?.budget || 0;
+
     this.filteredOffers = this.filteredOffers.map(offre => {
-      const mappedScore = scoreMap.get(Number(offre.ownerId));
+      let mappedScore = scoreMap.get(Number(offre.ownerId));
+
+      let finalMatchScore = undefined;
+      let calculatedBudgetScore = 0;
+
+      if (mappedScore !== undefined) {
+        // We received existing_score from Python API as percentage (0-100)
+        // Let's calculate the Budget compatibility on the Frontend to be able to access the Offer details
+        const offerPrice = offre.prixLoc || 0;
+        
+        if (userBudget !== 0) {
+          const difference = Math.abs(userBudget - offerPrice);
+          const normalizedBudgetScore = Math.max(0, 1 - (difference / userBudget));
+          calculatedBudgetScore = normalizedBudgetScore * 100; // Convert to percentage
+        }
+
+        // Apply 80% User matching (MappedScore) and 20% Budget matching
+        finalMatchScore = Math.round((mappedScore * 0.8) + (calculatedBudgetScore * 0.2));
+      }
+
       return {
         ...offre,
-        matchScore: mappedScore !== undefined ? mappedScore : undefined
+        matchScore: finalMatchScore
       };
     }).sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
 
@@ -344,7 +397,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     });
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();
@@ -356,16 +409,24 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.filteredOffers = !term
       ? this.offers
       : this.offers.filter(o =>
-          o.titre.toLowerCase().includes(term) ||
-          o.description.toLowerCase().includes(term) ||
-          o.ville.toLowerCase().includes(term)
-        );
+        o.titre.toLowerCase().includes(term) ||
+        o.description.toLowerCase().includes(term) ||
+        o.ville.toLowerCase().includes(term)
+      );
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();
+  }
+
+  toggleVoiceSearch(): void {
+    if (this.isListening) {
+      this.voiceSearchService.stopListening();
+    } else {
+      this.voiceSearchService.startListening();
+    }
   }
 
   /* ===============================
@@ -459,7 +520,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     });
 
     if (this.matchingEnabled) {
-        this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
+      this.filteredOffers.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
     }
 
     this.updateMarkers();

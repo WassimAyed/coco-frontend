@@ -391,3 +391,39 @@ main.container {
   0%, 100% { transform: scale(1); opacity: 1; }
   50%       { transform: scale(1.25); opacity: 0.85; }
 }
+
+/* ── Voice Search Animations ─────────────────────── */
+.voice-btn {
+  position: relative;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.voice-btn.listening i {
+  animation: micPulse 1.5s infinite;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(220, 53, 69, 0.25);
+  z-index: -1;
+  animation: pulseRing 1.5s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
+}
+
+@keyframes micPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulseRing {
+  0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
