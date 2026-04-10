@@ -10,6 +10,7 @@ import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AdminPlansComponent } from './subs-payment/components/admin-plans/admin-plans.component';
 
 
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -26,7 +27,8 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
     LucideAngularModule,
     AppRoutingModule,
     SharedModule,
-    UserSecurityModule
+    UserSecurityModule,
+    AdminPlansComponent
   ],
   providers: [
     {
