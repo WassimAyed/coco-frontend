@@ -291,7 +291,8 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
               map((rawScores: any[]) => {
                 return rawScores.map((result, index) => {
                   const correctId = uniqueIds[index];
-                  const percentageScore = Math.round((result.score || 0) * 100);
+                  // Use totalScore from the updated backend, fallback to score if old API
+                  const percentageScore = Math.round((result.totalScore || result.score || 0) * 100);
 
                   return {
                     candidateUserId: Number(correctId),
@@ -316,11 +317,32 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
       scores.map(s => [s.candidateUserId, s.score])
     );
 
+    const userBudget = this.currentUserProfile?.budget || 0;
+
     this.filteredOffers = this.filteredOffers.map(offre => {
-      const mappedScore = scoreMap.get(Number(offre.ownerId));
+      let mappedScore = scoreMap.get(Number(offre.ownerId));
+
+      let finalMatchScore = undefined;
+      let calculatedBudgetScore = 0;
+
+      if (mappedScore !== undefined) {
+        // We received existing_score from Python API as percentage (0-100)
+        // Let's calculate the Budget compatibility on the Frontend to be able to access the Offer details
+        const offerPrice = offre.prixLoc || 0;
+        
+        if (userBudget !== 0) {
+          const difference = Math.abs(userBudget - offerPrice);
+          const normalizedBudgetScore = Math.max(0, 1 - (difference / userBudget));
+          calculatedBudgetScore = normalizedBudgetScore * 100; // Convert to percentage
+        }
+
+        // Apply 80% User matching (MappedScore) and 20% Budget matching
+        finalMatchScore = Math.round((mappedScore * 0.8) + (calculatedBudgetScore * 0.2));
+      }
+
       return {
         ...offre,
-        matchScore: mappedScore !== undefined ? mappedScore : undefined
+        matchScore: finalMatchScore
       };
     }).sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
 
