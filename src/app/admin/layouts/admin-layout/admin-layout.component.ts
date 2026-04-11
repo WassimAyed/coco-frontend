@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {
   AlertTriangle,
   BarChart3,
@@ -46,6 +47,7 @@ interface DashboardModule {
 })
 export class AdminLayoutComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
 
@@ -149,6 +151,16 @@ export class AdminLayoutComponent {
   itemReportsLoading = false;
   itemReportsError = '';
   processingReportId: number | null = null;
+  reporterNames = new Map<number, string>();
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const moduleId = params.get('module');
+      if (moduleId && this.modules.some((module) => module.id === moduleId)) {
+        this.selectModule(moduleId);
+      }
+    });
+  }
 
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
@@ -167,6 +179,7 @@ export class AdminLayoutComponent {
         this.itemReports = (reports || []).sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
+        this.preloadReporterNames(this.itemReports);
         this.itemReportsLoading = false;
       },
       error: (error) => {
@@ -177,7 +190,7 @@ export class AdminLayoutComponent {
   }
 
   keepReportedItem(report: ItemReportResponse): void {
-    if (!report?.id) return;
+    if (!this.isAdmin || !report?.id) return;
 
     this.processingReportId = report.id;
     this.lostAndFoundService.reviewReport(report.id, {
@@ -196,7 +209,7 @@ export class AdminLayoutComponent {
   }
 
   blockReportedItem(report: ItemReportResponse): void {
-    if (!report?.id) return;
+    if (!this.isAdmin || !report?.id) return;
 
     this.processingReportId = report.id;
     this.lostAndFoundService.reviewReport(report.id, {
@@ -214,12 +227,67 @@ export class AdminLayoutComponent {
     });
   }
 
+  openItemDetails(report: ItemReportResponse): void {
+    if (!report?.itemId) return;
+    this.router.navigate(['/lost-found/details', report.itemId], {
+      queryParams: report.id ? { reportId: report.id } : undefined
+    });
+  }
+
+  getReporterDisplayName(reporterUserId: number): string {
+    if (!reporterUserId) {
+      return 'Unknown user';
+    }
+
+    return this.reporterNames.get(reporterUserId) || `User #${reporterUserId}`;
+  }
+
+  get isAdmin(): boolean {
+    const role = (this.user()?.role || '').toLowerCase();
+    return role.includes('admin');
+  }
+
+  private preloadReporterNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.reporterUserId).filter((id) => !!id))];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.reporterNames.has(id));
+    if (unresolvedIds.length === 0) {
+      return;
+    }
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: any, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.reporterNames.set(id, fullName || `User #${id}`);
+      });
+    });
+  }
+
   get selectedModuleName(): string {
     return this.modules.find((module) => module.id === this.selectedModule())?.name ?? 'Dashboard';
   }
 
   get selectedModuleIcon(): LucideIconData {
     return this.modules.find((module) => module.id === this.selectedModule())?.icon ?? BarChart3;
+  }
+
+  get itemReportsBlockedCount(): number {
+    return this.itemReports.filter((report) => report.itemStatus === 'BLOCKED').length;
+  }
+
+  get itemReportsReviewedCount(): number {
+    return this.itemReports.filter((report) => report.status === 'REVIEWED').length;
+  }
+
+  get itemReportsActionTakenCount(): number {
+    return this.itemReports.filter((report) => report.status === 'ACTION_TAKEN').length;
   }
 
   get mobileModules(): DashboardModule[] {

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
+import { LucideAngularModule, Edit, XCircle, LucideIconData } from 'lucide-angular';
 
 @Component({
   selector: 'app-admin-plans',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     <section class="plans-shell">
       <div class="plans-header">
@@ -96,8 +97,12 @@ import { SubscriptionPlan } from '../../models/subscription.model';
                 <td>{{ plan.postLimit || 'Unlimited' }}</td>
                 <td>{{ plan.durationDays }} d</td>
                 <td class="actions">
-                  <button class="icon-btn edit" (click)="editPlan(plan)"><i class="bi bi-pencil"></i></button>
-                  <button class="icon-btn delete" (click)="deletePlan(plan.id!)"><i class="bi bi-trash"></i></button>
+                  <button class="icon-btn edit" type="button" (click)="editPlan(plan)" aria-label="Edit plan">
+                    <lucide-icon [img]="EditIcon" [size]="16"></lucide-icon>
+                  </button>
+                  <button class="icon-btn delete" type="button" (click)="deletePlan(plan.id!)" aria-label="Delete plan">
+                    <lucide-icon [img]="DeleteIcon" [size]="16"></lucide-icon>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -356,6 +361,8 @@ import { SubscriptionPlan } from '../../models/subscription.model';
   `]
 })
 export class AdminPlansComponent implements OnInit {
+  readonly EditIcon: LucideIconData = Edit;
+  readonly DeleteIcon: LucideIconData = XCircle;
   plans: SubscriptionPlan[] = [];
   isEditing = false;
   currentPlan: SubscriptionPlan = this.initPlan();

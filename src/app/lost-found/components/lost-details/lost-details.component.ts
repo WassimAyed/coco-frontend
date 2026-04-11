@@ -13,7 +13,7 @@ import { UserService } from '../../../user-security/services/user.service';
     template: `
     <div class="details-container" *ngIf="item">
       <div class="details-wrapper">
-        <button class="btn-back" routerLink="/lost-found">
+        <button class="btn-back" (click)="goBack()">
           <i class="bi bi-arrow-left"></i> Back to listings
         </button>
         
@@ -85,6 +85,14 @@ import { UserService } from '../../../user-security/services/user.service';
               </div>
 
               <p class="status-msg" *ngIf="actionMessage">{{ actionMessage }}</p>
+
+              <div class="admin-moderation" *ngIf="isAdmin && reportId">
+                <h3>Admin moderation</h3>
+                <div class="admin-actions">
+                  <button class="btn-keep" [disabled]="moderationBusy" (click)="keepPost()">Keep Post</button>
+                  <button class="btn-block" [disabled]="moderationBusy || item.status === 'BLOCKED'" (click)="blockPost()">Block Post</button>
+                </div>
+              </div>
             </div>
 
             <div class="owner-claims" *ngIf="item.isOwner">
@@ -165,6 +173,13 @@ import { UserService } from '../../../user-security/services/user.service';
     .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.2px; }
     .status-badge.approved { background: #dcfce7; color: #166534; }
     .claim-state { margin-bottom: 0.8rem; }
+    .admin-moderation { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 1rem; }
+    .admin-moderation h3 { font-size: 0.95rem; margin: 0 0 0.6rem; color: #cbd5e1; }
+    .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .btn-keep, .btn-block { border: none; border-radius: 10px; padding: 0.7rem 0.8rem; font-weight: 700; cursor: pointer; }
+    .btn-keep { background: #dcfce7; color: #166534; }
+    .btn-block { background: #fee2e2; color: #991b1b; }
+    .btn-keep:disabled, .btn-block:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .owner-claims { margin-top: 1.25rem; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; background: #f8fafc; }
     .owner-claims-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
@@ -193,6 +208,9 @@ import { UserService } from '../../../user-security/services/user.service';
 })
 export class LostDetailsComponent implements OnInit {
   item: LostItem | null = null;
+  reportId: number | null = null;
+  isAdmin = false;
+  moderationBusy = false;
   showClaimForm = false;
   showReportForm = false;
   claimMessage = '';
@@ -215,6 +233,10 @@ export class LostDetailsComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+      this.isAdmin = (this.userService.currentUser()?.role || '').toLowerCase().includes('admin');
+      const reportIdParam = this.route.snapshot.queryParamMap.get('reportId');
+      this.reportId = reportIdParam ? Number(reportIdParam) : null;
+
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.lostService.getItemById(Number(id)).subscribe({
@@ -229,6 +251,60 @@ export class LostDetailsComponent implements OnInit {
                 error: () => this.router.navigate(['/lost-found'])
             });
         }
+    }
+
+    goBack(): void {
+      if (this.isAdmin && this.reportId) {
+        this.router.navigate(['/admin'], { queryParams: { module: 'item-reports' } });
+        return;
+      }
+
+      this.router.navigate(['/lost-found']);
+    }
+
+    keepPost(): void {
+      if (!this.isAdmin || !this.reportId) {
+        return;
+      }
+
+      this.moderationBusy = true;
+      this.lostService.reviewReport(this.reportId, {
+        status: 'REVIEWED',
+        moderatorComment: 'Reviewed by admin. Item remains visible.'
+      }).subscribe({
+        next: () => {
+          this.moderationBusy = false;
+          this.actionMessage = 'Post kept successfully.';
+        },
+        error: (err) => {
+          this.moderationBusy = false;
+          this.actionMessage = err?.error?.message || 'Unable to keep post.';
+        }
+      });
+    }
+
+    blockPost(): void {
+      if (!this.isAdmin || !this.reportId) {
+        return;
+      }
+
+      this.moderationBusy = true;
+      this.lostService.reviewReport(this.reportId, {
+        status: 'ACTION_TAKEN',
+        moderatorComment: 'Item blocked by admin after report review.'
+      }).subscribe({
+        next: () => {
+          this.moderationBusy = false;
+          if (this.item) {
+            this.item = { ...this.item, status: 'BLOCKED' };
+          }
+          this.actionMessage = 'Post blocked successfully.';
+        },
+        error: (err) => {
+          this.moderationBusy = false;
+          this.actionMessage = err?.error?.message || 'Unable to block post.';
+        }
+      });
     }
 
     loadOwnerClaims(itemId: number): void {
