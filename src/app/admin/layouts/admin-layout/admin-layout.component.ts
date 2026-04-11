@@ -152,6 +152,7 @@ export class AdminLayoutComponent {
   itemReportsError = '';
   processingReportId: number | null = null;
   reporterNames = new Map<number, string>();
+  ownerNames = new Map<number, string>();
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
@@ -180,6 +181,7 @@ export class AdminLayoutComponent {
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         this.preloadReporterNames(this.itemReports);
+        this.preloadOwnerNames(this.itemReports);
         this.itemReportsLoading = false;
       },
       error: (error) => {
@@ -242,6 +244,14 @@ export class AdminLayoutComponent {
     return this.reporterNames.get(reporterUserId) || `User #${reporterUserId}`;
   }
 
+  getOwnerDisplayName(ownerUserId?: number | null): string {
+    if (!ownerUserId) {
+      return 'Unknown owner';
+    }
+
+    return this.ownerNames.get(ownerUserId) || `User #${ownerUserId}`;
+  }
+
   get isAdmin(): boolean {
     const role = (this.user()?.role || '').toLowerCase();
     return role.includes('admin');
@@ -266,6 +276,29 @@ export class AdminLayoutComponent {
         const lastName = profile?.lastName || profile?.lastname || '';
         const fullName = `${firstName} ${lastName}`.trim();
         this.reporterNames.set(id, fullName || `User #${id}`);
+      });
+    });
+  }
+
+  private preloadOwnerNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.itemOwnerUserId).filter((id): id is number => !!id))];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.ownerNames.has(id));
+    if (unresolvedIds.length === 0) {
+      return;
+    }
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: any, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.ownerNames.set(id, fullName || `User #${id}`);
       });
     });
   }

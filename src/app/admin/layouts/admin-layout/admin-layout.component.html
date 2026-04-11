@@ -326,7 +326,7 @@
                     <td>
                       <div class="item-cell">
                         <p class="item-title">{{ report.itemTitle || ('Item #' + report.itemId) }}</p>
-                        <p class="item-subtitle">Owner #{{ report.itemOwnerUserId || 'N/A' }}</p>
+                        <p class="item-subtitle">{{ getOwnerDisplayName(report.itemOwnerUserId) }}</p>
                       </div>
                     </td>
                     <td>
