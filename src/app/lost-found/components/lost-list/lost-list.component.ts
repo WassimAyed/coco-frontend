@@ -85,6 +85,30 @@ import { LostItem } from '../../models/lost-item.model';
             </div>
           </div>
 
+          <div class="pagination-bar" *ngIf="totalPages > 1">
+            <div class="pagination-summary">
+              Page {{ currentPage + 1 }} of {{ totalPages }} • {{ totalElements }} items
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-secondary" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">Previous</button>
+              <button
+                class="btn-page"
+                *ngFor="let p of visiblePageNumbers"
+                [class.active]="p === currentPage"
+                (click)="goToPage(p)">
+                {{ p + 1 }}
+              </button>
+              <button class="btn-secondary" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">Next</button>
+
+              <label class="size-label" for="pageSize">Per page</label>
+              <select id="pageSize" class="form-select page-size" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+                <option [ngValue]="8">8</option>
+                <option [ngValue]="12">12</option>
+                <option [ngValue]="24">24</option>
+              </select>
+            </div>
+          </div>
+
           <ng-template #noItems>
             <div class="empty-state">
               <div class="empty-icon"><i class="bi bi-search"></i></div>
@@ -115,6 +139,17 @@ import { LostItem } from '../../models/lost-item.model';
     
     .items-panel { min-height: 380px; }
     .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+
+    .pagination-bar { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; }
+    .pagination-summary { color: #64748b; font-size: 0.9rem; }
+    .pagination-controls { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+    .btn-page { border: 1px solid #cbd5e1; background: white; color: #1e293b; border-radius: 10px; min-width: 38px; height: 38px; font-weight: 700; cursor: pointer; }
+    .btn-page.active { background: #1e293b; color: white; border-color: #1e293b; }
+    .btn-page:hover { border-color: #94a3b8; }
+    .btn-page.active:hover { border-color: #1e293b; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .size-label { color: #475569; font-size: 0.85rem; font-weight: 600; margin-left: 0.35rem; }
+    .page-size { width: auto; min-width: 76px; }
     
     .item-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
     .item-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #3b82f6; }
@@ -151,6 +186,11 @@ export class LostListComponent implements OnInit {
   keyword = '';
   category = '';
   location = '';
+  currentPage = 0;
+  pageSize = 12;
+  totalPages = 1;
+  totalElements = 0;
+  private usingAdvancedFilters = false;
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
     FOUND: this.buildFallbackImage('FOUND', '#10b981')
@@ -159,28 +199,47 @@ export class LostListComponent implements OnInit {
   constructor(private lostService: LostAndFoundService) { }
 
   ngOnInit(): void {
-    this.loadItems();
+    this.loadItems(0);
   }
 
-  loadItems(): void {
-    this.lostService.getAllItems().subscribe((data) => {
+  get visiblePageNumbers(): number[] {
+    const radius = 2;
+    const start = Math.max(0, this.currentPage - radius);
+    const end = Math.min(this.totalPages - 1, this.currentPage + radius);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }
+
+  loadItems(page: number = this.currentPage): void {
+    this.currentPage = Math.max(0, page);
+    this.lostService.getAllItems(this.currentPage, this.pageSize).subscribe((data) => {
       const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
 
       // Sort by newest first by default
       this.items = items.sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
       this.filteredItems = this.items;
+
+      if (Array.isArray(data)) {
+        this.totalElements = data.length;
+        this.totalPages = Math.max(1, Math.ceil(this.totalElements / this.pageSize));
+      } else {
+        this.totalElements = Number(data?.totalElements ?? this.filteredItems.length);
+        this.totalPages = Math.max(1, Number(data?.totalPages ?? 1));
+      }
     });
   }
 
-  runAdvancedSearch(): void {
+  runAdvancedSearch(page: number = 0): void {
+    this.usingAdvancedFilters = true;
+    this.currentPage = Math.max(0, page);
+
     const payload = {
       keyword: this.keyword || undefined,
       type: this.selectedType !== 'ALL' ? this.selectedType as 'LOST' | 'FOUND' : undefined,
       status: this.selectedStatus !== 'ALL' ? this.selectedStatus as 'ACTIVE' | 'RESOLVED' : undefined,
       category: this.category || undefined,
       location: this.location || undefined,
-      page: 0,
-      size: 40,
+      page: this.currentPage,
+      size: this.pageSize,
       sortBy: 'createdAt',
       sortDir: 'desc' as const
     };
@@ -189,6 +248,8 @@ export class LostListComponent implements OnInit {
       next: (data) => {
         const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
         this.filteredItems = items;
+        this.totalElements = Number(data?.totalElements ?? items.length);
+        this.totalPages = Math.max(1, Number(data?.totalPages ?? 1));
       },
       error: () => {
         window.alert('Unable to apply advanced filters.');
@@ -202,7 +263,30 @@ export class LostListComponent implements OnInit {
     this.location = '';
     this.selectedType = 'ALL';
     this.selectedStatus = 'ALL';
-    this.loadItems();
+    this.usingAdvancedFilters = false;
+    this.loadItems(0);
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages || page === this.currentPage) {
+      return;
+    }
+
+    if (this.usingAdvancedFilters) {
+      this.runAdvancedSearch(page);
+      return;
+    }
+
+    this.loadItems(page);
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize = Number(size) || 12;
+    if (this.usingAdvancedFilters) {
+      this.runAdvancedSearch(0);
+      return;
+    }
+    this.loadItems(0);
   }
 
   getFallbackByType(type: 'LOST' | 'FOUND'): string {

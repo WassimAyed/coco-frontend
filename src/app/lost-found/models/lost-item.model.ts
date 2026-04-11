@@ -13,7 +13,7 @@ export interface LostItemCreateRequest {
     imageUrl?: string;
 }
 
-export interface LostItemUpdateRequest extends LostItemCreateRequest {}
+export interface LostItemUpdateRequest extends LostItemCreateRequest { }
 
 export interface LostItemResponse {
     id: number;
@@ -31,6 +31,7 @@ export interface LostItemResponse {
     createdAt?: string;
     updatedAt?: string;
     version?: number;
+    aiProposals?: any[];
 }
 
 export interface LostItemSearchParams {

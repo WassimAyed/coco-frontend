@@ -107,9 +107,16 @@ export class LostAndFoundService {
             && Array.isArray((data as { content?: unknown[] }).content);
     }
 
-    getAllItems(): Observable<any> {
+    getAllItems(page: number = 0, size: number = 12): Observable<any> {
+        const params = new HttpParams()
+            .set('page', String(page))
+            .set('size', String(size));
+
         return new Observable((subscriber) => {
-            this.http.get<any>(this.apiUrl, this.buildHeaders()).subscribe({
+            this.http.get<any>(this.apiUrl, {
+                ...this.buildHeaders(),
+                params
+            }).subscribe({
                 next: (data) => {
                     subscriber.next(this.normalizeItemsResponse(data));
                     subscriber.complete();
@@ -131,8 +138,8 @@ export class LostAndFoundService {
         const options = this.buildHeaders();
         return new Observable((subscriber) => {
             this.http.get<any>(`${this.apiUrl}/search/advanced`, {
-            ...options,
-            params: httpParams
+                ...options,
+                params: httpParams
             }).subscribe({
                 next: (data) => {
                     subscriber.next(this.normalizeItemsResponse(data));
@@ -253,5 +260,9 @@ export class LostAndFoundService {
             ...options,
             headers: (options.headers || new HttpHeaders()).set('X-User-Role', this.resolveCurrentRole())
         });
+    }
+
+    getAiProposals(itemId: number, topK: number = 5): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${itemId}/ai/propose?topK=${topK}`, this.buildHeaders());
     }
 }

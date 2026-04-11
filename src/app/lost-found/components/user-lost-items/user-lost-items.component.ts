@@ -46,6 +46,7 @@ import { ToastService } from '../../../shared/services/toast.service';
             <input
               type="text"
               [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange()"
               placeholder="Search by title, category, or location..."
             />
           </div>
@@ -98,7 +99,7 @@ import { ToastService } from '../../../shared/services/toast.service';
         </div>
 
         <main class="offers-grid" *ngIf="filteredItems.length > 0">
-          <article class="offer-card" *ngFor="let item of filteredItems" [routerLink]="['/lost-found/details', item.id]">
+          <article class="offer-card" *ngFor="let item of pagedItems" [routerLink]="['/lost-found/details', item.id]">
             <div class="card-img-wrap">
               <img
                 [src]="item.imageUrl || getFallbackByType(item.type)"
@@ -135,6 +136,31 @@ import { ToastService } from '../../../shared/services/toast.service';
             </div>
           </article>
         </main>
+
+        <div class="pagination-bar" *ngIf="filteredItems.length > pageSize">
+          <div class="pagination-summary">
+            Showing {{ pageStart + 1 }}-{{ pageEnd }} of {{ filteredItems.length }} items
+          </div>
+
+          <div class="pagination-controls">
+            <button class="btn-secondary" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">Previous</button>
+            <button
+              class="btn-page"
+              *ngFor="let p of visiblePageNumbers"
+              [class.active]="p === currentPage"
+              (click)="goToPage(p)">
+              {{ p }}
+            </button>
+            <button class="btn-secondary" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">Next</button>
+
+            <label for="myItemsPageSize" class="page-size-label">Per page</label>
+            <select id="myItemsPageSize" class="page-size" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+              <option [ngValue]="6">6</option>
+              <option [ngValue]="9">9</option>
+              <option [ngValue]="12">12</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -495,6 +521,65 @@ import { ToastService } from '../../../shared/services/toast.service';
     .empty-desc { color: #8a8a8a; margin: 0; }
     .mt-4 { margin-top: 1rem; }
 
+    .pagination-bar {
+      margin-top: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pagination-summary {
+      color: #6b7280;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-page {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #111827;
+      border-radius: 10px;
+      min-width: 38px;
+      height: 36px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-page.active {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .page-size-label {
+      margin-left: 0.35rem;
+      color: #4b5563;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .page-size {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 0.38rem 0.5rem;
+      background: #fff;
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -506,6 +591,8 @@ export class UserLostItemsComponent implements OnInit {
   moderationNotifications: ItemReportResponse[] = [];
   searchTerm = '';
   userId!: number;
+  currentPage = 1;
+  pageSize = 9;
   private pendingDeleteItemId: number | null = null;
   private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly ownerReportNotificationStorageKey = 'lf_owner_review_seen_ids';
@@ -561,6 +648,31 @@ export class UserLostItemsComponent implements OnInit {
       || item.category.toLowerCase().includes(term)
       || item.location.toLowerCase().includes(term)
     );
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredItems.length / this.pageSize));
+  }
+
+  get pageStart(): number {
+    return (this.currentPage - 1) * this.pageSize;
+  }
+
+  get pageEnd(): number {
+    return Math.min(this.pageStart + this.pageSize, this.filteredItems.length);
+  }
+
+  get pagedItems(): LostItem[] {
+    const start = this.pageStart;
+    const end = start + this.pageSize;
+    return this.filteredItems.slice(start, end);
+  }
+
+  get visiblePageNumbers(): number[] {
+    const radius = 2;
+    const start = Math.max(1, this.currentPage - radius);
+    const end = Math.min(this.totalPages, this.currentPage + radius);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }
 
   get lostItemsCount(): number {
@@ -627,12 +739,29 @@ export class UserLostItemsComponent implements OnInit {
     this.lostService.deleteItem(item.id).subscribe({
       next: () => {
         this.myItems = this.myItems.filter((i) => i.id !== item.id);
+        this.ensurePageInRange();
         this.toast.success('Item deleted successfully.');
       },
       error: () => {
         this.toast.error('Unable to delete this item. Please try again.');
       }
     });
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize = Number(size) || 9;
+    this.currentPage = 1;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) {
+      return;
+    }
+    this.currentPage = page;
   }
 
   dismissNotification(reportId: number): void {
@@ -726,5 +855,14 @@ export class UserLostItemsComponent implements OnInit {
 
   private persistSeenOwnerNotifications(): void {
     localStorage.setItem(this.ownerReportNotificationStorageKey, JSON.stringify([...this.seenOwnerReviewIds]));
+  }
+
+  private ensurePageInRange(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 }
