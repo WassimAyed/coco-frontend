@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserService } from '../../user-security/services/user.service';
+import { environment } from '../../../environments/environment';
 import {
     ItemClaimDecisionRequest,
     ItemClaimRequest,
@@ -20,9 +21,9 @@ import {
     providedIn: 'root'
 })
 export class LostAndFoundService {
-    private apiUrl = 'http://localhost:9092/api/lost-found';
-    private claimsUrl = 'http://localhost:9092/api/lost-found/claims';
-    private reportsUrl = 'http://localhost:9092/api/lost-found/reports';
+    private apiUrl = environment.lostFoundApiBaseUrl;
+    private claimsUrl = `${environment.lostFoundApiBaseUrl}/claims`;
+    private reportsUrl = `${environment.lostFoundApiBaseUrl}/reports`;
 
     constructor(
         private http: HttpClient,
@@ -32,11 +33,7 @@ export class LostAndFoundService {
     private resolveCurrentUserId(): string | null {
         const fromSession = this.userService.currentUser()?.id;
         if (fromSession) {
-            const value = String(fromSession);
-            if (localStorage.getItem('userId') !== value) {
-                localStorage.setItem('userId', value);
-            }
-            return value;
+            return String(fromSession);
         }
 
         const fromStorage = localStorage.getItem('userId');
@@ -53,11 +50,7 @@ export class LostAndFoundService {
             return localStorage.getItem('role') || '';
         }
 
-        const mappedRole = rawRole.toLowerCase() === 'admin' ? 'ADMIN' : rawRole.toUpperCase();
-        if (localStorage.getItem('role') !== mappedRole) {
-            localStorage.setItem('role', mappedRole);
-        }
-        return mappedRole;
+        return rawRole.toLowerCase() === 'admin' ? 'ADMIN' : rawRole.toUpperCase();
     }
 
     private buildHeaders(): { headers?: HttpHeaders } {
@@ -74,32 +67,44 @@ export class LostAndFoundService {
         };
     }
 
-    private normalizeItem<T>(item: T): T {
+    private normalizeItem<T extends { isOwner?: boolean; owner?: unknown }>(item: T): T {
         if (!item) {
             return item;
         }
 
-        const mutable = item as any;
-        if (mutable.isOwner === undefined && mutable.owner !== undefined) {
-            mutable.isOwner = !!mutable.owner;
-        }
-
-        return mutable as T;
-    }
-
-    private normalizeItemsResponse(data: any): any {
-        if (Array.isArray(data)) {
-            return data.map((item) => this.normalizeItem(item));
-        }
-
-        if (data && Array.isArray(data.content)) {
+        if (item.isOwner === undefined && item.owner !== undefined) {
             return {
-                ...data,
-                content: data.content.map((item: any) => this.normalizeItem(item))
+                ...item,
+                isOwner: !!item.owner
             };
         }
 
-        return this.normalizeItem(data);
+        return item;
+    }
+
+    private normalizeItemsResponse(data: unknown): unknown {
+        if (Array.isArray(data)) {
+            return data.map((item) => this.normalizeItem(item as { isOwner?: boolean; owner?: unknown }));
+        }
+
+        if (this.isPagedResponse(data)) {
+            return {
+                ...data,
+                content: data.content.map((item) => this.normalizeItem(item as { isOwner?: boolean; owner?: unknown }))
+            };
+        }
+
+        if (data && typeof data === 'object') {
+            return this.normalizeItem(data as { isOwner?: boolean; owner?: unknown });
+        }
+
+        return data;
+    }
+
+    private isPagedResponse(data: unknown): data is { content: unknown[] } {
+        return typeof data === 'object'
+            && data !== null
+            && Array.isArray((data as { content?: unknown[] }).content);
     }
 
     getAllItems(): Observable<any> {

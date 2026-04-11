@@ -445,11 +445,7 @@ export class UserDashboardComponent implements OnInit {
   private resolveCurrentUserId(): string | null {
     const fromSession = this.userService.currentUser()?.id;
     if (fromSession) {
-      const value = String(fromSession);
-      if (localStorage.getItem('userId') !== value) {
-        localStorage.setItem('userId', value);
-      }
-      return value;
+      return String(fromSession);
     }
 
     return localStorage.getItem('userId');

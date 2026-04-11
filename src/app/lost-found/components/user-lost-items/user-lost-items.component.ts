@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
 import { LostItem } from '../../models/lost-item.model';
 import { UserService } from '../../../user-security/services/user.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-user-lost-items',
@@ -407,6 +408,8 @@ export class UserLostItemsComponent implements OnInit {
   myItems: LostItem[] = [];
   searchTerm = '';
   userId!: number;
+  private pendingDeleteItemId: number | null = null;
+  private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
@@ -416,7 +419,8 @@ export class UserLostItemsComponent implements OnInit {
   constructor(
     private lostService: LostAndFoundService,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -437,11 +441,7 @@ export class UserLostItemsComponent implements OnInit {
   private resolveCurrentUserId(): string | null {
     const fromSession = this.userService.currentUser()?.id;
     if (fromSession) {
-      const value = String(fromSession);
-      if (localStorage.getItem('userId') !== value) {
-        localStorage.setItem('userId', value);
-      }
-      return value;
+      return String(fromSession);
     }
 
     return localStorage.getItem('userId');
@@ -502,15 +502,32 @@ export class UserLostItemsComponent implements OnInit {
 
     if (!item.id) return;
 
-    const confirmed = window.confirm('Are you sure you want to delete this listing?');
-    if (!confirmed) return;
+    if (this.pendingDeleteItemId !== item.id) {
+      this.pendingDeleteItemId = item.id;
+      if (this.pendingDeleteTimer) {
+        clearTimeout(this.pendingDeleteTimer);
+      }
+      this.pendingDeleteTimer = setTimeout(() => {
+        this.pendingDeleteItemId = null;
+        this.pendingDeleteTimer = null;
+      }, 5000);
+      this.toast.warning('Click delete again within 5 seconds to confirm.', 'Confirm delete');
+      return;
+    }
+
+    this.pendingDeleteItemId = null;
+    if (this.pendingDeleteTimer) {
+      clearTimeout(this.pendingDeleteTimer);
+      this.pendingDeleteTimer = null;
+    }
 
     this.lostService.deleteItem(item.id).subscribe({
       next: () => {
         this.myItems = this.myItems.filter((i) => i.id !== item.id);
+        this.toast.success('Item deleted successfully.');
       },
       error: () => {
-        window.alert('Unable to delete this item. Please try again.');
+        this.toast.error('Unable to delete this item. Please try again.');
       }
     });
   }

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SubscriptionPlan, UserSubscription, Payment } from '../models/subscription.model';
 import { environment } from '../../../environments/environment';
+import { UserService } from '../../user-security/services/user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,10 +11,22 @@ import { environment } from '../../../environments/environment';
 export class SubsService {
   private apiUrl = environment.paymentApiBaseUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private userService: UserService
+  ) { }
+
+  private resolveCurrentUserId(): number {
+    const fromSession = this.userService.currentUser()?.id;
+    if (fromSession) {
+      return Number(fromSession);
+    }
+
+    return Number(localStorage.getItem('userId') || 0);
+  }
 
   private userHeaders(userId?: number): { headers?: HttpHeaders } {
-    const effectiveUserId = userId ?? Number(localStorage.getItem('userId') || 0);
+    const effectiveUserId = userId ?? this.resolveCurrentUserId();
     if (!effectiveUserId) return {};
     return {
       headers: new HttpHeaders({
@@ -71,7 +84,7 @@ export class SubsService {
   }
 
   downloadInvoice(paymentId: number): Observable<Blob> {
-    const userId = Number(localStorage.getItem('userId') || 0);
+    const userId = this.resolveCurrentUserId();
     return this.http.get(`${this.apiUrl}/payments/${paymentId}/invoice`, {
       headers: this.userHeaders(userId).headers,
       responseType: 'blob'

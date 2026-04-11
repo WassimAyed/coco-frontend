@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
 import { LostItemCreateRequest, LostItemResponse, LostItemUpdateRequest } from '../../models/lost-item.model';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-lost-post',
@@ -140,7 +141,8 @@ export class LostPostComponent {
   constructor(
     private lostService: LostAndFoundService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {
     const editIdParam = this.route.snapshot.queryParamMap.get('editId');
 
@@ -167,13 +169,14 @@ export class LostPostComponent {
     }
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
     if (file) {
       this.selectedImageFile = file;
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.item.imageUrl = e.target.result; // Store image as Base64 in imageUrl
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        this.item.imageUrl = (e.target?.result as string) || '';
       };
       reader.readAsDataURL(file);
     }
@@ -198,7 +201,7 @@ export class LostPostComponent {
           },
           error: (err) => {
             const message = err?.error?.message || 'Unable to update this listing.';
-            window.alert(message);
+            this.toast.error(message, 'Update failed');
           }
         });
         return;
@@ -210,7 +213,7 @@ export class LostPostComponent {
         },
         error: (err) => {
           const message = err?.error?.message || 'Unable to create this listing.';
-          window.alert(message);
+          this.toast.error(message, 'Create failed');
         }
       });
     };
@@ -221,7 +224,7 @@ export class LostPostComponent {
           submitWithPayload({ ...payload, imageUrl: res.imageUrl });
         },
         error: () => {
-          window.alert('Unable to upload image. Please try again.');
+          this.toast.error('Unable to upload image. Please try again.', 'Upload failed');
         }
       });
       return;

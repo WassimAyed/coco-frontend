@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
 import { LucideAngularModule, Edit, XCircle, LucideIconData } from 'lucide-angular';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-admin-plans',
@@ -366,8 +367,13 @@ export class AdminPlansComponent implements OnInit {
   plans: SubscriptionPlan[] = [];
   isEditing = false;
   currentPlan: SubscriptionPlan = this.initPlan();
+  private pendingDeletePlanId: number | null = null;
+  private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private subsService: SubsService) { }
+  constructor(
+    private subsService: SubsService,
+    private toast: ToastService
+  ) { }
 
   ngOnInit() { this.loadPlans(); }
 
@@ -408,9 +414,35 @@ export class AdminPlansComponent implements OnInit {
   }
 
   deletePlan(id: number) {
-    if (confirm('Supprimer ce plan ?')) {
-      this.subsService.deletePlan(id).subscribe(() => this.loadPlans());
+    if (this.pendingDeletePlanId !== id) {
+      this.pendingDeletePlanId = id;
+      if (this.pendingDeleteTimer) {
+        clearTimeout(this.pendingDeleteTimer);
+      }
+      this.pendingDeleteTimer = setTimeout(() => {
+        this.pendingDeletePlanId = null;
+        this.pendingDeleteTimer = null;
+      }, 5000);
+      this.toast.warning('Click delete again within 5 seconds to confirm.', 'Confirm delete');
+      return;
     }
+
+    this.pendingDeletePlanId = null;
+    if (this.pendingDeleteTimer) {
+      clearTimeout(this.pendingDeleteTimer);
+      this.pendingDeleteTimer = null;
+    }
+
+    this.subsService.deletePlan(id).subscribe({
+      next: () => {
+        this.toast.success('Plan deleted successfully.');
+        this.loadPlans();
+      },
+      error: (err) => {
+        const message = err?.error?.message || 'Unable to delete plan.';
+        this.toast.error(message, 'Delete failed');
+      }
+    });
   }
 
   get paidPlansCount(): number {
