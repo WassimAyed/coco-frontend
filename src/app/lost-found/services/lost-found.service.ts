@@ -7,6 +7,7 @@ import {
     ItemClaimRequest,
     ItemClaimResponse,
     ItemReportRequest,
+    ItemReportReviewRequest,
     ItemReportResponse,
     LostItemCreateRequest,
     LostItemResponse,
@@ -233,6 +234,14 @@ export class LostAndFoundService {
         return this.http.get<ItemReportResponse[]>(this.reportsUrl, {
             ...options,
             params,
+            headers: (options.headers || new HttpHeaders()).set('X-User-Role', this.resolveCurrentRole())
+        });
+    }
+
+    reviewReport(reportId: number, payload: ItemReportReviewRequest): Observable<ItemReportResponse> {
+        const options = this.buildHeaders();
+        return this.http.patch<ItemReportResponse>(`${this.reportsUrl}/${reportId}/review`, payload, {
+            ...options,
             headers: (options.headers || new HttpHeaders()).set('X-User-Role', this.resolveCurrentRole())
         });
     }

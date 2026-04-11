@@ -31,6 +31,8 @@ import {
   MessageCircle
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
+import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
+import { ItemReportResponse } from '../../../lost-found/models/lost-item.model';
 
 interface DashboardModule {
   id: string;
@@ -45,6 +47,7 @@ interface DashboardModule {
 export class AdminLayoutComponent {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
+  private readonly lostAndFoundService = inject(LostAndFoundService);
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
@@ -53,6 +56,7 @@ export class AdminLayoutComponent {
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'users', name: 'User Management', icon: Users },
+    { id: 'item-reports', name: 'Item Reports', icon: AlertTriangle },
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
     { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
@@ -141,8 +145,73 @@ export class AdminLayoutComponent {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
+  itemReports: ItemReportResponse[] = [];
+  itemReportsLoading = false;
+  itemReportsError = '';
+  processingReportId: number | null = null;
+
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
+
+    if (moduleId === 'item-reports') {
+      this.loadItemReports();
+    }
+  }
+
+  loadItemReports(): void {
+    this.itemReportsLoading = true;
+    this.itemReportsError = '';
+
+    this.lostAndFoundService.getReportsForModeration().subscribe({
+      next: (reports) => {
+        this.itemReports = (reports || []).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.itemReportsLoading = false;
+      },
+      error: (error) => {
+        this.itemReportsError = error?.error?.message || 'Unable to load item reports.';
+        this.itemReportsLoading = false;
+      }
+    });
+  }
+
+  keepReportedItem(report: ItemReportResponse): void {
+    if (!report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'REVIEWED',
+      moderatorComment: 'Reviewed by admin. Item remains visible.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to mark report as reviewed.';
+      }
+    });
+  }
+
+  blockReportedItem(report: ItemReportResponse): void {
+    if (!report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'ACTION_TAKEN',
+      moderatorComment: 'Item blocked by admin after report review.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to block reported item.';
+      }
+    });
   }
 
   get selectedModuleName(): string {

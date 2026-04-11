@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
 import { LostItem } from '../../models/lost-item.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-user-lost-items',
@@ -88,8 +89,8 @@ import { LostItem } from '../../models/lost-item.model';
                 {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
               </span>
 
-              <span class="floating-badge floating-badge--status" [class.badge-active]="item.status === 'ACTIVE'" [class.badge-resolved]="item.status !== 'ACTIVE'">
-                {{ item.status === 'ACTIVE' ? 'Active' : 'Resolved' }}
+              <span class="floating-badge floating-badge--status" [class.badge-active]="item.status === 'ACTIVE'" [class.badge-blocked]="item.status === 'BLOCKED'" [class.badge-resolved]="item.status !== 'ACTIVE' && item.status !== 'BLOCKED'">
+                {{ item.status === 'ACTIVE' ? 'Active' : (item.status === 'BLOCKED' ? 'Blocked' : 'Resolved') }}
               </span>
             </div>
 
@@ -313,6 +314,7 @@ import { LostItem } from '../../models/lost-item.model';
     .badge-lost { background: rgba(248, 52, 65, 0.16); color: #d31e2b; border-color: rgba(248, 52, 65, 0.33); }
     .badge-found { background: rgba(16, 185, 129, 0.16); color: #0f8c61; border-color: rgba(16, 185, 129, 0.33); }
     .badge-active { background: rgba(59, 130, 246, 0.18); color: #2563eb; border-color: rgba(59, 130, 246, 0.35); }
+    .badge-blocked { background: rgba(239, 68, 68, 0.2); color: #b91c1c; border-color: rgba(239, 68, 68, 0.35); }
     .badge-resolved { background: rgba(120,120,120,0.2); color: #666; border-color: rgba(120,120,120,0.25); }
 
     .card-body { padding: 1.2rem 1.3rem 1.3rem; display: flex; flex-direction: column; gap: 0.8rem; }
@@ -413,19 +415,36 @@ export class UserLostItemsComponent implements OnInit {
 
   constructor(
     private lostService: LostAndFoundService,
-    private router: Router
+    private router: Router,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
-    const storedId = localStorage.getItem('userId');
-    if (storedId) {
-      this.userId = Number(storedId);
-      this.lostService.getMyItems().subscribe((items) => {
-        this.myItems = items.sort(
-          (a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
-        );
-      });
+    const resolvedUserId = this.resolveCurrentUserId();
+    if (!resolvedUserId) {
+      this.router.navigate(['/login']);
+      return;
     }
+
+    this.userId = Number(resolvedUserId);
+    this.lostService.getMyItems().subscribe((items) => {
+      this.myItems = items.sort(
+        (a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+      );
+    });
+  }
+
+  private resolveCurrentUserId(): string | null {
+    const fromSession = this.userService.currentUser()?.id;
+    if (fromSession) {
+      const value = String(fromSession);
+      if (localStorage.getItem('userId') !== value) {
+        localStorage.setItem('userId', value);
+      }
+      return value;
+    }
+
+    return localStorage.getItem('userId');
   }
 
   get filteredItems(): LostItem[] {

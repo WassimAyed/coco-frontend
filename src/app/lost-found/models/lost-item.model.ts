@@ -1,5 +1,5 @@
 export type LostItemType = 'LOST' | 'FOUND';
-export type LostItemStatus = 'ACTIVE' | 'RESOLVED';
+export type LostItemStatus = 'ACTIVE' | 'RESOLVED' | 'BLOCKED';
 export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 export type ReportStatus = 'OPEN' | 'REVIEWED' | 'ACTION_TAKEN' | 'REJECTED';
 
@@ -81,6 +81,9 @@ export interface ItemReportReviewRequest {
 export interface ItemReportResponse {
     id: number;
     itemId: number;
+    itemTitle?: string;
+    itemStatus?: LostItemStatus;
+    itemOwnerUserId?: number;
     reporterUserId: number;
     reason: string;
     details?: string;

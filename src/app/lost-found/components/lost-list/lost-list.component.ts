@@ -65,32 +65,34 @@ import { LostItem } from '../../models/lost-item.model';
           </div>
         </aside>
 
-        <main class="items-grid" *ngIf="filteredItems.length > 0; else noItems">
-          <div class="item-card" *ngFor="let item of filteredItems" [routerLink]="['/lost-found/details', item.id]">
-            <div class="card-image">
-              <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
-              <span class="type-badge" [class.lost]="item.type === 'LOST'">
-                {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
-              </span>
-            </div>
-            <div class="card-body">
-              <div class="item-category">{{ item.category }}</div>
-              <h3 class="item-title">{{ item.title }}</h3>
-              <div class="item-info">
-                <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
-                <span><i class="bi bi-clock"></i> {{ item.dateTime }}</span>
+        <main class="items-panel">
+          <div class="items-grid" *ngIf="filteredItems.length > 0; else noItems">
+            <div class="item-card" *ngFor="let item of filteredItems" [routerLink]="['/lost-found/details', item.id]">
+              <div class="card-image">
+                <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
+                <span class="type-badge" [class.lost]="item.type === 'LOST'">
+                  {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
+                </span>
+              </div>
+              <div class="card-body">
+                <div class="item-category">{{ item.category }}</div>
+                <h3 class="item-title">{{ item.title }}</h3>
+                <div class="item-info">
+                  <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
+                  <span><i class="bi bi-clock"></i> {{ item.dateTime }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </main>
 
-        <ng-template #noItems>
-          <div class="empty-state">
-            <img src="https://illustrations.popsy.co/amber/searching.svg" alt="Empty">
-            <h3>No items yet</h3>
-            <p>Be the first to post a listing.</p>
-          </div>
-        </ng-template>
+          <ng-template #noItems>
+            <div class="empty-state">
+              <div class="empty-icon"><i class="bi bi-search"></i></div>
+              <h3>No items yet</h3>
+              <p>Be the first to post a listing.</p>
+            </div>
+          </ng-template>
+        </main>
       </div>
     </div>
   `,
@@ -111,6 +113,7 @@ import { LostItem } from '../../models/lost-item.model';
     .filter-btn { margin: 0 !important; width: 100%; justify-content: center; }
     .btn-secondary { background: #e2e8f0; color: #1e293b; padding: 0.8rem 1.1rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
     
+    .items-panel { min-height: 380px; }
     .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     
     .item-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
@@ -129,8 +132,10 @@ import { LostItem } from '../../models/lost-item.model';
     .item-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; }
     .item-info { display: flex; flex-direction: column; gap: 0.5rem; color: #64748b; font-size: 0.9rem; }
     
-    .empty-state { grid-column: 1 / -1; text-align: center; padding: 4rem; background: white; border-radius: 32px; border: 2px dashed #e2e8f0; }
-    .empty-state img { width: 200px; margin-bottom: 2rem; }
+    .empty-state { height: 100%; min-height: 380px; text-align: center; padding: 3rem; background: white; border-radius: 32px; border: 2px dashed #e2e8f0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .empty-icon { width: 92px; height: 92px; border-radius: 50%; background: #eef2ff; color: #334155; display: grid; place-items: center; margin-bottom: 1rem; font-size: 2rem; }
+    .empty-state h3 { margin: 0 0 0.4rem; color: #1e293b; }
+    .empty-state p { margin: 0; color: #64748b; }
     
     .btn-primary { background: #1e293b; color: white; padding: 0.8rem 2rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin: 2rem auto 0; transition: all 0.3s; }
     .btn-primary:hover { background: #334155; transform: scale(1.05); }

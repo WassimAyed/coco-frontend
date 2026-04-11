@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 import { UserSubscription, Payment } from '../../models/subscription.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -420,20 +421,38 @@ export class UserDashboardComponent implements OnInit {
   payments: Payment[] = [];
   userId!: number;
 
-  constructor(private subsService: SubsService, private router: Router) { }
+  constructor(
+    private subsService: SubsService,
+    private router: Router,
+    private userService: UserService
+  ) { }
 
   ngOnInit() {
-    const storedId = localStorage.getItem('userId');
-    if (!storedId) {
+    const resolvedUserId = this.resolveCurrentUserId();
+    if (!resolvedUserId) {
       console.warn('User not logged in, redirecting to /login');
       this.router.navigate(['/login']);
       return;
     }
-    this.userId = Number(storedId);
+
+    this.userId = Number(resolvedUserId);
     this.subsService.getUserSubscriptions(this.userId).subscribe(subs => {
       this.activeSubscription = subs.find(s => s.status === 'ACTIVE');
     });
     this.loadHistory();
+  }
+
+  private resolveCurrentUserId(): string | null {
+    const fromSession = this.userService.currentUser()?.id;
+    if (fromSession) {
+      const value = String(fromSession);
+      if (localStorage.getItem('userId') !== value) {
+        localStorage.setItem('userId', value);
+      }
+      return value;
+    }
+
+    return localStorage.getItem('userId');
   }
 
   loadHistory() {
