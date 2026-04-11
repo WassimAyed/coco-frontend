@@ -233,6 +233,10 @@ export class LostAndFoundService {
         return this.http.get<ItemReportResponse[]>(`${this.reportsUrl}/my`, this.buildHeaders());
     }
 
+    getReportsForMyItems(): Observable<ItemReportResponse[]> {
+        return this.http.get<ItemReportResponse[]>(`${this.reportsUrl}/owner/my-items`, this.buildHeaders());
+    }
+
     getReportsForModeration(status?: ReportStatus): Observable<ItemReportResponse[]> {
         const options = this.buildHeaders();
         const params = status ? new HttpParams().set('status', status) : undefined;

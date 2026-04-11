@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
-import { LostItem } from '../../models/lost-item.model';
+import { ItemReportResponse, LostItem } from '../../models/lost-item.model';
 import { UserService } from '../../../user-security/services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
 
@@ -55,6 +55,27 @@ import { ToastService } from '../../../shared/services/toast.service';
             <button class="btn-primary" (click)="createNewItem()">Create post</button>
           </div>
         </div>
+
+        <section class="owner-notifications" *ngIf="moderationNotifications.length > 0">
+          <div class="notification-head">
+            <h3>Moderation updates</h3>
+            <span>{{ moderationNotifications.length }} recent</span>
+          </div>
+
+          <article class="notification-card" *ngFor="let report of moderationNotifications">
+            <div>
+              <p class="notification-title">{{ report.itemTitle || ('Item #' + report.itemId) }}</p>
+              <p class="notification-text" *ngIf="report.status === 'ACTION_TAKEN'">
+                Your item was blocked after review.
+              </p>
+              <p class="notification-text" *ngIf="report.status !== 'ACTION_TAKEN'">
+                Report reviewed and item kept visible.
+              </p>
+              <p class="notification-comment" *ngIf="report.moderatorComment">{{ report.moderatorComment }}</p>
+            </div>
+            <button class="notification-dismiss" (click)="dismissNotification(report.id)">Dismiss</button>
+          </article>
+        </section>
 
         <div *ngIf="myItems.length === 0" class="empty-state">
           <div class="empty-icon-wrap">
@@ -366,6 +387,82 @@ import { ToastService } from '../../../shared/services/toast.service';
     .action-btn--delete { background: rgba(248,52,65,0.12); color: #d31e2b; }
     .action-btn--delete:hover { background: rgba(248,52,65,0.22); }
 
+    .owner-notifications {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #ececec;
+      padding: 1rem;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+    }
+
+    .notification-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.7rem;
+    }
+
+    .notification-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .notification-head span {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #f83441;
+      background: rgba(248,52,65,0.12);
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+    }
+
+    .notification-card {
+      border: 1px solid #efefef;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .notification-card + .notification-card {
+      margin-top: 0.55rem;
+    }
+
+    .notification-title {
+      margin: 0;
+      font-weight: 700;
+      color: #111827;
+      font-size: 0.9rem;
+    }
+
+    .notification-text,
+    .notification-comment {
+      margin: 0.2rem 0 0;
+      color: #6b7280;
+      font-size: 0.82rem;
+    }
+
+    .notification-dismiss {
+      border: none;
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 9px;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .notification-dismiss:hover {
+      background: #e5e7eb;
+    }
+
     .empty-state {
       background: #fff;
       border-radius: 20px;
@@ -406,10 +503,13 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class UserLostItemsComponent implements OnInit {
   myItems: LostItem[] = [];
+  moderationNotifications: ItemReportResponse[] = [];
   searchTerm = '';
   userId!: number;
   private pendingDeleteItemId: number | null = null;
   private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly ownerReportNotificationStorageKey = 'lf_owner_review_seen_ids';
+  private seenOwnerReviewIds = new Set<number>();
 
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
@@ -431,11 +531,14 @@ export class UserLostItemsComponent implements OnInit {
     }
 
     this.userId = Number(resolvedUserId);
+    this.loadSeenOwnerNotifications();
     this.lostService.getMyItems().subscribe((items) => {
       this.myItems = items.sort(
         (a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
       );
     });
+
+    this.loadOwnerModerationNotifications();
   }
 
   private resolveCurrentUserId(): string | null {
@@ -532,6 +635,12 @@ export class UserLostItemsComponent implements OnInit {
     });
   }
 
+  dismissNotification(reportId: number): void {
+    this.moderationNotifications = this.moderationNotifications.filter((report) => report.id !== reportId);
+    this.seenOwnerReviewIds.add(reportId);
+    this.persistSeenOwnerNotifications();
+  }
+
   createNewItem(): void {
     this.router.navigate(['/lost-found/post']);
   }
@@ -565,5 +674,57 @@ export class UserLostItemsComponent implements OnInit {
     `;
 
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  private loadOwnerModerationNotifications(): void {
+    this.lostService.getReportsForMyItems().subscribe({
+      next: (reports) => {
+        const sortedReports = (reports || []).sort(
+          (a, b) => new Date(b.reviewedAt || b.updatedAt).getTime() - new Date(a.reviewedAt || a.updatedAt).getTime()
+        );
+
+        this.moderationNotifications = sortedReports.slice(0, 5);
+        this.notifyForNewOwnerReviews(sortedReports);
+      },
+      error: () => {
+        // keep silent to avoid noisy UX if endpoint is temporarily unavailable
+      }
+    });
+  }
+
+  private notifyForNewOwnerReviews(reports: ItemReportResponse[]): void {
+    reports.forEach((report) => {
+      if (!report?.id || this.seenOwnerReviewIds.has(report.id)) {
+        return;
+      }
+
+      if (report.status === 'ACTION_TAKEN') {
+        this.toast.warning(`Moderation update: "${report.itemTitle || 'your item'}" was blocked.`);
+      } else {
+        this.toast.info(`Moderation update: "${report.itemTitle || 'your item'}" was reviewed and kept visible.`);
+      }
+
+      this.seenOwnerReviewIds.add(report.id);
+    });
+
+    this.persistSeenOwnerNotifications();
+  }
+
+  private loadSeenOwnerNotifications(): void {
+    const raw = localStorage.getItem(this.ownerReportNotificationStorageKey);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const ids = JSON.parse(raw) as number[];
+      this.seenOwnerReviewIds = new Set((ids || []).filter((id) => Number.isFinite(id)));
+    } catch {
+      this.seenOwnerReviewIds = new Set<number>();
+    }
+  }
+
+  private persistSeenOwnerNotifications(): void {
+    localStorage.setItem(this.ownerReportNotificationStorageKey, JSON.stringify([...this.seenOwnerReviewIds]));
   }
 }
