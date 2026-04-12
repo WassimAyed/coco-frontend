@@ -1,0 +1,30 @@
+<div class="my-coupons-page">
+  <h1>🎫 Mes Coupons</h1>
+  <div *ngIf="message" class="alert">{{ message }}</div>
+
+  <div *ngIf="myCoupons.length === 0" class="empty-state">
+    <p>Tu n'as pas encore de coupons. Va dans les Bons Plans pour en recuperer!</p>
+  </div>
+
+  <div class="coupons-list">
+    <div *ngFor="let uc of myCoupons" class="my-coupon-card" [ngClass]="getStatusClass(uc.status)">
+      <div class="card-left">
+        <span class="discount-badge">
+          {{ uc.couponDiscountType === 'PERCENTAGE' ? uc.couponDiscountValue + '%' : uc.couponDiscountValue + ' DT' }}
+        </span>
+      </div>
+      <div class="card-right">
+        <h3>{{ uc.couponTitle }}</h3>
+        <p>📍 {{ uc.couponPartnerName }}</p>
+        <p class="desc">{{ uc.couponDescription }}</p>
+        <div class="card-footer">
+          <span [ngClass]="getStatusClass(uc.status)">{{ getStatusLabel(uc.status) }}</span>
+          <span class="date">Reclame le {{ uc.claimedAt | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <button *ngIf="uc.status === 'CLAIMED'" class="use-btn" (click)="useCoupon(uc.couponId)">
+          ✨ Utiliser maintenant
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

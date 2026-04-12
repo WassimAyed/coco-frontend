@@ -1,0 +1,19 @@
+.my-coupons-page { max-width: 800px; margin: 0 auto; padding: 20px; }
+.my-coupons-page h1 { text-align: center; color: #1a1a2e; margin-bottom: 24px; }
+.alert { background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+.empty-state { text-align: center; padding: 60px; color: #888; }
+.coupons-list { display: flex; flex-direction: column; gap: 16px; }
+.my-coupon-card { display: flex; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+.card-left { display: flex; align-items: center; justify-content: center; min-width: 100px; background: linear-gradient(135deg, #e94560, #0f3460); color: white; padding: 20px; }
+.discount-badge { font-size: 1.4rem; font-weight: bold; text-align: center; }
+.card-right { padding: 16px 20px; flex: 1; }
+.card-right h3 { margin: 0 0 4px 0; color: #1a1a2e; }
+.card-right p { margin: 0 0 4px 0; color: #888; font-size: 0.9rem; }
+.desc { color: #555 !important; margin-bottom: 10px !important; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.85rem; }
+.status-claimed { color: #28a745; font-weight: bold; }
+.status-used { color: #6c757d; }
+.status-expired { color: #dc3545; }
+.date { color: #aaa; }
+.use-btn { padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+.use-btn:hover { background: #218838; }

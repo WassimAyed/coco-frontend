@@ -1,0 +1,52 @@
+<div class="stats-page">
+  <h1>📊 Dashboard Coupons</h1>
+
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <span class="stat-icon">🎫</span>
+      <div class="stat-info">
+        <span class="stat-number">{{ totalCoupons }}</span>
+        <span class="stat-label">Total Coupons</span>
+      </div>
+    </div>
+    <div class="stat-card active">
+      <span class="stat-icon">✅</span>
+      <div class="stat-info">
+        <span class="stat-number">{{ activeCoupons }}</span>
+        <span class="stat-label">Actifs</span>
+      </div>
+    </div>
+    <div class="stat-card claimed">
+      <span class="stat-icon">🙋</span>
+      <div class="stat-info">
+        <span class="stat-number">{{ totalClaimed }}</span>
+        <span class="stat-label">Total Reclames</span>
+      </div>
+    </div>
+    <div class="stat-card expired">
+      <span class="stat-icon">⏰</span>
+      <div class="stat-info">
+        <span class="stat-number">{{ expiredCoupons }}</span>
+        <span class="stat-label">Expires</span>
+      </div>
+    </div>
+    <div class="stat-card inactive">
+      <span class="stat-icon">🚫</span>
+      <div class="stat-info">
+        <span class="stat-number">{{ inactiveCoupons }}</span>
+        <span class="stat-label">Inactifs</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="category-section">
+    <h2>📂 Par Categorie</h2>
+    <div class="category-grid">
+      <div *ngFor="let cat of categoryCounts" class="category-card">
+        <span class="cat-icon">{{ cat.icon }}</span>
+        <span class="cat-name">{{ cat.name }}</span>
+        <span class="cat-count">{{ cat.count }}</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+.coupon-page { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.coupon-header { text-align: center; margin-bottom: 30px; }
+.coupon-header h1 { font-size: 2rem; color: #1a1a2e; margin-bottom: 8px; }
+.coupon-header p { color: #666; font-size: 1.1rem; }
+.alert { background: #d4edda; color: #155724; padding: 12px 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+.category-filters { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; }
+.category-filters button { padding: 8px 18px; border: 2px solid #e0e0e0; border-radius: 25px; background: white; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; }
+.category-filters button:hover { border-color: #e94560; color: #e94560; }
+.category-filters button.active { background: #e94560; color: white; border-color: #e94560; }
+.coupons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.coupon-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; position: relative; }
+.coupon-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+.coupon-badge { position: absolute; top: 12px; left: 12px; background: rgba(26,26,46,0.85); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; z-index: 1; }
+.coupon-image { width: 100%; height: 180px; object-fit: cover; }
+.coupon-content { padding: 20px; }
+.coupon-content h3 { margin: 0 0 8px 0; color: #1a1a2e; font-size: 1.2rem; }
+.coupon-partner { color: #888; font-size: 0.9rem; margin: 0 0 8px 0; }
+.coupon-desc { color: #555; font-size: 0.9rem; margin: 0 0 15px 0; line-height: 1.4; }
+.coupon-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.discount { background: #e94560; color: white; padding: 4px 14px; border-radius: 20px; font-weight: bold; font-size: 1rem; }
+.expiry { color: #888; font-size: 0.85rem; }
+.coupon-usage { margin-bottom: 15px; }
+.usage-bar { height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.usage-fill { height: 100%; background: linear-gradient(90deg, #e94560, #0f3460); border-radius: 3px; transition: width 0.5s; }
+.coupon-usage span { font-size: 0.8rem; color: #888; }
+.claim-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #e94560, #0f3460); color: white; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: opacity 0.3s; }
+.claim-btn:hover { opacity: 0.9; }
+.empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 1.2rem; }

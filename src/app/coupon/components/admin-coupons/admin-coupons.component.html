@@ -1,0 +1,110 @@
+<div class="admin-page">
+ <div class="admin-header">
+    <h1>⚙️ Gestion des Coupons</h1>
+    <div class="header-actions">
+      <button class="export-btn" (click)="exportPDF()">📄 Export PDF</button>
+      <button class="add-btn" (click)="openAddForm()">+ Ajouter un coupon</button>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="alert" [ngClass]="messageType">{{ message }}</div>
+
+  <div class="search-bar">
+    <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
+           placeholder="🔍 Rechercher par code, titre, partenaire ou categorie...">
+  </div>
+
+  <!-- FORMULAIRE -->
+  <div *ngIf="showForm" class="form-container">
+    <h2>{{ editMode ? '✏️ Modifier le coupon' : '➕ Nouveau coupon' }}</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Code</label>
+        <input [(ngModel)]="form.code" placeholder="Ex: PATHE30" [disabled]="editMode">
+      </div>
+      <div class="form-group">
+        <label>Titre</label>
+        <input [(ngModel)]="form.title" placeholder="Ex: 30% chez Pathe">
+      </div>
+      <div class="form-group full">
+        <label>Description</label>
+        <textarea [(ngModel)]="form.description" rows="2" placeholder="Description du coupon"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Type de reduction</label>
+        <select [(ngModel)]="form.discountType">
+          <option value="PERCENTAGE">Pourcentage (%)</option>
+          <option value="FIXED">Montant fixe (DT)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valeur</label>
+        <input type="number" [(ngModel)]="form.discountValue" min="0">
+      </div>
+      <div class="form-group">
+        <label>Categorie</label>
+        <select [(ngModel)]="form.category">
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date d'expiration</label>
+        <input type="datetime-local" [(ngModel)]="form.expirationDate">
+      </div>
+      <div class="form-group">
+        <label>Max utilisations</label>
+        <input type="number" [(ngModel)]="form.maxUsage" min="1">
+      </div>
+      <div class="form-group">
+        <label>Nom du partenaire</label>
+        <input [(ngModel)]="form.partnerName" placeholder="Ex: Pathe Tunis">
+      </div>
+      <div class="form-group full">
+        <label>URL image</label>
+        <input [(ngModel)]="form.imageUrl" placeholder="https://...">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="save-btn" (click)="submitForm()">{{ editMode ? 'Modifier' : 'Creer' }}</button>
+      <button class="cancel-btn" (click)="cancelForm()">Annuler</button>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Titre</th>
+          <th>Reduction</th>
+          <th>Categorie</th>
+          <th>Usage</th>
+          <th>Statut</th>
+          <th>Expiration</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of filteredCoupons">
+          <td><strong>{{ c.code }}</strong></td>
+          <td>{{ c.title }}</td>
+          <td>{{ c.discountType === 'PERCENTAGE' ? c.discountValue + '%' : c.discountValue + ' DT' }}</td>
+          <td>{{ c.category }}</td>
+          <td>{{ c.currentUsage }}/{{ c.maxUsage }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="c.isActive ? 'active' : 'inactive'"
+                  (click)="toggleStatus(c.id)">
+              {{ c.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+          </td>
+          <td>{{ c.expirationDate | date:'dd/MM/yyyy' }}</td>
+          <td class="actions">
+            <button class="edit-btn" (click)="openEditForm(c)">✏️</button>
+            <button class="delete-btn" (click)="deleteCoupon(c.id)">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
