@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Covoiturage, Reservation, Vehicule } from '../models/covoiturage.model';
+import { Covoiturage, Reservation, Vehicule, Notation } from '../models/covoiturage.model';
 
 @Injectable({
   providedIn: 'root'
@@ -127,6 +127,40 @@ export class CovoiturageService {
 
   getVehiculeImageUrl(filename: string): string {
     return `http://localhost:8092/imagesVehicules/${filename}`;
+  }
+
+  // ========== NOTATION ==========
+
+  addNotation(notation: Notation): Observable<Notation> {
+    return this.http.post<Notation>(`${this.apiUrl}/notation/add`, notation);
+  }
+
+  getNotationsByRecepteur(idRecepteur: number): Observable<Notation[]> {
+    return this.http.get<Notation[]>(`${this.apiUrl}/notation/recepteur/${idRecepteur}`);
+  }
+
+  getNotationsByDonneur(idDonneur: number): Observable<Notation[]> {
+    return this.http.get<Notation[]>(`${this.apiUrl}/notation/donneur/${idDonneur}`);
+  }
+
+  updateNotation(notation: Notation): Observable<Notation> {
+    return this.http.put<Notation>(`${this.apiUrl}/notation/update`, notation);
+  }
+
+  deleteNotation(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/notation/delete/${id}`);
+  }
+
+  // ========== ML - PREDICTION COUT ==========
+
+  predictCost(data: {
+    distance_km: number;
+    duree_min: number;
+    nombre_places: number;
+    prix_carburant_litre?: number;
+    consommation_moyenne?: number;
+  }): Observable<any> {
+    return this.http.post<any>('http://localhost:5002/api/covoiturage/predict-cost', data);
   }
 
   // ========== USER ==========

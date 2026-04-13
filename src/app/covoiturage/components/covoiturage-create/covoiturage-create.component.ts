@@ -34,6 +34,10 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   error = '';
   currentUserId: number = 0;
 
+  // ML prediction
+  mlPrediction: any = null;
+  mlLoading = false;
+
   // Confirm modal
   showConfirmModal = false;
   pendingDeleteVehiculeId: number | null = null;
@@ -172,6 +176,9 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
           // distance in km, duration in minutes
           this.covoiturage.distance = Math.round(leg.distance.value / 1000);
           this.covoiturage.dureeEstimee = Math.round(leg.duration.value / 60);
+
+          // Appel au service ML pour predire le prix
+          this.predictCost();
         } else {
           console.error('Directions request failed:', status);
         }
@@ -195,6 +202,10 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
 
   onNombrePlacesChange(): void {
     this.covoiturage.placesDisponibles = this.covoiturage.nombrePlaces;
+    // Relancer la prediction ML car le nombre de places a change
+    if (this.covoiturage.distance > 0) {
+      this.predictCost();
+    }
   }
 
   submit(): void {
@@ -224,6 +235,35 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
         console.error(err);
       }
     });
+  }
+
+  // ========== ML PREDICTION ==========
+
+  predictCost(): void {
+    if (this.covoiturage.distance <= 0 || this.covoiturage.dureeEstimee <= 0) return;
+
+    this.mlLoading = true;
+    this.covoiturageService.predictCost({
+      distance_km: this.covoiturage.distance,
+      duree_min: this.covoiturage.dureeEstimee,
+      nombre_places: this.covoiturage.nombrePlaces
+    }).subscribe({
+      next: (result) => {
+        this.mlPrediction = result;
+        this.mlLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur prediction ML', err);
+        this.mlPrediction = null;
+        this.mlLoading = false;
+      }
+    });
+  }
+
+  applySuggestedPrice(): void {
+    if (this.mlPrediction) {
+      this.covoiturage.prixParPassager = this.mlPrediction.contribution_par_passager_ml;
+    }
   }
 
   // ========== VEHICULE MODAL ==========

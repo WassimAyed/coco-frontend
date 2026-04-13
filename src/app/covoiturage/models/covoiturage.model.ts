@@ -40,3 +40,11 @@ export interface Vehicule {
   capacite: number;
   image: string;
 }
+
+export interface Notation {
+  id?: number;
+  notation: number;
+  comment: string;
+  idDonneur: number;
+  idRecepteur: number;
+}

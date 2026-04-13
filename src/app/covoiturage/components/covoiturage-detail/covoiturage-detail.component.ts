@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
-import { Covoiturage, Reservation, Vehicule, StatusReservation } from '../../models/covoiturage.model';
+import { Covoiturage, Reservation, Vehicule, StatusReservation, Notation } from '../../models/covoiturage.model';
 
 declare var google: any;
 
@@ -30,6 +30,17 @@ export class CovoiturageDetailComponent implements OnInit {
 
   myReservation: Reservation | null = null;
   loadingMyReservation = false;
+
+  // Notation
+  notations: Notation[] = [];
+  notationDonneurNames: Map<number, string> = new Map();
+  myNotation: Notation | null = null;
+  newNotation: number = 5;
+  newComment: string = '';
+  notationSuccess = '';
+  notationError = '';
+  editingNotation = false;
+  hoverRating: number = 0;
 
   showConfirmModal = false;
   confirmModalTitle = '';
@@ -124,6 +135,7 @@ export class CovoiturageDetailComponent implements OnInit {
           this.loadMyReservation(id);
         }
 
+        this.loadNotations(data.idDriver);
         this.showRouteOnMap();
       },
       error: (err) => {
@@ -311,6 +323,122 @@ export class CovoiturageDetailComponent implements OnInit {
   closeConfirmModal(): void {
     this.showConfirmModal = false;
     this.confirmModalAction = null;
+  }
+
+  // ========== NOTATION ==========
+
+  loadNotations(idDriver: number): void {
+    this.covoiturageService.getNotationsByRecepteur(idDriver).subscribe({
+      next: (notations) => {
+        this.notations = notations;
+        this.myNotation = notations.find(n => n.idDonneur === this.currentUserId) || null;
+        if (this.myNotation) {
+          this.newNotation = this.myNotation.notation;
+          this.newComment = this.myNotation.comment;
+        }
+        this.loadDonneurNames(notations);
+      },
+      error: (err) => console.error('Erreur chargement notations', err)
+    });
+  }
+
+  private loadDonneurNames(notations: Notation[]): void {
+    const uniqueIds = [...new Set(notations.map(n => n.idDonneur))];
+    uniqueIds.forEach(id => {
+      if (!this.notationDonneurNames.has(id)) {
+        this.covoiturageService.getUserById(id).subscribe({
+          next: (user) => this.notationDonneurNames.set(id, user.username),
+          error: () => this.notationDonneurNames.set(id, `Utilisateur #${id}`)
+        });
+      }
+    });
+  }
+
+  getDonneurName(id: number): string {
+    return this.notationDonneurNames.get(id) || 'Chargement...';
+  }
+
+  getAverageNotation(): number {
+    if (this.notations.length === 0) return 0;
+    const sum = this.notations.reduce((acc, n) => acc + n.notation, 0);
+    return Math.round((sum / this.notations.length) * 10) / 10;
+  }
+
+  submitNotation(): void {
+    if (!this.covoiturage) return;
+    this.notationError = '';
+    this.notationSuccess = '';
+
+    const notation: Notation = {
+      notation: this.newNotation,
+      comment: this.newComment,
+      idDonneur: this.currentUserId,
+      idRecepteur: this.covoiturage.idDriver
+    };
+
+    this.covoiturageService.addNotation(notation).subscribe({
+      next: () => {
+        this.notationSuccess = 'Notation ajoutee avec succes !';
+        this.loadNotations(this.covoiturage!.idDriver);
+      },
+      error: (err) => {
+        this.notationError = 'Erreur lors de l\'ajout de la notation.';
+        console.error(err);
+      }
+    });
+  }
+
+  updateMyNotation(): void {
+    if (!this.myNotation) return;
+    this.notationError = '';
+    this.notationSuccess = '';
+
+    const updated: Notation = {
+      ...this.myNotation,
+      notation: this.newNotation,
+      comment: this.newComment
+    };
+
+    this.covoiturageService.updateNotation(updated).subscribe({
+      next: () => {
+        this.notationSuccess = 'Notation modifiee avec succes !';
+        this.editingNotation = false;
+        this.loadNotations(this.covoiturage!.idDriver);
+      },
+      error: (err) => {
+        this.notationError = 'Erreur lors de la modification.';
+        console.error(err);
+      }
+    });
+  }
+
+  deleteMyNotation(): void {
+    if (!this.myNotation) return;
+    this.openConfirmModal(
+      'Supprimer la notation',
+      'Voulez-vous vraiment supprimer votre notation ?',
+      'fas fa-star text-warning',
+      () => {
+        this.covoiturageService.deleteNotation(this.myNotation!.id!).subscribe({
+          next: () => {
+            this.notationSuccess = 'Notation supprimee.';
+            this.myNotation = null;
+            this.newNotation = 5;
+            this.newComment = '';
+            this.editingNotation = false;
+            this.loadNotations(this.covoiturage!.idDriver);
+          },
+          error: (err) => {
+            this.notationError = 'Erreur lors de la suppression.';
+            console.error(err);
+          }
+        });
+      }
+    );
+  }
+
+  setRating(value: number): void {
+    this.newNotation = value;
   }
 
   getVehiculeImageUrl(filename: string): string {

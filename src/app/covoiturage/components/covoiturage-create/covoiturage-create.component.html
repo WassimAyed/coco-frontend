@@ -64,6 +64,47 @@
                 <input type="number" class="form-control" [(ngModel)]="covoiturage.prixParPassager" name="prixParPassager" min="0" step="0.5">
               </div>
 
+              <!-- ========== SUGGESTION IA ========== -->
+              <div class="col-md-12" *ngIf="mlLoading">
+                <div class="border rounded-3 p-3 bg-light text-center">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                  <span class="text-muted">Calcul IA du prix en cours...</span>
+                </div>
+              </div>
+
+              <div class="col-md-12" *ngIf="mlPrediction && !mlLoading">
+                <div class="border rounded-4 p-3 bg-light border-primary">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-robot text-primary fs-5 me-2"></i>
+                    <h6 class="fw-bold mb-0 text-primary">Suggestion IA - Contribution carburant</h6>
+                  </div>
+
+                  <div class="row g-2 mb-2">
+                    <div class="col-sm-6">
+                      <div class="bg-white rounded-3 p-2 text-center">
+                        <div class="text-muted small">Cout total estime</div>
+                        <div class="fw-bold fs-5 text-danger">{{ mlPrediction.cout_total_ml }} TND</div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6">
+                      <div class="bg-white rounded-3 p-2 text-center">
+                        <div class="text-muted small">Prix suggere / passager</div>
+                        <div class="fw-bold fs-5 text-success">{{ mlPrediction.contribution_par_passager_ml }} TND</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="small text-muted mb-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Base sur {{ mlPrediction.details.distance_km }} km, {{ mlPrediction.details.duree_min }} min, {{ mlPrediction.nb_passagers }} passagers
+                  </div>
+
+                  <button type="button" class="btn btn-primary btn-sm rounded-pill" (click)="applySuggestedPrice()">
+                    <i class="fas fa-check me-1"></i> Appliquer ce prix
+                  </button>
+                </div>
+              </div>
+
               <!-- ========== VEHICULE SECTION ========== -->
               <div class="col-md-12">
                 <label class="form-label fw-bold"><i class="fas fa-car me-1"></i> Vehicule *</label>

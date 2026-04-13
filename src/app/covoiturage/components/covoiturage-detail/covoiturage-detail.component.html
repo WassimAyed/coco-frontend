@@ -91,6 +91,141 @@
           </div>
         </div>
 
+        <!-- ====== SECTION NOTATION ====== -->
+        <div class="card border-0 shadow rounded-4 mt-4">
+          <div class="card-body p-4">
+
+            <!-- Header avec moyenne -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-star text-warning me-2"></i> {{ isDriver ? 'Vos avis' : 'Avis sur le conducteur' }}</h5>
+              <div *ngIf="notations.length > 0" class="text-end">
+                <span class="fs-4 fw-bold text-warning">{{ getAverageNotation() }}</span>
+                <span class="text-muted">/5</span>
+                <div class="small text-muted">{{ notations.length }} avis</div>
+              </div>
+            </div>
+
+            <!-- Moyenne etoiles -->
+            <div *ngIf="notations.length > 0" class="mb-3">
+              <span *ngFor="let s of [1,2,3,4,5]" class="fs-5">
+                <i class="fas fa-star" [ngClass]="s <= getAverageNotation() ? 'text-warning' : 'text-muted'" style="opacity: 0.4;" [style.opacity]="s <= getAverageNotation() ? '1' : '0.3'"></i>
+              </span>
+            </div>
+            <div *ngIf="notations.length === 0" class="text-muted mb-3">
+              <i class="fas fa-info-circle me-1"></i> Aucun avis pour le moment.
+            </div>
+
+            <!-- Formulaire notation (passager avec reservation confirmee, pas encore note) -->
+            <div *ngIf="!isDriver && myReservation && myReservation.statusReservation === 'CONFIRMEE' && !myNotation"
+                 class="border rounded-3 p-3 mb-3 bg-light">
+              <h6 class="fw-bold mb-2"><i class="fas fa-pen me-1"></i> Laisser un avis</h6>
+
+              <div *ngIf="notationSuccess" class="alert alert-success py-2">{{ notationSuccess }}</div>
+              <div *ngIf="notationError" class="alert alert-danger py-2">{{ notationError }}</div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Note</label>
+                <div class="star-rating">
+                  <span *ngFor="let s of [1,2,3,4,5]" class="star-btn"
+                        (click)="setRating(s)" (mouseenter)="hoverRating = s" (mouseleave)="hoverRating = 0">
+                    <i class="fas fa-star fs-4"
+                       [ngClass]="(hoverRating || newNotation) >= s ? 'text-warning' : 'text-muted'"
+                       style="cursor:pointer;"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Commentaire</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="newComment"
+                          placeholder="Partagez votre experience..."></textarea>
+              </div>
+              <button class="btn btn-warning rounded-pill px-4" (click)="submitNotation()">
+                <i class="fas fa-paper-plane me-1"></i> Envoyer
+              </button>
+            </div>
+
+            <!-- Ma notation existante (lecture / edition) -->
+            <div *ngIf="!isDriver && myNotation && !editingNotation"
+                 class="border rounded-3 p-3 mb-3 border-warning bg-light">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="badge bg-warning text-dark rounded-pill mb-1">Mon avis</span>
+                  <div class="mb-1">
+                    <span *ngFor="let s of [1,2,3,4,5]">
+                      <i class="fas fa-star" [ngClass]="s <= myNotation.notation ? 'text-warning' : 'text-muted'"></i>
+                    </span>
+                  </div>
+                  <p class="mb-0 text-muted" *ngIf="myNotation.comment">{{ myNotation.comment }}</p>
+                </div>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-warning rounded-pill" (click)="editingNotation = true">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="deleteMyNotation()">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edition de ma notation -->
+            <div *ngIf="!isDriver && myNotation && editingNotation"
+                 class="border rounded-3 p-3 mb-3 border-warning bg-light">
+              <h6 class="fw-bold mb-2"><i class="fas fa-edit me-1"></i> Modifier mon avis</h6>
+
+              <div *ngIf="notationSuccess" class="alert alert-success py-2">{{ notationSuccess }}</div>
+              <div *ngIf="notationError" class="alert alert-danger py-2">{{ notationError }}</div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Note</label>
+                <div class="star-rating">
+                  <span *ngFor="let s of [1,2,3,4,5]" class="star-btn"
+                        (click)="setRating(s)" (mouseenter)="hoverRating = s" (mouseleave)="hoverRating = 0">
+                    <i class="fas fa-star fs-4"
+                       [ngClass]="(hoverRating || newNotation) >= s ? 'text-warning' : 'text-muted'"
+                       style="cursor:pointer;"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Commentaire</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="newComment"></textarea>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-warning rounded-pill px-4" (click)="updateMyNotation()">
+                  <i class="fas fa-save me-1"></i> Enregistrer
+                </button>
+                <button class="btn btn-outline-secondary rounded-pill" (click)="editingNotation = false">
+                  Annuler
+                </button>
+              </div>
+            </div>
+
+            <!-- Liste des avis -->
+            <div *ngIf="notations.length > 0">
+              <hr>
+              <div *ngFor="let n of notations" class="mb-3 p-3 bg-light rounded-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <span class="fw-bold small">
+                      <i class="fas fa-user-circle me-1 text-secondary"></i>
+                      {{ getDonneurName(n.idDonneur) }}
+                      <span *ngIf="n.idDonneur === currentUserId" class="badge bg-info text-dark ms-1">Vous</span>
+                    </span>
+                    <div class="mt-1">
+                      <span *ngFor="let s of [1,2,3,4,5]">
+                        <i class="fas fa-star small" [ngClass]="s <= n.notation ? 'text-warning' : 'text-muted'"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p *ngIf="n.comment" class="mb-0 mt-1 text-muted small">{{ n.comment }}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Reservations (visible by driver) -->
         <div *ngIf="isDriver && reservations.length > 0" class="card border-0 shadow rounded-4 mt-4">
           <div class="card-body p-4">
