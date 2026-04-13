@@ -1,6 +1,7 @@
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -22,6 +23,7 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
   imports: [
     BrowserModule,
     CommonModule,
+    FormsModule,
     HttpClientModule,
     RouterModule,
     LucideAngularModule,

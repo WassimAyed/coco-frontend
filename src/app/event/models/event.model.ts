@@ -1,4 +1,5 @@
-export type EventStatus = 'PENDING' | 'ACCEPTED' | 'REFUSED' | string;
+export type EventStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACCEPTED' | 'REFUSED' | string;
+export type EventType = 'OUTDOOR' | 'INDOOR' | 'ONLINE' | string;
 
 export interface EventDto {
 	id?: number;
@@ -10,8 +11,11 @@ export interface EventDto {
 	longitude?: number;
 	fullAddress?: string;
 	temperature?: number;
+	precipitationMm?: number;
+	windSpeedKmh?: number;
 	weatherCode?: number;
 	weatherLabel?: string;
+	eventType?: EventType;
 	startDate?: string;
 	endDate?: string;
 	status?: EventStatus;
@@ -40,6 +44,7 @@ export interface CreateEventRequest {
 	endDate?: string;
 	status?: EventStatus;
 	categoryId: number;
+	eventType: EventType;
 	userId?: number;
 	maxCapacity: number;
 	currentParticipants?: number;
@@ -58,6 +63,7 @@ export interface UpdateEventRequest {
 	endDate?: string;
 	status?: EventStatus;
 	categoryId?: number;
+	eventType?: EventType;
 	userId?: number;
 	maxCapacity?: number;
 	currentParticipants?: number;

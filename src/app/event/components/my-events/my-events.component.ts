@@ -54,6 +54,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     name: '',
     description: '',
     location: '',
+    eventType: 'OUTDOOR',
     price: undefined,
     latitude: undefined,
     longitude: undefined,
@@ -240,6 +241,11 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   startEdit(event: EventDto): void {
+    if (!this.canEditEvent(event)) {
+      this.errorMessage = 'This event is locked and cannot be edited.';
+      return;
+    }
+
     this.editingEventId = event.id || null;
     this.editingEvent = event;
     this.errorMessage = '';
@@ -255,6 +261,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: event.name,
       description: event.description,
       location: event.location,
+      eventType: event.eventType,
       latitude: event.latitude,
       longitude: event.longitude,
       fullAddress: event.fullAddress,
@@ -381,6 +388,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: this.cleanString(this.editModel.name),
       description: this.cleanString(this.editModel.description),
       location: this.cleanString(this.editModel.location),
+      eventType: this.editModel.eventType,
       imageUrl: existingImageValue,
       fullAddress: this.cleanString(this.editModel.fullAddress),
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
@@ -514,21 +522,17 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     return this.categories.find(category => category.id === categoryId)?.name || `#${categoryId}`;
   }
 
-  isAcceptedStatus(status?: string): boolean {
-    return String(status || '').toUpperCase() === 'ACCEPTED';
-  }
-
-  isRefusedStatus(status?: string): boolean {
-    return String(status || '').toUpperCase() === 'REFUSED';
+  canEditEvent(event?: EventDto | null): boolean {
+    return this.normalizeStatus(event?.status) === 'PENDING';
   }
 
   getStatusBadgeClass(status?: string): string {
-    switch ((status || '').toUpperCase()) {
+    switch (this.normalizeStatus(status)) {
       case 'PENDING':
         return 'badge-yellow';
-      case 'ACCEPTED':
+      case 'APPROVED':
         return 'badge-green';
-      case 'REFUSED':
+      case 'REJECTED':
         return 'badge-red';
       default:
         return 'badge-blue';
@@ -536,13 +540,13 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(status?: string): string {
-    switch ((status || '').toUpperCase()) {
+    switch (this.normalizeStatus(status)) {
       case 'PENDING':
         return 'En attente';
-      case 'ACCEPTED':
-        return 'Accepté';
-      case 'REFUSED':
-        return 'Refusé';
+      case 'APPROVED':
+        return 'Approuvé';
+      case 'REJECTED':
+        return 'Rejeté';
       default:
         return status || 'N/A';
     }
@@ -867,6 +871,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: '',
       description: '',
       location: '',
+      eventType: 'OUTDOOR',
       price: undefined,
       latitude: undefined,
       longitude: undefined,
@@ -893,5 +898,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     });
 
     return Array.from(mapBySignature.values());
+  }
+
+  private normalizeStatus(status?: string): string {
+    switch (String(status || '').toUpperCase()) {
+      case 'ACCEPTED':
+        return 'APPROVED';
+      case 'REFUSED':
+        return 'REJECTED';
+      default:
+        return String(status || '').toUpperCase();
+    }
   }
 }

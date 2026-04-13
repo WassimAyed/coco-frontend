@@ -57,7 +57,7 @@
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
                   <button type="button" class="btn-secondary !px-3 !py-2" (click)="openDetailModal(event)">Voir Détail</button>
-                  <button type="button" class="btn-secondary !px-3 !py-2" (click)="startEdit(event)">Edit</button>
+                  <button type="button" class="btn-secondary !px-3 !py-2" [disabled]="!canEditEvent(event)" (click)="startEdit(event)">Edit</button>
                   <button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteEvent(event.id!)">Delete</button>
                 </div>
               </td>
@@ -102,6 +102,16 @@
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Location</label>
           <input class="form-input" placeholder="Location" [(ngModel)]="createModel.location" />
           <p *ngIf="createFieldErrors['location']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['location'] }}</p>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Event Type</label>
+          <select class="form-input" [(ngModel)]="createModel.eventType">
+            <option value="OUTDOOR">Outdoor</option>
+            <option value="INDOOR">Indoor</option>
+            <option value="ONLINE">Online</option>
+          </select>
+          <p *ngIf="createFieldErrors['eventType']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['eventType'] }}</p>
         </div>
 
         <div>
@@ -210,6 +220,16 @@
         </div>
 
         <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Event Type</label>
+          <select class="form-input" [(ngModel)]="editModel.eventType">
+            <option value="OUTDOOR">Outdoor</option>
+            <option value="INDOOR">Indoor</option>
+            <option value="ONLINE">Online</option>
+          </select>
+          <p *ngIf="editFieldErrors['eventType']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['eventType'] }}</p>
+        </div>
+
+        <div>
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Category</label>
           <select class="form-input" [ngModel]="editModel.categoryId" (ngModelChange)="editModel.categoryId = $event">
             <option [ngValue]="0">Select category</option>
@@ -314,6 +334,10 @@
             <p><strong>End date:</strong> {{ formatDate(detailModalEvent.endDate) }}</p>
             <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
             <p><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</p>
+            <p><strong>Event type:</strong> {{ detailModalEvent.eventType || 'N/A' }}</p>
+            <p><strong>Temperature:</strong> {{ detailModalEvent.temperature ?? 'N/A' }} °C</p>
+            <p><strong>Precipitation:</strong> {{ detailModalEvent.precipitationMm ?? 'N/A' }} mm</p>
+            <p><strong>Wind speed:</strong> {{ detailModalEvent.windSpeedKmh ?? 'N/A' }} km/h</p>
           </div>
         </div>
 

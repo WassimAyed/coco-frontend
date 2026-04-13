@@ -43,6 +43,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     name: '',
     description: '',
     location: '',
+    eventType: 'OUTDOOR',
     latitude: undefined,
     longitude: undefined,
     fullAddress: '',
@@ -54,7 +55,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     currentParticipants: 0
   };
 
-  readonly statuses: EventStatus[] = ['PENDING', 'ACCEPTED', 'REFUSED'];
+  readonly statuses: EventStatus[] = ['PENDING', 'APPROVED', 'REJECTED'];
 
   constructor(
     private readonly eventService: EventService,
@@ -331,6 +332,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       name: '',
       description: '',
       location: '',
+      eventType: 'OUTDOOR',
       latitude: undefined,
       longitude: undefined,
       fullAddress: '',
@@ -581,12 +583,12 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getStatusBadgeClass(status?: string): string {
-    switch ((status || '').toUpperCase()) {
+    switch (this.normalizeStatus(status)) {
       case 'PENDING':
         return 'status-badge status-ongoing';
-      case 'ACCEPTED':
+      case 'APPROVED':
         return 'status-badge status-completed';
-      case 'REFUSED':
+      case 'REJECTED':
         return 'status-badge status-cancelled';
       default:
         return 'status-badge status-planned';
@@ -594,13 +596,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getStatusLabel(status?: string): string {
-    switch ((status || '').toUpperCase()) {
+    switch (this.normalizeStatus(status)) {
       case 'PENDING':
         return 'En attente';
-      case 'ACCEPTED':
-        return 'Accepté';
-      case 'REFUSED':
-        return 'Refusé';
+      case 'APPROVED':
+        return 'Approuvé';
+      case 'REJECTED':
+        return 'Rejeté';
       default:
         return status || 'N/A';
     }
@@ -656,6 +658,17 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private toPublicEvents(events: EventDto[]): EventDto[] {
-    return (events || []).filter(event => String(event.status || '').toUpperCase() === 'ACCEPTED');
+    return (events || []).filter(event => ['APPROVED', 'ACCEPTED'].includes(this.normalizeStatus(event.status)));
+  }
+
+  private normalizeStatus(status?: string): string {
+    switch (String(status || '').toUpperCase()) {
+      case 'ACCEPTED':
+        return 'APPROVED';
+      case 'REFUSED':
+        return 'REJECTED';
+      default:
+        return String(status || '').toUpperCase();
+    }
   }
 }

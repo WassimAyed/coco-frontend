@@ -84,6 +84,18 @@ export class EventService {
     return this.http.get<CategoryDto>(`${this.categoryUrl}/${id}`);
   }
 
+  createCategory(payload: Partial<CategoryDto>): Observable<CategoryDto> {
+    return this.http.post<CategoryDto>(this.categoryUrl, payload);
+  }
+
+  updateCategory(id: number, payload: Partial<CategoryDto>): Observable<CategoryDto> {
+    return this.http.put<CategoryDto>(`${this.categoryUrl}/${id}`, payload);
+  }
+
+  deleteCategory(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.categoryUrl}/${id}`);
+  }
+
   getAvailable(query?: EventListQuery): Observable<EventDto[]> {
     return this.http.get<EventDto[]>(`${this.baseUrl}/available`, { params: this.toParams(query) });
   }
