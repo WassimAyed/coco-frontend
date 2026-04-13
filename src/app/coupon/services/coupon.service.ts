@@ -60,6 +60,11 @@ export class CouponService {
     return this.http.delete<void>(this.apiUrl + '/' + id);
   }
 
+
+analyzeCoupons(): Observable<any> {
+    return this.http.get<any>(this.apiUrl + '/ai/analyze');
+  }
+
   toggleCouponStatus(id: number): Observable<Coupon> {
     return this.http.patch<Coupon>(this.apiUrl + '/' + id + '/toggle', {});
   }

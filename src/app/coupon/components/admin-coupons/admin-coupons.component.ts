@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService } from '../../services/coupon.service';
 import { Coupon } from '../../models/coupon.model';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 @Component({
   selector: 'app-admin-coupons',
   standalone: true,
@@ -62,7 +63,36 @@ export class AdminCouponsComponent implements OnInit {
     );
   }
 
+  exportPDF(): void {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Liste des Coupons - CoCo Platform', 14, 22);
+    doc.setFontSize(10);
+    doc.text('Genere le ' + new Date().toLocaleDateString('fr-FR'), 14, 30);
+
+    const rows = this.filteredCoupons.map(c => [
+      c.code,
+      c.title,
+      c.discountType === 'PERCENTAGE' ? c.discountValue + '%' : c.discountValue + ' DT',
+      c.category,
+      c.currentUsage + '/' + c.maxUsage,
+      c.isActive ? 'Actif' : 'Inactif',
+      new Date(c.expirationDate).toLocaleDateString('fr-FR')
+    ]);
+
+    autoTable(doc, {
+      head: [['Code', 'Titre', 'Reduction', 'Categorie', 'Usage', 'Statut', 'Expiration']],
+      body: rows,
+      startY: 36,
+      theme: 'grid',
+      headStyles: { fillColor: [233, 69, 96] },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save('coupons-coco.pdf');
+  }
   openAddForm(): void {
+    
     this.resetForm();
     this.showForm = true;
     this.editMode = false;
