@@ -1,3 +1,4 @@
+import { AdminCouponsComponent } from "./coupon/components/admin-coupons/admin-coupons.component";
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -26,8 +27,9 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
     LucideAngularModule,
     AppRoutingModule,
     SharedModule,
-    UserSecurityModule
-  ],
+    UserSecurityModule,
+    AdminCouponsComponent
+],
   providers: [
     {
       deps: [UserService],

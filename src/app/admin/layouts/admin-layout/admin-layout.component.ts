@@ -1,3 +1,4 @@
+import { AdminCouponsComponent } from '../../../coupon/components/admin-coupons/admin-coupons.component';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -28,7 +29,8 @@ import {
   User,
   Users,
   XCircle,
-  MessageCircle
+ MessageCircle,
+  Gift
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 
@@ -62,7 +64,8 @@ export class AdminLayoutComponent {
     { id: 'services', name: 'Services', icon: Briefcase },
     { id: 'events', name: 'Events', icon: Calendar },
     { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3 }
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'coupons', name: 'Coupons', icon: Gift }
   ];
 
   readonly kpiCards = [
