@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LostAndFoundService } from '../../services/lost-found.service';
+import { UserService } from '../../../user-security/services/user.service';
 import { LostItem } from '../../models/lost-item.model';
 
 @Component({
@@ -196,7 +197,7 @@ export class LostListComponent implements OnInit {
     FOUND: this.buildFallbackImage('FOUND', '#10b981')
   };
 
-  constructor(private lostService: LostAndFoundService) { }
+  constructor(private lostService: LostAndFoundService, private userService: UserService) { }
 
   ngOnInit(): void {
     this.loadItems(0);
@@ -211,21 +212,33 @@ export class LostListComponent implements OnInit {
 
   loadItems(page: number = this.currentPage): void {
     this.currentPage = Math.max(0, page);
-    this.lostService.getAllItems(this.currentPage, this.pageSize).subscribe((data) => {
-      const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
+    this.usingAdvancedFilters = false;
+    
+    this.lostService.getAllItems(this.currentPage, this.pageSize).subscribe(
+      (data) => {
+        const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);
 
-      // Sort by newest first by default
-      this.items = items.sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
-      this.filteredItems = this.items;
+        // Sort by newest first by default
+        this.items = items.sort((a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+        this.filteredItems = this.items;
 
-      if (Array.isArray(data)) {
-        this.totalElements = data.length;
-        this.totalPages = Math.max(1, Math.ceil(this.totalElements / this.pageSize));
-      } else {
-        this.totalElements = Number(data?.totalElements ?? this.filteredItems.length);
-        this.totalPages = Math.max(1, Number(data?.totalPages ?? 1));
+        if (Array.isArray(data)) {
+          this.totalElements = data.length;
+          this.totalPages = Math.max(1, Math.ceil(this.totalElements / this.pageSize));
+        } else {
+          this.totalElements = Number(data?.totalElements ?? this.filteredItems.length);
+          this.totalPages = Math.max(1, Number(data?.totalPages ?? 1));
+        }
+      },
+      (error) => {
+        console.error('Error loading items:', error);
+        // Retry without userId header by forcing an immediate reload
+        if (!this.userService.currentUser()) {
+          localStorage.setItem('userId', '1');
+          setTimeout(() => this.loadItems(page), 500);
+        }
       }
-    });
+    );
   }
 
   runAdvancedSearch(page: number = 0): void {

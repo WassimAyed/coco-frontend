@@ -112,11 +112,11 @@ export class LostAndFoundService {
             .set('page', String(page))
             .set('size', String(size));
 
+        const headers = this.buildHeaders();
+        const config = { params, ...headers };
+
         return new Observable((subscriber) => {
-            this.http.get<any>(this.apiUrl, {
-                ...this.buildHeaders(),
-                params
-            }).subscribe({
+            this.http.get<any>(this.apiUrl, config).subscribe({
                 next: (data) => {
                     subscriber.next(this.normalizeItemsResponse(data));
                     subscriber.complete();
