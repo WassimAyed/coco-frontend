@@ -14,32 +14,42 @@ import { LostItem } from '../../models/lost-item.model';
     <div class="lost-container">
       <header class="page-header">
         <div class="header-content">
-          <h1 class="gradient-text">Lost & Found Hub</h1>
-          <p>The community platform to help recover your belongings.</p>
+          <div>
+            <span class="header-eyebrow">Platform</span>
+            <h1 class="header-title">Lost & Found Hub</h1>
+            <p class="header-subtitle">Recover the items that matter most to you.</p>
+          </div>
           <div class="header-actions">
             <button class="btn-primary" routerLink="post">
               <i class="bi bi-plus-circle"></i>
               Post a listing
             </button>
-            <button class="btn-secondary-header" routerLink="my-actions">
-              <i class="bi bi-collection"></i>
-              Claims & reports
+            <button class="btn-outline" routerLink="my-items">
+              <i class="bi bi-wallet2"></i>
+              My Claims
             </button>
           </div>
+        </div>
+        <div class="header-decoration">
+          <div class="deco-circle deco-circle--1"></div>
+          <div class="deco-circle deco-circle--2"></div>
         </div>
       </header>
 
       <div class="content-wrapper">
         <aside class="filters-sidebar">
-          <h3>Filters</h3>
+          <h3 class="sidebar-title">Filters</h3>
           <div class="filter-group">
             <label>Keyword</label>
-            <input class="form-input" type="text" [(ngModel)]="keyword" placeholder="title, description...">
+            <div class="input-wrap">
+              <i class="bi bi-search"></i>
+              <input type="text" [(ngModel)]="keyword" placeholder="Search...">
+            </div>
           </div>
           <div class="filter-group">
             <label>Type</label>
             <select class="form-select" [(ngModel)]="selectedType">
-              <option value="ALL">All</option>
+              <option value="ALL">All Types</option>
               <option value="LOST">Lost</option>
               <option value="FOUND">Found</option>
             </select>
@@ -47,22 +57,18 @@ import { LostItem } from '../../models/lost-item.model';
           <div class="filter-group">
             <label>Status</label>
             <select class="form-select" [(ngModel)]="selectedStatus">
-              <option value="ALL">All</option>
+              <option value="ALL">All Status</option>
               <option value="ACTIVE">Active</option>
               <option value="RESOLVED">Resolved</option>
             </select>
           </div>
           <div class="filter-group">
             <label>Category</label>
-            <input class="form-input" type="text" [(ngModel)]="category" placeholder="electronics, keys...">
-          </div>
-          <div class="filter-group">
-            <label>Location</label>
-            <input class="form-input" type="text" [(ngModel)]="location" placeholder="campus, library...">
+            <input class="form-input" type="text" [(ngModel)]="category" placeholder="Electronics, keys...">
           </div>
           <div class="filter-actions">
             <button class="btn-primary filter-btn" (click)="runAdvancedSearch()">Search</button>
-            <button class="btn-secondary filter-btn" (click)="resetFilters()">Reset</button>
+            <button class="btn-ghost" (click)="resetFilters()">Reset</button>
           </div>
         </aside>
 
@@ -74,47 +80,45 @@ import { LostItem } from '../../models/lost-item.model';
                 <span class="type-badge" [class.lost]="item.type === 'LOST'">
                   {{ item.type === 'LOST' ? 'Lost' : 'Found' }}
                 </span>
+                <span class="status-overlay" *ngIf="item.status === 'RESOLVED'">Resolved</span>
               </div>
               <div class="card-body">
-                <div class="item-category">{{ item.category }}</div>
+                <span class="item-cat-badge">{{ item.category }}</span>
                 <h3 class="item-title">{{ item.title }}</h3>
-                <div class="item-info">
+                <div class="item-metadata">
                   <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
-                  <span><i class="bi bi-clock"></i> {{ item.dateTime }}</span>
+                  <span><i class="bi bi-calendar3"></i> {{ item.dateTime | date:'shortDate' }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="pagination-bar" *ngIf="totalPages > 1">
-            <div class="pagination-summary">
-              Page {{ currentPage + 1 }} of {{ totalPages }} • {{ totalElements }} items
+            <div class="pagination-info">
+              Showing {{ currentPage + 1 }} of {{ totalPages }}
             </div>
-            <div class="pagination-controls">
-              <button class="btn-secondary" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">Previous</button>
+            <div class="pagination-nav">
+              <button class="nav-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">
+                <i class="bi bi-chevron-left"></i>
+              </button>
               <button
-                class="btn-page"
+                class="page-num"
                 *ngFor="let p of visiblePageNumbers"
                 [class.active]="p === currentPage"
                 (click)="goToPage(p)">
                 {{ p + 1 }}
               </button>
-              <button class="btn-secondary" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">Next</button>
-
-              <label class="size-label" for="pageSize">Per page</label>
-              <select id="pageSize" class="form-select page-size" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
-                <option [ngValue]="8">8</option>
-                <option [ngValue]="12">12</option>
-                <option [ngValue]="24">24</option>
-              </select>
+              <button class="nav-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
+                <i class="bi bi-chevron-right"></i>
+              </button>
             </div>
           </div>
 
           <ng-template #noItems>
-            <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-search"></i></div>
-              <h3>No items yet</h3>
-              <p>Be the first to post a listing.</p>
+            <div class="empty-state-hub">
+              <div class="empty-circle"><i class="bi bi-search"></i></div>
+              <h3>No items found</h3>
+              <p>Try adjusting your filters or post a new listing.</p>
             </div>
           </ng-template>
         </main>
@@ -122,61 +126,83 @@ import { LostItem } from '../../models/lost-item.model';
     </div>
   `,
   styles: [`
-    .lost-container { min-height: 100vh; background: #f8fafc; font-family: 'Outfit', sans-serif; }
+    .lost-container { min-height: 100vh; background: #fdfdfd; font-family: 'Outfit', sans-serif; }
     
-    .page-header { background: white; padding: 4rem 2rem; border-bottom: 1px solid #e2e8f0; text-align: center; }
-    .gradient-text { font-size: 3.5rem; font-weight: 800; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
-    .page-header p { color: #64748b; font-size: 1.1rem; }
+    /* Header Standardized */
+    .page-header {
+      position: relative;
+      background: linear-gradient(135deg, #1a1a1a 0%, #262626 55%, #3d1417 100%);
+      padding: 3.5rem 2.5rem 4.5rem;
+      overflow: hidden;
+      color: #fff;
+      text-align: left;
+    }
+    .header-content { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; }
+    .header-eyebrow { display: inline-flex; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #f83441; background: rgba(248, 52, 65, 0.1); padding: 0.3rem 0.8rem; border-radius: 30px; border: 1px solid rgba(248, 52, 65, 0.3); margin-bottom: 0.8rem; }
+    .header-title { font-size: 2.8rem; font-weight: 800; margin: 0; }
+    .header-subtitle { color: rgba(255,255,255,0.6); margin: 0.4rem 0 0; font-size: 1.1rem; }
     
-    .content-wrapper { max-width: 1400px; margin: -2rem auto 2rem; padding: 0 2rem; display: grid; grid-template-columns: 280px 1fr; gap: 2rem; }
-    
-    .filters-sidebar { background: white; padding: 1.5rem; border-radius: 20px; border: 1px solid #e2e8f0; height: fit-content; position: sticky; top: 2rem; }
-    .filter-group { margin-bottom: 0.9rem; }
-    .filter-group label { display: block; font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 0.35rem; }
-    .form-select, .form-input { width: 100%; border-radius: 10px; border: 1px solid #cbd5e1; padding: 0.55rem 0.65rem; }
-    .filter-actions { display: flex; gap: 0.55rem; margin-top: 0.8rem; }
-    .filter-btn { margin: 0 !important; width: 100%; justify-content: center; }
-    .btn-secondary { background: #e2e8f0; color: #1e293b; padding: 0.8rem 1.1rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
-    
-    .items-panel { min-height: 380px; }
-    .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .header-actions { display: flex; gap: 1rem; }
+    .btn-primary { background: #f83441; color: white; border: none; padding: 0.8rem 1.6rem; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.6rem; transition: transform 0.2s, background 0.2s; }
+    .btn-primary:hover { background: #e02d38; transform: translateY(-2px); }
+    .btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.8rem 1.6rem; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.6rem; transition: all 0.2s; }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
 
-    .pagination-bar { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; }
-    .pagination-summary { color: #64748b; font-size: 0.9rem; }
-    .pagination-controls { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
-    .btn-page { border: 1px solid #cbd5e1; background: white; color: #1e293b; border-radius: 10px; min-width: 38px; height: 38px; font-weight: 700; cursor: pointer; }
-    .btn-page.active { background: #1e293b; color: white; border-color: #1e293b; }
-    .btn-page:hover { border-color: #94a3b8; }
-    .btn-page.active:hover { border-color: #1e293b; }
-    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .size-label { color: #475569; font-size: 0.85rem; font-weight: 600; margin-left: 0.35rem; }
-    .page-size { width: auto; min-width: 76px; }
+    .header-decoration { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .deco-circle { position: absolute; border-radius: 50%; background: #f83441; opacity: 0.08; }
+    .deco-circle--1 { width: 400px; height: 400px; right: -100px; top: -150px; }
+    .deco-circle--2 { width: 250px; height: 250px; left: 10%; bottom: -50px; opacity: 0.05; background: white; }
+
+    /* Layout */
+    .content-wrapper { max-width: 1400px; margin: -1.75rem auto 3rem; padding: 0 2rem; position: relative; z-index: 5; display: grid; grid-template-columns: 310px 1fr; gap: 2.5rem; }
     
-    .item-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-    .item-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #3b82f6; }
+    .filters-sidebar { background: white; padding: 1.75rem; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; height: fit-content; position: sticky; top: 2rem; }
+    .sidebar-title { font-size: 1.1rem; font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; }
+    .filter-group { margin-bottom: 1.25rem; }
+    .filter-group label { display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+    .input-wrap { position: relative; }
+    .input-wrap i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .input-wrap input { padding-left: 2.2rem; }
+    .form-input, .form-select { width: 100%; padding: 0.7rem 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #1e293b; font-weight: 500; }
+    .form-input:focus, .form-select:focus { outline: none; border-color: #f83441; background: white; }
     
-    .card-image { height: 200px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
-    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-    .item-card:hover .card-image img { transform: scale(1.1); }
-    .card-image img.fallback-mode { object-fit: contain; padding: 1rem; transform: none !important; }
+    .filter-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+    .filter-btn { width: 100%; justify-content: center; margin: 0; }
+    .btn-ghost { background: transparent; color: #64748b; border: none; font-weight: 700; cursor: pointer; padding: 0.5rem; font-size: 0.9rem; }
+    .btn-ghost:hover { color: #f83441; }
+
+    /* Grid & Cards */
+    .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
+    .item-card { background: white; border-radius: 28px; overflow: hidden; border: 1px solid #f1f5f9; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01); }
+    .item-card:hover { transform: translateY(-10px); box-shadow: 0 30px 60px -12px rgba(0,0,0,0.12), 0 18px 36px -18px rgba(0,0,0,0.1); border-color: #f83441; }
     
-    .type-badge { position: absolute; top: 1rem; left: 1rem; padding: 0.5rem 1rem; border-radius: 12px; background: #10b981; color: white; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .type-badge.lost { background: #ef4444; }
+    .card-image { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; background: #f8fafc; }
+    .card-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.3) 100%); opacity: 0.6; pointer-events: none; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.2, 0, 0, 1); }
+    .item-card:hover .card-image img { transform: scale(1.12); }
+    .card-image img.fallback-mode { object-fit: contain; padding: 2rem; }
+    .type-badge { position: absolute; top: 1.25rem; left: 1.25rem; padding: 0.4rem 0.9rem; border-radius: 30px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: white; background: #10b981; backdrop-filter: blur(4px); }
+    .type-badge.lost { background: #f83441; }
+    .status-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; text-transform: uppercase; font-size: 1.2rem; pointer-events: none; }
     
     .card-body { padding: 1.5rem; }
-    .item-category { font-size: 0.75rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .item-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; }
-    .item-info { display: flex; flex-direction: column; gap: 0.5rem; color: #64748b; font-size: 0.9rem; }
-    
-    .empty-state { height: 100%; min-height: 380px; text-align: center; padding: 3rem; background: white; border-radius: 32px; border: 2px dashed #e2e8f0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .empty-icon { width: 92px; height: 92px; border-radius: 50%; background: #eef2ff; color: #334155; display: grid; place-items: center; margin-bottom: 1rem; font-size: 2rem; }
-    .empty-state h3 { margin: 0 0 0.4rem; color: #1e293b; }
-    .empty-state p { margin: 0; color: #64748b; }
-    
-    .btn-primary { background: #1e293b; color: white; padding: 0.8rem 2rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin: 2rem auto 0; transition: all 0.3s; }
-    .btn-primary:hover { background: #334155; transform: scale(1.05); }
-    .header-actions { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
-    .btn-secondary-header { background: #e2e8f0; color: #1e293b; padding: 0.8rem 1.2rem; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.45rem; margin-top: 2rem; }
+    .item-cat-badge { display: inline-block; font-size: 0.65rem; font-weight: 800; color: #f83441; background: rgba(248,52,65,0.08); padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .item-title { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0 0 1rem; line-height: 1.3; }
+    .item-metadata { display: flex; flex-direction: column; gap: 0.5rem; color: #64748b; font-size: 0.88rem; font-weight: 500; }
+    .item-metadata span { display: flex; align-items: center; gap: 0.5rem; }
+    .item-metadata i { color: #f83441; opacity: 0.8; }
+
+    /* Pagination */
+    .pagination-bar { margin-top: 3rem; display: flex; align-items: center; justify-content: space-between; }
+    .pagination-info { font-size: 0.9rem; font-weight: 600; color: #64748b; }
+    .pagination-nav { display: flex; gap: 0.5rem; }
+    .nav-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; cursor: pointer; color: #1e293b; }
+    .page-num { min-width: 40px; height: 40px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-weight: 700; color: #64748b; }
+    .page-num.active { background: #1e293b; color: white; border-color: #1e293b; }
+    .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .empty-state-hub { padding: 5rem 2rem; text-align: center; background: white; border-radius: 32px; border: 2px dashed #e2e8f0; }
+    .empty-circle { width: 80px; height: 80px; background: #fff1f2; color: #f83441; border-radius: 50%; display: grid; place-items: center; font-size: 1.75rem; margin: 0 auto 1.5rem; }
   `]
 })
 export class LostListComponent implements OnInit {
@@ -213,7 +239,7 @@ export class LostListComponent implements OnInit {
   loadItems(page: number = this.currentPage): void {
     this.currentPage = Math.max(0, page);
     this.usingAdvancedFilters = false;
-    
+
     this.lostService.getAllItems(this.currentPage, this.pageSize).subscribe(
       (data) => {
         const items: LostItem[] = Array.isArray(data) ? data : (data?.content || []);

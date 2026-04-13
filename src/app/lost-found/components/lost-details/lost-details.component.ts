@@ -11,158 +11,163 @@ import { UserService } from '../../../user-security/services/user.service';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
-    <div class="details-container" *ngIf="item">
-      <div class="details-wrapper">
-        <button class="btn-back" (click)="goBack()">
-          <i class="bi bi-arrow-left"></i> Back to listings
-        </button>
-        
-        <div class="card-details">
-          <div class="image-section">
-            <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
-            <div class="hero-badge" [class.lost]="item.type === 'LOST'">
-              {{ item.type === 'LOST' ? 'Lost item' : 'Found item' }}
+    <div class="details-page" *ngIf="item">
+      <!-- Standard App Header -->
+      <header class="page-header">
+        <div class="header-content">
+          <div>
+            <span class="header-eyebrow">Item Overview</span>
+            <h1 class="header-title">{{ item.title }}</h1>
+            <p class="header-subtitle">Posted on {{ item.dateTime }}</p>
+          </div>
+          <button class="btn-outline" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i> Back to listings
+          </button>
+        </div>
+        <div class="header-decoration">
+          <div class="deco-circle deco-circle--1"></div>
+          <div class="deco-circle deco-circle--2"></div>
+        </div>
+      </header>
+
+      <div class="container main-content">
+        <!-- Main Card Details -->
+        <div class="clean-card item-split-card">
+          <div class="item-visuals">
+            <div class="image-wrapper">
+              <img [src]="item.imageUrl || getFallbackByType(item.type)" (error)="onImageError($event, item.type)" alt="Item">
+              <div class="type-badge-pill" [class.lost]="item.type === 'LOST'">
+                {{ item.type === 'LOST' ? 'Lost Item' : 'Found Item' }}
+              </div>
+              <div class="status-overlay" *ngIf="item.status === 'RESOLVED'">Resolved</div>
             </div>
           </div>
           
-          <div class="info-section">
+          <div class="item-info-panel">
             <span class="category-tag">{{ item.category }}</span>
-            <h1>{{ item.title }}</h1>
+            <h2 class="item-main-title">{{ item.title }}</h2>
             
-            <div class="meta-data">
-              <div class="meta-item">
-                <i class="bi bi-geo-alt-fill text-blue"></i>
-                <div>
-                  <strong>Location</strong>
-                  <p>{{ item.location }}</p>
+            <div class="quick-meta">
+              <div class="meta-row">
+                <i class="bi bi-geo-alt"></i>
+                <div class="meta-text">
+                  <span>Location</span>
+                  <strong>{{ item.location }}</strong>
                 </div>
               </div>
-              <div class="meta-item">
-                <i class="bi bi-calendar-event-fill text-blue"></i>
-                <div>
-                  <strong>Date</strong>
-                  <p>{{ item.dateTime }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="description-box">
-              <h3>Detailed description</h3>
-              <p>{{ item.description || 'No additional description provided.' }}</p>
-            </div>
-
-            <div class="contact-card">
-              <h3>Contact owner</h3>
-              <div class="contact-info">
-                <i class="bi bi-person-lines-fill"></i>
-                <span>{{ item.contactInfo }}</span>
-              </div>
-              <div class="status-banner" *ngIf="showApprovedBadge()">
-                <span class="status-badge approved">Claim approved • Item found</span>
-              </div>
-
-              <div class="actions-grid" *ngIf="!item.isOwner && !showApprovedBadge()">
-                <button class="btn-contact" [disabled]="!canCreateClaim()" (click)="toggleClaimForm()">Claim this item</button>
-                <button class="btn-report" (click)="toggleReportForm()">Report this listing</button>
-              </div>
-
-              <div class="claim-state" *ngIf="!item.isOwner && myClaimStatus && !showApprovedBadge()">
-                <span class="claim-badge" [class.pending]="myClaimStatus === 'PENDING'">Your request: {{ myClaimStatus }}</span>
-              </div>
-
-              <div class="inline-form" *ngIf="showClaimForm && !item.isOwner && canCreateClaim() && !showApprovedBadge()">
-                <label>Proof message</label>
-                <textarea [(ngModel)]="claimMessage" rows="3" placeholder="Describe proof of ownership..."></textarea>
-                <button class="btn-contact" (click)="submitClaim(item.id)">Submit claim</button>
-              </div>
-
-              <div class="inline-form" *ngIf="showReportForm && !item.isOwner && !showApprovedBadge()">
-                <label>Reason</label>
-                <input [(ngModel)]="reportReason" placeholder="Spam, scam, inappropriate...">
-                <label>Details</label>
-                <textarea [(ngModel)]="reportDetails" rows="3" placeholder="Additional context"></textarea>
-                <button class="btn-report" (click)="submitReport(item.id)">Submit report</button>
-              </div>
-
-              <p class="status-msg" *ngIf="actionMessage">{{ actionMessage }}</p>
-
-              <div class="admin-moderation" *ngIf="isAdmin && reportId">
-                <h3>Admin moderation</h3>
-                <div class="admin-actions">
-                  <button class="btn-keep" [disabled]="moderationBusy" (click)="keepPost()">Keep Post</button>
-                  <button class="btn-block" [disabled]="moderationBusy || item.status === 'BLOCKED'" (click)="blockPost()">Block Post</button>
+              <div class="meta-row">
+                <i class="bi bi-person-badge"></i>
+                <div class="meta-text">
+                  <span>Contact</span>
+                  <strong>{{ item.contactInfo }}</strong>
                 </div>
               </div>
             </div>
 
-            <div class="owner-claims" *ngIf="item.isOwner">
-              <div class="owner-claims-head">
-                <h3>Claim requests</h3>
-                <button class="btn-refresh" (click)="loadOwnerClaims(item.id)">Refresh</button>
+            <div class="desc-box">
+              <h4>Description</h4>
+              <p>{{ item.description || 'No detailed description provided.' }}</p>
+            </div>
+
+            <!-- Interactivity Section -->
+            <div class="actions-section">
+              <div class="status-alert" *ngIf="showApprovedBadge()">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Claim Approved. Item returned to owner.</span>
               </div>
 
-              <div *ngIf="ownerClaims.length === 0" class="owner-empty">No claim requests yet.</div>
-
-              <div class="owner-claim-row" *ngFor="let claim of ownerClaims">
-                <div>
-                  <strong>{{ getUserDisplayName(claim.claimantUserId) }}</strong>
-                  <p>{{ claim.proofMessage }}</p>
+              <!-- General User Actions -->
+              <div class="user-actions" *ngIf="!item.isOwner && !showApprovedBadge()">
+                <div class="action-buttons">
+                  <button class="btn-primary" [disabled]="!canCreateClaim()" (click)="toggleClaimForm()">
+                    <i class="bi bi-shield-check"></i> Claim Item
+                  </button>
+                  <button class="btn-danger-ghost" (click)="toggleReportForm()">
+                    <i class="bi bi-flag"></i> Report
+                  </button>
                 </div>
-                <div class="owner-claim-actions">
-                  <span class="claim-badge" [class.pending]="claim.status === 'PENDING'">{{ claim.status }}</span>
-                  <button class="btn-approve" *ngIf="claim.status === 'PENDING'" (click)="approveClaim(claim.id, item.id)">Approve</button>
-                  <button class="btn-reject" *ngIf="claim.status === 'PENDING'" (click)="rejectClaim(claim.id, item.id)">Reject</button>
+
+                <div class="inline-form claim-form" *ngIf="showClaimForm">
+                  <label>Proof of ownership</label>
+                  <textarea [(ngModel)]="claimMessage" placeholder="Describe unique identifying marks..."></textarea>
+                  <button class="btn-dark" (click)="submitClaim(item.id)">Submit Claim</button>
+                </div>
+
+                <div class="inline-form report-form" *ngIf="showReportForm">
+                  <label>Reason for report</label>
+                  <input [(ngModel)]="reportReason" placeholder="Spam, scam, incorrect info...">
+                  <button class="btn-danger" (click)="submitReport(item.id)">Send Report</button>
+                </div>
+
+                <div class="claim-notif" *ngIf="myClaimStatus">
+                  <span class="notif-badge">Your request status: <strong>{{ myClaimStatus }}</strong></span>
+                </div>
+              </div>
+
+              <!-- Owner Tracking -->
+              <div class="owner-tracking" *ngIf="item.isOwner">
+                <div class="owner-header">
+                  <h4>Claim Requests</h4>
+                </div>
+                <div class="claims-list" *ngIf="ownerClaims.length > 0">
+                  <div class="claim-row" *ngFor="let c of ownerClaims">
+                    <div class="claim-details">
+                      <strong>{{ getUserDisplayName(c.claimantUserId) }}</strong>
+                      <p>{{ c.proofMessage }}</p>
+                    </div>
+                    <div class="claim-actions" *ngIf="c.status === 'PENDING'">
+                      <button class="btn-approve" (click)="approveClaim(c.id, item.id)"><i class="bi bi-check-lg"></i></button>
+                      <button class="btn-reject" (click)="rejectClaim(c.id, item.id)"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <span class="claim-status-pill" *ngIf="c.status !== 'PENDING'" [class.approved]="c.status === 'APPROVED'">{{ c.status }}</span>
+                  </div>
+                </div>
+                <p class="empty-text" *ngIf="ownerClaims.length === 0">No requests yet.</p>
+              </div>
+
+              <!-- Admin Tracking -->
+              <div class="admin-tracking" *ngIf="isAdmin && reportId">
+                <h4>Admin Moderation</h4>
+                <div class="admin-btns">
+                  <button class="btn-approve" (click)="keepPost()">Keep Listing</button>
+                  <button class="btn-reject" (click)="blockPost()">Block Listing</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- ✨ AI Similar Items Section -->
-      <div class="ai-section" *ngIf="item">
-        <div class="ai-header">
-          <div class="ai-title">
-            <div class="ai-icon">🤖</div>
-            <div>
-              <h2>AI Similarity Engine</h2>
-              <p>{{ item.type === 'LOST' ? 'Matching FOUND items that look similar to this lost object' : 'Matching LOST items that look similar to this found object' }}</p>
+        <!-- AI Similarity Engine -->
+        <div class="clean-card ai-engine-card" *ngIf="item">
+          <div class="ai-header">
+            <div class="ai-title">
+              <i class="bi bi-robot"></i>
+              <div>
+                <h3>AI Similarity Check</h3>
+                <p>Matching visual networks to find this item.</p>
+              </div>
+            </div>
+            <button class="btn-refresh" (click)="loadAiProposals(item.id)" [disabled]="aiLoading">
+              <i class="bi bi-arrow-clockwise" [class.spin]="aiLoading"></i> Refresh
+            </button>
+          </div>
+
+          <div class="ai-matches-grid" *ngIf="!aiLoading && aiProposals.length > 0">
+            <div class="ai-match-card" *ngFor="let p of aiProposals" (click)="viewProposal(p.candidate_post_id)">
+              <div class="ai-img-wrap">
+                <img [src]="p.imageUrl" alt="Match">
+                <span class="ai-score">{{ (p.score * 100).toFixed(0) }}% Match</span>
+              </div>
+              <div class="ai-info">
+                <h5>{{ p.title }}</h5>
+                <span class="ai-type">{{ p.candidate_post_type }}</span>
+              </div>
             </div>
           </div>
-          <button class="btn-ai-refresh" (click)="loadAiProposals(item.id)" [disabled]="aiLoading">
-            <span *ngIf="!aiLoading">🔄 Refresh</span>
-            <span *ngIf="aiLoading">⏳ Scanning...</span>
-          </button>
-        </div>
-
-        <div class="ai-loading" *ngIf="aiLoading">
-          <div class="ai-spinner"></div>
-          <p>Neural network scanning for visual similarities...</p>
-        </div>
-
-        <div class="ai-empty" *ngIf="!aiLoading && aiProposals.length === 0">
-          <span class="ai-empty-icon">🔍</span>
-          <p>No visually similar items found yet. The AI index will grow as more posts are added.</p>
-        </div>
-
-        <div class="ai-grid" *ngIf="!aiLoading && aiProposals.length > 0">
-          <div class="ai-card" *ngFor="let proposal of aiProposals; let i = index">
-            <div class="ai-card-rank">#{{ i + 1 }}</div>
-            <div class="ai-card-image" *ngIf="proposal.imageUrl">
-              <img [src]="proposal.imageUrl" alt="Proposal preview">
-            </div>
-            <div class="ai-card-body">
-              <div class="ai-score-bar">
-                <div class="ai-score-fill" [style.width]="(proposal.score * 100) + '%'" [class.high]="proposal.score >= 0.7" [class.medium]="proposal.score >= 0.5 && proposal.score < 0.7"></div>
-              </div>
-              <div class="ai-card-info">
-                <span class="ai-type-badge" [class.found]="proposal.candidate_post_type === 'FOUND'">{{ proposal.candidate_post_type }}</span>
-                <span class="ai-score-label">{{ (proposal.score * 100).toFixed(1) }}% match</span>
-              </div>
-              <h4 class="ai-proposal-title">{{ proposal.title || 'Untitled item' }}</h4>
-              <p class="ai-post-id">Post ID: <strong>{{ proposal.candidate_post_id }}</strong></p>
-              <button class="btn-ai-view" (click)="viewProposal(proposal.candidate_post_id)">View post →</button>
-            </div>
+          
+          <div class="ai-empty" *ngIf="!aiLoading && aiProposals.length === 0">
+            <div class="empty-icon"><i class="bi bi-search"></i></div>
+            <p>No similar items detected by the AI yet.</p>
           </div>
         </div>
       </div>
@@ -174,121 +179,126 @@ import { UserService } from '../../../user-security/services/user.service';
     </div>
   `,
   styles: [`
-    .details-container { min-height: 100vh; background: #f8fafc; font-family: 'Outfit', sans-serif; padding: 3rem 1rem; }
-    .details-wrapper { max-width: 1100px; margin: 0 auto; }
-    
-    .btn-back { background: white; border: 1px solid #e2e8f0; padding: 0.6rem 1.2rem; border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #475569; margin-bottom: 2rem; transition: all 0.2s; }
-    .btn-back:hover { background: #f1f5f9; transform: translateX(-4px); }
-    
-    .card-details { background: white; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #e2e8f0; }
-    
-    .image-section { position: relative; height: 100%; min-height: 400px; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
-    .image-section img { width: 100%; height: 100%; object-fit: cover; }
-    .image-section img.fallback-mode { object-fit: contain; padding: 1.25rem; }
-    
-    .hero-badge { position: absolute; top: 1.5rem; left: 1.5rem; background: #10b981; color: white; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-    .hero-badge.lost { background: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
-    
-    .info-section { padding: 3rem; }
-    
-    .category-tag { display: inline-block; background: #eff6ff; color: #3b82f6; padding: 0.4rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 1rem; }
-    
-    h1 { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 2rem; line-height: 1.2; }
-    
-    .meta-data { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; }
-    .meta-item { display: flex; align-items: flex-start; gap: 1rem; }
-    .meta-item i { font-size: 1.5rem; color: #3b82f6; background: #eff6ff; padding: 0.8rem; border-radius: 12px; }
-    .meta-item strong { display: block; color: #64748b; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem; }
-    .meta-item p { color: #0f172a; font-weight: 600; font-size: 1.1rem; margin: 0; }
-    
-    .description-box h3 { font-size: 1.2rem; color: #0f172a; margin-bottom: 1rem; }
-    .description-box p { color: #475569; line-height: 1.7; font-size: 1.05rem; background: #f8fafc; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; }
-    
-    .contact-card { margin-top: 2.5rem; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 2rem; border-radius: 20px; color: white; }
-    .contact-card h3 { color: #f8fafc; margin-bottom: 1.5rem; font-size: 1.2rem; }
-    .contact-info { display: flex; align-items: center; gap: 1rem; font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; }
-    .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
-    
-    .btn-contact { width: 100%; background: white; color: #1e293b; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
-    .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-    .btn-report { width: 100%; background: #fecaca; color: #7f1d1d; border: none; padding: 1rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; }
-    .inline-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.8rem; }
-    .inline-form label { font-size: 0.85rem; font-weight: 700; color: #cbd5e1; }
-    .inline-form textarea, .inline-form input { border-radius: 10px; border: 1px solid rgba(255,255,255,0.3); padding: 0.65rem 0.8rem; background: rgba(255,255,255,0.08); color: white; }
-    .inline-form textarea::placeholder, .inline-form input::placeholder { color: #cbd5e1; }
-    .status-msg { margin-top: 0.8rem; font-size: 0.9rem; color: #bfdbfe; }
-    .status-banner { margin-bottom: 1rem; }
-    .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.2px; }
-    .status-badge.approved { background: #dcfce7; color: #166534; }
-    .claim-state { margin-bottom: 0.8rem; }
-    .admin-moderation { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 1rem; }
-    .admin-moderation h3 { font-size: 0.95rem; margin: 0 0 0.6rem; color: #cbd5e1; }
-    .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
-    .btn-keep, .btn-block { border: none; border-radius: 10px; padding: 0.7rem 0.8rem; font-weight: 700; cursor: pointer; }
-    .btn-keep { background: #dcfce7; color: #166534; }
-    .btn-block { background: #fee2e2; color: #991b1b; }
-    .btn-keep:disabled, .btn-block:disabled { opacity: 0.55; cursor: not-allowed; }
+    .details-page { min-height: 100vh; background: #fdfdfd; font-family: 'Outfit', sans-serif; padding-bottom: 5rem; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
 
-    .owner-claims { margin-top: 1.25rem; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; background: #f8fafc; }
-    .owner-claims-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
-    .owner-claims-head h3 { margin: 0; font-size: 1.05rem; color: #0f172a; }
-    .btn-refresh { border: 1px solid #cbd5e1; background: white; color: #334155; border-radius: 8px; padding: 0.4rem 0.7rem; font-weight: 600; cursor: pointer; }
-    .owner-empty { color: #64748b; font-size: 0.9rem; }
-    .owner-claim-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; border-top: 1px solid #e2e8f0; padding: 0.7rem 0; }
-    .owner-claim-row p { margin: 0.2rem 0 0; color: #475569; font-size: 0.92rem; }
-    .owner-claim-actions { display: flex; align-items: center; gap: 0.45rem; }
-    .claim-badge { background: #e2e8f0; color: #0f172a; border-radius: 999px; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
-    .claim-badge.pending { background: #fef3c7; color: #92400e; }
-    .btn-approve, .btn-reject { border: none; border-radius: 8px; padding: 0.4rem 0.7rem; font-weight: 700; cursor: pointer; }
+    /* Standard App Header */
+    .page-header {
+      position: relative;
+      background: linear-gradient(135deg, #1a1a1a 0%, #262626 55%, #3d1417 100%);
+      padding: 3.5rem 2.5rem 5rem;
+      overflow: hidden;
+      color: #fff;
+    }
+    .header-content { position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; }
+    .header-eyebrow { display: inline-flex; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #f83441; background: rgba(248, 52, 65, 0.1); padding: 0.3rem 0.8rem; border-radius: 30px; border: 1px solid rgba(248, 52, 65, 0.3); margin-bottom: 0.8rem; }
+    .header-title { font-size: 2.2rem; font-weight: 800; margin: 0; }
+    .header-subtitle { color: rgba(255,255,255,0.6); margin: 0.4rem 0 0; }
+    
+    .btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.7rem 1.2rem; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.6rem; transition: all 0.2s; text-decoration: none; }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+    .header-decoration { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .deco-circle { position: absolute; border-radius: 50%; background: #f83441; opacity: 0.08; }
+    .deco-circle--1 { width: 400px; height: 400px; right: -100px; top: -150px; }
+    .deco-circle--2 { width: 250px; height: 250px; left: 10%; bottom: -50px; opacity: 0.05; background: white; }
+
+    /* Core Content Layout */
+    .main-content { margin-top: -3rem; position: relative; z-index: 10; }
+    .clean-card { background: white; border-radius: 28px; border: 1px solid #f1f5f9; box-shadow: 0 20px 40px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 2.5rem; }
+    
+    .item-split-card { display: grid; grid-template-columns: 1fr 1fr; }
+    
+    .image-wrapper { height: 100%; min-height: 450px; position: relative; background: #f8fafc; }
+    .image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    .image-wrapper img.fallback-mode { object-fit: contain; padding: 3rem; }
+    .type-badge-pill { position: absolute; top: 1.5rem; left: 1.5rem; background: #10b981; color: white; padding: 0.5rem 1.2rem; border-radius: 30px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+    .type-badge-pill.lost { background: #f83441; box-shadow: 0 4px 15px rgba(248, 52, 65, 0.3); }
+    .status-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; text-transform: uppercase; font-size: 1.5rem; pointer-events: none; }
+
+    .item-info-panel { padding: 3rem; display: flex; flex-direction: column; }
+    .category-tag { display: inline-block; font-size: 0.75rem; font-weight: 800; color: #f83441; background: rgba(248,52,65,0.08); padding: 0.3rem 0.8rem; border-radius: 6px; text-transform: uppercase; margin-bottom: 1rem; width: fit-content; }
+    .item-main-title { font-size: 2rem; font-weight: 800; color: #1e293b; margin: 0 0 2rem; line-height: 1.2; }
+    
+    .quick-meta { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+    .meta-row { display: flex; align-items: center; gap: 1.2rem; }
+    .meta-row i { font-size: 1.4rem; color: #f83441; background: #fff1f2; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; }
+    .meta-text span { display: block; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+    .meta-text strong { font-size: 1.05rem; color: #1e293b; }
+
+    .desc-box { margin-bottom: 3rem; }
+    .desc-box h4 { font-size: 1rem; font-weight: 800; color: #1e293b; margin: 0 0 0.8rem; }
+    .desc-box p { color: #475569; line-height: 1.7; font-size: 1rem; margin: 0; }
+
+    /* Actions */
+    .actions-section { margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 2rem; }
+    .status-alert { background: #f0fdf4; color: #166534; padding: 1rem; border-radius: 14px; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.75rem; }
+    
+    .action-buttons { display: flex; gap: 1rem; }
+    .btn-primary { flex: 1; padding: 1rem; background: #f83441; color: white; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: 0.3s; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(248, 52, 65, 0.25); background: #e02d38; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-danger-ghost { padding: 1rem 1.5rem; background: transparent; color: #991b1b; border: 1px solid #fecaca; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-danger-ghost:hover { background: #fef2f2; }
+
+    .inline-form { margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .inline-form label { font-size: 0.8rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .inline-form textarea, .inline-form input { width: 100%; border-radius: 12px; border: 1px solid #cbd5e1; background: white; padding: 0.8rem; margin-bottom: 1rem; font-family: inherit; }
+    .btn-dark { width: 100%; background: #1e293b; color: white; border: none; padding: 0.8rem; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .btn-danger { width: 100%; background: #ef4444; color: white; border: none; padding: 0.8rem; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+    .claim-notif { margin-top: 1rem; }
+    .notif-badge { background: #f1f5f9; color: #475569; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; display: inline-block; }
+    .notif-badge strong { color: #1e293b; }
+
+    /* Lists */
+    .owner-tracking h4, .admin-tracking h4 { font-size: 1rem; font-weight: 800; color: #1e293b; margin: 0 0 1rem; }
+    .claim-row { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #f1f5f9; }
+    .claim-details strong { font-size: 0.95rem; color: #1e293b; }
+    .claim-details p { margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b; }
+    .claim-actions { display: flex; gap: 0.5rem; }
+    .btn-approve, .btn-reject { width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer; transition: 0.2s; font-weight: 700; display: grid; place-items: center; }
     .btn-approve { background: #dcfce7; color: #166534; }
     .btn-reject { background: #fee2e2; color: #991b1b; }
-    
-    .loading-state { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .admin-btns { display: flex; gap: 1rem; }
+    .admin-btns button { width: auto; padding: 0 1.5rem; }
+    .claim-status-pill { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; background: #f1f5f9; padding: 0.3rem 0.6rem; border-radius: 6px; }
+    .claim-status-pill.approved { color: #166534; background: #dcfce7; }
+    .empty-text { color: #94a3b8; font-size: 0.9rem; }
 
     /* AI Section */
-    .ai-section { margin-top: 2.5rem; background: white; border-radius: 28px; padding: 2.5rem; border: 1px solid #e2e8f0; box-shadow: 0 8px 30px -8px rgba(0,0,0,0.08); }
-    .ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .ai-title { display: flex; align-items: center; gap: 1.2rem; }
-    .ai-icon { font-size: 2.5rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 16px; flex-shrink: 0; }
-    .ai-title h2 { margin: 0 0 0.3rem; font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-    .ai-title p { margin: 0; color: #64748b; font-size: 0.92rem; max-width: 500px; }
-    .btn-ai-refresh { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-    .btn-ai-refresh:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.35); }
-    .btn-ai-refresh:disabled { opacity: 0.65; cursor: not-allowed; }
-    .ai-loading { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem; color: #6366f1; }
-    .ai-spinner { width: 44px; height: 44px; border: 4px solid #e0e7ff; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite; }
-    .ai-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #94a3b8; text-align: center; }
-    .ai-empty-icon { font-size: 3rem; }
-    .ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; }
-    .ai-card { border: 1.5px solid #e2e8f0; border-radius: 18px; overflow: hidden; transition: all 0.25s; position: relative; background: #fafbff; }
-    .ai-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px -8px rgba(99,102,241,0.2); border-color: #a5b4fc; }
-    .ai-card-rank { position: absolute; top: 0.75rem; right: 0.75rem; background: #312e81; color: white; font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 8px; }
-    .ai-card-body { padding: 1.5rem; }
-    .ai-score-bar { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-bottom: 1rem; }
-    .ai-score-fill { height: 100%; border-radius: 999px; background: #94a3b8; transition: width 0.6s ease; }
-    .ai-score-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .ai-score-fill.high { background: linear-gradient(90deg, #10b981, #34d399); }
-    .ai-card-info { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-    .ai-type-badge { font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 6px; background: #fee2e2; color: #991b1b; text-transform: uppercase; }
-    .ai-type-badge.found { background: #dcfce7; color: #166534; }
-    .ai-score-label { font-size: 0.85rem; font-weight: 700; color: #475569; }
-    .ai-post-id { color: #64748b; font-size: 0.88rem; margin: 0 0 1rem; }
-    .btn-ai-view { width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.65rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
-    .btn-ai-view:hover { opacity: 0.9; transform: translateY(-1px); }
+    .ai-engine-card { padding: 2.5rem; }
+    .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .ai-title { display: flex; align-items: center; gap: 1rem; }
+    .ai-title i { font-size: 2rem; color: #1e293b; }
+    .ai-title h3 { margin: 0 0 0.2rem; font-weight: 800; color: #1e293b; }
+    .ai-title p { margin: 0; font-size: 0.9rem; color: #64748b; }
+    .btn-refresh { border: 1px solid #e2e8f0; background: white; color: #1e293b; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: 0.2s; }
+    .btn-refresh:hover { border-color: #cbd5e1; background: #f8fafc; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .ai-card-image { height: 140px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
-    .ai-card-image img { width: 100%; height: 100%; object-fit: cover; }
-    .ai-proposal-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 700; color: #1e293b; 
-      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .ai-matches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+    .ai-match-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; cursor: pointer; transition: 0.3s; }
+    .ai-match-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+    .ai-img-wrap { height: 140px; position: relative; background: #f8fafc; }
+    .ai-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .ai-score { position: absolute; top: 0.75rem; right: 0.75rem; background: #1e293b; color: white; font-size: 0.7rem; font-weight: 800; padding: 0.3rem 0.6rem; border-radius: 8px; }
+    .ai-info { padding: 1.25rem; }
+    .ai-info h5 { margin: 0 0 0.4rem; font-size: 0.95rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ai-type { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
     
+    .ai-empty { text-align: center; padding: 3rem; color: #94a3b8; }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
+
+    /* Utilities & Loading */
+    .loading-state { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fdfdfd; font-family: 'Outfit'; }
+    .spinner { width: 44px; height: 44px; border: 4px solid #e2e8f0; border-top-color: #f83441; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem; }
+
     @media (max-width: 900px) {
-      .card-details { grid-template-columns: 1fr; }
-      .image-section { min-height: 300px; height: 300px; }
-      .info-section { padding: 2rem; }
-      .ai-section { padding: 1.5rem; }
-      .ai-title h2 { font-size: 1.2rem; }
+      .item-split-card { grid-template-columns: 1fr; }
+      .image-wrapper { min-height: 300px; height: 300px; }
+      .item-info-panel { padding: 2rem; }
     }
   `]
 })

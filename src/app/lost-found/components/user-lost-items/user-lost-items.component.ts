@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { LostAndFoundService } from '../../services/lost-found.service';
-import { ItemReportResponse, LostItem } from '../../models/lost-item.model';
+import { ItemClaimResponse, LostItem } from '../../models/lost-item.model';
 import { UserService } from '../../../user-security/services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-user-lost-items',
@@ -24,18 +25,17 @@ import { ToastService } from '../../../shared/services/toast.service';
           <div class="header-stats">
             <div class="stat-pill">
               <span class="stat-num">{{ lostItemsCount }}</span>
-              <span class="stat-label">Lost Posts</span>
+              <span class="stat-label">Lost</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-num">{{ foundItemsCount }}</span>
+              <span class="stat-label">Found</span>
             </div>
             <div class="stat-pill stat-pill--active">
-              <span class="stat-num">{{ foundItemsCount }}</span>
-              <span class="stat-label">Found Posts</span>
+              <span class="stat-num">{{ myClaims.length }}</span>
+              <span class="stat-label">My Claims</span>
             </div>
           </div>
-        </div>
-
-        <div class="header-decoration">
-          <div class="deco-circle deco-circle--1"></div>
-          <div class="deco-circle deco-circle--2"></div>
         </div>
       </div>
 
@@ -57,25 +57,26 @@ import { ToastService } from '../../../shared/services/toast.service';
           </div>
         </div>
 
-        <section class="owner-notifications" *ngIf="moderationNotifications.length > 0">
-          <div class="notification-head">
-            <h3>Moderation updates</h3>
-            <span>{{ moderationNotifications.length }} recent</span>
-          </div>
-
-          <article class="notification-card" *ngFor="let report of moderationNotifications">
-            <div>
-              <p class="notification-title">{{ report.itemTitle || ('Item #' + report.itemId) }}</p>
-              <p class="notification-text" *ngIf="report.status === 'ACTION_TAKEN'">
-                Your item was blocked after review.
-              </p>
-              <p class="notification-text" *ngIf="report.status !== 'ACTION_TAKEN'">
-                Report reviewed and item kept visible.
-              </p>
-              <p class="notification-comment" *ngIf="report.moderatorComment">{{ report.moderatorComment }}</p>
-            </div>
-            <button class="notification-dismiss" (click)="dismissNotification(report.id)">Dismiss</button>
-          </article>
+        <section class="claims-section" *ngIf="myClaims.length > 0">
+           <div class="section-head">
+             <h3>My Claims Tracking</h3>
+             <p>Track the status of items you have claimed.</p>
+           </div>
+           
+           <div class="claims-grid">
+             <div class="claim-card" *ngFor="let claim of myClaims">
+               <div class="claim-info">
+                 <span class="claim-item-title">{{ getItemDisplayName(claim.itemId) }}</span>
+                 <p class="claim-message">{{ claim.proofMessage }}</p>
+               </div>
+               <div class="claim-status">
+                 <span class="status-badge" [class.pending]="claim.status === 'PENDING'" [class.approved]="claim.status === 'APPROVED'" [class.rejected]="claim.status === 'REJECTED'">
+                   {{ claim.status }}
+                 </span>
+                 <span class="claim-date">{{ claim.createdAt | date:'shortDate' }}</span>
+               </div>
+             </div>
+           </div>
         </section>
 
         <div *ngIf="myItems.length === 0" class="empty-state">
@@ -332,14 +333,22 @@ import { ToastService } from '../../../shared/services/toast.service';
 
     .card-img-wrap {
       position: relative;
-      height: 200px;
+      width: 100%;
+      aspect-ratio: 16/9;
       overflow: hidden;
       background: linear-gradient(135deg, #f0f0f0, #e4e4e4);
     }
+    .card-img-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.2) 100%);
+      pointer-events: none;
+    }
 
-    .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-    .offer-card:hover .card-img { transform: scale(1.04); }
-    .card-img.fallback-mode { object-fit: contain; padding: 1rem; transform: none !important; }
+    .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); }
+    .offer-card:hover .card-img { transform: scale(1.1); }
+    .card-img.fallback-mode { object-fit: contain; padding: 2.2rem; }
 
     .floating-badge {
       position: absolute;
@@ -413,81 +422,25 @@ import { ToastService } from '../../../shared/services/toast.service';
     .action-btn--delete { background: rgba(248,52,65,0.12); color: #d31e2b; }
     .action-btn--delete:hover { background: rgba(248,52,65,0.22); }
 
-    .owner-notifications {
-      background: #fff;
-      border-radius: 16px;
-      border: 1px solid #ececec;
-      padding: 1rem;
-      margin-bottom: 1.1rem;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
-    }
-
-    .notification-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.7rem;
-    }
-
-    .notification-head h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 800;
-      color: #1f2937;
-    }
-
-    .notification-head span {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #f83441;
-      background: rgba(248,52,65,0.12);
-      border-radius: 999px;
-      padding: 0.2rem 0.55rem;
-    }
-
-    .notification-card {
-      border: 1px solid #efefef;
-      border-radius: 12px;
-      padding: 0.7rem 0.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .notification-card + .notification-card {
-      margin-top: 0.55rem;
-    }
-
-    .notification-title {
-      margin: 0;
-      font-weight: 700;
-      color: #111827;
-      font-size: 0.9rem;
-    }
-
-    .notification-text,
-    .notification-comment {
-      margin: 0.2rem 0 0;
-      color: #6b7280;
-      font-size: 0.82rem;
-    }
-
-    .notification-dismiss {
-      border: none;
-      background: #f3f4f6;
-      color: #374151;
-      border-radius: 9px;
-      padding: 0.45rem 0.7rem;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .notification-dismiss:hover {
-      background: #e5e7eb;
-    }
+    .claims-section { margin-bottom: 2.5rem; background: #fff; border-radius: 24px; padding: 1.5rem; border: 1px solid #e2e8f0; }
+    .section-head { margin-bottom: 1.25rem; }
+    .section-head h3 { font-size: 1.2rem; font-weight: 800; color: #1e293b; margin: 0; }
+    .section-head p { font-size: 0.9rem; color: #64748b; margin: 0.2rem 0 0; }
+    
+    .claims-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+    .claim-card { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.2s; }
+    .claim-card:hover { transform: translateY(-2px); border-color: #cbd5e1; }
+    
+    .claim-info { flex: 1; }
+    .claim-item-title { display: block; font-weight: 700; color: #1e293b; font-size: 0.95rem; margin-bottom: 0.2rem; }
+    .claim-message { margin: 0; font-size: 0.85rem; color: #64748b; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .claim-status { text-align: right; min-width: 90px; }
+    .status-badge { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 30px; margin-bottom: 0.25rem; background: #94a3b8; color: white; }
+    .status-badge.pending { background: #f59e0b; }
+    .status-badge.approved { background: #10b981; }
+    .status-badge.rejected { background: #ef4444; }
+    .claim-date { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
 
     .empty-state {
       background: #fff;
@@ -588,15 +541,14 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class UserLostItemsComponent implements OnInit {
   myItems: LostItem[] = [];
-  moderationNotifications: ItemReportResponse[] = [];
+  myClaims: ItemClaimResponse[] = [];
+  itemTitles: Record<number, string> = {};
   searchTerm = '';
   userId!: number;
   currentPage = 1;
   pageSize = 9;
   private pendingDeleteItemId: number | null = null;
   private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly ownerReportNotificationStorageKey = 'lf_owner_review_seen_ids';
-  private seenOwnerReviewIds = new Set<number>();
 
   readonly fallbackImages: Record<'LOST' | 'FOUND', string> = {
     LOST: this.buildFallbackImage('LOST', '#ef4444'),
@@ -608,7 +560,7 @@ export class UserLostItemsComponent implements OnInit {
     private router: Router,
     private userService: UserService,
     private toast: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const resolvedUserId = this.resolveCurrentUserId();
@@ -618,14 +570,39 @@ export class UserLostItemsComponent implements OnInit {
     }
 
     this.userId = Number(resolvedUserId);
-    this.loadSeenOwnerNotifications();
+    this.loadMyItems();
+    this.loadMyClaims();
+  }
+
+  private loadMyItems(): void {
     this.lostService.getMyItems().subscribe((items) => {
       this.myItems = items.sort(
         (a: LostItem, b: LostItem) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
       );
     });
+  }
 
-    this.loadOwnerModerationNotifications();
+  private loadMyClaims(): void {
+    this.lostService.getMyClaims().subscribe({
+      next: (claims) => {
+        this.myClaims = claims || [];
+        this.resolveItemTitles();
+      }
+    });
+  }
+
+  private resolveItemTitles(): void {
+    const ids = Array.from(new Set(this.myClaims.map(c => c.itemId)));
+    ids.forEach(id => {
+      if (this.itemTitles[id]) return;
+      this.lostService.getItemById(id).subscribe(item => {
+        this.itemTitles[id] = item?.title || `Item #${id}`;
+      });
+    });
+  }
+
+  getItemDisplayName(itemId: number): string {
+    return this.itemTitles[itemId] || `Item #${itemId}`;
   }
 
   private resolveCurrentUserId(): string | null {
@@ -764,20 +741,6 @@ export class UserLostItemsComponent implements OnInit {
     this.currentPage = page;
   }
 
-  dismissNotification(reportId: number): void {
-    this.moderationNotifications = this.moderationNotifications.filter((report) => report.id !== reportId);
-    this.seenOwnerReviewIds.add(reportId);
-    this.persistSeenOwnerNotifications();
-  }
-
-  createNewItem(): void {
-    this.router.navigate(['/lost-found/post']);
-  }
-
-  backToList(): void {
-    this.router.navigate(['/lost-found']);
-  }
-
   private buildFallbackImage(label: 'LOST' | 'FOUND', accent: string): string {
     const badgeText = label === 'LOST' ? 'LOST' : 'FOUND';
     const icon = label === 'LOST' ? '!' : '✓';
@@ -805,56 +768,12 @@ export class UserLostItemsComponent implements OnInit {
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
-  private loadOwnerModerationNotifications(): void {
-    this.lostService.getReportsForMyItems().subscribe({
-      next: (reports) => {
-        const sortedReports = (reports || []).sort(
-          (a, b) => new Date(b.reviewedAt || b.updatedAt).getTime() - new Date(a.reviewedAt || a.updatedAt).getTime()
-        );
-
-        this.moderationNotifications = sortedReports.slice(0, 5);
-        this.notifyForNewOwnerReviews(sortedReports);
-      },
-      error: () => {
-        // keep silent to avoid noisy UX if endpoint is temporarily unavailable
-      }
-    });
+  createNewItem(): void {
+    this.router.navigate(['/lost-found/post']);
   }
 
-  private notifyForNewOwnerReviews(reports: ItemReportResponse[]): void {
-    reports.forEach((report) => {
-      if (!report?.id || this.seenOwnerReviewIds.has(report.id)) {
-        return;
-      }
-
-      if (report.status === 'ACTION_TAKEN') {
-        this.toast.warning(`Moderation update: "${report.itemTitle || 'your item'}" was blocked.`);
-      } else {
-        this.toast.info(`Moderation update: "${report.itemTitle || 'your item'}" was reviewed and kept visible.`);
-      }
-
-      this.seenOwnerReviewIds.add(report.id);
-    });
-
-    this.persistSeenOwnerNotifications();
-  }
-
-  private loadSeenOwnerNotifications(): void {
-    const raw = localStorage.getItem(this.ownerReportNotificationStorageKey);
-    if (!raw) {
-      return;
-    }
-
-    try {
-      const ids = JSON.parse(raw) as number[];
-      this.seenOwnerReviewIds = new Set((ids || []).filter((id) => Number.isFinite(id)));
-    } catch {
-      this.seenOwnerReviewIds = new Set<number>();
-    }
-  }
-
-  private persistSeenOwnerNotifications(): void {
-    localStorage.setItem(this.ownerReportNotificationStorageKey, JSON.stringify([...this.seenOwnerReviewIds]));
+  backToList(): void {
+    this.router.navigate(['/lost-found']);
   }
 
   private ensurePageInRange(): void {
