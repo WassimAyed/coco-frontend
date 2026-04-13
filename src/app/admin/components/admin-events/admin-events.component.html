@@ -1,4 +1,62 @@
 <article class="rounded-2xl bg-white p-6">
+  <div class="mb-5">
+    <h3 class="text-lg font-bold text-foreground">Statistiques Événements</h3>
+    <p class="text-sm text-slate-500">Vue globale basée sur les données backend.</p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Événements</p>
+      <p class="mt-2 text-3xl font-bold text-slate-700">{{ stats?.totalEvents ?? 0 }}</p>
+    </div>
+    <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">Total Participants</p>
+      <p class="mt-2 text-3xl font-bold text-blue-700">{{ stats?.totalParticipants ?? 0 }}</p>
+    </div>
+    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Événements Disponibles</p>
+      <p class="mt-2 text-3xl font-bold text-emerald-700">{{ stats?.availableEvents ?? 0 }}</p>
+    </div>
+    <div class="rounded-xl border border-purple-100 bg-purple-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-purple-600">Total Catégories</p>
+      <p class="mt-2 text-3xl font-bold text-purple-700">{{ stats?.totalCategories ?? 0 }}</p>
+    </div>
+  </div>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-3">
+    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Acceptés</p>
+      <p class="mt-2 text-3xl font-bold text-emerald-700">
+        {{ stats?.eventsByStatus?.['ACCEPTED'] ?? stats?.eventsByStatus?.['APPROVED'] ?? 0 }}
+      </p>
+    </div>
+    <div class="rounded-xl border border-amber-100 bg-amber-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-amber-600">En attente</p>
+      <p class="mt-2 text-3xl font-bold text-amber-700">
+        {{ stats?.eventsByStatus?.['PENDING'] ?? 0 }}
+      </p>
+    </div>
+    <div class="rounded-xl border border-red-100 bg-red-50 p-4 text-center">
+      <p class="text-xs font-semibold uppercase tracking-wide text-red-600">Refusés</p>
+      <p class="mt-2 text-3xl font-bold text-red-700">
+        {{ stats?.eventsByStatus?.['REFUSED'] ?? stats?.eventsByStatus?.['REJECTED'] ?? 0 }}
+      </p>
+    </div>
+  </div>
+
+  <div class="mt-4 rounded-xl border border-border bg-slate-50 p-4" *ngIf="stats?.eventsByCategory">
+    <h4 class="mb-3 text-sm font-semibold text-foreground">Événements par catégorie</h4>
+    <div class="flex flex-wrap gap-2">
+      <span
+        *ngFor="let entry of stats!.eventsByCategory | keyvalue"
+        class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+        {{ entry.key }} : {{ entry.value }}
+      </span>
+    </div>
+  </div>
+</article>
+
+<article class="rounded-2xl bg-white p-6">
   <div class="mb-6 flex items-center justify-between gap-3">
     <div>
       <h3 class="text-lg font-bold text-foreground">Events Management</h3>
@@ -84,7 +142,9 @@
               <button
                 *ngIf="event.id"
                 type="button"
-                class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40"
+                [disabled]="isRefusedStatus(event.status)"
+                title="Impossible de modifier un événement refusé"
                 (click)="startEdit(event)">
                 ✏️ Edit
               </button>
@@ -219,13 +279,13 @@
 
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Start Date</label>
-        <input class="form-input" type="datetime-local" [(ngModel)]="createEventModel.startDate" />
+        <input class="form-input" type="datetime-local" [min]="dateTimeMin" [(ngModel)]="createEventModel.startDate" />
         <p *ngIf="createFieldErrors['startDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['startDate'] }}</p>
       </div>
 
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">End Date</label>
-        <input class="form-input" type="datetime-local" [(ngModel)]="createEventModel.endDate" />
+        <input class="form-input" type="datetime-local" [min]="dateTimeMin" [(ngModel)]="createEventModel.endDate" />
         <p *ngIf="createFieldErrors['endDate']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['endDate'] }}</p>
       </div>
 
@@ -330,13 +390,13 @@
 
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Start Date</label>
-        <input class="form-input" type="datetime-local" [(ngModel)]="editEventModel.startDate" />
+        <input class="form-input" type="datetime-local" [min]="dateTimeMin" [(ngModel)]="editEventModel.startDate" />
         <p *ngIf="editFieldErrors['startDate']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['startDate'] }}</p>
       </div>
 
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">End Date</label>
-        <input class="form-input" type="datetime-local" [(ngModel)]="editEventModel.endDate" />
+        <input class="form-input" type="datetime-local" [min]="dateTimeMin" [(ngModel)]="editEventModel.endDate" />
         <p *ngIf="editFieldErrors['endDate']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['endDate'] }}</p>
       </div>
 
@@ -486,11 +546,15 @@
           <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
           <p><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</p>
           <p><strong>Event type:</strong> {{ detailModalEvent.eventType || 'N/A' }}</p>
+          <p><strong>Prix:</strong> {{ detailModalEvent.price ? (detailModalEvent.price + ' TND') : 'Gratuit' }}</p>
+          <p><strong>Adresse complète:</strong> {{ detailModalEvent.fullAddress || 'N/A' }}</p>
+          <p><strong>Capacité max:</strong> {{ detailModalEvent.maxCapacity ?? detailModalEvent.capacity ?? 'N/A' }}</p>
+          <p><strong>Participants actuels:</strong> {{ detailModalEvent.currentParticipants ?? detailModalEvent.occupiedPlaces ?? 0 }}</p>
           <p><strong>Temperature:</strong> {{ detailModalEvent.temperature ?? 'N/A' }} °C</p>
           <p><strong>Precipitation:</strong> {{ detailModalEvent.precipitationMm ?? 'N/A' }} mm</p>
           <p><strong>Wind speed:</strong> {{ detailModalEvent.windSpeedKmh ?? 'N/A' }} km/h</p>
           <p><strong>Category:</strong> {{ getCategoryName(detailModalEvent) }}</p>
-          <p><strong>Creator:</strong> {{ getCreatorName(detailModalEvent) }} ({{ getCreatorEmail(detailModalEvent) }})</p>
+          <p><strong>Creator:</strong> {{ getCreatorName(detailModalEvent) }}</p>
           <p><strong>Status:</strong>
             <span class="inline-flex rounded-full border px-2 py-1 text-xs font-semibold" [ngClass]="{
               'border-emerald-200 bg-emerald-50 text-emerald-700': getStatusBadgeClass(detailModalEvent.status || '') === 'badge-green',
@@ -537,7 +601,16 @@
       </div>
 
       <div class="rounded-xl border border-border bg-slate-50 p-4">
-        <h3 class="text-base font-semibold text-foreground">Participants</h3>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-base font-semibold text-foreground">Participants</h3>
+          <button
+            *ngIf="detailModalEvent?.id && detailModalParticipants.length > 0"
+            type="button"
+            class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+            (click)="exportParticipantsPdf(detailModalEvent!.id!)">
+            📄 Export PDF
+          </button>
+        </div>
         <div class="mt-3 overflow-x-auto" *ngIf="detailModalParticipants.length > 0; else noModalParticipants">
           <table class="w-full min-w-[580px] border-collapse">
             <thead>

@@ -1,4 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import maplibregl from 'maplibre-gl';
 import { forkJoin, map, Observable, of } from 'rxjs';
@@ -13,7 +14,16 @@ import { CommentService } from '../../../event/services/comment.service';
 import { EventService } from '../../../event/services/event.service';
 import { ParticipantService } from '../../../event/services/participant.service';
 import { ReactionService } from '../../../event/services/reaction.service';
-import { UserService } from '../../../user-security/services/user.service';
+
+interface StatsDTO {
+  totalEvents: number;
+  totalParticipants: number;
+  totalCategories: number;
+  availableEvents: number;
+  eventsByStatus: Record<string, number>;
+  eventsByCategory: Record<string, number>;
+  participantsByEvent: Record<string, number>;
+}
 
 interface EventCreatorInfo {
   name: string;
@@ -76,10 +86,12 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   detailModalReactions: Partial<Record<ReactionType, number>> = {};
   detailModalComments: CommentDto[] = [];
   detailModalParticipants: ParticipantDto[] = [];
+  stats: StatsDTO | null = null;
 
   readonly reactionTypes: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
   readonly reactionEmoji = REACTION_EMOJI;
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
+  dateTimeMin = this.buildDateTimeLocalValue(new Date());
 
   mapOpenUrl: string | null = null;
   private detailMap?: maplibregl.Map;
@@ -92,15 +104,16 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly eventService: EventService,
-    private readonly userService: UserService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
-    private readonly participantService: ParticipantService
+    private readonly participantService: ParticipantService,
+    private readonly http: HttpClient
   ) {}
 
   ngOnInit(): void {
     this.loadCategories();
     this.loadEvents();
+    this.loadStats();
     this.autoDismissMessages();
   }
 
@@ -169,6 +182,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
     this.isCreateModalOpen = true;
+    this.refreshDateTimeConstraints();
     this.resetCreateForm();
     this.createEventModel.categoryId = this.categories[0]?.id || 0;
     setTimeout(() => this.initCreateMap(), 0);
@@ -271,6 +285,11 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isRefusedStatus(event.status)) {
+      this.errorMessage = 'Impossible de modifier un événement refusé.';
+      return;
+    }
+
     this.editingEventId = event.id;
     this.editingEvent = event;
     this.errorMessage = '';
@@ -281,6 +300,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
     this.isSavingEdit = false;
+    this.refreshDateTimeConstraints();
 
     this.editEventModel = {
       name: event.name,
@@ -664,6 +684,15 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     return Number(this.detailModalReactions[type] || 0);
   }
 
+  
+  exportParticipantsPdf(eventId: number): void {
+    const base = environment.eventServiceUrl.replace(/\/+$/, '');
+    const url = `${base}/api/export/participants/${eventId}/pdf`;
+    console.log('Export URL:', url);  // ← vérifie dans la console
+    window.open(url, '_blank');
+  }
+
+
   getModalMaxCapacity(): number {
     if (!this.detailModalEvent) {
       return 0;
@@ -749,17 +778,18 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
+
     const requests: Observable<CreatorRow>[] = userIds.map(userId =>
-      this.userService.getProfileByUserId(userId).pipe(
-        map((profile: any): CreatorRow => ({
+      this.http.get<any>(`${base}/users/${userId}`, {
+        withCredentials: environment.auth.withCredentials,
+      }).pipe(
+        map((user: any): CreatorRow => ({
           userId,
-          name: profile?.username
-            || profile?.userName
-            || `${profile?.firstName || ''} ${profile?.lastName || profile?.lastname || ''}`.trim()
-            || `User #${userId}`,
-          email: profile?.email || 'N/A'
+          name: `${user?.username || ''} ${user?.lastname || ''}`.trim() || `User #${userId}`,
+          email: user?.email || ''
         })),
-        catchError(() => of({ userId, name: `User #${userId}`, email: 'N/A' }))
+        catchError(() => of({ userId, name: `User #${userId}`, email: '' }))
       )
     );
 
@@ -782,6 +812,14 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  private loadStats(): void {
+  const base = environment.eventServiceUrl;
+  this.http.get<StatsDTO>(`${base}/api/stats`).subscribe({  // ← sans withCredentials
+    next: stats => this.stats = stats,
+    error: () => this.stats = null
+  });
+}
 
   private initCreateMap(): void {
     const container = document.getElementById('create-map-modal') as HTMLDivElement | null;
@@ -1145,6 +1183,16 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   private cleanString(value?: string): string | undefined {
     const trimmed = value?.trim();
     return trimmed ? trimmed : undefined;
+  }
+
+  private refreshDateTimeConstraints(): void {
+    this.dateTimeMin = this.buildDateTimeLocalValue(new Date());
+  }
+
+  private buildDateTimeLocalValue(date: Date): string {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   private toOptionalNumber(value?: number | null): number | undefined {

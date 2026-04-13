@@ -50,6 +50,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   editingEventId: number | null = null;
   editingEvent: EventDto | null = null;
   isCreateModalOpen = false;
+  dateTimeMin = this.buildDateTimeLocalValue(new Date());
   createModel: CreateEventRequest = {
     name: '',
     description: '',
@@ -135,6 +136,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.isCreateModalOpen = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.refreshDateTimeConstraints();
     this.resetCreateForm();
     this.createModel.categoryId = this.categories[0]?.id || 0;
     setTimeout(() => this.initCreateMap(), 0);
@@ -241,12 +243,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   startEdit(event: EventDto): void {
-    if (!this.canEditEvent(event)) {
-      this.errorMessage = 'This event is locked and cannot be edited.';
+    if (!event.id) {
       return;
     }
 
-    this.editingEventId = event.id || null;
+    if (this.isRefusedStatus(event.status)) {
+      this.errorMessage = 'Impossible de modifier un événement refusé.';
+      return;
+    }
+
+    this.editingEventId = event.id;
     this.editingEvent = event;
     this.errorMessage = '';
     this.successMessage = '';
@@ -256,6 +262,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
     this.isSavingEdit = false;
+    this.refreshDateTimeConstraints();
 
     this.editModel = {
       name: event.name,
@@ -526,6 +533,10 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     return this.normalizeStatus(event?.status) === 'PENDING';
   }
 
+  isRefusedStatus(status?: string): boolean {
+    return this.normalizeStatus(status) === 'REJECTED';
+  }
+
   getStatusBadgeClass(status?: string): string {
     switch (this.normalizeStatus(status)) {
       case 'PENDING':
@@ -732,6 +743,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   private cleanString(value?: string): string | undefined {
     const trimmed = value?.trim();
     return trimmed ? trimmed : undefined;
+  }
+
+  private refreshDateTimeConstraints(): void {
+    this.dateTimeMin = this.buildDateTimeLocalValue(new Date());
+  }
+
+  private buildDateTimeLocalValue(date: Date): string {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   private toDateTimeLocal(value?: string): string | undefined {
