@@ -747,30 +747,21 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeImageUrl = slides[nextIndex];
   }
 
-  getStatusBadgeClass(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'status-badge status-ongoing';
-      case 'APPROVED':
-        return 'status-badge status-completed';
-      case 'REJECTED':
-        return 'status-badge status-cancelled';
-      default:
-        return 'status-badge status-planned';
+  isFreeEvent(event?: EventDto | null): boolean {
+    if (!event) {
+      return false;
     }
+
+    const price = Number(event.price);
+    return Number.isFinite(price) && price === 0;
   }
 
-  getStatusLabel(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'En attente';
-      case 'APPROVED':
-        return 'Approuvé';
-      case 'REJECTED':
-        return 'Rejeté';
-      default:
-        return status || 'N/A';
-    }
+  getStatusBadgeClass(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'status-badge status-completed' : '';
+  }
+
+  getStatusLabel(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'Gratuit' : '';
   }
 
   private normalizeStatus(status?: string): string {
@@ -953,9 +944,10 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       style: 'https://demotiles.maplibre.org/style.json',
       center: [lng, lat],
       zoom: 12,
-      attributionControl: false,
-      interactive: false
+      attributionControl: false
     });
+
+    this.detailMap.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     this.detailMap.on('load', () => {
       this.updateDetailMap(this.event?.latitude, this.event?.longitude);

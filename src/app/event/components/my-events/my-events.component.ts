@@ -31,6 +31,13 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   mainImageFile: File | null = null;
   galleryFiles: File[] = [];
   isSavingCreate = false;
+  createWeatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
+  isCreateWeatherLoading = false;
   editFieldErrors: Record<string, string> = {};
   selectedEditCoordinates = '';
   editExistingMainImageUrl = '';
@@ -57,6 +64,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   editingEvent: EventDto | null = null;
   isCreateModalOpen = false;
   dateTimeMin = this.buildDateTimeLocalValue(new Date());
+  lastSavedEvent: EventDto | null = null;
   createModel: CreateEventRequest = {
     name: '',
     description: '',
@@ -151,6 +159,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   closeCreateModal(): void {
     this.isCreateModalOpen = false;
     this.isSavingCreate = false;
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.resetCreateForm();
     this.createMap?.remove();
     this.createMap = undefined;
@@ -200,6 +210,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
     this.eventService.create(payload).subscribe({
       next: created => {
+        this.lastSavedEvent = created;
         const eventId = created.id;
         if (!eventId) {
           this.isSavingCreate = false;
@@ -423,6 +434,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.eventService.update(eventId, payload).subscribe({
       next: updatedEvent => {
         this.errorMessage = '';
+        this.editingEvent = updatedEvent;
+        this.lastSavedEvent = updatedEvent;
         if (updatedEvent?.temperature !== undefined) {
           this.weatherPreview = {
             temperature: updatedEvent.temperature,
@@ -563,30 +576,21 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     return this.normalizeStatus(status) === 'REJECTED';
   }
 
-  getStatusBadgeClass(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'badge-yellow';
-      case 'APPROVED':
-        return 'badge-green';
-      case 'REJECTED':
-        return 'badge-red';
-      default:
-        return 'badge-blue';
+  isFreeEvent(event?: EventDto | null): boolean {
+    if (!event) {
+      return false;
     }
+
+    const price = Number(event.price);
+    return Number.isFinite(price) && price === 0;
   }
 
-  getStatusLabel(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'En attente';
-      case 'APPROVED':
-        return 'Approuvé';
-      case 'REJECTED':
-        return 'Rejeté';
-      default:
-        return status || 'N/A';
-    }
+  getStatusBadgeClass(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'badge-green' : '';
+  }
+
+  getStatusLabel(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'Gratuit' : '';
   }
 
   formatDate(value?: string): string {
@@ -664,6 +668,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.createModel.latitude = Number(latitude.toFixed(7));
     this.createModel.longitude = Number(longitude.toFixed(7));
     this.selectedCreateCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
+    this.tryLoadCreateWeatherPreview();
 
     if (this.createMarker) {
       this.createMarker.setLngLat([this.createModel.longitude, this.createModel.latitude]);
@@ -932,8 +937,49 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     };
     this.createFieldErrors = {};
     this.selectedCreateCoordinates = '';
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.mainImageFile = null;
     this.galleryFiles = [];
+  }
+
+  onCreateWeatherInputsChanged(): void {
+    this.tryLoadCreateWeatherPreview();
+  }
+
+  private tryLoadCreateWeatherPreview(): void {
+    const latitude = this.toOptionalNumber(this.createModel.latitude);
+    const longitude = this.toOptionalNumber(this.createModel.longitude);
+    const start = this.toDate(this.createModel.startDate);
+    const end = this.toDate(this.createModel.endDate);
+
+    if (latitude === undefined || longitude === undefined || !start) {
+      this.createWeatherPreview = null;
+      this.isCreateWeatherLoading = false;
+      return;
+    }
+
+    this.isCreateWeatherLoading = true;
+    this.eventService.getWeatherPreview(
+      latitude,
+      longitude,
+      this.toIsoDate(start),
+      end ? this.toIsoDate(end) : undefined
+    ).subscribe({
+      next: preview => {
+        this.createWeatherPreview = preview;
+        this.isCreateWeatherLoading = false;
+      },
+      error: () => {
+        this.createWeatherPreview = null;
+        this.isCreateWeatherLoading = false;
+      }
+    });
+  }
+
+  private toIsoDate(value: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
   }
 
   private mergeUniqueFiles(existingFiles: File[], newFiles: File[]): File[] {

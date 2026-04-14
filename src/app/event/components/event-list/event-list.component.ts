@@ -582,30 +582,21 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         }).format(date);
   }
 
-  getStatusBadgeClass(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'status-badge status-ongoing';
-      case 'APPROVED':
-        return 'status-badge status-completed';
-      case 'REJECTED':
-        return 'status-badge status-cancelled';
-      default:
-        return 'status-badge status-planned';
+  isFreeEvent(event?: EventDto | null): boolean {
+    if (!event) {
+      return false;
     }
+
+    const price = Number(event.price);
+    return Number.isFinite(price) && price === 0;
   }
 
-  getStatusLabel(status?: string): string {
-    switch (this.normalizeStatus(status)) {
-      case 'PENDING':
-        return 'En attente';
-      case 'APPROVED':
-        return 'Approuvé';
-      case 'REJECTED':
-        return 'Rejeté';
-      default:
-        return status || 'N/A';
-    }
+  getStatusBadgeClass(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'status-badge status-completed' : '';
+  }
+
+  getStatusLabel(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'Gratuit' : '';
   }
 
   private hydrateEventImages(events: EventDto[]): void {

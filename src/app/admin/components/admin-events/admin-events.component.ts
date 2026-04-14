@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CategoryDto } from '../../../event/models/category.model';
@@ -58,6 +59,13 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   selectedCreateCoordinates = '';
   mainImageFile: File | null = null;
   galleryFiles: File[] = [];
+  createWeatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
+  isCreateWeatherLoading = false;
 
   editFieldErrors: Record<string, string> = {};
   selectedEditCoordinates = '';
@@ -69,6 +77,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   isCreateModalOpen = false;
   isSavingCreate = false;
   createEventModel: CreateEventRequest = this.buildDefaultCreateModel();
+  lastSavedEvent: EventDto | null = null;
 
   editingEventId: number | null = null;
   editingEvent: EventDto | null = null;
@@ -197,6 +206,8 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   closeCreateModal(): void {
     this.isCreateModalOpen = false;
     this.isSavingCreate = false;
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.resetCreateForm();
     this.createMap?.remove();
     this.createMap = undefined;
@@ -240,6 +251,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
 
     this.eventService.create(payload).subscribe({
       next: created => {
+        this.lastSavedEvent = created;
         const eventId = created.id;
         if (!eventId) {
           this.isSavingCreate = false;
@@ -423,6 +435,8 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.eventService.update(eventId, payload).subscribe({
       next: updatedEvent => {
         this.errorMessage = '';
+        this.editingEvent = updatedEvent;
+        this.lastSavedEvent = updatedEvent;
         if (updatedEvent?.temperature !== undefined) {
           this.weatherPreview = {
             temperature: updatedEvent.temperature,
@@ -908,6 +922,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.createEventModel.latitude = Number(latitude.toFixed(7));
     this.createEventModel.longitude = Number(longitude.toFixed(7));
     this.selectedCreateCoordinates = `${this.createEventModel.latitude.toFixed(6)}, ${this.createEventModel.longitude.toFixed(6)}`;
+    this.tryLoadCreateWeatherPreview();
 
     if (this.createMarker) {
       this.createMarker.setLngLat([this.createEventModel.longitude, this.createEventModel.latitude]);
@@ -1172,8 +1187,49 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.createEventModel = this.buildDefaultCreateModel();
     this.createFieldErrors = {};
     this.selectedCreateCoordinates = '';
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.mainImageFile = null;
     this.galleryFiles = [];
+  }
+
+  onCreateWeatherInputsChanged(): void {
+    this.tryLoadCreateWeatherPreview();
+  }
+
+  private tryLoadCreateWeatherPreview(): void {
+    const latitude = this.toOptionalNumber(this.createEventModel.latitude);
+    const longitude = this.toOptionalNumber(this.createEventModel.longitude);
+    const start = this.toDate(this.createEventModel.startDate);
+    const end = this.toDate(this.createEventModel.endDate);
+
+    if (latitude === undefined || longitude === undefined || !start) {
+      this.createWeatherPreview = null;
+      this.isCreateWeatherLoading = false;
+      return;
+    }
+
+    this.isCreateWeatherLoading = true;
+    this.eventService.getWeatherPreview(
+      latitude,
+      longitude,
+      this.toIsoDate(start),
+      end ? this.toIsoDate(end) : undefined
+    ).subscribe({
+      next: preview => {
+        this.createWeatherPreview = preview;
+        this.isCreateWeatherLoading = false;
+      },
+      error: () => {
+        this.createWeatherPreview = null;
+        this.isCreateWeatherLoading = false;
+      }
+    });
+  }
+
+  private toIsoDate(value: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
   }
 
   private buildDefaultCreateModel(): CreateEventRequest {

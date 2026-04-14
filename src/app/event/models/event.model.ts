@@ -15,6 +15,7 @@ export interface EventDto {
 	windSpeedKmh?: number;
 	weatherCode?: number;
 	weatherLabel?: string;
+	predictedParticipants?: number;
 	eventType?: EventType;
 	startDate?: string;
 	endDate?: string;
