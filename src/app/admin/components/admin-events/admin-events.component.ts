@@ -74,6 +74,12 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   editingEvent: EventDto | null = null;
   editEventModel: UpdateEventRequest = {};
   isSavingEdit = false;
+  weatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
 
   newCategoryModel: CategoryFormModel = { name: '', description: '' };
   isSavingCategory = false;
@@ -344,6 +350,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
     this.isSavingEdit = false;
+    this.weatherPreview = null;
     this.editMap?.remove();
     this.editMap = undefined;
     this.editMarker = undefined;
@@ -414,19 +421,25 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     this.isSavingEdit = true;
 
     this.eventService.update(eventId, payload).subscribe({
-      next: () => {
+      next: updatedEvent => {
         this.errorMessage = '';
+        if (updatedEvent?.temperature !== undefined) {
+          this.weatherPreview = {
+            temperature: updatedEvent.temperature,
+            precipitationMm: updatedEvent.precipitationMm,
+            windSpeedKmh: updatedEvent.windSpeedKmh,
+            weatherLabel: updatedEvent.weatherLabel
+          };
+        }
         this.uploadEditImages(eventId).subscribe({
           next: () => {
             this.successMessage = 'Event updated successfully.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadEvents();
           },
           error: () => {
             this.successMessage = 'Event updated, but some images could not be uploaded.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadEvents();
           }
         });
@@ -682,6 +695,19 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
 
   getModalReactionCount(type: ReactionType): number {
     return Number(this.detailModalReactions[type] || 0);
+  }
+
+  getWeatherBadgeClass(label?: string): string {
+    const map: Record<string, string> = {
+      'Clear': 'bg-warning text-dark',
+      'Clouds': 'bg-secondary text-white',
+      'Rain': 'bg-primary text-white',
+      'Snow': 'bg-info text-dark border',
+      'Fog': 'bg-light text-dark border',
+      'Thunderstorm': 'bg-danger text-white',
+      'Unknown': 'bg-dark text-white'
+    };
+    return map[label ?? ''] ?? 'bg-dark text-white';
   }
 
   

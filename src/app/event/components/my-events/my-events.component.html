@@ -319,6 +319,35 @@
           </button>
           <button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEdit()">Cancel</button>
         </div>
+
+        <div *ngIf="weatherPreview" class="mt-3 rounded-xl border border-border bg-slate-50 p-3 md:col-span-2">
+          <h6 class="mb-2 text-sm font-semibold text-foreground">
+            <i class="fas fa-cloud-sun me-2 text-primary"></i>
+            Météo moyenne sur la durée de l'événement
+          </h6>
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <i class="fas fa-thermometer-half text-danger"></i>
+              <div class="fw-bold">{{ weatherPreview.temperature }}°C</div>
+              <small class="text-muted">Température moy.</small>
+            </div>
+            <div class="col-4">
+              <i class="fas fa-tint text-primary"></i>
+              <div class="fw-bold">{{ weatherPreview.precipitationMm }} mm</div>
+              <small class="text-muted">Précipitation moy.</small>
+            </div>
+            <div class="col-4">
+              <i class="fas fa-wind text-info"></i>
+              <div class="fw-bold">{{ weatherPreview.windSpeedKmh }} km/h</div>
+              <small class="text-muted">Vent moyen</small>
+            </div>
+          </div>
+          <div class="mt-2 text-center">
+            <span class="badge" [ngClass]="getWeatherBadgeClass(weatherPreview.weatherLabel)">
+              {{ weatherPreview.weatherLabel }}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   </div>

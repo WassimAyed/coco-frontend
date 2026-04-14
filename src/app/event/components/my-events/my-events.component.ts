@@ -38,6 +38,12 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   editGalleryFiles: File[] = [];
   editExistingGallery: EventImageDto[] = [];
   isSavingEdit = false;
+  weatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
 
   detailModalEvent: EventDto | null = null;
   detailModalReactions: Partial<Record<ReactionType, number>> = {};
@@ -304,6 +310,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editMainImageFile = null;
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
+    this.weatherPreview = null;
     this.editMap?.remove();
     this.editMap = undefined;
     this.editMarker = undefined;
@@ -414,19 +421,25 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.isSavingEdit = true;
 
     this.eventService.update(eventId, payload).subscribe({
-      next: () => {
+      next: updatedEvent => {
         this.errorMessage = '';
+        if (updatedEvent?.temperature !== undefined) {
+          this.weatherPreview = {
+            temperature: updatedEvent.temperature,
+            precipitationMm: updatedEvent.precipitationMm,
+            windSpeedKmh: updatedEvent.windSpeedKmh,
+            weatherLabel: updatedEvent.weatherLabel
+          };
+        }
         this.uploadEditImages(eventId).subscribe({
           next: () => {
             this.successMessage = 'Event updated successfully.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadMyEvents();
           },
           error: () => {
             this.successMessage = 'Event updated, but some images could not be uploaded.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadMyEvents();
           }
         });
@@ -444,6 +457,19 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     }
 
     return Number(this.detailModalEvent.maxCapacity ?? this.detailModalEvent.capacity ?? 0);
+  }
+
+  getWeatherBadgeClass(label?: string): string {
+    const map: Record<string, string> = {
+      'Clear': 'bg-warning text-dark',
+      'Clouds': 'bg-secondary text-white',
+      'Rain': 'bg-primary text-white',
+      'Snow': 'bg-info text-dark border',
+      'Fog': 'bg-light text-dark border',
+      'Thunderstorm': 'bg-danger text-white',
+      'Unknown': 'bg-dark text-white'
+    };
+    return map[label ?? ''] ?? 'bg-dark text-white';
   }
 
   getModalParticipantsCount(): number {
