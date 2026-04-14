@@ -9,7 +9,6 @@ export interface EventDto {
 	price?: number;
 	latitude?: number;
 	longitude?: number;
-	fullAddress?: string;
 	temperature?: number;
 	precipitationMm?: number;
 	windSpeedKmh?: number;
@@ -40,7 +39,6 @@ export interface CreateEventRequest {
 	location: string;
 	latitude?: number;
 	longitude?: number;
-	fullAddress?: string;
 	startDate?: string;
 	endDate?: string;
 	status?: EventStatus;
@@ -59,7 +57,6 @@ export interface UpdateEventRequest {
 	imageUrl?: string;
 	latitude?: number;
 	longitude?: number;
-	fullAddress?: string;
 	startDate?: string;
 	endDate?: string;
 	status?: EventStatus;

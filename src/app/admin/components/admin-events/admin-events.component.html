@@ -118,7 +118,7 @@
           <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">{{ getCategoryName(event) }}</td>
           <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">{{ formatDate(event.startDate) }}</td>
           <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">{{ formatDate(event.endDate) }}</td>
-          <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">{{ event.fullAddress || event.location || 'N/A' }}</td>
+          <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">{{ event.location || 'N/A' }}</td>
           <td class="border-b border-slate-100 px-4 py-4 text-sm text-slate-700">
             <p class="font-medium">{{ getCreatorName(event) }}</p>
             <p class="text-xs text-slate-500">{{ getCreatorEmail(event) }}</p>
@@ -261,12 +261,6 @@
         <p *ngIf="createFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['name'] }}</p>
       </div>
 
-      <div>
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
-        <input class="form-input" placeholder="Full address" [(ngModel)]="createEventModel.fullAddress" />
-        <p *ngIf="createFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['fullAddress'] }}</p>
-      </div>
-
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Description</label>
         <input class="form-input" placeholder="Description" [(ngModel)]="createEventModel.description" maxlength="500" />
@@ -404,12 +398,6 @@
         <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Name</label>
         <input class="form-input" placeholder="Name" [(ngModel)]="editEventModel.name" maxlength="100" />
         <p *ngIf="editFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['name'] }}</p>
-      </div>
-
-      <div>
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
-        <input class="form-input" placeholder="Full address" [(ngModel)]="editEventModel.fullAddress" />
-        <p *ngIf="editFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['fullAddress'] }}</p>
       </div>
 
       <div class="md:col-span-2">
@@ -638,7 +626,7 @@
           <p><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</p>
           <p><strong>Event type:</strong> {{ detailModalEvent.eventType || 'N/A' }}</p>
           <p><strong>Prix:</strong> {{ detailModalEvent.price ? (detailModalEvent.price + ' TND') : 'Gratuit' }}</p>
-          <p><strong>Adresse complète:</strong> {{ detailModalEvent.fullAddress || 'N/A' }}</p>
+          <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
           <p><strong>Capacité max:</strong> {{ detailModalEvent.maxCapacity ?? detailModalEvent.capacity ?? 'N/A' }}</p>
           <p><strong>Participants actuels:</strong> {{ detailModalEvent.currentParticipants ?? detailModalEvent.occupiedPlaces ?? 0 }}</p>
           <p *ngIf="detailModalEvent.predictedParticipants !== null && detailModalEvent.predictedParticipants !== undefined">

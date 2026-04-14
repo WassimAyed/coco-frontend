@@ -222,7 +222,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     const name = this.cleanString(this.createEventModel.name) || '';
     const location = this.cleanString(this.createEventModel.location) || '';
     const description = this.cleanString(this.createEventModel.description);
-    const fullAddress = this.cleanString(this.createEventModel.fullAddress);
     const price = this.toOptionalNumber(this.createEventModel.price);
     const startDate = this.toDate(this.createEventModel.startDate);
     const endDate = this.toDate(this.createEventModel.endDate);
@@ -236,7 +235,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       ...this.createEventModel,
       name,
       description,
-      fullAddress,
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
@@ -327,7 +325,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       eventType: event.eventType,
       latitude: event.latitude,
       longitude: event.longitude,
-      fullAddress: event.fullAddress,
       startDate: this.toDateTimeLocal(event.startDate),
       endDate: this.toDateTimeLocal(event.endDate),
       status: event.status,
@@ -415,7 +412,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       location: this.cleanString(this.editEventModel.location),
       eventType: this.editEventModel.eventType,
       imageUrl: existingImageValue,
-      fullAddress: this.cleanString(this.editEventModel.fullAddress),
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
       latitude: this.toOptionalNumber(this.editEventModel.latitude),
@@ -1241,7 +1237,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       price: undefined,
       latitude: undefined,
       longitude: undefined,
-      fullAddress: '',
       startDate: '',
       endDate: '',
       status: 'PENDING',

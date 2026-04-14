@@ -46,7 +46,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     eventType: 'OUTDOOR',
     latitude: undefined,
     longitude: undefined,
-    fullAddress: '',
     startDate: '',
     endDate: '',
     status: 'PENDING',
@@ -82,7 +81,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     const name = this.cleanString(this.createModel.name) || '';
     const location = this.cleanString(this.createModel.location) || '';
     const description = this.cleanString(this.createModel.description);
-    const fullAddress = this.cleanString(this.createModel.fullAddress);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
 
@@ -100,7 +98,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       ...this.createModel,
       name,
       description,
-      fullAddress,
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
@@ -335,7 +332,6 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       eventType: 'OUTDOOR',
       latitude: undefined,
       longitude: undefined,
-      fullAddress: '',
       startDate: '',
       endDate: '',
       status: 'PENDING',

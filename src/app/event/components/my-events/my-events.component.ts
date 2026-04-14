@@ -73,7 +73,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     price: undefined,
     latitude: undefined,
     longitude: undefined,
-    fullAddress: '',
     startDate: '',
     endDate: '',
     status: 'PENDING',
@@ -175,7 +174,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     const name = this.cleanString(this.createModel.name) || '';
     const location = this.cleanString(this.createModel.location) || '';
     const description = this.cleanString(this.createModel.description);
-    const fullAddress = this.cleanString(this.createModel.fullAddress);
     const price = this.toOptionalNumber(this.createModel.price);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
@@ -195,7 +193,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       ...this.createModel,
       name,
       description,
-      fullAddress,
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
@@ -288,7 +285,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       eventType: event.eventType,
       latitude: event.latitude,
       longitude: event.longitude,
-      fullAddress: event.fullAddress,
       startDate: this.toDateTimeLocal(event.startDate),
       endDate: this.toDateTimeLocal(event.endDate),
       status: event.status,
@@ -415,7 +411,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       location: this.cleanString(this.editModel.location),
       eventType: this.editModel.eventType,
       imageUrl: existingImageValue,
-      fullAddress: this.cleanString(this.editModel.fullAddress),
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
       latitude: this.toOptionalNumber(this.editModel.latitude),
@@ -927,7 +922,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       price: undefined,
       latitude: undefined,
       longitude: undefined,
-      fullAddress: '',
       startDate: '',
       endDate: '',
       status: 'PENDING',

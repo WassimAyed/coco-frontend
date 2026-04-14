@@ -111,12 +111,6 @@
           <p *ngIf="createFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['name'] }}</p>
         </div>
 
-        <div>
-          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
-          <input class="form-input" placeholder="Full address" [(ngModel)]="createModel.fullAddress" />
-          <p *ngIf="createFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ createFieldErrors['fullAddress'] }}</p>
-        </div>
-
         <div class="md:col-span-2">
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Description</label>
           <input class="form-input" placeholder="Description" [(ngModel)]="createModel.description" maxlength="500" />
@@ -258,12 +252,6 @@
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Name</label>
           <input class="form-input" placeholder="Name" [(ngModel)]="editModel.name" maxlength="100" />
           <p *ngIf="editFieldErrors['name']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['name'] }}</p>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Address</label>
-          <input class="form-input" placeholder="Full address" [(ngModel)]="editModel.fullAddress" />
-          <p *ngIf="editFieldErrors['fullAddress']" class="mt-1 text-xs text-red-600">{{ editFieldErrors['fullAddress'] }}</p>
         </div>
 
         <div class="md:col-span-2">
@@ -429,7 +417,7 @@
             <p><strong>Start date:</strong> {{ formatDate(detailModalEvent.startDate) }}</p>
             <p><strong>End date:</strong> {{ formatDate(detailModalEvent.endDate) }}</p>
             <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
-            <p><strong>Adresse complète:</strong> {{ detailModalEvent.fullAddress || 'N/A' }}</p>
+            <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
             <p><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</p>
             <p><strong>Event type:</strong> {{ detailModalEvent.eventType || 'N/A' }}</p>
             <p><strong>Prix:</strong> {{ detailModalEvent.price ? (detailModalEvent.price + ' TND') : 'Gratuit' }}</p>
