@@ -21,6 +21,9 @@ export class AdminCouponsComponent implements OnInit {
   editMode = false;
   editId: number | null = null;
   searchTerm = '';
+  
+  aiAnalysis = '';
+  aiLoading = false;
 
   form = {
     code: '',
@@ -64,6 +67,7 @@ export class AdminCouponsComponent implements OnInit {
   }
 
   exportPDF(): void {
+    
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text('Liste des Coupons - CoCo Platform', 14, 22);
@@ -90,6 +94,20 @@ export class AdminCouponsComponent implements OnInit {
     });
 
     doc.save('coupons-coco.pdf');
+  }
+  analyzeWithAI(): void {
+    this.aiLoading = true;
+    this.aiAnalysis = '';
+    this.couponService.analyzeCoupons().subscribe({
+      next: (res) => {
+        this.aiAnalysis = res.analysis;
+        this.aiLoading = false;
+      },
+      error: () => {
+        this.aiAnalysis = 'Erreur lors de l\'analyse IA';
+        this.aiLoading = false;
+      }
+    });
   }
   openAddForm(): void {
     

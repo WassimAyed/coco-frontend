@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import { AdminCouponsComponent } from '../../../coupon/components/admin-coupons/admin-coupons.component';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+=======
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
+>>>>>>> 19cabf4ffa148b10a2c69b4d687f5e50e3050e75
 import {
   AlertTriangle,
   BarChart3,
@@ -33,6 +39,16 @@ import {
   Gift
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
+import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
+import { ItemReportResponse } from '../../../lost-found/models/lost-item.model';
+import { ToastService } from '../../../shared/services/toast.service';
+
+interface UserProfileDto {
+  firstName?: string;
+  lastName?: string;
+  lastname?: string;
+  username?: string;
+}
 
 interface DashboardModule {
   id: string;
@@ -46,7 +62,10 @@ interface DashboardModule {
 })
 export class AdminLayoutComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
+  private readonly lostAndFoundService = inject(LostAndFoundService);
+  private readonly toast = inject(ToastService);
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
@@ -55,6 +74,7 @@ export class AdminLayoutComponent {
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'users', name: 'User Management', icon: Users },
+    { id: 'item-reports', name: 'Item Reports', icon: AlertTriangle },
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
     { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
@@ -144,8 +164,263 @@ export class AdminLayoutComponent {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
+  itemReports: ItemReportResponse[] = [];
+  itemReportsLoading = false;
+  itemReportsError = '';
+  processingReportId: number | null = null;
+  bulkProcessing = false;
+  reporterNames = new Map<number, string>();
+  ownerNames = new Map<number, string>();
+  selectedReportIds = new Set<number>();
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const moduleId = params.get('module');
+      if (moduleId && this.modules.some((module) => module.id === moduleId)) {
+        this.selectModule(moduleId);
+      }
+    });
+  }
+
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
+
+    if (moduleId === 'item-reports') {
+      this.loadItemReports();
+    }
+  }
+
+  loadItemReports(): void {
+    this.itemReportsLoading = true;
+    this.itemReportsError = '';
+
+    this.lostAndFoundService.getReportsForModeration().subscribe({
+      next: (reports) => {
+        this.itemReports = (reports || []).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.selectedReportIds.clear();
+        this.preloadReporterNames(this.itemReports);
+        this.preloadOwnerNames(this.itemReports);
+        this.itemReportsLoading = false;
+      },
+      error: (error) => {
+        this.itemReportsError = error?.error?.message || 'Unable to load item reports.';
+        this.itemReportsLoading = false;
+      }
+    });
+  }
+
+  keepReportedItem(report: ItemReportResponse): void {
+    if (!this.isAdmin || !report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'REVIEWED',
+      moderatorComment: 'Reviewed by admin. Item remains visible.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.toast.success('Report marked as reviewed. Item kept visible.');
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to mark report as reviewed.';
+        this.toast.error('Failed to mark report as reviewed.');
+      }
+    });
+  }
+
+  blockReportedItem(report: ItemReportResponse): void {
+    if (!this.isAdmin || !report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'ACTION_TAKEN',
+      moderatorComment: 'Item blocked by admin after report review.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.toast.warning('Item blocked successfully after report review.');
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to block reported item.';
+        this.toast.error('Failed to block reported item.');
+      }
+    });
+  }
+
+  isReportActionable(report: ItemReportResponse): boolean {
+    return report.status === 'OPEN';
+  }
+
+  isReportSelected(reportId?: number): boolean {
+    return !!reportId && this.selectedReportIds.has(reportId);
+  }
+
+  toggleReportSelection(report: ItemReportResponse, checked: boolean): void {
+    if (!report?.id || !this.isReportActionable(report)) {
+      return;
+    }
+
+    if (checked) {
+      this.selectedReportIds.add(report.id);
+      return;
+    }
+
+    this.selectedReportIds.delete(report.id);
+  }
+
+  toggleAllReportSelection(checked: boolean): void {
+    if (!checked) {
+      this.selectedReportIds.clear();
+      return;
+    }
+
+    this.itemReports
+      .filter((report) => this.isReportActionable(report) && !!report.id)
+      .forEach((report) => this.selectedReportIds.add(report.id as number));
+  }
+
+  keepSelectedReports(): void {
+    this.processBulkReview('REVIEWED', 'Reviewed by admin. Item remains visible.', 'reviewed');
+  }
+
+  blockSelectedReports(): void {
+    this.processBulkReview('ACTION_TAKEN', 'Item blocked by admin after report review.', 'blocked');
+  }
+
+  get selectedReportsCount(): number {
+    return this.selectedReportIds.size;
+  }
+
+  get allActionableSelected(): boolean {
+    const actionable = this.itemReports.filter((report) => this.isReportActionable(report) && !!report.id);
+    return actionable.length > 0 && actionable.every((report) => this.selectedReportIds.has(report.id as number));
+  }
+
+  openItemDetails(report: ItemReportResponse): void {
+    if (!report?.itemId) return;
+    this.router.navigate(['/lost-found/details', report.itemId], {
+      queryParams: report.id ? { reportId: report.id } : undefined
+    });
+  }
+
+  getReporterDisplayName(reporterUserId: number): string {
+    if (!reporterUserId) {
+      return 'Unknown user';
+    }
+
+    return this.reporterNames.get(reporterUserId) || `User #${reporterUserId}`;
+  }
+
+  getOwnerDisplayName(ownerUserId?: number | null): string {
+    if (!ownerUserId) {
+      return 'Unknown owner';
+    }
+
+    return this.ownerNames.get(ownerUserId) || `User #${ownerUserId}`;
+  }
+
+  get isAdmin(): boolean {
+    const role = (this.user()?.role || '').toLowerCase();
+    return role.includes('admin');
+  }
+
+  private preloadReporterNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.reporterUserId).filter((id) => !!id))];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.reporterNames.has(id));
+    if (unresolvedIds.length === 0) {
+      return;
+    }
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: UserProfileDto, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.reporterNames.set(id, fullName || `User #${id}`);
+      });
+    });
+  }
+
+  private preloadOwnerNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.itemOwnerUserId).filter((id): id is number => !!id))];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.ownerNames.has(id));
+    if (unresolvedIds.length === 0) {
+      return;
+    }
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: UserProfileDto, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.ownerNames.set(id, fullName || `User #${id}`);
+      });
+    });
+  }
+
+  private processBulkReview(
+    status: 'REVIEWED' | 'ACTION_TAKEN',
+    moderatorComment: string,
+    actionLabel: 'reviewed' | 'blocked'
+  ): void {
+    if (!this.isAdmin || this.bulkProcessing) {
+      return;
+    }
+
+    const targets = this.itemReports.filter(
+      (report) => !!report.id && this.selectedReportIds.has(report.id) && this.isReportActionable(report)
+    );
+
+    if (targets.length === 0) {
+      this.toast.warning('Please select at least one OPEN report.');
+      return;
+    }
+
+    this.bulkProcessing = true;
+    this.itemReportsError = '';
+
+    const operations = targets.map((report) =>
+      this.lostAndFoundService.reviewReport(report.id, { status, moderatorComment }).pipe(
+        map(() => ({ ok: true })),
+        catchError(() => of({ ok: false }))
+      )
+    );
+
+    forkJoin(operations).subscribe((results) => {
+      const successCount = results.filter((result) => result.ok).length;
+      const failedCount = results.length - successCount;
+
+      this.bulkProcessing = false;
+      this.selectedReportIds.clear();
+
+      if (failedCount === 0) {
+        this.toast.success(`${successCount} report(s) ${actionLabel} successfully.`);
+      } else if (successCount > 0) {
+        this.toast.warning(`${successCount} report(s) ${actionLabel}, ${failedCount} failed.`);
+      } else {
+        this.toast.error(`Failed to process selected reports.`);
+      }
+
+      this.loadItemReports();
+    });
   }
 
   get selectedModuleName(): string {
@@ -154,6 +429,18 @@ export class AdminLayoutComponent {
 
   get selectedModuleIcon(): LucideIconData {
     return this.modules.find((module) => module.id === this.selectedModule())?.icon ?? BarChart3;
+  }
+
+  get itemReportsBlockedCount(): number {
+    return this.itemReports.filter((report) => report.itemStatus === 'BLOCKED').length;
+  }
+
+  get itemReportsReviewedCount(): number {
+    return this.itemReports.filter((report) => report.status === 'REVIEWED').length;
+  }
+
+  get itemReportsActionTakenCount(): number {
+    return this.itemReports.filter((report) => report.status === 'ACTION_TAKEN').length;
   }
 
   get mobileModules(): DashboardModule[] {

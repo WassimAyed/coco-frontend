@@ -1,18 +1,22 @@
 <div class="admin-page">
- <div class="admin-header">
+  <div class="admin-header">
     <h1>⚙️ Gestion des Coupons</h1>
     <div class="header-actions">
-      <button class="export-btn" (click)="exportPDF()">📄 Export PDF</button>
-      <div class="header-actions">
+      <button class="ai-btn" (click)="analyzeWithAI()">🤖 Analyse IA</button>
       <button class="export-btn" (click)="exportPDF()">📄 Export PDF</button>
       <button class="add-btn" (click)="openAddForm()">+ Ajouter un coupon</button>
-    </div>
     </div>
   </div>
 
   <div *ngIf="message" class="alert" [ngClass]="messageType">{{ message }}</div>
 
   <div class="search-bar">
+    <div *ngIf="aiLoading" class="ai-loading">🤖 Analyse en cours...</div>
+  <div *ngIf="aiAnalysis" class="ai-result">
+    <h3>🤖 Analyse IA des Coupons</h3>
+    <pre>{{ aiAnalysis }}</pre>
+    <button class="cancel-btn" (click)="aiAnalysis = ''">Fermer</button>
+  </div>
     <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
            placeholder="🔍 Rechercher par code, titre, partenaire ou categorie...">
   </div>
