@@ -29,13 +29,9 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
     AppRoutingModule,
     SharedModule,
     UserSecurityModule,
-<<<<<<< HEAD
-    AdminCouponsComponent
-],
-=======
-    AdminPlansComponent
-  ],
->>>>>>> 19cabf4ffa148b10a2c69b4d687f5e50e3050e75
+    AdminCouponsComponent,
+      AdminPlansComponent
+    ],
   providers: [
     {
       deps: [UserService],
