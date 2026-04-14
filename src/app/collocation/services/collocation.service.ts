@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserService } from '../../user-security/services/user.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollocationService {
 
-  private apiUrl = 'http://localhost:8091/collocation';
+  private apiUrl = `${environment.collocationApiBaseUrl}`;
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) { }
@@ -66,11 +67,11 @@ export class CollocationService {
     return this.http.get<number[]>(`${this.apiUrl}/favorites/${id}`);
   }
 
-addFavorite(userId: number, offerId: number) {
-  return this.http.post(
-    `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
-  );
-}
+  addFavorite(userId: number, offerId: number) {
+    return this.http.post(
+      `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
+    );
+  }
 
   removeFavorite(offerId: number, userId?: number) {
     const id = userId ?? this.userService.currentUser()?.id;

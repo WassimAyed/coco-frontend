@@ -155,13 +155,22 @@ export class MesOffresComponent implements OnInit {
           // If the backend returns the full object we use it, otherwise fallback to our payload
           const resAny = response as any;
           const updated = (resAny && resAny.id) ? resAny : payload;
-          const index = this.myOffers.findIndex(o => o.id === this.selectedOffer.id);
           
+          // Update the item in myOffers
+          const index = this.myOffers.findIndex(o => o.id === this.selectedOffer.id);
           if (index !== -1) {
-            this.myOffers[index] = { ...updated };
+            this.myOffers[index] = { ...this.myOffers[index], ...updated };
           }
           
+          // Apply changes to filteredOffers too
+          const filteredIndex = this.filteredOffers.findIndex(o => o.id === this.selectedOffer.id);
+          if (filteredIndex !== -1) {
+             this.filteredOffers[filteredIndex] = { ...this.filteredOffers[filteredIndex], ...updated };
+          }
+          
+          // Refresh current page view
           this.setPage(this.currentPage);
+          
           this.isUpdating = false;
           this.showUpdateModal = false;
         },
