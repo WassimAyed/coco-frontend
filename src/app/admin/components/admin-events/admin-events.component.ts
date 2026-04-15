@@ -102,6 +102,14 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   detailModalComments: CommentDto[] = [];
   detailModalParticipants: ParticipantDto[] = [];
   stats: StatsDTO | null = null;
+  searchName = '';
+  selectedStatus: EventStatus | '' = '';
+  selectedCategory: number | '' = '';
+  dateFrom = '';
+  dateTo = '';
+  currentPage = 0;
+  totalPages = 0;
+  pageSize = 9;
 
   readonly reactionTypes: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
   readonly reactionEmoji = REACTION_EMOJI;
@@ -139,13 +147,57 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   }
 
   loadEvents(): void {
+    const filter = this.resolveFilterType();
+    if (filter === 'search') {
+      this.loadByName();
+      return;
+    }
+    if (filter === 'status') {
+      this.loadByStatus();
+      return;
+    }
+    if (filter === 'category') {
+      this.loadByCategory();
+      return;
+    }
+    if (filter === 'date-range') {
+      this.loadByDateRange();
+      return;
+    }
+
+    this.loadAll();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 0;
+    this.loadEvents();
+  }
+
+  resetFilters(): void {
+    this.searchName = '';
+    this.selectedStatus = '';
+    this.selectedCategory = '';
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.currentPage = 0;
+    this.loadAll();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadEvents();
+  }
+
+  private loadAll(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getAll().subscribe({
-      next: events => {
-        this.events = events || [];
+    this.eventService.getAllPaged({ page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.events = response?.content || [];
+        this.currentPage = response?.page || 0;
+        this.totalPages = response?.totalPages || 0;
         this.loadCreators(this.events);
         this.isLoading = false;
       },
@@ -154,6 +206,131 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private loadByName(): void {
+    const name = this.searchName.trim();
+    if (!name) {
+      this.loadAll();
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.eventService.searchByNamePaged(name, { page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.events = response?.content || [];
+        this.currentPage = response?.page || 0;
+        this.totalPages = response?.totalPages || 0;
+        this.loadCreators(this.events);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to filter by name.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadByStatus(): void {
+    if (!this.selectedStatus) {
+      this.loadAll();
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.eventService.getByStatusPaged(this.selectedStatus, { page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.events = response?.content || [];
+        this.currentPage = response?.page || 0;
+        this.totalPages = response?.totalPages || 0;
+        this.loadCreators(this.events);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to filter by status.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadByCategory(): void {
+    if (!this.selectedCategory) {
+      this.loadAll();
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.eventService.getByCategoryPaged(Number(this.selectedCategory), {
+      page: this.currentPage,
+      size: this.pageSize
+    }).subscribe({
+      next: response => {
+        this.events = response?.content || [];
+        this.currentPage = response?.page || 0;
+        this.totalPages = response?.totalPages || 0;
+        this.loadCreators(this.events);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to filter by category.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private loadByDateRange(): void {
+    if (!this.dateFrom || !this.dateTo) {
+      this.loadAll();
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.eventService.getByDateRangePaged({
+      startDate: this.dateFrom,
+      endDate: this.dateTo,
+      page: this.currentPage,
+      size: this.pageSize
+    }).subscribe({
+      next: response => {
+        this.events = response?.content || [];
+        this.currentPage = response?.page || 0;
+        this.totalPages = response?.totalPages || 0;
+        this.loadCreators(this.events);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to filter by date range.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private resolveFilterType(): 'all' | 'search' | 'status' | 'category' | 'date-range' {
+    if (this.searchName.trim()) {
+      return 'search';
+    }
+    if (this.selectedStatus) {
+      return 'status';
+    }
+    if (this.selectedCategory) {
+      return 'category';
+    }
+    if (this.dateFrom && this.dateTo) {
+      return 'date-range';
+    }
+    return 'all';
   }
 
   deleteEvent(eventId: number): void {

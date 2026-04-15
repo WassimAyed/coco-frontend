@@ -13,6 +13,7 @@ import { EventService } from '../../services/event.service';
 import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
+import { BehaviorService } from '../../services/behavior.service';
 import { UserService } from '../../../user-security/services/user.service';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 import { Observable, of } from 'rxjs';
@@ -82,6 +83,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly commentService: CommentService,
     private readonly ratingService: EventRatingService,
     private readonly participantService: ParticipantService,
+    private readonly behaviorService: BehaviorService,
     private readonly userService: UserService
   ) {}
 
@@ -288,6 +290,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isParticipating = false;
         this.loadParticipants(this.eventId!);
         this.loadParticipantCount(this.eventId!);
+        this.recordBehavior('PARTICIPATE');
     });
   }
 
@@ -597,6 +600,26 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.updateDetailMap(event.latitude, event.longitude);
       this.detailMap?.resize();
     }, 0);
+    this.recordBehavior('VIEW');
+  }
+
+  private recordBehavior(actionType: 'VIEW' | 'PARTICIPATE' | 'BOOKMARK'): void {
+    if (!this.currentUserId || !this.eventId || !this.event) {
+      return;
+    }
+
+    this.behaviorService.record({
+      userId: this.currentUserId,
+      eventId: this.eventId,
+      categoryId: this.event.categoryId,
+      actionType,
+      lat: this.event.latitude,
+      lng: this.event.longitude
+    }).subscribe({
+      error: () => {
+        // Behavior tracking should never block UX.
+      }
+    });
   }
 
   getAvailablePlaces(): number | 'N/A' {

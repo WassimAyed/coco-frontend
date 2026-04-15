@@ -7,6 +7,7 @@ import { CategoryDto } from '../models/category.model';
 import { EventImageDto } from '../models/event-image.model';
 import { DateRangeQuery, EventListQuery, NearbyQuery } from '../models/event-query.model';
 import { CreateEventRequest, EventDto, EventStatus, UpdateEventRequest } from '../models/event.model';
+import { PagedResponse } from '../models/paged-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -36,46 +37,75 @@ export class EventService {
     );
   }
 
+  getAllPaged(query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    return this.http.get<unknown>(this.baseUrl, { params: this.toParams(query) })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
   getAll(query?: EventListQuery): Observable<EventDto[]> {
-    return this.http.get<EventDto[]>(this.baseUrl, { params: this.toParams(query) });
+    return this.getAllPaged(query).pipe(map(response => this.extractContent(response)));
   }
 
   create(payload: CreateEventRequest): Observable<EventDto> {
     return this.http.post<EventDto>(this.baseUrl, payload);
   }
 
-  getByStatus(status: EventStatus, query?: EventListQuery): Observable<EventDto[]> {
-    return this.http.get<EventDto[]>(`${this.baseUrl}/status/${encodeURIComponent(String(status))}`, {
+  getByStatusPaged(status: EventStatus, query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    return this.http.get<unknown>(`${this.baseUrl}/status/${encodeURIComponent(String(status))}`, {
       params: this.toParams(query)
-    });
+    }).pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
+  getByStatus(status: EventStatus, query?: EventListQuery): Observable<EventDto[]> {
+    return this.getByStatusPaged(status, query).pipe(map(response => this.extractContent(response)));
+  }
+
+  searchByNamePaged(name: string, query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    const params = this.toParams({ ...query, name });
+    return this.http.get<unknown>(`${this.baseUrl}/search`, { params })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
   }
 
   searchByName(name: string, query?: EventListQuery): Observable<EventDto[]> {
-    const params = this.toParams({ ...query, name });
-    return this.http.get<EventDto[]>(`${this.baseUrl}/search`, { params });
+    return this.searchByNamePaged(name, query).pipe(map(response => this.extractContent(response)));
   }
 
-  getNearby(query: NearbyQuery): Observable<EventDto[]> {
+  getNearbyPaged(query: NearbyQuery): Observable<PagedResponse<EventDto>> {
     const params = this.toParams({
       ...query,
       lat: query.latitude,
       lng: query.longitude,
       radius: query.radiusKm
     });
-    return this.http.get<EventDto[]>(`${this.baseUrl}/nearby`, { params });
+    return this.http.get<unknown>(`${this.baseUrl}/nearby`, { params })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
   }
 
-  getByDateRange(query: DateRangeQuery): Observable<EventDto[]> {
+  getNearby(query: NearbyQuery): Observable<EventDto[]> {
+    return this.getNearbyPaged(query).pipe(map(response => this.extractContent(response)));
+  }
+
+  getByDateRangePaged(query: DateRangeQuery): Observable<PagedResponse<EventDto>> {
     const params = this.toParams({
       ...query,
       from: query.startDate,
       to: query.endDate
     });
-    return this.http.get<EventDto[]>(`${this.baseUrl}/date-range`, { params });
+    return this.http.get<unknown>(`${this.baseUrl}/date-range`, { params })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
+  getByDateRange(query: DateRangeQuery): Observable<EventDto[]> {
+    return this.getByDateRangePaged(query).pipe(map(response => this.extractContent(response)));
+  }
+
+  getByCategoryPaged(categoryId: number, query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    return this.http.get<unknown>(`${this.baseUrl}/category/${categoryId}`, { params: this.toParams(query) })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
   }
 
   getByCategory(categoryId: number, query?: EventListQuery): Observable<EventDto[]> {
-    return this.http.get<EventDto[]>(`${this.baseUrl}/category/${categoryId}`, { params: this.toParams(query) });
+    return this.getByCategoryPaged(categoryId, query).pipe(map(response => this.extractContent(response)));
   }
 
   getCategories(): Observable<CategoryDto[]> {
@@ -98,8 +128,13 @@ export class EventService {
     return this.http.delete<void>(`${this.categoryUrl}/${id}`);
   }
 
+  getAvailablePaged(query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    return this.http.get<unknown>(`${this.baseUrl}/available`, { params: this.toParams(query) })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
   getAvailable(query?: EventListQuery): Observable<EventDto[]> {
-    return this.http.get<EventDto[]>(`${this.baseUrl}/available`, { params: this.toParams(query) });
+    return this.getAvailablePaged(query).pipe(map(response => this.extractContent(response)));
   }
 
   uploadMainImage(eventId: number, file: File): Observable<string> {
@@ -248,5 +283,45 @@ export class EventService {
     });
 
     return params;
+  }
+
+  private extractContent<T>(response: PagedResponse<T> | T[]): T[] {
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    return response?.content || [];
+  }
+
+  private normalizePagedResponse<T>(response: unknown): PagedResponse<T> {
+    if (Array.isArray(response)) {
+      return {
+        content: response as T[],
+        page: 0,
+        size: (response as T[]).length,
+        totalElements: (response as T[]).length,
+        totalPages: 1,
+        last: true
+      };
+    }
+
+    const pageData = (response || {}) as {
+      content?: T[];
+      page?: number;
+      number?: number;
+      size?: number;
+      totalElements?: number;
+      totalPages?: number;
+      last?: boolean;
+    };
+
+    return {
+      content: pageData.content || [],
+      page: pageData.page ?? pageData.number ?? 0,
+      size: pageData.size ?? 0,
+      totalElements: pageData.totalElements ?? (pageData.content?.length || 0),
+      totalPages: pageData.totalPages ?? 0,
+      last: pageData.last ?? true
+    };
   }
 }

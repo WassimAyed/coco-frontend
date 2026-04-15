@@ -5,8 +5,11 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { CategoryDto } from '../../models/category.model';
 import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
+import { PagedResponse } from '../../models/paged-response.model';
+import { ScoredEvent } from '../../models/scored-event.model';
 import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
+import { RecommendationService } from '../../services/recommendation.service';
 
 @Component({
   selector: 'app-event-list',
@@ -32,6 +35,14 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedCoordinates = '';
   currentUserId: number | null = null;
   createFieldErrors: Record<string, string> = {};
+  currentPage = 0;
+  totalPages = 0;
+  pageSize = 9;
+  similarEventsLimit = 10;
+  isPersonalizedSort = false;
+  recommendationLabels: Record<number, string> = {};
+  personalizedOrderedEvents: EventDto[] = [];
+  private currentFilter: 'all' | 'search' | 'status' | 'category' | 'date' | 'nearby' | 'available' = 'all';
 
   private map?: maplibregl.Map;
   private marker?: maplibregl.Marker;
@@ -58,7 +69,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private readonly eventService: EventService,
-    private readonly ownershipService: EventOwnershipService
+    private readonly ownershipService: EventOwnershipService,
+    private readonly recommendationService: RecommendationService
   ) {}
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
@@ -146,38 +158,51 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  loadAll(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.eventService.getAll().subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
-        this.hydrateEventImages(this.events);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Unable to load events.';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  search(): void {
-    const name = this.searchTerm.trim();
-    if (!name) {
-      this.loadAll();
-      return;
+  loadAll(resetPage = true): void {
+    this.currentFilter = 'all';
+    if (resetPage) {
+      this.currentPage = 0;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.searchByName(name).subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+    if (this.currentUserId) {
+      if (!resetPage && this.personalizedOrderedEvents.length > 0) {
+        this.isPersonalizedSort = true;
+        this.applyPersonalizedPage();
+        return;
+      }
+
+      this.loadPersonalizedFlow();
+      return;
+    }
+
+    this.loadStandardAll();
+  }
+
+  search(resetPage = true): void {
+    const name = this.searchTerm.trim();
+    if (!name) {
+      this.loadAll();
+      return;
+    }
+
+    this.currentFilter = 'search';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.eventService.searchByNamePaged(name, { page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -188,19 +213,26 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  filterByStatus(): void {
+  filterByStatus(resetPage = true): void {
     if (!this.selectedStatus) {
       this.loadAll();
       return;
+    }
+
+    this.currentFilter = 'status';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getByStatus(this.selectedStatus).subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+    this.eventService.getByStatusPaged(this.selectedStatus, { page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -211,7 +243,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  filterByCategory(): void {
+  filterByCategory(resetPage = true): void {
     const name = this.cleanString(this.categoryFilterName);
     if (!name) {
       this.errorMessage = 'Please choose a category.';
@@ -224,13 +256,20 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.currentFilter = 'category';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getByCategory(categoryId).subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+    this.eventService.getByCategoryPaged(categoryId, { page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -241,22 +280,31 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  filterByDateRange(): void {
+  filterByDateRange(resetPage = true): void {
     if (!this.dateStart || !this.dateEnd) {
       this.errorMessage = 'Please select start and end dates.';
       return;
+    }
+
+    this.currentFilter = 'date';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getByDateRange({
+    this.eventService.getByDateRangePaged({
       startDate: `${this.dateStart}T00:00:00`,
-      endDate: `${this.dateEnd}T23:59:59`
+      endDate: `${this.dateEnd}T23:59:59`,
+      page: this.currentPage,
+      size: this.pageSize
     }).subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -267,23 +315,32 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  filterNearby(): void {
+  filterNearby(resetPage = true): void {
     if (this.nearbyLatitude === null || this.nearbyLongitude === null) {
       this.errorMessage = 'Please set latitude and longitude.';
       return;
+    }
+
+    this.currentFilter = 'nearby';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getNearby({
+    this.eventService.getNearbyPaged({
       latitude: this.nearbyLatitude,
       longitude: this.nearbyLongitude,
-      radiusKm: this.nearbyRadiusKm
+      radiusKm: this.nearbyRadiusKm,
+      page: this.currentPage,
+      size: this.pageSize
     }).subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -294,14 +351,21 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  loadAvailable(): void {
+  loadAvailable(resetPage = true): void {
+    this.currentFilter = 'available';
+    this.clearRecommendationMetadata();
+    if (resetPage) {
+      this.currentPage = 0;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getAvailable().subscribe({
-      next: events => {
-        this.events = this.toPublicEvents(events);
+    this.eventService.getAvailablePaged({ page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
         this.hydrateEventImages(this.events);
         this.isLoading = false;
       },
@@ -322,6 +386,11 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nearbyLongitude = null;
     this.nearbyRadiusKm = 5;
     this.loadAll();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.reloadCurrentFilter();
   }
 
   private resetCreateForm(): void {
@@ -648,6 +717,13 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     return (events || []).filter(event => ['APPROVED', 'ACCEPTED'].includes(this.normalizeStatus(event.status)));
   }
 
+  getRecommendationLabel(event: EventDto): string {
+    if (!event?.id) {
+      return '';
+    }
+    return this.recommendationLabels[event.id] || '';
+  }
+
   private normalizeStatus(status?: string): string {
     switch (String(status || '').toUpperCase()) {
       case 'ACCEPTED':
@@ -656,6 +732,132 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         return 'REJECTED';
       default:
         return String(status || '').toUpperCase();
+    }
+  }
+
+  private applyPageMetadata(response: PagedResponse<unknown>): void {
+    this.totalPages = response?.totalPages || 0;
+    this.currentPage = response?.page || 0;
+  }
+
+  private loadStandardAll(): void {
+    this.clearRecommendationMetadata();
+    this.eventService.getAllPaged({ page: this.currentPage, size: this.pageSize }).subscribe({
+      next: response => {
+        this.applyPageMetadata(response);
+        this.events = this.toPublicEvents(response.content || []);
+        this.hydrateEventImages(this.events);
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Unable to load events.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private clearRecommendationMetadata(): void {
+    this.isPersonalizedSort = false;
+    this.recommendationLabels = {};
+    this.personalizedOrderedEvents = [];
+  }
+
+  private loadPersonalizedFlow(): void {
+    this.clearRecommendationMetadata();
+    if (!this.currentUserId) {
+      this.loadStandardAll();
+      return;
+    }
+
+    forkJoin({
+      recommended: this.recommendationService.getRecommended(this.currentUserId, 0, 1000),
+      allEvents: this.eventService.getAllPaged({ page: 0, size: 1000 })
+    }).subscribe({
+      next: ({ recommended, allEvents }) => {
+        const scoredEvents = recommended?.content || [];
+        if (!scoredEvents.length) {
+          this.loadStandardAll();
+          return;
+        }
+
+        this.isPersonalizedSort = true;
+        const limitedScoredEvents = scoredEvents.slice(0, this.similarEventsLimit);
+        this.recommendationLabels = limitedScoredEvents.reduce((acc, item) => {
+          if (item.event?.id && item.scoreLabel) {
+            acc[item.event.id] = item.scoreLabel;
+          }
+          return acc;
+        }, {} as Record<number, string>);
+
+        const similarEvents = this.sortByCategory(
+          limitedScoredEvents.map(item => item.event).filter((event): event is EventDto => !!event)
+        );
+        const similarIds = new Set(similarEvents.map(event => event.id));
+        const otherEvents = this.sortByCategory(
+          this.toPublicEvents(allEvents?.content || []).filter(event => !similarIds.has(event.id))
+        );
+
+        this.personalizedOrderedEvents = [...similarEvents, ...otherEvents];
+        this.applyPersonalizedPage();
+      },
+      error: () => {
+        this.loadStandardAll();
+      }
+    });
+  }
+
+  private applyPersonalizedPage(): void {
+    const totalItems = this.personalizedOrderedEvents.length;
+    this.totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / this.pageSize);
+
+    if (this.totalPages > 0 && this.currentPage >= this.totalPages) {
+      this.currentPage = this.totalPages - 1;
+    }
+
+    const start = this.currentPage * this.pageSize;
+    const end = start + this.pageSize;
+    this.events = this.personalizedOrderedEvents.slice(start, end);
+    this.hydrateEventImages(this.events);
+    this.isLoading = false;
+  }
+
+  private sortByCategory(events: EventDto[]): EventDto[] {
+    return [...events].sort((left, right) => {
+      const leftCategory = left.categoryId ?? Number.MAX_SAFE_INTEGER;
+      const rightCategory = right.categoryId ?? Number.MAX_SAFE_INTEGER;
+      if (leftCategory !== rightCategory) {
+        return leftCategory - rightCategory;
+      }
+
+      const leftDate = left.startDate ? new Date(left.startDate).getTime() : 0;
+      const rightDate = right.startDate ? new Date(right.startDate).getTime() : 0;
+      return leftDate - rightDate;
+    });
+  }
+
+  private reloadCurrentFilter(): void {
+    switch (this.currentFilter) {
+      case 'search':
+        this.search(false);
+        break;
+      case 'status':
+        this.filterByStatus(false);
+        break;
+      case 'category':
+        this.filterByCategory(false);
+        break;
+      case 'date':
+        this.filterByDateRange(false);
+        break;
+      case 'nearby':
+        this.filterNearby(false);
+        break;
+      case 'available':
+        this.loadAvailable(false);
+        break;
+      default:
+        this.loadAll(false);
+        break;
     }
   }
 }
