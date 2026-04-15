@@ -8,7 +8,7 @@ import { catchError } from 'rxjs/operators';
 import { CategoryDto } from '../../../event/models/category.model';
 import { CommentDto } from '../../../event/models/comment.model';
 import { EventImageDto } from '../../../event/models/event-image.model';
-import { CreateEventRequest, EventDto, EventStatus, UpdateEventRequest } from '../../../event/models/event.model';
+import { CreateEventRequest, EventDto, EventStatus, ExternalPredictionRequest, UpdateEventRequest } from '../../../event/models/event.model';
 import { ParticipantDto } from '../../../event/models/participant.model';
 import { REACTION_EMOJI, ReactionType } from '../../../event/models/reaction.model';
 import { CommentService } from '../../../event/services/comment.service';
@@ -77,6 +77,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   isCreateModalOpen = false;
   isSavingCreate = false;
   createEventModel: CreateEventRequest = this.buildDefaultCreateModel();
+  createPredictionRequest: ExternalPredictionRequest | null = null;
   lastSavedEvent: EventDto | null = null;
 
   editingEventId: number | null = null;
@@ -423,6 +424,8 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       currentParticipants: this.toOptionalNumber(this.createEventModel.currentParticipants),
       price
     };
+
+    this.createPredictionRequest = this.buildExternalPredictionRequest(payload, startDate, endDate);
 
     this.eventService.create(payload).subscribe({
       next: created => {
@@ -1481,6 +1484,47 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   private formatDateForBackend(date: Date): string {
     const pad = (value: number) => String(value).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  private calculateDaysUntilEvent(startDate: Date): number {
+    const today = new Date();
+    const todayAtMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const eventAtMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const diffDays = Math.ceil((eventAtMidnight.getTime() - todayAtMidnight.getTime()) / msPerDay);
+    return Math.max(diffDays, 0);
+  }
+
+  private buildExternalPredictionRequest(
+    payload: CreateEventRequest,
+    startDate: Date | null,
+    endDate: Date | null
+  ): ExternalPredictionRequest | null {
+    if (!startDate) {
+      return null;
+    }
+
+    const safeEndDate = endDate && endDate >= startDate ? endDate : startDate;
+    const durationDays = Math.max(
+      Math.ceil((safeEndDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1,
+      1
+    );
+    const eventDay = startDate.getDay();
+
+    return {
+      category_id: Number(payload.categoryId),
+      price: Number(payload.price ?? 0),
+      is_free: !payload.price || Number(payload.price) === 0 ? 1 : 0,
+      max_capacity: Number(payload.maxCapacity),
+      event_type: String(payload.eventType ?? ''),
+      is_weekend: eventDay === 0 || eventDay === 6 ? 1 : 0,
+      is_holiday: 0,
+      duration_days: durationDays,
+      days_until_event: this.calculateDaysUntilEvent(startDate),
+      temperature: Number(this.createWeatherPreview?.temperature ?? 20),
+      precipitation_mm: Number(this.createWeatherPreview?.precipitationMm ?? 0),
+      wind_speed_kmh: Number(this.createWeatherPreview?.windSpeedKmh ?? 0)
+    };
   }
 
   private getCurrentUserId(): number | undefined {

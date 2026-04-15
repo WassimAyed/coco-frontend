@@ -67,3 +67,18 @@ export interface UpdateEventRequest {
 	currentParticipants?: number;
 	price?: number;
 }
+
+export interface ExternalPredictionRequest {
+	category_id: number;
+	price: number;
+	is_free: number;
+	max_capacity: number;
+	event_type: string;
+	is_weekend: number;
+	is_holiday: number;
+	duration_days: number;
+	days_until_event: number;
+	temperature: number;
+	precipitation_mm: number;
+	wind_speed_kmh: number;
+}
