@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CouponService } from '../../services/coupon.service';
 import { Coupon } from '../../models/coupon.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-coupon-list',
@@ -15,10 +16,18 @@ export class CouponListComponent implements OnInit {
   filteredCoupons: Coupon[] = [];
   categories = ['ALL', 'CINEMA', 'RESTAURANT', 'TRANSPORT', 'SUBSCRIPTION', 'FITNESS', 'SHOPPING', 'COWORKING'];
   selectedCategory = 'ALL';
-  userId = 1;
   claimedMessage = '';
+  claimedMessageType = '';
+  predictions: Map<number, any> = new Map();
+  userCluster: any = null;
 
-  constructor(private couponService: CouponService) {}
+  private couponService = inject(CouponService);
+  private userService = inject(UserService);
+
+  get userId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 0;
+  }
 
   ngOnInit(): void {
     this.loadCoupons();
@@ -29,29 +38,77 @@ export class CouponListComponent implements OnInit {
       next: (data) => {
         this.coupons = data;
         this.filteredCoupons = data;
+        if (this.userId) {
+          this.loadRecommendations();
+          this.loadUserCluster();
+        }
       },
-      error: (err) => console.error('Error loading coupons', err)
+      error: () => console.error('Error loading coupons')
     });
+  }
+
+  loadRecommendations(): void {
+    this.couponService.getRecommendations(this.userId).subscribe({
+      next: (res) => {
+        if (res.predictions) {
+          res.predictions.forEach((p: any) => {
+            this.predictions.set(p.couponId, p);
+          });
+          this.sortByRecommendation();
+        }
+      },
+      error: () => console.log('ML service non disponible')
+    });
+  }
+
+  loadUserCluster(): void {
+    this.couponService.getUserCluster(this.userId).subscribe({
+      next: (res) => this.userCluster = res,
+      error: () => console.log('Clustering non disponible')
+    });
+  }
+
+  sortByRecommendation(): void {
+    this.filteredCoupons.sort((a, b) => {
+      const pa = this.predictions.get(a.id)?.probability || 0;
+      const pb = this.predictions.get(b.id)?.probability || 0;
+      return pb - pa;
+    });
+  }
+
+  getPrediction(couponId: number): any {
+    return this.predictions.get(couponId);
   }
 
   filterByCategory(category: string): void {
     this.selectedCategory = category;
     if (category === 'ALL') {
-      this.filteredCoupons = this.coupons;
+      this.filteredCoupons = [...this.coupons];
     } else {
       this.filteredCoupons = this.coupons.filter(c => c.category === category);
+    }
+    if (this.predictions.size > 0) {
+      this.sortByRecommendation();
     }
   }
 
   claimCoupon(couponId: number): void {
+    if (!this.userId) {
+      this.claimedMessage = 'Veuillez vous connecter pour reclamer un coupon';
+      this.claimedMessageType = 'error';
+      setTimeout(() => this.claimedMessage = '', 3000);
+      return;
+    }
     this.couponService.claimCoupon(couponId, this.userId).subscribe({
       next: () => {
         this.claimedMessage = 'Coupon reclame avec succes!';
+        this.claimedMessageType = 'success';
         setTimeout(() => this.claimedMessage = '', 3000);
         this.loadCoupons();
       },
       error: (err) => {
         this.claimedMessage = err.error?.message || 'Erreur lors de la reclamation';
+        this.claimedMessageType = 'error';
         setTimeout(() => this.claimedMessage = '', 3000);
       }
     });

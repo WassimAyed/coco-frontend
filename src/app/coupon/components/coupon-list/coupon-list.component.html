@@ -4,7 +4,12 @@
     <p>Decouvre les meilleures offres exclusives pour les etudiants CoCo</p>
   </div>
 
-  <div *ngIf="claimedMessage" class="alert">{{ claimedMessage }}</div>
+  <div *ngIf="userCluster" class="cluster-banner">
+    🧠 Profil detecte : <strong>{{ userCluster.clusterName }}</strong>
+    — Categories recommandees : {{ userCluster.recommendedCategories?.join(', ') }}
+  </div>
+
+  <div *ngIf="claimedMessage" class="alert" [ngClass]="claimedMessageType">{{ claimedMessage }}</div>
 
   <div class="category-filters">
     <button *ngFor="let cat of categories"
@@ -15,9 +20,20 @@
   </div>
 
   <div class="coupons-grid">
-    <div *ngFor="let coupon of filteredCoupons" class="coupon-card">
+    <div *ngFor="let coupon of filteredCoupons" class="coupon-card"
+         [class.recommended]="getPrediction(coupon.id)?.recommendation === 'FORTEMENT_RECOMMANDE'">
+
       <div class="coupon-badge">{{ getCategoryIcon(coupon.category) }} {{ coupon.category }}</div>
+
+      <div *ngIf="getPrediction(coupon.id)?.recommendation === 'FORTEMENT_RECOMMANDE'" class="ml-badge top">
+        🎯 Recommande pour vous ({{ getPrediction(coupon.id)?.percentage }}%)
+      </div>
+      <div *ngIf="getPrediction(coupon.id)?.recommendation === 'RECOMMANDE'" class="ml-badge medium">
+        👍 Peut vous interesser ({{ getPrediction(coupon.id)?.percentage }}%)
+      </div>
+
       <img [src]="coupon.imageUrl" [alt]="coupon.title" class="coupon-image">
+
       <div class="coupon-content">
         <h3>{{ coupon.title }}</h3>
         <p class="coupon-partner">📍 {{ coupon.partnerName }}</p>

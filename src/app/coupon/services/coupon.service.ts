@@ -68,4 +68,20 @@ analyzeCoupons(): Observable<any> {
   toggleCouponStatus(id: number): Observable<Coupon> {
     return this.http.patch<Coupon>(this.apiUrl + '/' + id + '/toggle', {});
   }
+  // ML Recommendations
+  getRecommendations(userId: number): Observable<any> {
+    return this.http.get<any>(this.apiUrl + '/ai/recommend?userId=' + userId);
+  }
+
+  getPrediction(userId: number, couponId: number): Observable<any> {
+    return this.http.get<any>(this.apiUrl + '/ai/predict?userId=' + userId + '&couponId=' + couponId);
+  }
+
+  getUserCluster(userId: number): Observable<any> {
+    return this.http.get<any>(this.apiUrl + '/ai/cluster?userId=' + userId);
+  }
+
+  getSegments(): Observable<any> {
+    return this.http.get<any>(this.apiUrl + '/ai/segments');
+  }
 }

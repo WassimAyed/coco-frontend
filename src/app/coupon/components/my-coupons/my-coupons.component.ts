@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CouponService } from '../../services/coupon.service';
 import { UserCoupon } from '../../models/coupon.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-my-coupons',
@@ -12,19 +13,25 @@ import { UserCoupon } from '../../models/coupon.model';
 })
 export class MyCouponsComponent implements OnInit {
   myCoupons: UserCoupon[] = [];
-  userId = 1;
   message = '';
 
-  constructor(private couponService: CouponService) {}
+  private couponService = inject(CouponService);
+  private userService = inject(UserService);
+
+  get userId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 0;
+  }
 
   ngOnInit(): void {
     this.loadMyCoupons();
   }
 
   loadMyCoupons(): void {
+    if (!this.userId) return;
     this.couponService.getMyCoupons(this.userId).subscribe({
       next: (data) => this.myCoupons = data,
-      error: (err) => console.error('Error loading my coupons', err)
+      error: () => console.error('Error loading my coupons')
     });
   }
 

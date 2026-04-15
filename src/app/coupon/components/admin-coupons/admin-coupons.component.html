@@ -10,13 +10,14 @@
 
   <div *ngIf="message" class="alert" [ngClass]="messageType">{{ message }}</div>
 
-  <div class="search-bar">
-    <div *ngIf="aiLoading" class="ai-loading">🤖 Analyse en cours...</div>
+  <div *ngIf="aiLoading" class="ai-loading">🤖 Analyse en cours...</div>
   <div *ngIf="aiAnalysis" class="ai-result">
     <h3>🤖 Analyse IA des Coupons</h3>
     <pre>{{ aiAnalysis }}</pre>
     <button class="cancel-btn" (click)="aiAnalysis = ''">Fermer</button>
   </div>
+
+  <div class="search-bar">
     <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
            placeholder="🔍 Rechercher par code, titre, partenaire ou categorie...">
   </div>
@@ -24,18 +25,27 @@
   <!-- FORMULAIRE -->
   <div *ngIf="showForm" class="form-container">
     <h2>{{ editMode ? '✏️ Modifier le coupon' : '➕ Nouveau coupon' }}</h2>
+    <div *ngIf="formErrors.length > 0" class="validation-errors">
+      <p *ngFor="let err of formErrors">⚠️ {{ err }}</p>
+    </div>
     <div class="form-grid">
       <div class="form-group">
-        <label>Code</label>
-        <input [(ngModel)]="form.code" placeholder="Ex: PATHE30" [disabled]="editMode">
+        <label>Code *</label>
+        <input [(ngModel)]="form.code" placeholder="Ex: PATHE30" [disabled]="editMode"
+               [class.input-error]="submitted && form.code.length < 3">
+        <small *ngIf="submitted && form.code.length < 3" class="error-text">Min 3 caracteres</small>
       </div>
       <div class="form-group">
-        <label>Titre</label>
-        <input [(ngModel)]="form.title" placeholder="Ex: 30% chez Pathe">
+        <label>Titre *</label>
+        <input [(ngModel)]="form.title" placeholder="Ex: 30% chez Pathe"
+               [class.input-error]="submitted && form.title.length < 3">
+        <small *ngIf="submitted && form.title.length < 3" class="error-text">Min 3 caracteres</small>
       </div>
       <div class="form-group full">
-        <label>Description</label>
-        <textarea [(ngModel)]="form.description" rows="2" placeholder="Description du coupon"></textarea>
+        <label>Description *</label>
+        <textarea [(ngModel)]="form.description" rows="2" placeholder="Description du coupon"
+                  [class.input-error]="submitted && form.description.length < 5"></textarea>
+        <small *ngIf="submitted && form.description.length < 5" class="error-text">Min 5 caracteres</small>
       </div>
       <div class="form-group">
         <label>Type de reduction</label>
@@ -45,8 +55,10 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Valeur</label>
-        <input type="number" [(ngModel)]="form.discountValue" min="0">
+        <label>Valeur *</label>
+        <input type="number" [(ngModel)]="form.discountValue" min="0"
+               [class.input-error]="submitted && form.discountValue <= 0">
+        <small *ngIf="submitted && form.discountValue <= 0" class="error-text">Doit etre superieur a 0</small>
       </div>
       <div class="form-group">
         <label>Categorie</label>
@@ -55,8 +67,11 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Date d'expiration</label>
-        <input type="datetime-local" [(ngModel)]="form.expirationDate">
+        <label>Date d'expiration *</label>
+        <input type="datetime-local" [(ngModel)]="form.expirationDate"
+               [class.input-error]="submitted && !isDateValid()">
+        <small *ngIf="submitted && !form.expirationDate" class="error-text">Date requise</small>
+        <small *ngIf="submitted && form.expirationDate && !isDateValid()" class="error-text">La date doit etre dans le futur</small>
       </div>
       <div class="form-group">
         <label>Max utilisations</label>

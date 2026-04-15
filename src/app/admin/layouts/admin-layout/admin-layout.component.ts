@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 import { AdminCouponsComponent } from '../../../coupon/components/admin-coupons/admin-coupons.component';
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-=======
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
->>>>>>> 19cabf4ffa148b10a2c69b4d687f5e50e3050e75
 import {
   AlertTriangle,
   BarChart3,
