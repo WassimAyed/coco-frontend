@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import {
   AlertTriangle,
@@ -67,6 +68,11 @@ interface PendingEvent {
 export class AdminLayoutComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+
+  private readonly moduleUrlMap: Record<string, string> = {
+    carpooling: '/admin/covoiturage'
+  };
   private readonly userService = inject(UserService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
   private readonly toast = inject(ToastService);
@@ -124,7 +130,7 @@ export class AdminLayoutComponent implements OnInit {
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
     { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
-    { id: 'carpooling', name: 'Carpooling', icon: Car },
+    { id: 'carpooling', name: 'Covoiturage', icon: Car },
     { id: 'colocation', name: 'Colocation', icon: Home },
     { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag },
     { id: 'services', name: 'Services', icon: Briefcase },
@@ -221,6 +227,12 @@ export class AdminLayoutComponent implements OnInit {
   // ────────────────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    this.route.data.subscribe((data) => {
+      const moduleId = data['module'];
+      if (moduleId && this.modules.some((module) => module.id === moduleId)) {
+        this.selectModule(moduleId);
+      }
+    });
     this.route.queryParamMap.subscribe((params) => {
       const moduleId = params.get('module');
       if (moduleId && this.modules.some((module) => module.id === moduleId)) {
@@ -231,6 +243,11 @@ export class AdminLayoutComponent implements OnInit {
 
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
+
+    const targetUrl = this.moduleUrlMap[moduleId] ?? '/admin';
+    if (this.location.path() !== targetUrl) {
+      this.location.replaceState(targetUrl);
+    }
 
     if (moduleId === 'item-reports') {
       this.loadItemReports();

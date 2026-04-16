@@ -58,6 +58,12 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     component: AdminLayoutComponent
   },
+  {
+    path: 'admin/covoiturage',
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent,
+    data: { module: 'carpooling' }
+  },
   { path: '**', redirectTo: 'landing' }
 ];
 

@@ -1,4 +1,5 @@
 export const environment = {
+  googleMapsApiKey: 'AIzaSyBIaXbRrGVgkj8Ffre1-dHYRrEokUrp-w0',
   apiBaseUrl: 'http://localhost:8090/',
   collocationApiBaseUrl: 'http://localhost:9092/collocationservice/collocation',
   paymentApiBaseUrl: 'http://localhost:9092/api/payment',
