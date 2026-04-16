@@ -19,7 +19,7 @@ export class SubsDetailComponent implements OnInit {
   ngOnInit(): void {
     const storedId = localStorage.getItem('userId');
     if (!storedId) {
-      console.warn('Utilisateur non connecté, redirection vers /login');
+      console.warn('User not logged in, redirecting to /login');
       this.router.navigate(['/login']);
       return;
     }
@@ -30,7 +30,7 @@ export class SubsDetailComponent implements OnInit {
   loadQuota(): void {
     this.subsService.getUserQuota(this.userId).subscribe({
       next: (data) => this.quota = data,
-      error: (err) => console.error('Erreur quota', err)
+      error: (err) => console.error('Quota error', err)
     });
   }
 

@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import {
   AlertTriangle,
   BarChart3,
@@ -31,7 +32,16 @@ import {
   MessageCircle
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
-import { EventService } from '../../../event/services/event.service';
+import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
+import { ItemReportResponse } from '../../../lost-found/models/lost-item.model';
+import { ToastService } from '../../../shared/services/toast.service';
+
+interface UserProfileDto {
+  firstName?: string;
+  lastName?: string;
+  lastname?: string;
+  username?: string;
+}
 
 interface DashboardModule {
   id: string;
@@ -39,9 +49,12 @@ interface DashboardModule {
   icon: LucideIconData;
 }
 
-interface PendingEventNotification {
+// Interface for the notification panel (colleagues' feature)
+interface PendingEvent {
   id: number;
   title: string;
+  time: string;
+  type: string;
   username: string;
   lastname: string;
   email: string;
@@ -51,21 +64,63 @@ interface PendingEventNotification {
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html'
 })
-export class AdminLayoutComponent implements OnInit, OnDestroy {
+export class AdminLayoutComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
-  private readonly eventService = inject(EventService);
-  private notificationIntervalId: ReturnType<typeof setInterval> | null = null;
+  private readonly lostAndFoundService = inject(LostAndFoundService);
+  private readonly toast = inject(ToastService);
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
-  readonly showNotifications = signal(false);
   readonly user = this.userService.currentUser;
-  pendingEvents: PendingEventNotification[] = [];
+
+  // ─── Colleagues' notification panel ─────────────────────────────────────────
+  readonly showNotifications = signal(false);
+
+  pendingEvents: PendingEvent[] = [
+    {
+      id: 1,
+      title: 'New user registration awaiting approval',
+      time: '5 min ago',
+      type: 'user',
+      username: 'Ahmed',
+      lastname: 'Ben Ali',
+      email: 'ahmed.benali@esprit.tn'
+    },
+    {
+      id: 2,
+      title: 'Marketplace listing flagged for review',
+      time: '20 min ago',
+      type: 'marketplace',
+      username: 'Sarah',
+      lastname: 'Tounsi',
+      email: 'sarah.tounsi@esprit.tn'
+    },
+    {
+      id: 3,
+      title: 'Event created pending validation',
+      time: '1 hour ago',
+      type: 'event',
+      username: 'Mohamed',
+      lastname: 'Karim',
+      email: 'mohamed.karim@esprit.tn'
+    }
+  ];
+
+  toggleNotifications(): void {
+    this.showNotifications.update(v => !v);
+  }
+
+  markAsRead(notifId: number): void {
+    this.pendingEvents = this.pendingEvents.filter(e => e.id !== notifId);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
 
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'users', name: 'User Management', icon: Users },
+    { id: 'item-reports', name: 'Item Reports', icon: AlertTriangle },
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
     { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
@@ -154,36 +209,187 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
-  ngOnInit(): void {
-    this.loadPendingEvents();
-    this.notificationIntervalId = setInterval(() => {
-      this.loadPendingEvents();
-    }, 5000);
-  }
+  // ─── Your item-reports state ─────────────────────────────────────────────────
+  itemReports: ItemReportResponse[] = [];
+  itemReportsLoading = false;
+  itemReportsError = '';
+  processingReportId: number | null = null;
+  bulkProcessing = false;
+  reporterNames = new Map<number, string>();
+  ownerNames = new Map<number, string>();
+  selectedReportIds = new Set<number>();
+  // ────────────────────────────────────────────────────────────────────────────
 
-  ngOnDestroy(): void {
-    if (this.notificationIntervalId) {
-      clearInterval(this.notificationIntervalId);
-      this.notificationIntervalId = null;
-    }
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const moduleId = params.get('module');
+      if (moduleId && this.modules.some((module) => module.id === moduleId)) {
+        this.selectModule(moduleId);
+      }
+    });
   }
 
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
-  }
 
-  toggleNotifications(): void {
-    this.showNotifications.set(!this.showNotifications());
-  }
-
-  markAsRead(eventId: number): void {
-    const read = JSON.parse(localStorage.getItem('readNotifs') || '[]');
-    if (!read.includes(eventId)) {
-      read.push(eventId);
-      localStorage.setItem('readNotifs', JSON.stringify(read));
+    if (moduleId === 'item-reports') {
+      this.loadItemReports();
     }
-    this.pendingEvents = this.pendingEvents.filter(e => e.id !== eventId);
   }
+
+  // ─── Your item-reports methods ───────────────────────────────────────────────
+
+  loadItemReports(): void {
+    this.itemReportsLoading = true;
+    this.itemReportsError = '';
+
+    this.lostAndFoundService.getReportsForModeration().subscribe({
+      next: (reports) => {
+        this.itemReports = (reports || []).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.selectedReportIds.clear();
+        this.preloadReporterNames(this.itemReports);
+        this.preloadOwnerNames(this.itemReports);
+        this.itemReportsLoading = false;
+      },
+      error: (error) => {
+        this.itemReportsError = error?.error?.message || 'Unable to load item reports.';
+        this.itemReportsLoading = false;
+      }
+    });
+  }
+
+  keepReportedItem(report: ItemReportResponse): void {
+    if (!this.isAdmin || !report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'REVIEWED',
+      moderatorComment: 'Reviewed by admin. Item remains visible.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.toast.success('Report marked as reviewed. Item kept visible.');
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to mark report as reviewed.';
+        this.toast.error('Failed to mark report as reviewed.');
+      }
+    });
+  }
+
+  blockReportedItem(report: ItemReportResponse): void {
+    if (!this.isAdmin || !report?.id) return;
+
+    this.processingReportId = report.id;
+    this.lostAndFoundService.reviewReport(report.id, {
+      status: 'ACTION_TAKEN',
+      moderatorComment: 'Item blocked by admin after report review.'
+    }).subscribe({
+      next: () => {
+        this.processingReportId = null;
+        this.toast.warning('Item blocked successfully after report review.');
+        this.loadItemReports();
+      },
+      error: () => {
+        this.processingReportId = null;
+        this.itemReportsError = 'Failed to block reported item.';
+        this.toast.error('Failed to block reported item.');
+      }
+    });
+  }
+
+  isReportActionable(report: ItemReportResponse): boolean {
+    return report.status === 'OPEN';
+  }
+
+  isReportSelected(reportId?: number): boolean {
+    return !!reportId && this.selectedReportIds.has(reportId);
+  }
+
+  toggleReportSelection(report: ItemReportResponse, checked: boolean): void {
+    if (!report?.id || !this.isReportActionable(report)) {
+      return;
+    }
+
+    if (checked) {
+      this.selectedReportIds.add(report.id);
+      return;
+    }
+
+    this.selectedReportIds.delete(report.id);
+  }
+
+  toggleAllReportSelection(checked: boolean): void {
+    if (!checked) {
+      this.selectedReportIds.clear();
+      return;
+    }
+
+    this.itemReports
+      .filter((report) => this.isReportActionable(report) && !!report.id)
+      .forEach((report) => this.selectedReportIds.add(report.id as number));
+  }
+
+  keepSelectedReports(): void {
+    this.processBulkReview('REVIEWED', 'Reviewed by admin. Item remains visible.', 'reviewed');
+  }
+
+  blockSelectedReports(): void {
+    this.processBulkReview('ACTION_TAKEN', 'Item blocked by admin after report review.', 'blocked');
+  }
+
+  get selectedReportsCount(): number {
+    return this.selectedReportIds.size;
+  }
+
+  get allActionableSelected(): boolean {
+    const actionable = this.itemReports.filter((report) => this.isReportActionable(report) && !!report.id);
+    return actionable.length > 0 && actionable.every((report) => this.selectedReportIds.has(report.id as number));
+  }
+
+  openItemDetails(report: ItemReportResponse): void {
+    if (!report?.itemId) return;
+    this.router.navigate(['/lost-found/details', report.itemId], {
+      queryParams: report.id ? { reportId: report.id } : undefined
+    });
+  }
+
+  getReporterDisplayName(reporterUserId: number): string {
+    if (!reporterUserId) {
+      return 'Unknown user';
+    }
+    return this.reporterNames.get(reporterUserId) || `User #${reporterUserId}`;
+  }
+
+  getOwnerDisplayName(ownerUserId?: number | null): string {
+    if (!ownerUserId) {
+      return 'Unknown owner';
+    }
+    return this.ownerNames.get(ownerUserId) || `User #${ownerUserId}`;
+  }
+
+  get isAdmin(): boolean {
+    const role = (this.user()?.role || '').toLowerCase();
+    return role.includes('admin');
+  }
+
+  get itemReportsBlockedCount(): number {
+    return this.itemReports.filter((report) => report.itemStatus === 'BLOCKED').length;
+  }
+
+  get itemReportsReviewedCount(): number {
+    return this.itemReports.filter((report) => report.status === 'REVIEWED').length;
+  }
+
+  get itemReportsActionTakenCount(): number {
+    return this.itemReports.filter((report) => report.status === 'ACTION_TAKEN').length;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   get selectedModuleName(): string {
     return this.modules.find((module) => module.id === this.selectedModule())?.name ?? 'Dashboard';
@@ -202,55 +408,86 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     await this.router.navigate(['/']);
   }
 
-  private loadPendingEvents(): void {
-    this.eventService.getByStatus('PENDING', { page: 0, size: 200 }).subscribe({
-      next: events => {
-        const data = { events: Array.isArray(events) ? events : [] };
-        const read = JSON.parse(localStorage.getItem('readNotifs') || '[]');
-        this.pendingEvents = (data.events || [])
-          .map((event: any) => this.toPendingNotification(event))
-          .filter((event): event is PendingEventNotification => !!event && !read.includes(event.id));
-      },
-      error: () => {
-        this.pendingEvents = [];
-      }
+  private preloadReporterNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.reporterUserId).filter((id) => !!id))];
+    if (uniqueIds.length === 0) return;
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.reporterNames.has(id));
+    if (unresolvedIds.length === 0) return;
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: UserProfileDto, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.reporterNames.set(id, fullName || `User #${id}`);
+      });
     });
   }
 
-  private toPendingNotification(event: any): PendingEventNotification | null {
-    const id = Number(event?.id);
-    if (!Number.isFinite(id)) {
-      return null;
+  private preloadOwnerNames(reports: ItemReportResponse[]): void {
+    const uniqueIds = [...new Set((reports || []).map((r) => r.itemOwnerUserId).filter((id): id is number => !!id))];
+    if (uniqueIds.length === 0) return;
+
+    const unresolvedIds = uniqueIds.filter((id) => !this.ownerNames.has(id));
+    if (unresolvedIds.length === 0) return;
+
+    const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
+    forkJoin(requests).subscribe((profiles) => {
+      profiles.forEach((profile: UserProfileDto, index: number) => {
+        const id = unresolvedIds[index];
+        const firstName = profile?.firstName || profile?.username || '';
+        const lastName = profile?.lastName || profile?.lastname || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        this.ownerNames.set(id, fullName || `User #${id}`);
+      });
+    });
+  }
+
+  private processBulkReview(
+    status: 'REVIEWED' | 'ACTION_TAKEN',
+    moderatorComment: string,
+    actionLabel: 'reviewed' | 'blocked'
+  ): void {
+    if (!this.isAdmin || this.bulkProcessing) return;
+
+    const targets = this.itemReports.filter(
+      (report) => !!report.id && this.selectedReportIds.has(report.id) && this.isReportActionable(report)
+    );
+
+    if (targets.length === 0) {
+      this.toast.warning('Please select at least one OPEN report.');
+      return;
     }
 
-    const creator = event?.creator || event?.createdBy || event?.user || {};
-    const username = String(
-      event?.username
-      || event?.firstName
-      || creator?.username
-      || creator?.firstName
-      || ''
-    ).trim();
-    const lastname = String(
-      event?.lastname
-      || event?.lastName
-      || creator?.lastname
-      || creator?.lastName
-      || ''
-    ).trim();
-    const email = String(
-      event?.email
-      || event?.creatorEmail
-      || creator?.email
-      || ''
-    ).trim();
+    this.bulkProcessing = true;
+    this.itemReportsError = '';
 
-    return {
-      id,
-      title: String(event?.name || event?.title || 'Untitled event'),
-      username: username || 'Unknown',
-      lastname,
-      email: email || 'No email',
-    };
+    const operations = targets.map((report) =>
+      this.lostAndFoundService.reviewReport(report.id, { status, moderatorComment }).pipe(
+        map(() => ({ ok: true })),
+        catchError(() => of({ ok: false }))
+      )
+    );
+
+    forkJoin(operations).subscribe((results) => {
+      const successCount = results.filter((result) => result.ok).length;
+      const failedCount = results.length - successCount;
+
+      this.bulkProcessing = false;
+      this.selectedReportIds.clear();
+
+      if (failedCount === 0) {
+        this.toast.success(`${successCount} report(s) ${actionLabel} successfully.`);
+      } else if (successCount > 0) {
+        this.toast.warning(`${successCount} report(s) ${actionLabel}, ${failedCount} failed.`);
+      } else {
+        this.toast.error(`Failed to process selected reports.`);
+      }
+
+      this.loadItemReports();
+    });
   }
 }

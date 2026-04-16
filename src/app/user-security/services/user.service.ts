@@ -47,6 +47,8 @@ export class UserService {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('profileCompleted');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('role');
       const keys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -68,6 +70,13 @@ export class UserService {
     this.authSession.setLoading();
 
     try {
+      // Best-effort: clear any existing backend HTTP session to avoid sticky account switch.
+      try {
+        await this.authApiService.logoutSession();
+      } catch {
+        // Ignore when no server session exists.
+      }
+
       const result = await this.authApiService.login(credentials);
 
       if (result.session) {
@@ -213,9 +222,17 @@ export class UserService {
   }
 
   logout(): void {
-    this.authSession.logout();
-    this.profileCache.clear();
-    this.clearLegacyBrowserAuthCaches();
+    const clearLocal = () => {
+      this.authSession.logout();
+      this.profileCache.clear();
+      this.clearLegacyBrowserAuthCaches();
+    };
+
+    this.authApiService.logoutSession()
+      .catch(() => {
+        // Ignore server logout errors; local logout must still happen.
+      })
+      .finally(clearLocal);
   }
 
   setCurrentSession(session: unknown): void {
@@ -244,7 +261,10 @@ export class UserService {
       return of(this.profileCache.get(userId));
     }
 
-    return this.http.get<any>(`http://localhost:8090/profiles/${userId}`).pipe(
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
+    return this.http.get<any>(`${base}/users/${userId}`, {
+      withCredentials: environment.auth.withCredentials,
+    }).pipe(
       tap((profile) => this.profileCache.set(userId, profile)),
       catchError(() => of(null)),
     );

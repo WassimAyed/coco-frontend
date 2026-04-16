@@ -4,22 +4,22 @@
 
   <div class="pricing-container">
     <div class="header">
-      <h1>Choisissez votre Plan CoCo</h1>
-      <p>Des solutions flexibles pour booster votre visibilité sur la plateforme.</p>
+      <h1>Choose Your CoCo Plan</h1>
+      <p>Flexible solutions to boost your visibility on the platform.</p>
     </div>
 
     <!-- Top Row: 3 Cards -->
     <div class="plans-grid top-row" *ngIf="!loading; else loadingTemplate">
       <div class="plan-card" *ngFor="let plan of getTopPlans()" [ngClass]="{'featured': plan.name === 'MONTHLY'}"
         [style.animation-delay]="getDelay(plan.name)">
-        <div class="badge" *ngIf="plan.name === 'MONTHLY'">Recommandé</div>
+        <div class="badge" *ngIf="plan.name === 'MONTHLY'">Recommended</div>
 
         <div class="card-header">
           <span class="plan-tag">{{ plan.name }}</span>
           <div class="price">
             <span class="currency">TND</span>
             <span class="amount">{{ plan.price }}</span>
-            <span class="period" *ngIf="plan.durationDays">/{{ plan.durationDays === 30 ? 'mois' : 'an' }}</span>
+            <span class="period" *ngIf="plan.durationDays">/{{ plan.durationDays === 30 ? 'month' : 'year' }}</span>
           </div>
           <p class="description">{{ getDescription(plan.name) }}</p>
         </div>
@@ -72,15 +72,15 @@
     <div class="trust-bar" *ngIf="!loading">
       <div class="trust-item">
         <i class="bi bi-shield-lock"></i>
-        <span>Paiement sécurisé</span>
+        <span>Secure payment</span>
       </div>
       <div class="trust-item">
         <i class="bi bi-calendar-x"></i>
-        <span>Annulation à tout moment</span>
+        <span>Cancel anytime</span>
       </div>
       <div class="trust-item">
         <i class="bi bi-patch-check"></i>
-        <span>Sans engagement</span>
+        <span>No commitment</span>
       </div>
     </div>
   </div>

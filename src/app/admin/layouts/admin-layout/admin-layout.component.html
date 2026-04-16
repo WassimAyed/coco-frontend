@@ -292,6 +292,160 @@
       </article>
       } @else if (selectedModule() === 'events') {
       <app-admin-events />
+      } @else if (selectedModule() === 'item-reports') {
+      <section class="reports-shell">
+        <div class="reports-header">
+          <div>
+            <span class="header-eyebrow">Lost & Found Moderation</span>
+            <h2>Item Reports</h2>
+            <p>Review user reports, inspect the post, and decide whether to keep or block it.</p>
+          </div>
+
+          <div class="header-stats">
+            <div class="stat-pill">
+              <span class="stat-value">{{ itemReports.length }}</span>
+              <span class="stat-label">Total Reports</span>
+            </div>
+            <div class="stat-pill stat-pill--active">
+              <span class="stat-value">{{ itemReportsBlockedCount }}</span>
+              <span class="stat-label">Blocked</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reports-grid">
+          <article class="card reports-summary-card">
+            <h3>Review summary</h3>
+            <ul>
+              <li><strong>{{ itemReportsBlockedCount }}</strong> blocked post(s) currently under moderation.</li>
+              <li><strong>{{ itemReportsReviewedCount }}</strong> report(s) marked as reviewed.</li>
+              <li><strong>{{ itemReportsActionTakenCount }}</strong> report(s) already blocked.</li>
+            </ul>
+          </article>
+
+          <article class="card reports-table-card">
+            <div class="card-head">
+              <h3>Reported posts</h3>
+              <div class="card-head-actions">
+                @if (isAdmin) {
+                <button type="button" class="btn btn-outline" [disabled]="selectedReportsCount === 0 || bulkProcessing"
+                  (click)="keepSelectedReports()">
+                  <lucide-icon [img]="CheckCircleIcon" [size]="16"></lucide-icon>
+                  Keep selected ({{ selectedReportsCount }})
+                </button>
+                <button type="button" class="btn btn-danger" [disabled]="selectedReportsCount === 0 || bulkProcessing"
+                  (click)="blockSelectedReports()">
+                  <lucide-icon [img]="XCircleIcon" [size]="16"></lucide-icon>
+                  Block selected ({{ selectedReportsCount }})
+                </button>
+                }
+                <button type="button" class="btn btn-outline" (click)="loadItemReports()" [disabled]="bulkProcessing">
+                  <lucide-icon [img]="FilterIcon" [size]="16"></lucide-icon>
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            @if (itemReportsError) {
+            <div class="error-banner">{{ itemReportsError }}</div>
+            }
+
+            @if (itemReportsLoading) {
+            <div class="empty-state">Loading reports...</div>
+            } @else if (itemReports.length === 0) {
+            <div class="empty-state">No item reports available.</div>
+            } @else {
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th class="select-col">
+                      @if (isAdmin) {
+                      <input
+                        type="checkbox"
+                        [checked]="allActionableSelected"
+                        (change)="toggleAllReportSelection($any($event.target).checked)"
+                        [disabled]="bulkProcessing"
+                        aria-label="Select all actionable reports"
+                      />
+                      }
+                    </th>
+                    <th>Item</th>
+                    <th>Reporter</th>
+                    <th>Reason</th>
+                    <th>Report Status</th>
+                    <th>Item Status</th>
+                    <th class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (report of itemReports; track report.id) {
+                  <tr>
+                    <td class="select-col">
+                      @if (isAdmin) {
+                      <input
+                        type="checkbox"
+                        [checked]="isReportSelected(report.id)"
+                        (change)="toggleReportSelection(report, $any($event.target).checked)"
+                        [disabled]="bulkProcessing || !isReportActionable(report)"
+                        [attr.aria-label]="'Select report #' + report.id"
+                      />
+                      }
+                    </td>
+                    <td>
+                      <div class="item-cell">
+                        <p class="item-title">{{ report.itemTitle || ('Item #' + report.itemId) }}</p>
+                        <p class="item-subtitle">{{ getOwnerDisplayName(report.itemOwnerUserId) }}</p>
+                      </div>
+                    </td>
+                    <td>
+                      <p class="reporter-name">{{ getReporterDisplayName(report.reporterUserId) }}</p>
+                    </td>
+                    <td>
+                      <p class="reason-text">{{ report.reason }}</p>
+                      <p class="item-subtitle" *ngIf="report.details">{{ report.details }}</p>
+                    </td>
+                    <td>
+                      <span class="status-chip"
+                        [ngClass]="report.status === 'OPEN' ? 'status-chip--warning' : report.status === 'ACTION_TAKEN' ? 'status-chip--danger' : 'status-chip--neutral'">
+                        {{ report.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="status-chip"
+                        [ngClass]="report.itemStatus === 'BLOCKED' ? 'status-chip--danger' : report.itemStatus === 'ACTIVE' ? 'status-chip--success' : 'status-chip--neutral'">
+                        {{ report.itemStatus || 'UNKNOWN' }}
+                      </span>
+                    </td>
+                    <td class="actions-col">
+                      <div class="actions-group">
+                        <button type="button" class="icon-btn view" (click)="openItemDetails(report)" aria-label="View details">
+                          <lucide-icon [img]="EyeIcon" [size]="16"></lucide-icon>
+                        </button>
+                        @if (isAdmin) {
+                        <button type="button" class="icon-btn keep" [disabled]="processingReportId === report.id"
+                          (click)="keepReportedItem(report)" aria-label="Keep post">
+                          <lucide-icon [img]="CheckCircleIcon" [size]="16"></lucide-icon>
+                        </button>
+                        <button type="button" class="icon-btn block"
+                          [disabled]="processingReportId === report.id || report.itemStatus === 'BLOCKED'"
+                          (click)="blockReportedItem(report)" aria-label="Block post">
+                          <lucide-icon [img]="XCircleIcon" [size]="16"></lucide-icon>
+                        </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            }
+          </article>
+        </div>
+      </section>
+      } @else if (selectedModule() === 'subscriptions') {
+      <app-admin-plans></app-admin-plans>
       } @else {
       <article class="rounded-2xl bg-white p-12 text-center">
         <div class="mx-auto max-w-md">
@@ -318,3 +472,61 @@
     </div>
   </nav>
 </div>
+
+<style>
+.reports-shell { display: grid; gap: 1.25rem; }
+.reports-header { background: linear-gradient(135deg, #1e1e1e 0%, #2c2c2c 55%, #3a1215 100%); border-radius: 18px; color: #fff; padding: 1.4rem 1.5rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; position: relative; overflow: hidden; }
+.reports-header h2 { margin: 0; font-size: 1.55rem; font-family: 'Syne', sans-serif; font-weight: 800; }
+.reports-header p { margin: 0.3rem 0 0; color: rgba(255,255,255,0.65); font-size: 0.9rem; }
+.header-eyebrow { display: inline-flex; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #f83441; background: rgba(248, 52, 65, 0.15); border: 1px solid rgba(248, 52, 65, 0.3); border-radius: 999px; padding: 0.25rem 0.6rem; margin-bottom: 0.45rem; }
+.header-stats { display: flex; gap: 0.55rem; }
+.stat-pill { min-width: 95px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 0.6rem 0.8rem; text-align: center; }
+.stat-pill--active { background: rgba(248, 52, 65, 0.2); border-color: rgba(248, 52, 65, 0.35); }
+.stat-value { display: block; font-size: 1.35rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.72); }
+.reports-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 1.25rem; }
+.card { background: #fff; border: 1px solid #e9e9e9; border-radius: 18px; padding: 1.2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 0.7rem; margin-bottom: 0.9rem; flex-wrap: wrap; }
+.card-head-actions { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+.card-head h3 { margin: 0; font-size: 1.1rem; font-family: 'Syne', sans-serif; font-weight: 700; }
+.reports-summary-card h3 { margin: 0 0 0.75rem; }
+.reports-summary-card ul { margin: 0; padding-left: 1rem; color: #555; font-size: 0.92rem; line-height: 1.7; }
+.reports-summary-card strong { color: #151515; }
+.table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { text-align: left; padding: 0.95rem; color: #888; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.admin-table td { padding: 0.95rem; border-top: 1px solid #efefef; font-size: 0.9rem; vertical-align: top; }
+.select-col { width: 44px; text-align: center !important; }
+.item-cell { display: grid; gap: 0.15rem; }
+.item-title, .reporter-name { margin: 0; font-weight: 700; color: #151515; }
+.item-subtitle, .reason-text { margin: 0; color: #667085; font-size: 0.82rem; }
+.status-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.03em; }
+.status-chip--warning { background: #fef3c7; color: #92400e; }
+.status-chip--danger { background: #fee2e2; color: #991b1b; }
+.status-chip--success { background: #dcfce7; color: #166534; }
+.status-chip--neutral { background: #e2e8f0; color: #334155; }
+.actions-col { width: 170px; }
+.actions-group { display: inline-flex; align-items: center; gap: 0.45rem; }
+.icon-btn { width: 34px; height: 34px; border: 1px solid #e2e2e2; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; }
+.icon-btn.view:hover { border-color: #c9c9c9; background: #f7f7f7; }
+.icon-btn.keep:hover { border-color: #b7ebc6; background: #f0fdf4; color: #166534; }
+.icon-btn.block:hover { border-color: #f5c4c8; background: #fff5f6; color: #d32030; }
+.icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn { border: none; border-radius: 10px; padding: 0.65rem 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.45rem; }
+.btn-outline { background: #fff; border: 1px solid #ddd; color: #444; }
+.btn-outline:hover { border-color: #c8c8c8; }
+.btn-danger { background: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.2); color: #b91c1c; }
+.btn-danger:hover { background: rgba(220, 38, 38, 0.18); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.empty-state { padding: 2rem 1rem; text-align: center; color: #667085; }
+.error-banner { margin-bottom: 1rem; border-radius: 12px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; padding: 0.8rem 1rem; font-size: 0.9rem; }
+
+@media (max-width: 920px) {
+  .reports-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .header-stats { width: 100%; }
+  .stat-pill { flex: 1; }
+}
+</style>
