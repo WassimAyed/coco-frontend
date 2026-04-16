@@ -28,7 +28,8 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "webgl-fluid": "^0.3.9",
-    "zone.js": "~0.14.10"
+    "zone.js": "~0.14.10",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^18.2.21",
