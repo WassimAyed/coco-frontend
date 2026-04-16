@@ -1,0 +1,244 @@
+<main class="container my-4">
+  <button class="btn btn-outline-secondary rounded-pill mb-3" (click)="goBack()">
+    <i class="fas fa-arrow-left me-1"></i> Retour
+  </button>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow rounded-4">
+        <div class="card-body p-4">
+          <h3 class="fw-bold mb-4"><i class="fas fa-plus-circle text-danger me-2"></i> Proposer un trajet</h3>
+
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+          <form (ngSubmit)="submit()">
+            <div class="row g-3">
+              <!-- Depart avec Google Places Autocomplete -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
+                <input #departInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="covoiturage.lattitudeDepart" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointDepart }}
+                </small>
+              </div>
+
+              <!-- Arrivee avec Google Places Autocomplete -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
+                <input #arriveeInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="covoiturage.latitudeArrivee" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointArrivee }}
+                </small>
+              </div>
+
+              <!-- Google Map -->
+              <div class="col-md-12">
+                <div #mapContainer class="rounded-3 border" style="width: 100%; height: 350px;"></div>
+              </div>
+
+              <!-- Distance & Duree (auto-calcules, read-only) -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-road text-info me-1"></i> Distance (km)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="covoiturage.distance" name="distance" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-clock text-info me-1"></i> Duree estimee (min)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="covoiturage.dureeEstimee" name="dureeEstimee" readonly>
+                <small class="text-muted">Calcule automatiquement</small>
+              </div>
+
+              <!-- Date -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Date de depart *</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="covoiturage.dateDepart" name="dateDepart" required>
+              </div>
+              <!-- Nombre de places -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Nombre de places</label>
+                <input type="number" class="form-control" [(ngModel)]="covoiturage.nombrePlaces" name="nombrePlaces" min="1" (change)="onNombrePlacesChange()">
+              </div>
+              <!-- Prix -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Prix par passager (TND)</label>
+                <input type="number" class="form-control" [(ngModel)]="covoiturage.prixParPassager" name="prixParPassager" min="0" step="0.5">
+              </div>
+
+              <!-- ========== SUGGESTION IA ========== -->
+              <div class="col-md-12" *ngIf="mlLoading">
+                <div class="border rounded-3 p-3 bg-light text-center">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                  <span class="text-muted">Calcul IA du prix en cours...</span>
+                </div>
+              </div>
+
+              <div class="col-md-12" *ngIf="mlPrediction && !mlLoading">
+                <div class="border rounded-4 p-3 bg-light border-primary">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-robot text-primary fs-5 me-2"></i>
+                    <h6 class="fw-bold mb-0 text-primary">Suggestion IA - Contribution carburant</h6>
+                  </div>
+
+                  <div class="row g-2 mb-2">
+                    <div class="col-sm-6">
+                      <div class="bg-white rounded-3 p-2 text-center">
+                        <div class="text-muted small">Cout total estime</div>
+                        <div class="fw-bold fs-5 text-danger">{{ mlPrediction.cout_total_ml }} TND</div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6">
+                      <div class="bg-white rounded-3 p-2 text-center">
+                        <div class="text-muted small">Prix suggere / passager</div>
+                        <div class="fw-bold fs-5 text-success">{{ mlPrediction.contribution_par_passager_ml }} TND</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="small text-muted mb-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Base sur {{ mlPrediction.details.distance_km }} km, {{ mlPrediction.details.duree_min }} min, {{ mlPrediction.nb_passagers }} passagers
+                  </div>
+
+                  <button type="button" class="btn btn-primary btn-sm rounded-pill" (click)="applySuggestedPrice()">
+                    <i class="fas fa-check me-1"></i> Appliquer ce prix
+                  </button>
+                </div>
+              </div>
+
+              <!-- ========== VEHICULE SECTION ========== -->
+              <div class="col-md-12">
+                <label class="form-label fw-bold"><i class="fas fa-car me-1"></i> Vehicule *</label>
+
+                <!-- Pas de vehicule -->
+                <div *ngIf="vehicules.length === 0" class="border border-dashed rounded-4 p-4 text-center bg-light">
+                  <i class="fas fa-car-side fa-3x text-muted mb-3"></i>
+                  <p class="text-muted mb-3">Vous n'avez aucun vehicule enregistre.</p>
+                  <button type="button" class="btn btn-primary rounded-pill px-4" (click)="openAddVehicule()">
+                    <i class="fas fa-plus me-1"></i> Ajouter un vehicule
+                  </button>
+                </div>
+
+                <!-- Vehicules existants -->
+                <div *ngIf="vehicules.length > 0">
+                  <div class="d-flex flex-column gap-2">
+                    <div *ngFor="let v of vehicules"
+                         class="border rounded-3 p-3 d-flex align-items-center justify-content-between"
+                         [ngClass]="{'border-primary bg-primary bg-opacity-10': covoiturage.vehicleId === v.id}"
+                         style="cursor: pointer;"
+                         (click)="covoiturage.vehicleId = v.id!">
+
+                      <!-- Info vehicule -->
+                      <div class="d-flex align-items-center gap-3">
+                        <div>
+                          <input type="radio" class="form-check-input" [checked]="covoiturage.vehicleId === v.id" name="vehicleRadio">
+                        </div>
+                        <img *ngIf="v.image" [src]="getImageUrl(v.image)" alt="vehicule"
+                             class="rounded-3" style="width:50px;height:50px;object-fit:cover;">
+                        <div *ngIf="!v.image" class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;">
+                          <i class="fas fa-car text-muted"></i>
+                        </div>
+                        <div>
+                          <p class="fw-bold mb-0">{{ v.marque }}</p>
+                          <small class="text-muted">{{ v.immatriculation }} &middot; {{ v.couleur }} &middot; {{ v.capacite }} places</small>
+                        </div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="d-flex gap-1" (click)="$event.stopPropagation()">
+                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill" (click)="openEditVehicule(v)" title="Modifier">
+                          <i class="fas fa-edit"></i> Modifier
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" (click)="deleteVehicule(v.id!)" title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" class="btn btn-outline-primary btn-sm rounded-pill mt-2" (click)="openAddVehicule()">
+                    <i class="fas fa-plus me-1"></i> Ajouter un autre vehicule
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+              <button type="submit" class="btn btn-danger rounded-pill px-4">
+                <i class="fas fa-check me-1"></i> Publier le trajet
+              </button>
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="goBack()">Annuler</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ========== MODAL VEHICULE ========== -->
+<div *ngIf="showVehiculeModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showVehiculeModal" class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">
+          <i class="fas" [ngClass]="isEditMode ? 'fa-edit text-warning' : 'fa-plus-circle text-primary'" class="me-2"></i>
+          {{ isEditMode ? 'Modifier le vehicule' : 'Ajouter un vehicule' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeVehiculeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="vehiculeError" class="alert alert-danger">{{ vehiculeError }}</div>
+
+        <form (ngSubmit)="submitVehicule()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Marque *</label>
+              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.marque" name="vMarque" required placeholder="Ex: Peugeot">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Immatriculation *</label>
+              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.immatriculation" name="vImmat" required placeholder="Ex: 123 TU 4567">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Couleur *</label>
+              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.couleur" name="vCouleur" required placeholder="Ex: Noir">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Capacite (places)</label>
+              <input type="number" class="form-control" [(ngModel)]="vehiculeForm.capacite" name="vCapacite" min="1" max="50">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold"><i class="fas fa-camera me-1"></i> Image du vehicule</label>
+              <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)">
+              <div *ngIf="imagePreview" class="mt-2 text-center">
+                <img [src]="imagePreview" alt="Preview" class="rounded-3 shadow-sm" style="max-height:150px;max-width:100%;object-fit:cover;">
+              </div>
+              <small class="text-muted">Formats acceptes : JPG, PNG, GIF (max 5 MB)</small>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeVehiculeModal()">Annuler</button>
+            <button type="submit" class="btn rounded-pill px-4" [ngClass]="isEditMode ? 'btn-warning' : 'btn-primary'" [disabled]="vehiculeLoading">
+              <span *ngIf="vehiculeLoading" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!vehiculeLoading" class="fas me-1" [ngClass]="isEditMode ? 'fa-save' : 'fa-plus'"></i>
+              {{ isEditMode ? 'Enregistrer' : 'Ajouter' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-confirm-modal
+  [show]="showConfirmModal"
+  title="Supprimer le vehicule"
+  message="Voulez-vous vraiment supprimer ce vehicule ?"
+  confirmText="Supprimer"
+  confirmClass="btn-danger"
+  icon="fas fa-car-crash text-danger"
+  (confirmed)="onConfirmDeleteVehicule()"
+  (cancelled)="closeConfirmModal()">
+</app-confirm-modal>

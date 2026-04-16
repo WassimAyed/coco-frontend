@@ -2,7 +2,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router } from '@angular/router';
 import { ChevronDown, LogOut, UserRound, Clipboard } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
-import { Home, Briefcase, FileText, Search, Calendar } from 'lucide-angular';
+import { Home, Briefcase, FileText, Search, Calendar, Car } from 'lucide-angular';
 @Component({
   selector: 'app-user-menu',
   templateUrl: './user-menu.component.html'
@@ -15,6 +15,7 @@ export class UserMenuComponent {
   readonly FileTextIcon = FileText;
   readonly SearchIcon = Search;
   readonly CalendarIcon = Calendar;
+  readonly CarIcon = Car;
 
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
