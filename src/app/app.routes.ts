@@ -64,6 +64,12 @@ export const routes: Routes = [
     component: AdminLayoutComponent,
     data: { module: 'carpooling' }
   },
+  {
+    path: 'admin/collocation',
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent,
+    data: { module: 'colocation' }
+  },
   { path: '**', redirectTo: 'landing' }
 ];
 
