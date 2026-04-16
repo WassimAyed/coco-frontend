@@ -2,7 +2,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router } from '@angular/router';
 import { ChevronDown, LogOut, UserRound, Clipboard } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
-import { Home, Briefcase, FileText, Search, Calendar, Car } from 'lucide-angular';
+import { Home, Briefcase, FileText, Search, Calendar, Car, Heart } from 'lucide-angular';
 @Component({
   selector: 'app-user-menu',
   templateUrl: './user-menu.component.html'
@@ -41,6 +41,8 @@ export class UserMenuComponent {
   readonly mesOffresRequestRoute = '/collocation/mesOffresRequest';
   readonly myEventsRoute = '/event/my-events';
   readonly participatedEventsRoute = '/event/participated-events';
+  readonly mesFavorisRoute = '/collocation/mesFavoris';
+  readonly HeartIcon = Heart;
 
   toggleMenu(): void {
     this.menuOpen.update((value) => !value);

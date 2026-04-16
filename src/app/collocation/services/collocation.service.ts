@@ -75,7 +75,7 @@ export class CollocationService {
   removeFavorite(offerId: number, userId?: number) {
     const id = userId ?? this.userService.currentUser()?.id;
     if (!id) throw new Error('User not authenticated');
-    return this.http.delete(`${this.apiUrl}/favorites/${offerId}/${id}`);
+    return this.http.delete(`${this.apiUrl}/favorites/${offerId}/${id}`, { responseType: 'text' });
   }
 
   getNearbyOffers(lat: number, lng: number, radius: number) {
