@@ -66,11 +66,11 @@ export class CollocationService {
     return this.http.get<number[]>(`${this.apiUrl}/favorites/${id}`);
   }
 
-addFavorite(userId: number, offerId: number) {
-  return this.http.post(
-    `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
-  );
-}
+  addFavorite(userId: number, offerId: number) {
+    return this.http.post(
+      `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
+    );
+  }
 
   removeFavorite(offerId: number, userId?: number) {
     const id = userId ?? this.userService.currentUser()?.id;
