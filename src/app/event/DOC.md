@@ -84,7 +84,7 @@ Business logic is unchanged. Map rendering is implemented with OpenLayers in the
 
 **Backend (Spring Boot):**
 - No controller/service/domain change required for map migration.
-- Existing API contract is preserved (`latitude`, `longitude`, optional `fullAddress`).
+- Existing API contract is preserved (`latitude`, `longitude`, `location`).
 - Geocoding/reverse-geocoding behavior remains server-side and unchanged.
 
 **Compatibility Note:**
@@ -143,10 +143,9 @@ interface EventDto {
   location?: string;                // Required, text address
   latitude?: number;                // Geolocation coordinate
   longitude?: number;               // Geolocation coordinate
-  fullAddress?: string;             // Auto-filled by Nominatim geocoding
   startDate?: string;               // ISO datetime, must be future
   endDate?: string;                 // ISO datetime, after startDate
-  status?: EventStatus;             // 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'ANNULE'
+  status?: EventStatus;             // 'PENDING' | 'ACCEPTED' | 'REFUSED'
   categoryId?: number;              // Foreign key to Category
   categoryName?: string;            // Denormalized category name
   userId?: number;                  // Event creator's user ID
@@ -205,7 +204,7 @@ interface UpdateEventRequest {
 
 **Backend Validation** (EventDTO via Spring validation):
 - Same constraints enforced on server
-- Location auto-geocoded via Nominatim API → latitude/longitude/fullAddress filled
+- Location auto-geocoded via Nominatim API → latitude/longitude filled
 - Current participants defaults to 0
 
 **Workflow**:

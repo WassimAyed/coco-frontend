@@ -4,6 +4,7 @@ export const environment = {
   paymentApiBaseUrl: 'http://localhost:9092/api/payment',
   lostFoundApiBaseUrl: 'http://localhost:9092/api/lost-found',
   eventApiBaseUrl: 'http://localhost:8093/api/events',
+  eventServiceUrl: 'http://localhost:8093',
   auth: {
     loginPath: '/auth/login',
     registerPath: '/auth/register',

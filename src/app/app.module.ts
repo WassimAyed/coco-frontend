@@ -1,6 +1,7 @@
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,6 +11,8 @@ import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AdminEventsComponent } from './admin/components/admin-events/admin-events.component';
+import { EventPaginationModule } from './event/event-pagination.module';
 import { AdminPlansComponent } from './subs-payment/components/admin-plans/admin-plans.component';
 import { AdminCovoiturageComponent } from './covoiturage/components/admin-covoiturage/admin-covoiturage.component';
 
@@ -19,15 +22,17 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
 
 @NgModule({
   bootstrap: [AppComponent],
-  declarations: [AppComponent, AdminLayoutComponent],
+  declarations: [AppComponent, AdminLayoutComponent, AdminEventsComponent],
   imports: [
     BrowserModule,
     CommonModule,
+    FormsModule,
     HttpClientModule,
     RouterModule,
     LucideAngularModule,
     AppRoutingModule,
     SharedModule,
+    EventPaginationModule,
     UserSecurityModule,
     AdminPlansComponent,
     AdminCovoiturageComponent

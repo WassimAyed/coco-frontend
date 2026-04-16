@@ -9,11 +9,11 @@ import { CategoryDto } from '../../models/category.model';
 import { CreateEventRequest, EventDto, UpdateEventRequest } from '../../models/event.model';
 import { REACTION_EMOJI, ReactionType } from '../../models/reaction.model';
 import { CommentService } from '../../services/comment.service';
-import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { ParticipantDto } from '../../models/participant.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-my-events',
@@ -31,6 +31,13 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   mainImageFile: File | null = null;
   galleryFiles: File[] = [];
   isSavingCreate = false;
+  createWeatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
+  isCreateWeatherLoading = false;
   editFieldErrors: Record<string, string> = {};
   selectedEditCoordinates = '';
   editExistingMainImageUrl = '';
@@ -38,6 +45,12 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   editGalleryFiles: File[] = [];
   editExistingGallery: EventImageDto[] = [];
   isSavingEdit = false;
+  weatherPreview: {
+    temperature?: number;
+    precipitationMm?: number;
+    windSpeedKmh?: number;
+    weatherLabel?: string;
+  } | null = null;
 
   detailModalEvent: EventDto | null = null;
   detailModalReactions: Partial<Record<ReactionType, number>> = {};
@@ -50,16 +63,19 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   editingEventId: number | null = null;
   editingEvent: EventDto | null = null;
   isCreateModalOpen = false;
+  dateTimeMin = this.buildDateTimeLocalValue(new Date());
+  lastSavedEvent: EventDto | null = null;
   createModel: CreateEventRequest = {
     name: '',
     description: '',
     location: '',
+    eventType: 'OUTDOOR',
+    price: undefined,
     latitude: undefined,
     longitude: undefined,
-    fullAddress: '',
     startDate: '',
     endDate: '',
-    status: 'EN_COURS',
+    status: 'PENDING',
     categoryId: 0,
     maxCapacity: 1,
     currentParticipants: 0
@@ -76,10 +92,10 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly eventService: EventService,
-    private readonly ownershipService: EventOwnershipService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
-    private readonly participantService: ParticipantService
+    private readonly participantService: ParticipantService,
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -93,21 +109,20 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   loadMyEvents(): void {
-    const currentUserId = this.ownershipService.getCurrentUserId();
+    const currentUserId = this.getCurrentUserId();
     if (!currentUserId) {
       this.errorMessage = 'You must be logged in to access your events.';
       this.myEvents = [];
       return;
     }
 
-    const ids = new Set(this.ownershipService.getOwnedEventIds(currentUserId));
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getAll().subscribe({
+    this.eventService.getCreatedByUser(currentUserId, { page: 0, size: 200 }).subscribe({
       next: events => {
-        this.myEvents = events.filter(item => !!item.id && ids.has(item.id));
+        this.myEvents = events || [];
         this.isLoading = false;
       },
       error: () => {
@@ -133,6 +148,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.isCreateModalOpen = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.refreshDateTimeConstraints();
     this.resetCreateForm();
     this.createModel.categoryId = this.categories[0]?.id || 0;
     setTimeout(() => this.initCreateMap(), 0);
@@ -141,6 +157,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   closeCreateModal(): void {
     this.isCreateModalOpen = false;
     this.isSavingCreate = false;
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.resetCreateForm();
     this.createMap?.remove();
     this.createMap = undefined;
@@ -155,10 +173,10 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     const name = this.cleanString(this.createModel.name) || '';
     const location = this.cleanString(this.createModel.location) || '';
     const description = this.cleanString(this.createModel.description);
-    const fullAddress = this.cleanString(this.createModel.fullAddress);
+    const price = this.toOptionalNumber(this.createModel.price);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
-    const currentUserId = this.ownershipService.getCurrentUserId();
+    const currentUserId = this.getCurrentUserId();
 
     if (!currentUserId) {
       this.errorMessage = 'You must be logged in to create an event.';
@@ -174,20 +192,22 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       ...this.createModel,
       name,
       description,
-      fullAddress,
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
+      status: this.resolveCreateStatus(),
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
       userId: currentUserId,
       maxCapacity: Number(this.createModel.maxCapacity),
-      currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants)
+      currentParticipants: this.toOptionalNumber(this.createModel.currentParticipants),
+      price
     };
 
     this.eventService.create(payload).subscribe({
       next: created => {
+        this.lastSavedEvent = created;
         const eventId = created.id;
         if (!eventId) {
           this.isSavingCreate = false;
@@ -196,8 +216,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
           this.loadMyEvents();
           return;
         }
-
-        this.ownershipService.addOwnedEvent(eventId, currentUserId);
 
         this.uploadCreateImages(eventId).subscribe({
           next: () => {
@@ -237,7 +255,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   startEdit(event: EventDto): void {
-    this.editingEventId = event.id || null;
+    if (!event.id) {
+      return;
+    }
+
+    if (this.isRefusedStatus(event.status)) {
+      this.errorMessage = 'Impossible de modifier un événement refusé.';
+      return;
+    }
+
+    this.editingEventId = event.id;
     this.editingEvent = event;
     this.errorMessage = '';
     this.successMessage = '';
@@ -247,20 +274,22 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
     this.isSavingEdit = false;
+    this.refreshDateTimeConstraints();
 
     this.editModel = {
       name: event.name,
       description: event.description,
       location: event.location,
+      eventType: event.eventType,
       latitude: event.latitude,
       longitude: event.longitude,
-      fullAddress: event.fullAddress,
       startDate: this.toDateTimeLocal(event.startDate),
       endDate: this.toDateTimeLocal(event.endDate),
       status: event.status,
       categoryId: event.categoryId,
       maxCapacity: event.maxCapacity ?? event.capacity,
-      currentParticipants: event.currentParticipants ?? event.occupiedPlaces
+      currentParticipants: event.currentParticipants ?? event.occupiedPlaces,
+      price: event.price
     };
 
     if (event.latitude !== undefined && event.longitude !== undefined) {
@@ -286,6 +315,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.editMainImageFile = null;
     this.editGalleryFiles = [];
     this.editExistingGallery = [];
+    this.weatherPreview = null;
     this.editMap?.remove();
     this.editMap = undefined;
     this.editMarker = undefined;
@@ -377,15 +407,17 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: this.cleanString(this.editModel.name),
       description: this.cleanString(this.editModel.description),
       location: this.cleanString(this.editModel.location),
+      eventType: this.editModel.eventType,
       imageUrl: existingImageValue,
-      fullAddress: this.cleanString(this.editModel.fullAddress),
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
       latitude: this.toOptionalNumber(this.editModel.latitude),
       longitude: this.toOptionalNumber(this.editModel.longitude),
       categoryId: this.toOptionalNumber(this.editModel.categoryId),
       maxCapacity: this.toOptionalNumber(this.editModel.maxCapacity),
-      currentParticipants: this.toOptionalNumber(this.editModel.currentParticipants)
+      currentParticipants: this.toOptionalNumber(this.editModel.currentParticipants),
+      price: this.toOptionalNumber(this.editModel.price),
+      userId: this.getCurrentUserId() ?? this.editingEvent?.userId
     };
 
     this.editFieldErrors = {};
@@ -394,19 +426,27 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.isSavingEdit = true;
 
     this.eventService.update(eventId, payload).subscribe({
-      next: () => {
+      next: updatedEvent => {
         this.errorMessage = '';
+        this.editingEvent = updatedEvent;
+        this.lastSavedEvent = updatedEvent;
+        if (updatedEvent?.temperature !== undefined) {
+          this.weatherPreview = {
+            temperature: updatedEvent.temperature,
+            precipitationMm: updatedEvent.precipitationMm,
+            windSpeedKmh: updatedEvent.windSpeedKmh,
+            weatherLabel: updatedEvent.weatherLabel
+          };
+        }
         this.uploadEditImages(eventId).subscribe({
           next: () => {
             this.successMessage = 'Event updated successfully.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadMyEvents();
           },
           error: () => {
             this.successMessage = 'Event updated, but some images could not be uploaded.';
             this.isSavingEdit = false;
-            this.cancelEdit();
             this.loadMyEvents();
           }
         });
@@ -424,6 +464,19 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     }
 
     return Number(this.detailModalEvent.maxCapacity ?? this.detailModalEvent.capacity ?? 0);
+  }
+
+  getWeatherBadgeClass(label?: string): string {
+    const map: Record<string, string> = {
+      'Clear': 'bg-warning text-dark',
+      'Clouds': 'bg-secondary text-white',
+      'Rain': 'bg-primary text-white',
+      'Snow': 'bg-info text-dark border',
+      'Fog': 'bg-light text-dark border',
+      'Thunderstorm': 'bg-danger text-white',
+      'Unknown': 'bg-dark text-white'
+    };
+    return map[label ?? ''] ?? 'bg-dark text-white';
   }
 
   getModalParticipantsCount(): number {
@@ -484,10 +537,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
     this.eventService.delete(eventId).subscribe({
       next: () => {
-        const userId = this.ownershipService.getCurrentUserId();
-        if (userId) {
-          this.ownershipService.removeOwnedEvent(eventId, userId);
-        }
         this.successMessage = 'Event deleted successfully.';
         this.loadMyEvents();
       },
@@ -507,6 +556,31 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     }
 
     return this.categories.find(category => category.id === categoryId)?.name || `#${categoryId}`;
+  }
+
+  canEditEvent(event?: EventDto | null): boolean {
+    return this.normalizeStatus(event?.status) === 'PENDING';
+  }
+
+  isRefusedStatus(status?: string): boolean {
+    return this.normalizeStatus(status) === 'REJECTED';
+  }
+
+  isFreeEvent(event?: EventDto | null): boolean {
+    if (!event) {
+      return false;
+    }
+
+    const price = Number(event.price);
+    return Number.isFinite(price) && price === 0;
+  }
+
+  getStatusBadgeClass(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'badge-green' : '';
+  }
+
+  getStatusLabel(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'Gratuit' : '';
   }
 
   formatDate(value?: string): string {
@@ -584,6 +658,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     this.createModel.latitude = Number(latitude.toFixed(7));
     this.createModel.longitude = Number(longitude.toFixed(7));
     this.selectedCreateCoordinates = `${this.createModel.latitude.toFixed(6)}, ${this.createModel.longitude.toFixed(6)}`;
+    this.tryLoadCreateWeatherPreview();
 
     if (this.createMarker) {
       this.createMarker.setLngLat([this.createModel.longitude, this.createModel.latitude]);
@@ -689,6 +764,16 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   private cleanString(value?: string): string | undefined {
     const trimmed = value?.trim();
     return trimmed ? trimmed : undefined;
+  }
+
+  private refreshDateTimeConstraints(): void {
+    this.dateTimeMin = this.buildDateTimeLocalValue(new Date());
+  }
+
+  private buildDateTimeLocalValue(date: Date): string {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   private toDateTimeLocal(value?: string): string | undefined {
@@ -828,20 +913,62 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       name: '',
       description: '',
       location: '',
+      eventType: 'OUTDOOR',
+      price: undefined,
       latitude: undefined,
       longitude: undefined,
-      fullAddress: '',
       startDate: '',
       endDate: '',
-      status: 'EN_COURS',
+      status: 'PENDING',
       categoryId: this.categories[0]?.id || 0,
       maxCapacity: 1,
       currentParticipants: 0
     };
     this.createFieldErrors = {};
     this.selectedCreateCoordinates = '';
+    this.createWeatherPreview = null;
+    this.isCreateWeatherLoading = false;
     this.mainImageFile = null;
     this.galleryFiles = [];
+  }
+
+  onCreateWeatherInputsChanged(): void {
+    this.tryLoadCreateWeatherPreview();
+  }
+
+  private tryLoadCreateWeatherPreview(): void {
+    const latitude = this.toOptionalNumber(this.createModel.latitude);
+    const longitude = this.toOptionalNumber(this.createModel.longitude);
+    const start = this.toDate(this.createModel.startDate);
+    const end = this.toDate(this.createModel.endDate);
+
+    if (latitude === undefined || longitude === undefined || !start) {
+      this.createWeatherPreview = null;
+      this.isCreateWeatherLoading = false;
+      return;
+    }
+
+    this.isCreateWeatherLoading = true;
+    this.eventService.getWeatherPreview(
+      latitude,
+      longitude,
+      this.toIsoDate(start),
+      end ? this.toIsoDate(end) : undefined
+    ).subscribe({
+      next: preview => {
+        this.createWeatherPreview = preview;
+        this.isCreateWeatherLoading = false;
+      },
+      error: () => {
+        this.createWeatherPreview = null;
+        this.isCreateWeatherLoading = false;
+      }
+    });
+  }
+
+  private toIsoDate(value: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
   }
 
   private mergeUniqueFiles(existingFiles: File[], newFiles: File[]): File[] {
@@ -853,5 +980,28 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     });
 
     return Array.from(mapBySignature.values());
+  }
+
+  private normalizeStatus(status?: string): string {
+    switch (String(status || '').toUpperCase()) {
+      case 'ACCEPTED':
+        return 'APPROVED';
+      case 'REFUSED':
+        return 'REJECTED';
+      default:
+        return String(status || '').toUpperCase();
+    }
+  }
+
+  private resolveCreateStatus(): string {
+    const currentUser = this.userService.currentUser();
+    const role = String(currentUser?.role || '').toUpperCase();
+    return role === 'ADMIN' ? 'ACCEPTED' : 'PENDING';
+  }
+
+  private getCurrentUserId(): number | null {
+    const currentUser = this.userService.currentUser();
+    const id = Number(currentUser?.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
   }
 }

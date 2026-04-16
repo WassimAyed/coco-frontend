@@ -50,11 +50,22 @@ interface DashboardModule {
   icon: LucideIconData;
 }
 
+// Interface for the notification panel (colleagues' feature)
+interface PendingEvent {
+  id: number;
+  title: string;
+  time: string;
+  type: string;
+  username: string;
+  lastname: string;
+  email: string;
+}
+
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html'
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
@@ -69,6 +80,48 @@ export class AdminLayoutComponent {
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
   readonly user = this.userService.currentUser;
+
+  // ─── Colleagues' notification panel ─────────────────────────────────────────
+  readonly showNotifications = signal(false);
+
+  pendingEvents: PendingEvent[] = [
+    {
+      id: 1,
+      title: 'New user registration awaiting approval',
+      time: '5 min ago',
+      type: 'user',
+      username: 'Ahmed',
+      lastname: 'Ben Ali',
+      email: 'ahmed.benali@esprit.tn'
+    },
+    {
+      id: 2,
+      title: 'Marketplace listing flagged for review',
+      time: '20 min ago',
+      type: 'marketplace',
+      username: 'Sarah',
+      lastname: 'Tounsi',
+      email: 'sarah.tounsi@esprit.tn'
+    },
+    {
+      id: 3,
+      title: 'Event created pending validation',
+      time: '1 hour ago',
+      type: 'event',
+      username: 'Mohamed',
+      lastname: 'Karim',
+      email: 'mohamed.karim@esprit.tn'
+    }
+  ];
+
+  toggleNotifications(): void {
+    this.showNotifications.update(v => !v);
+  }
+
+  markAsRead(notifId: number): void {
+    this.pendingEvents = this.pendingEvents.filter(e => e.id !== notifId);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
 
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
@@ -162,6 +215,7 @@ export class AdminLayoutComponent {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
+  // ─── Your item-reports state ─────────────────────────────────────────────────
   itemReports: ItemReportResponse[] = [];
   itemReportsLoading = false;
   itemReportsError = '';
@@ -170,6 +224,7 @@ export class AdminLayoutComponent {
   reporterNames = new Map<number, string>();
   ownerNames = new Map<number, string>();
   selectedReportIds = new Set<number>();
+  // ────────────────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.route.data.subscribe((data) => {
@@ -198,6 +253,8 @@ export class AdminLayoutComponent {
       this.loadItemReports();
     }
   }
+
+  // ─── Your item-reports methods ───────────────────────────────────────────────
 
   loadItemReports(): void {
     this.itemReportsLoading = true;
@@ -322,7 +379,6 @@ export class AdminLayoutComponent {
     if (!reporterUserId) {
       return 'Unknown user';
     }
-
     return this.reporterNames.get(reporterUserId) || `User #${reporterUserId}`;
   }
 
@@ -330,7 +386,6 @@ export class AdminLayoutComponent {
     if (!ownerUserId) {
       return 'Unknown owner';
     }
-
     return this.ownerNames.get(ownerUserId) || `User #${ownerUserId}`;
   }
 
@@ -339,16 +394,43 @@ export class AdminLayoutComponent {
     return role.includes('admin');
   }
 
+  get itemReportsBlockedCount(): number {
+    return this.itemReports.filter((report) => report.itemStatus === 'BLOCKED').length;
+  }
+
+  get itemReportsReviewedCount(): number {
+    return this.itemReports.filter((report) => report.status === 'REVIEWED').length;
+  }
+
+  get itemReportsActionTakenCount(): number {
+    return this.itemReports.filter((report) => report.status === 'ACTION_TAKEN').length;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+
+  get selectedModuleName(): string {
+    return this.modules.find((module) => module.id === this.selectedModule())?.name ?? 'Dashboard';
+  }
+
+  get selectedModuleIcon(): LucideIconData {
+    return this.modules.find((module) => module.id === this.selectedModule())?.icon ?? BarChart3;
+  }
+
+  get mobileModules(): DashboardModule[] {
+    return this.modules.slice(0, 5);
+  }
+
+  async logout(): Promise<void> {
+    this.userService.logout();
+    await this.router.navigate(['/']);
+  }
+
   private preloadReporterNames(reports: ItemReportResponse[]): void {
     const uniqueIds = [...new Set((reports || []).map((r) => r.reporterUserId).filter((id) => !!id))];
-    if (uniqueIds.length === 0) {
-      return;
-    }
+    if (uniqueIds.length === 0) return;
 
     const unresolvedIds = uniqueIds.filter((id) => !this.reporterNames.has(id));
-    if (unresolvedIds.length === 0) {
-      return;
-    }
+    if (unresolvedIds.length === 0) return;
 
     const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
     forkJoin(requests).subscribe((profiles) => {
@@ -364,14 +446,10 @@ export class AdminLayoutComponent {
 
   private preloadOwnerNames(reports: ItemReportResponse[]): void {
     const uniqueIds = [...new Set((reports || []).map((r) => r.itemOwnerUserId).filter((id): id is number => !!id))];
-    if (uniqueIds.length === 0) {
-      return;
-    }
+    if (uniqueIds.length === 0) return;
 
     const unresolvedIds = uniqueIds.filter((id) => !this.ownerNames.has(id));
-    if (unresolvedIds.length === 0) {
-      return;
-    }
+    if (unresolvedIds.length === 0) return;
 
     const requests = unresolvedIds.map((id) => this.userService.getProfileByUserId(id));
     forkJoin(requests).subscribe((profiles) => {
@@ -390,9 +468,7 @@ export class AdminLayoutComponent {
     moderatorComment: string,
     actionLabel: 'reviewed' | 'blocked'
   ): void {
-    if (!this.isAdmin || this.bulkProcessing) {
-      return;
-    }
+    if (!this.isAdmin || this.bulkProcessing) return;
 
     const targets = this.itemReports.filter(
       (report) => !!report.id && this.selectedReportIds.has(report.id) && this.isReportActionable(report)
@@ -430,34 +506,5 @@ export class AdminLayoutComponent {
 
       this.loadItemReports();
     });
-  }
-
-  get selectedModuleName(): string {
-    return this.modules.find((module) => module.id === this.selectedModule())?.name ?? 'Dashboard';
-  }
-
-  get selectedModuleIcon(): LucideIconData {
-    return this.modules.find((module) => module.id === this.selectedModule())?.icon ?? BarChart3;
-  }
-
-  get itemReportsBlockedCount(): number {
-    return this.itemReports.filter((report) => report.itemStatus === 'BLOCKED').length;
-  }
-
-  get itemReportsReviewedCount(): number {
-    return this.itemReports.filter((report) => report.status === 'REVIEWED').length;
-  }
-
-  get itemReportsActionTakenCount(): number {
-    return this.itemReports.filter((report) => report.status === 'ACTION_TAKEN').length;
-  }
-
-  get mobileModules(): DashboardModule[] {
-    return this.modules.slice(0, 5);
-  }
-
-  async logout(): Promise<void> {
-    this.userService.logout();
-    await this.router.navigate(['/']);
   }
 }
