@@ -4,8 +4,8 @@ export const environment = {
   collocationApiBaseUrl: 'http://localhost:9092/collocationservice/collocation',
   paymentApiBaseUrl: 'http://localhost:9092/api/payment',
   lostFoundApiBaseUrl: 'http://localhost:9092/api/lost-found',
-  eventApiBaseUrl: 'http://localhost:8093/api/events',
-  eventServiceUrl: 'http://localhost:8093',
+  eventApiBaseUrl: 'http://localhost:9092/api/event/api/events',
+  eventServiceUrl: 'http://localhost:9092/api/event',
   auth: {
     loginPath: '/auth/login',
     registerPath: '/auth/register',

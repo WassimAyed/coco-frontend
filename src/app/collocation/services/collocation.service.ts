@@ -2,14 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserService } from '../../user-security/services/user.service';
-import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollocationService {
 
-  private apiUrl = `${environment.collocationApiBaseUrl}`;
+  private apiUrl = 'http://localhost:9092/api/collocation';
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) { }
