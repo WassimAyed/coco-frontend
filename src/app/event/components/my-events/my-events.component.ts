@@ -9,11 +9,11 @@ import { CategoryDto } from '../../models/category.model';
 import { CreateEventRequest, EventDto, UpdateEventRequest } from '../../models/event.model';
 import { REACTION_EMOJI, ReactionType } from '../../models/reaction.model';
 import { CommentService } from '../../services/comment.service';
-import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { ParticipantDto } from '../../models/participant.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-my-events',
@@ -92,10 +92,10 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly eventService: EventService,
-    private readonly ownershipService: EventOwnershipService,
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
-    private readonly participantService: ParticipantService
+    private readonly participantService: ParticipantService,
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -109,21 +109,20 @@ export class MyEventsComponent implements OnInit, OnDestroy {
   }
 
   loadMyEvents(): void {
-    const currentUserId = this.ownershipService.getCurrentUserId();
+    const currentUserId = this.getCurrentUserId();
     if (!currentUserId) {
       this.errorMessage = 'You must be logged in to access your events.';
       this.myEvents = [];
       return;
     }
 
-    const ids = new Set(this.ownershipService.getOwnedEventIds(currentUserId));
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.eventService.getAll().subscribe({
+    this.eventService.getCreatedByUser(currentUserId, { page: 0, size: 200 }).subscribe({
       next: events => {
-        this.myEvents = events.filter(item => !!item.id && ids.has(item.id));
+        this.myEvents = events || [];
         this.isLoading = false;
       },
       error: () => {
@@ -177,7 +176,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
     const price = this.toOptionalNumber(this.createModel.price);
     const startDate = this.toDate(this.createModel.startDate);
     const endDate = this.toDate(this.createModel.endDate);
-    const currentUserId = this.ownershipService.getCurrentUserId();
+    const currentUserId = this.getCurrentUserId();
 
     if (!currentUserId) {
       this.errorMessage = 'You must be logged in to create an event.';
@@ -196,6 +195,7 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
+      status: this.resolveCreateStatus(),
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
@@ -216,8 +216,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
           this.loadMyEvents();
           return;
         }
-
-        this.ownershipService.addOwnedEvent(eventId, currentUserId);
 
         this.uploadCreateImages(eventId).subscribe({
           next: () => {
@@ -418,7 +416,8 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       categoryId: this.toOptionalNumber(this.editModel.categoryId),
       maxCapacity: this.toOptionalNumber(this.editModel.maxCapacity),
       currentParticipants: this.toOptionalNumber(this.editModel.currentParticipants),
-      price: this.toOptionalNumber(this.editModel.price)
+      price: this.toOptionalNumber(this.editModel.price),
+      userId: this.getCurrentUserId() ?? this.editingEvent?.userId
     };
 
     this.editFieldErrors = {};
@@ -538,10 +537,6 @@ export class MyEventsComponent implements OnInit, OnDestroy {
 
     this.eventService.delete(eventId).subscribe({
       next: () => {
-        const userId = this.ownershipService.getCurrentUserId();
-        if (userId) {
-          this.ownershipService.removeOwnedEvent(eventId, userId);
-        }
         this.successMessage = 'Event deleted successfully.';
         this.loadMyEvents();
       },
@@ -996,5 +991,17 @@ export class MyEventsComponent implements OnInit, OnDestroy {
       default:
         return String(status || '').toUpperCase();
     }
+  }
+
+  private resolveCreateStatus(): string {
+    const currentUser = this.userService.currentUser();
+    const role = String(currentUser?.role || '').toUpperCase();
+    return role === 'ADMIN' ? 'ACCEPTED' : 'PENDING';
+  }
+
+  private getCurrentUserId(): number | null {
+    const currentUser = this.userService.currentUser();
+    const id = Number(currentUser?.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
   }
 }

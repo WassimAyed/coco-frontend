@@ -15,6 +15,7 @@ import { CommentService } from '../../../event/services/comment.service';
 import { EventService } from '../../../event/services/event.service';
 import { ParticipantService } from '../../../event/services/participant.service';
 import { ReactionService } from '../../../event/services/reaction.service';
+import { UserService } from '../../../user-security/services/user.service';
 
 interface StatsDTO {
   totalEvents: number;
@@ -131,7 +132,8 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     private readonly reactionService: ReactionService,
     private readonly commentService: CommentService,
     private readonly participantService: ParticipantService,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -416,6 +418,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
+      status: this.resolveCreateStatus(),
       latitude: this.toOptionalNumber(this.createEventModel.latitude),
       longitude: this.toOptionalNumber(this.createEventModel.longitude),
       categoryId: Number(this.createEventModel.categoryId),
@@ -1530,6 +1533,12 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   private getCurrentUserId(): number | undefined {
     const userId = Number(localStorage.getItem('userId'));
     return Number.isFinite(userId) && userId > 0 ? userId : undefined;
+  }
+
+  private resolveCreateStatus(): EventStatus {
+    const currentUser = this.userService.currentUser();
+    const role = String(currentUser?.role || '').toUpperCase();
+    return role === 'ADMIN' ? 'ACCEPTED' : 'PENDING';
   }
 
   private normalizeStatus(status?: string): string {

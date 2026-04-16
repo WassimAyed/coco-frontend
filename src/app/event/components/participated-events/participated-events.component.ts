@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { CommentDto } from '../../models/comment.model';
 import { CategoryDto } from '../../models/category.model';
 import { EventDto } from '../../models/event.model';
@@ -71,28 +71,7 @@ export class ParticipatedEventsComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.eventService.getAll().pipe(
-      switchMap(events => {
-        const eventsWithId = events.filter(event => !!event.id);
-
-        if (eventsWithId.length === 0) {
-          return of([] as EventDto[]);
-        }
-
-        const checks = eventsWithId.map(event =>
-          this.participantService.getByEvent(event.id!).pipe(
-            catchError(() => of([] as ParticipantDto[])),
-            map(participants => ({ event, participants }))
-          )
-        );
-
-        return forkJoin(checks).pipe(
-          map(entries => entries
-            .filter(entry => this.isCurrentUserParticipant(entry.participants))
-            .map(entry => entry.event)
-          )
-        );
-      }),
+    this.eventService.getParticipatedByUser(this.currentUserEmail, this.currentUserPhone, { page: 0, size: 200 }).pipe(
       catchError(() => {
         this.errorMessage = 'Unable to load participated events.';
         return of([] as EventDto[]);

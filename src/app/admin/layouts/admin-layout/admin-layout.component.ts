@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   AlertTriangle,
@@ -31,6 +31,7 @@ import {
   MessageCircle
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
+import { EventService } from '../../../event/services/event.service';
 
 interface DashboardModule {
   id: string;
@@ -38,17 +39,29 @@ interface DashboardModule {
   icon: LucideIconData;
 }
 
+interface PendingEventNotification {
+  id: number;
+  title: string;
+  username: string;
+  lastname: string;
+  email: string;
+}
+
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html'
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
+  private readonly eventService = inject(EventService);
+  private notificationIntervalId: ReturnType<typeof setInterval> | null = null;
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
+  readonly showNotifications = signal(false);
   readonly user = this.userService.currentUser;
+  pendingEvents: PendingEventNotification[] = [];
 
   readonly modules: DashboardModule[] = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
@@ -141,8 +154,35 @@ export class AdminLayoutComponent {
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
+  ngOnInit(): void {
+    this.loadPendingEvents();
+    this.notificationIntervalId = setInterval(() => {
+      this.loadPendingEvents();
+    }, 5000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.notificationIntervalId) {
+      clearInterval(this.notificationIntervalId);
+      this.notificationIntervalId = null;
+    }
+  }
+
   selectModule(moduleId: string): void {
     this.selectedModule.set(moduleId);
+  }
+
+  toggleNotifications(): void {
+    this.showNotifications.set(!this.showNotifications());
+  }
+
+  markAsRead(eventId: number): void {
+    const read = JSON.parse(localStorage.getItem('readNotifs') || '[]');
+    if (!read.includes(eventId)) {
+      read.push(eventId);
+      localStorage.setItem('readNotifs', JSON.stringify(read));
+    }
+    this.pendingEvents = this.pendingEvents.filter(e => e.id !== eventId);
   }
 
   get selectedModuleName(): string {
@@ -160,5 +200,57 @@ export class AdminLayoutComponent {
   async logout(): Promise<void> {
     this.userService.logout();
     await this.router.navigate(['/']);
+  }
+
+  private loadPendingEvents(): void {
+    this.eventService.getByStatus('PENDING', { page: 0, size: 200 }).subscribe({
+      next: events => {
+        const data = { events: Array.isArray(events) ? events : [] };
+        const read = JSON.parse(localStorage.getItem('readNotifs') || '[]');
+        this.pendingEvents = (data.events || [])
+          .map((event: any) => this.toPendingNotification(event))
+          .filter((event): event is PendingEventNotification => !!event && !read.includes(event.id));
+      },
+      error: () => {
+        this.pendingEvents = [];
+      }
+    });
+  }
+
+  private toPendingNotification(event: any): PendingEventNotification | null {
+    const id = Number(event?.id);
+    if (!Number.isFinite(id)) {
+      return null;
+    }
+
+    const creator = event?.creator || event?.createdBy || event?.user || {};
+    const username = String(
+      event?.username
+      || event?.firstName
+      || creator?.username
+      || creator?.firstName
+      || ''
+    ).trim();
+    const lastname = String(
+      event?.lastname
+      || event?.lastName
+      || creator?.lastname
+      || creator?.lastName
+      || ''
+    ).trim();
+    const email = String(
+      event?.email
+      || event?.creatorEmail
+      || creator?.email
+      || ''
+    ).trim();
+
+    return {
+      id,
+      title: String(event?.name || event?.title || 'Untitled event'),
+      username: username || 'Unknown',
+      lastname,
+      email: email || 'No email',
+    };
   }
 }

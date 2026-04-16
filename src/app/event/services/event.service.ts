@@ -60,6 +60,32 @@ export class EventService {
     return this.getByStatusPaged(status, query).pipe(map(response => this.extractContent(response)));
   }
 
+  getCreatedByUserPaged(userId: number, query?: EventListQuery): Observable<PagedResponse<EventDto>> {
+    return this.http.get<unknown>(`${this.baseUrl}/created-by/${userId}`, {
+      params: this.toParams(query)
+    }).pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
+  getCreatedByUser(userId: number, query?: EventListQuery): Observable<EventDto[]> {
+    return this.getCreatedByUserPaged(userId, query).pipe(map(response => this.extractContent(response)));
+  }
+
+  getParticipatedByUserPaged(
+    email?: string,
+    phone?: string,
+    query?: EventListQuery
+  ): Observable<PagedResponse<EventDto>> {
+    const params = this.toParams({ ...query, email, phone });
+    return this.http.get<unknown>(`${this.baseUrl}/participated`, { params })
+      .pipe(map(response => this.normalizePagedResponse<EventDto>(response)));
+  }
+
+  getParticipatedByUser(email?: string, phone?: string, query?: EventListQuery): Observable<EventDto[]> {
+    return this.getParticipatedByUserPaged(email, phone, query).pipe(
+      map(response => this.extractContent(response))
+    );
+  }
+
   searchByNamePaged(name: string, query?: EventListQuery): Observable<PagedResponse<EventDto>> {
     const params = this.toParams({ ...query, name });
     return this.http.get<unknown>(`${this.baseUrl}/search`, { params })

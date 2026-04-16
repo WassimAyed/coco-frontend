@@ -10,6 +10,7 @@ import { ScoredEvent } from '../../models/scored-event.model';
 import { EventOwnershipService } from '../../services/event-ownership.service';
 import { EventService } from '../../services/event.service';
 import { RecommendationService } from '../../services/recommendation.service';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-event-list',
@@ -70,7 +71,8 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private readonly eventService: EventService,
     private readonly ownershipService: EventOwnershipService,
-    private readonly recommendationService: RecommendationService
+    private readonly recommendationService: RecommendationService,
+    private readonly userService: UserService
   ) {}
 
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
@@ -113,6 +115,7 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
       location,
       startDate: startDate ? this.formatDateForBackend(startDate) : undefined,
       endDate: endDate ? this.formatDateForBackend(endDate) : undefined,
+      status: this.resolveCreateStatus(),
       latitude: this.toOptionalNumber(this.createModel.latitude),
       longitude: this.toOptionalNumber(this.createModel.longitude),
       categoryId: Number(this.createModel.categoryId),
@@ -754,6 +757,12 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private resolveCreateStatus(): EventStatus {
+    const currentUser = this.userService.currentUser();
+    const role = String(currentUser?.role || '').toUpperCase();
+    return role === 'ADMIN' ? 'ACCEPTED' : 'PENDING';
   }
 
   private clearRecommendationMetadata(): void {
