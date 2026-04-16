@@ -21,7 +21,7 @@ export class SubsListComponent implements OnInit {
   ngOnInit(): void {
     const storedId = localStorage.getItem('userId');
     if (!storedId) {
-      console.warn('Utilisateur non connecté, redirection vers /login');
+      console.warn('User not logged in, redirecting to /login');
       this.router.navigate(['/login']);
       return;
     }
@@ -32,12 +32,12 @@ export class SubsListComponent implements OnInit {
   loadPlans(): void {
     this.subsService.getAllPlans().subscribe({
       next: (data) => {
-        // Cacher le plan FREE de la liste des plans disponibles
+        // Hide FREE plan from available plans list
         this.plans = data.filter(p => !p.name.includes('FREE'));
         this.loading = false;
       },
       error: (err) => {
-        console.error('Erreur chargement plans', err);
+        console.error('Error loading plans', err);
         this.loading = false;
       }
     });
@@ -52,23 +52,23 @@ export class SubsListComponent implements OnInit {
   }
 
   getFeatures(planName: string): string[] {
-    const common = ["Support technique 24/7", "Visibilité accrue"];
-    if (planName.includes('FREE')) return ["5 Posts inclus", ...common];
-    if (planName === 'PAY_PER_POST') return ["1 Post inclus", ...common];
-    return ["Posts Illimités", ...common];
+    const common = ['24/7 technical support', 'Increased visibility'];
+    if (planName.includes('FREE')) return ['5 posts included', ...common];
+    if (planName === 'PAY_PER_POST') return ['1 post included', ...common];
+    return ['Unlimited posts', ...common];
   }
 
   getDescription(planName: string): string {
-    if (planName.includes('FREE')) return "Idéal pour tester la plateforme.";
-    if (planName === 'MONTHLY') return "Le choix parfait pour les professionnels.";
-    if (planName === 'YEARLY') return "Économisez gros avec le plan annuel.";
-    return "Payez uniquement ce que vous postez.";
+    if (planName.includes('FREE')) return 'Ideal for trying the platform.';
+    if (planName === 'MONTHLY') return 'The perfect choice for professionals.';
+    if (planName === 'YEARLY') return 'Save more with the yearly plan.';
+    return 'Only pay for what you post.';
   }
 
   getButtonText(planName: string): string {
-    if (planName.includes('FREE')) return "COMMENCER";
-    if (planName === 'PAY_PER_POST') return "ACHETER UN POST";
-    return "S'ABONNER";
+    if (planName.includes('FREE')) return 'GET STARTED';
+    if (planName === 'PAY_PER_POST') return 'BUY ONE POST';
+    return 'SUBSCRIBE';
   }
 
   getDelay(planName: string): string {
@@ -83,10 +83,10 @@ export class SubsListComponent implements OnInit {
 
     this.subsService.initiatePayment(this.userId, planId).subscribe({
       next: (url) => {
-        // Redirection réelle vers le Checkout Stripe
+        // Real redirect to Stripe Checkout
         window.location.href = url;
       },
-      error: (err) => alert('Erreur lors du paiement: ' + err.message)
+      error: (err) => alert('Payment error: ' + err.message)
     });
   }
 }

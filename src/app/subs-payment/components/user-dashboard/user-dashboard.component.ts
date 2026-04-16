@@ -3,44 +3,58 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 import { UserSubscription, Payment } from '../../models/subscription.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="user-page">
-      <div class="mesh-gradient"></div>
-      <div class="noise-overlay"></div>
+    <div class="offres-page">
+      <div class="page-header">
+        <div class="header-content">
+          <div>
+            <span class="header-eyebrow">Subscription center</span>
+            <h1 class="header-title">My Dashboard</h1>
+            <p class="header-subtitle">Manage your plan, usage, and payments</p>
+          </div>
 
-      <div class="dashboard-container">
-        <div class="header" *ngIf="activeSubscription">
-          <h1>Mon Abonnement</h1>
-          <p>Gérez vos avantages et suivez votre consommation.</p>
+          <div class="header-stats" *ngIf="activeSubscription">
+            <div class="stat-pill">
+              <span class="stat-num">{{ getRemainingDays() }}</span>
+              <span class="stat-label">Days left</span>
+            </div>
+            <div class="stat-pill stat-pill--active">
+              <span class="stat-num">{{ activeSubscription.remainingPosts ?? '∞' }}</span>
+              <span class="stat-label">Posts left</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-decoration">
+          <div class="deco-circle deco-circle--1"></div>
+          <div class="deco-circle deco-circle--2"></div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div class="alert-banner" *ngIf="activeSubscription && showWarning()">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ getWarningMessage() }}</span>
+          <button class="upgrade-link" routerLink="/subs-payment">Renew / Upgrade</button>
         </div>
 
         <div class="dashboard-content" *ngIf="activeSubscription; else noSub">
-          <!-- Banner Alerte -->
-          <div class="alert-banner" *ngIf="showWarning()" class="fade-in">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            <span>{{ getWarningMessage() }}</span>
-            <button class="upgrade-link" routerLink="/subs-payment">Renouveler / Améliorer</button>
-          </div>
-
-          <!-- Widget Plan Actuel -->
           <div class="card plan-card">
-            <div class="card-header">
-              <span class="plan-tag">PLAN ACTUEL</span>
-              <h2>{{ activeSubscription.plan.name }}</h2>
-            </div>
-            
+            <span class="plan-tag">CURRENT PLAN</span>
+            <h2>{{ activeSubscription.plan.name }}</h2>
+
             <div class="stats-grid">
               <div class="stat-item">
-                <span class="label">Jours Restants</span>
+                <span class="label">Days Remaining</span>
                 <span class="value">{{ getRemainingDays() }}</span>
               </div>
               <div class="stat-item">
-                <span class="label">Quota Posts</span>
+                <span class="label">Post Quota</span>
                 <span class="value">{{ activeSubscription.remainingPosts ?? '∞' }}</span>
               </div>
             </div>
@@ -50,41 +64,39 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
                 <div class="fill" [style.width.%]="getProgress()"></div>
               </div>
               <div class="dates">
-                <span>Début: {{ activeSubscription.startDate | date:'dd/MM/yyyy' }}</span>
-                <span>Fin: {{ activeSubscription.endDate | date:'dd/MM/yyyy' }}</span>
+                <span>Start: {{ activeSubscription.startDate | date:'dd/MM/yyyy' }}</span>
+                <span>End: {{ activeSubscription.endDate | date:'dd/MM/yyyy' }}</span>
               </div>
             </div>
 
-            <button class="btn btn-outline" routerLink="/subs-payment">Changer de plan</button>
+            <button class="btn btn-outline" routerLink="/subs-payment">Change plan</button>
           </div>
 
-          <!-- Section Avantages -->
           <div class="card benefits-card">
-            <h3>Mes Avantages</h3>
+            <h3>My Benefits</h3>
             <ul class="benefits-list">
-              <li><i class="bi bi-check-circle"></i> Support prioritaire 24/7</li>
-              <li><i class="bi bi-check-circle"></i> Visibilité Boostée</li>
-              <li><i class="bi bi-check-circle"></i> Badge certifié sur vos offres</li>
+              <li><i class="bi bi-check-circle"></i> Priority support 24/7</li>
+              <li><i class="bi bi-check-circle"></i> Boosted visibility</li>
+              <li><i class="bi bi-check-circle"></i> Verified badge on your offers</li>
             </ul>
           </div>
         </div>
 
-        <!-- Section Historique -->
         <div class="history-section" *ngIf="payments.length > 0">
-          <h3>Historique des Paiements</h3>
+          <h3>Payment History</h3>
           <div class="table-card">
             <table class="history-table">
               <thead>
                 <tr>
                   <th>Date</th>
                   <th>Plan</th>
-                  <th>Montant</th>
-                  <th>Statut</th>
-                  <th>Facture</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Invoice</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let p of payments" class="fade-in">
+                <tr *ngFor="let p of payments">
                   <td>{{ p.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td class="bold">{{ p.subscription.plan.name }}</td>
                   <td>{{ p.amount }} {{ p.currency }}</td>
@@ -105,122 +117,303 @@ import { UserSubscription, Payment } from '../../models/subscription.model';
         <ng-template #noSub>
           <div class="empty-state">
             <i class="bi bi-credit-card-2-back"></i>
-            <h2>Aucun abonnement actif</h2>
-            <p>Souscrivez à un plan pour débloquer toutes les fonctionnalités.</p>
-            <button class="btn btn-red" routerLink="/subs-payment">Voir les Plans</button>
+            <h2>No active subscription</h2>
+            <p>Subscribe to a plan to unlock all features.</p>
+            <button class="btn btn-red" routerLink="/subs-payment">View Plans</button>
           </div>
         </ng-template>
       </div>
     </div>
   `,
   styles: [`
-    .user-page {
+    .offres-page {
       min-height: 100vh;
-      background-color: #f5f5f3;
+      background: #f4f4f6;
+      padding-bottom: 3rem;
       font-family: 'DM Sans', sans-serif;
-      color: #0a0a0a;
-      padding: 6rem 2rem;
+    }
+
+    .page-header {
       position: relative;
+      background: linear-gradient(135deg, #1e1e1e 0%, #2c2c2c 55%, #3a1215 100%);
+      padding: 2.75rem 2.5rem 3.5rem;
+      overflow: hidden;
+      color: #fff;
     }
 
-    .mesh-gradient {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 0;
-      background: radial-gradient(circle at 100% 0%, rgba(230, 48, 48, 0.03) 0%, transparent 40%);
+    .header-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .dashboard-container { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; }
-
-    .header {
-      margin-bottom: 3rem;
-      h1 { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
-      p { color: #888; font-size: 1.1rem; }
+    .header-eyebrow {
+      display: inline-flex;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f83441;
+      background: rgba(248, 52, 65, 0.12);
+      border: 1px solid rgba(248, 52, 65, 0.3);
+      border-radius: 30px;
+      padding: 0.3rem 0.85rem;
+      margin-bottom: 0.6rem;
     }
 
-    .dashboard-content { display: grid; gap: 2rem; grid-template-columns: 1.5fr 1fr; }
+    .header-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin: 0 0 0.25rem;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .header-subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      margin: 0;
+    }
+
+    .header-stats { display: flex; gap: 0.75rem; }
+
+    .stat-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 0.75rem 1.4rem;
+      min-width: 84px;
+    }
+
+    .stat-pill--active {
+      background: rgba(248, 52, 65, 0.15);
+      border-color: rgba(248, 52, 65, 0.35);
+    }
+
+    .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
+
+    .header-decoration { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .deco-circle { position: absolute; border-radius: 50%; opacity: 0.07; background: #f83441; }
+    .deco-circle--1 { width: 360px; height: 360px; right: -70px; top: -130px; }
+    .deco-circle--2 { width: 200px; height: 200px; right: 220px; bottom: -90px; background: #fff; opacity: 0.04; }
+
+    .content-area {
+      max-width: 1200px;
+      margin: -1.5rem auto 0;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 3;
+    }
+
+    .dashboard-content { display: grid; gap: 1.5rem; grid-template-columns: 1.5fr 1fr; }
 
     .card {
-      background: white; border-radius: 24px; padding: 2.5rem; border: 1px solid #e8e8e8;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      animation: fadeUp 0.8s ease-out both;
+      background: #fff;
+      border-radius: 18px;
+      padding: 2rem;
+      border: 1px solid #ececec;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
 
     .plan-tag { font-size: 0.7rem; font-weight: 700; color: #e63030; letter-spacing: 1px; }
-    h2 { font-family: 'Syne', sans-serif; margin-top: 0.5rem; font-size: 2rem; }
+    h2 { font-family: 'Syne', sans-serif; margin-top: 0.5rem; font-size: 2rem; margin-bottom: 0.2rem; }
 
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
-    .stat-item {
-      .label { display: block; color: #888; font-size: 0.85rem; margin-bottom: 0.5rem; }
-      .value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
-    }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    .stat-item .label { display: block; color: #777; font-size: 0.85rem; margin-bottom: 0.4rem; }
+    .stat-item .value { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 800; }
 
     .progress-container {
-      margin-bottom: 2.5rem;
-      .progress-bar { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; margin-bottom: 0.75rem; }
-      .fill { height: 100%; background: #e63030; border-radius: 4px; transition: width 1s ease-out; }
-      .dates { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
+      margin-bottom: 1.75rem;
     }
 
-    .benefits-card {
-      h3 { font-family: 'Syne', sans-serif; margin-bottom: 1.5rem; }
-      .benefits-list {
-        list-style: none; padding: 0;
-        li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 1rem; color: #555; }
-        i { color: #16a34a; font-size: 1.1rem; }
-      }
+    .progress-bar {
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
     }
+
+    .fill {
+      height: 100%;
+      background: #e63030;
+      border-radius: 4px;
+      transition: width 1s ease-out;
+    }
+
+    .dates {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .benefits-card h3 { font-family: 'Syne', sans-serif; margin-bottom: 1.1rem; }
+    .benefits-list { list-style: none; padding: 0; margin: 0; }
+    .benefits-list li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 0.85rem; color: #555; }
+    .benefits-list i { color: #16a34a; font-size: 1.1rem; }
 
     .alert-banner {
-      grid-column: span 2; background: #fff5f5; border: 1px solid #feb2b2; padding: 1rem 1.5rem; border-radius: 16px;
-      display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; color: #c53030; font-weight: 600; font-size: 0.9rem;
-      i { font-size: 1.2rem; }
-      .upgrade-link { margin-left: auto; background: #e63030; color: white; border: none; padding: 6px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      padding: 1rem 1.2rem;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+      color: #c53030;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .alert-banner i { font-size: 1.2rem; }
+
+    .upgrade-link {
+      margin-left: auto;
+      background: #e63030;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .history-section {
-      margin-top: 4rem;
-      h3 { font-family: 'Syne', sans-serif; font-size: 1.8rem; margin-bottom: 2rem; }
+      margin-top: 2rem;
     }
+
+    .history-section h3 { font-family: 'Syne', sans-serif; font-size: 1.5rem; margin-bottom: 1rem; }
 
     .history-table {
-      width: 100%; border-collapse: collapse;
-      th { text-align: left; padding: 1.25rem; color: #888; font-size: 0.85rem; text-transform: uppercase; }
-      td { padding: 1.25rem; border-top: 1px solid #f0f0f0; font-size: 0.95rem; }
-      .bold { font-weight: 700; color: #0a0a0a; }
+      width: 100%;
+      border-collapse: collapse;
     }
+
+    .history-table th {
+      text-align: left;
+      padding: 1rem;
+      color: #888;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .history-table td {
+      padding: 1rem;
+      border-top: 1px solid #f0f0f0;
+      font-size: 0.92rem;
+    }
+
+    .history-table .bold { font-weight: 700; color: #0a0a0a; }
 
     .status-pill {
-      padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 700;
-      &.SUCCESS, &.ACTIVE { background: #e6fcf5; color: #0ca678; }
-      &.FAILED, &.EXPIRED { background: #fff5f5; color: #fa5252; }
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
     }
+
+    .status-pill.SUCCESS,
+    .status-pill.ACTIVE { background: #e6fcf5; color: #0ca678; }
+
+    .status-pill.FAILED,
+    .status-pill.EXPIRED { background: #fff5f5; color: #fa5252; }
 
     .pdf-btn {
-      background: #f8f9fa; border: 1px solid #e8e8e8; padding: 6px 12px; border-radius: 8px;
-      cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.8rem;
-      &:hover { background: #0a0a0a; color: white; border-color: #0a0a0a; }
+      background: #f8f9fa;
+      border: 1px solid #e8e8e8;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      font-size: 0.8rem;
     }
 
-    .table-card { background: white; border-radius: 24px; padding: 1rem; border: 1px solid #e8e8e8; }
+    .pdf-btn:hover { background: #0a0a0a; color: white; border-color: #0a0a0a; }
+
+    .table-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 0.5rem;
+      border: 1px solid #ececec;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
 
     .empty-state {
-      text-align: center; padding: 5rem; background: white; border-radius: 32px; border: 1px dashed #e8e8e8;
-      i { font-size: 4rem; color: #e8e8e8; margin-bottom: 2rem; display: block; }
-      h2 { font-family: 'Syne', sans-serif; margin-bottom: 1rem; }
-      p { color: #888; margin-bottom: 2rem; }
+      text-align: center;
+      padding: 4rem 2rem;
+      background: #fff;
+      border-radius: 20px;
+      border: 1px dashed #e8e8e8;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.05);
     }
 
+    .empty-state i { font-size: 4rem; color: #e8e8e8; margin-bottom: 1.5rem; display: block; }
+    .empty-state h2 { font-family: 'Syne', sans-serif; margin-bottom: 0.75rem; }
+    .empty-state p { color: #888; margin-bottom: 1.5rem; }
+
     .btn {
-      width: 100%; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s;
-      &:hover { transform: translateY(-2px); opacity: 0.9; }
+      width: 100%;
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
     }
+
+    .btn:hover { transform: translateY(-2px); opacity: 0.92; }
+
     .btn-red { background: #e63030; color: white; border: none; }
     .btn-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
 
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 900px) {
+      .dashboard-content {
+        grid-template-columns: 1fr;
+      }
 
-    @media (max-width: 768px) { .dashboard-content { grid-template-columns: 1fr; } }
+      .alert-banner {
+        flex-wrap: wrap;
+      }
+
+      .upgrade-link {
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-title {
+        font-size: 1.8rem;
+      }
+
+      .content-area {
+        padding: 0 1rem;
+      }
+
+      .card {
+        padding: 1.25rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dates {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
   `]
 })
 export class UserDashboardComponent implements OnInit {
@@ -228,20 +421,34 @@ export class UserDashboardComponent implements OnInit {
   payments: Payment[] = [];
   userId!: number;
 
-  constructor(private subsService: SubsService, private router: Router) { }
+  constructor(
+    private subsService: SubsService,
+    private router: Router,
+    private userService: UserService
+  ) { }
 
   ngOnInit() {
-    const storedId = localStorage.getItem('userId');
-    if (!storedId) {
-      console.warn('Utilisateur non connecté, redirection vers /login');
+    const resolvedUserId = this.resolveCurrentUserId();
+    if (!resolvedUserId) {
+      console.warn('User not logged in, redirecting to /login');
       this.router.navigate(['/login']);
       return;
     }
-    this.userId = Number(storedId);
+
+    this.userId = Number(resolvedUserId);
     this.subsService.getUserSubscriptions(this.userId).subscribe(subs => {
       this.activeSubscription = subs.find(s => s.status === 'ACTIVE');
     });
     this.loadHistory();
+  }
+
+  private resolveCurrentUserId(): string | null {
+    const fromSession = this.userService.currentUser()?.id;
+    if (fromSession) {
+      return String(fromSession);
+    }
+
+    return localStorage.getItem('userId');
   }
 
   loadHistory() {
@@ -288,8 +495,8 @@ export class UserDashboardComponent implements OnInit {
   getWarningMessage(): string {
     const sub = this.activeSubscription;
     if (sub?.remainingPosts !== null && (sub?.remainingPosts ?? 0) <= 5) {
-      return "Attention : Votre quota de posts est presque épuisé ! (" + sub?.remainingPosts + " restants)";
+      return 'Warning: your post quota is almost exhausted! (' + sub?.remainingPosts + ' left)';
     }
-    return "Attention : Votre abonnement expire dans " + this.getRemainingDays() + " jours.";
+    return 'Warning: your subscription expires in ' + this.getRemainingDays() + ' days.';
   }
 }

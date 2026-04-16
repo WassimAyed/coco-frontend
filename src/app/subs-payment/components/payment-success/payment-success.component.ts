@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-payment-success',
@@ -19,24 +20,25 @@ import { HttpClient } from '@angular/common/http';
           </div>
           
           <h1 *ngIf="status === 'processing'">Activation en cours...</h1>
-          <h1 *ngIf="status === 'success'">Paiement Réussi !</h1>
-          <h1 *ngIf="status === 'error'">Un problème est survenu</h1>
+          <h1 *ngIf="status === 'processing'">Activation in progress...</h1>
+          <h1 *ngIf="status === 'success'">Payment successful!</h1>
+          <h1 *ngIf="status === 'error'">Something went wrong</h1>
 
-          <p *ngIf="status === 'processing'">Veuillez patienter pendant que nous confirmons votre transaction auprès de Stripe.</p>
-          <p *ngIf="status === 'success'">Votre abonnement CoCo est désormais actif. Profitez d'une visibilité maximale !</p>
-          <p *ngIf="status === 'error'">Nous n'avons pas pu confirmer votre paiement. Si vous avez été débité, contactez notre support.</p>
+          <p *ngIf="status === 'processing'">Please wait while we confirm your Stripe transaction.</p>
+          <p *ngIf="status === 'success'">Your CoCo subscription is now active. Enjoy maximum visibility!</p>
+          <p *ngIf="status === 'error'">We could not confirm your payment. If you were charged, please contact support.</p>
           
           <div class="divider"></div>
 
           <button class="btn btn-red" [routerLink]="status === 'success' ? '/subs-payment/user-dashboard' : '/subs-payment'">
-            {{ status === 'success' ? 'Aller vers mon Dashboard' : 'Retour aux offres' }}
+            {{ status === 'success' ? 'Go to my dashboard' : 'Back to plans' }}
           </button>
         </div>
 
         <div class="trust-bar">
           <div class="trust-item">
             <i class="bi bi-shield-lock"></i>
-            <span>Sécurisé par Stripe</span>
+            <span>Secured by Stripe</span>
           </div>
         </div>
       </div>
@@ -187,6 +189,7 @@ import { HttpClient } from '@angular/common/http';
 export class PaymentSuccessComponent implements OnInit {
   status: 'processing' | 'success' | 'error' = 'processing';
   sessionId: string | null = null;
+  private readonly paymentApiBaseUrl = environment.paymentApiBaseUrl;
 
   constructor(
     private route: ActivatedRoute,
@@ -204,13 +207,13 @@ export class PaymentSuccessComponent implements OnInit {
   }
 
   confirmPayment() {
-    this.http.get(`http://localhost:9092/api/payment/payments/confirm?sessionId=${this.sessionId}`)
+    this.http.get(`${this.paymentApiBaseUrl}/payments/confirm?sessionId=${this.sessionId}`)
       .subscribe({
         next: () => {
           this.status = 'success';
         },
         error: (err) => {
-          console.error('Erreur confirmation paiement:', err);
+          console.error('Payment confirmation error:', err);
           this.status = 'error';
         }
       });

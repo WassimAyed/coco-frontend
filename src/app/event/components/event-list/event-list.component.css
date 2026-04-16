@@ -1,0 +1,58 @@
+.event-panel {
+	box-shadow: 0 16px 40px -24px rgba(2, 6, 23, 0.22);
+}
+
+.event-card {
+	border-color: color-mix(in srgb, var(--border) 84%, white 16%);
+}
+
+.event-create-map {
+	height: 400px;
+	width: 100%;
+	border-radius: 0.75rem;
+	border: 1px solid var(--border);
+	overflow: hidden;
+}
+
+.event-card-overlay {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, rgba(2, 6, 23, 0.28), transparent 45%);
+}
+
+.status-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	padding: 0.35rem 0.65rem;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	border: 1px solid transparent;
+	backdrop-filter: blur(6px);
+}
+
+.status-planned {
+	background: rgba(148, 163, 184, 0.2);
+	border-color: rgba(148, 163, 184, 0.35);
+	color: #f8fafc;
+}
+
+.status-ongoing {
+	background: rgba(16, 185, 129, 0.18);
+	border-color: rgba(16, 185, 129, 0.35);
+	color: #ecfdf5;
+}
+
+.status-completed {
+	background: rgba(59, 130, 246, 0.2);
+	border-color: rgba(59, 130, 246, 0.35);
+	color: #eff6ff;
+}
+
+.status-cancelled {
+	background: rgba(239, 68, 68, 0.2);
+	border-color: rgba(239, 68, 68, 0.36);
+	color: #fff1f2;
+}

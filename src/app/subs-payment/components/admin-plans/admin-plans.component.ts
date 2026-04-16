@@ -3,176 +3,377 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
+import { LucideAngularModule, Edit, XCircle, LucideIconData } from 'lucide-angular';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-admin-plans',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
-    <div class="admin-page">
-      <div class="mesh-gradient"></div>
-      <div class="noise-overlay"></div>
-
-      <div class="admin-container">
-        <div class="header">
-          <h1>Gestion des Plans</h1>
-          <button class="btn btn-red" (click)="openCreateModal()">
-            <i class="bi bi-plus-lg"></i> Nouveau Plan
-          </button>
+    <section class="plans-shell">
+      <div class="plans-header">
+        <div>
+          <span class="header-eyebrow">SubPayment Admin</span>
+          <h2>Subscription Plans</h2>
+          <p>Create and manage all plans from one place.</p>
         </div>
 
-        <div class="table-card">
+        <div class="header-stats">
+          <div class="stat-pill">
+            <span class="stat-value">{{ plans.length }}</span>
+            <span class="stat-label">Total Plans</span>
+          </div>
+          <div class="stat-pill stat-pill--active">
+            <span class="stat-value">{{ paidPlansCount }}</span>
+            <span class="stat-label">Paid Plans</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="plans-grid">
+        <article class="card form-card">
+          <div class="card-head">
+            <h3>{{ isEditing ? 'Edit Plan' : 'Create Plan' }}</h3>
+            <button *ngIf="isEditing" class="btn btn-outline" (click)="resetForm()">Cancel edit</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label>Plan Name</label>
+              <input [(ngModel)]="currentPlan.name" placeholder="e.g. PREMIUM_PRO" />
+            </div>
+
+            <div class="field">
+              <label>Price (TND)</label>
+              <input type="number" [(ngModel)]="currentPlan.price" min="0" />
+            </div>
+
+            <div class="field">
+              <label>Post Limit</label>
+              <input type="number" [(ngModel)]="currentPlan.postLimit" min="0" />
+            </div>
+
+            <div class="field full">
+              <label>Duration (days)</label>
+              <input type="number" [(ngModel)]="currentPlan.durationDays" min="1" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary" (click)="savePlan()" [disabled]="!currentPlan.name.trim()">
+            {{ isEditing ? 'Update Plan' : 'Create Plan' }}
+          </button>
+        </article>
+
+        <article class="card tips-card">
+          <h3>Quick tips</h3>
+          <ul>
+            <li>Use clear plan names (e.g. FREE, MONTHLY, YEARLY).</li>
+            <li>Set <strong>Post Limit = 0</strong> for unlimited posting.</li>
+            <li>Review duration and pricing before publishing.</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="card table-card">
+        <div class="card-head">
+          <h3>Existing Plans</h3>
+        </div>
+
+        <div class="table-wrap">
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Nom</th>
-                <th>Prix (TND)</th>
-                <th>Limite Posts</th>
-                <th>Durée (Jours)</th>
+                <th>Name</th>
+                <th>Price (TND)</th>
+                <th>Post Limit</th>
+                <th>Duration (Days)</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let plan of plans" class="fade-in">
+              <tr *ngFor="let plan of plans">
                 <td class="bold">{{ plan.name }}</td>
                 <td>{{ plan.price }}</td>
-                <td>{{ plan.postLimit || 'Illimité' }}</td>
-                <td>{{ plan.durationDays }} j</td>
+                <td>{{ plan.postLimit || 'Unlimited' }}</td>
+                <td>{{ plan.durationDays }} d</td>
                 <td class="actions">
-                  <button class="icon-btn edit" (click)="editPlan(plan)"><i class="bi bi-pencil"></i></button>
-                  <button class="icon-btn delete" (click)="deletePlan(plan.id!)"><i class="bi bi-trash"></i></button>
+                  <button class="icon-btn edit" type="button" (click)="editPlan(plan)" aria-label="Edit plan">
+                    <lucide-icon [img]="EditIcon" [size]="16"></lucide-icon>
+                  </button>
+                  <button class="icon-btn delete" type="button" (click)="deletePlan(plan.id!)" aria-label="Delete plan">
+                    <lucide-icon [img]="DeleteIcon" [size]="16"></lucide-icon>
+                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <!-- Modal (Simple) -->
-        <div class="modal-backdrop" *ngIf="showModal">
-          <div class="modal-content">
-            <h2>{{ isEditing ? 'Modifier le Plan' : 'Nouveau Plan' }}</h2>
-            <div class="form-group">
-              <label>Nom du Plan</label>
-              <input [(ngModel)]="currentPlan.name" placeholder="ex: PREMIUM_PRO">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Prix (TND)</label>
-                <input type="number" [(ngModel)]="currentPlan.price">
-              </div>
-              <div class="form-group">
-                <label>Limite Posts</label>
-                <input type="number" [(ngModel)]="currentPlan.postLimit">
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Durée (Jours)</label>
-              <input type="number" [(ngModel)]="currentPlan.durationDays">
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-outline" (click)="closeModal()">Annuler</button>
-              <button class="btn btn-red" (click)="savePlan()">Enregistrer</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </article>
+    </section>
   `,
   styles: [`
-    .admin-page {
-      min-height: 100vh;
-      background-color: #f5f5f3;
-      font-family: 'DM Sans', sans-serif;
-      color: #0a0a0a;
-      padding: 4rem 2rem;
+    .plans-shell {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .plans-header {
+      background: linear-gradient(135deg, #1e1e1e 0%, #2c2c2c 55%, #3a1215 100%);
+      border-radius: 18px;
+      color: #fff;
+      padding: 1.4rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
       position: relative;
+      overflow: hidden;
     }
 
-    .mesh-gradient {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 0;
-      background: radial-gradient(circle at 0% 0%, rgba(230, 48, 48, 0.02) 0%, transparent 50%);
+    .header-eyebrow {
+      display: inline-flex;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f83441;
+      background: rgba(248, 52, 65, 0.15);
+      border: 1px solid rgba(248, 52, 65, 0.3);
+      border-radius: 999px;
+      padding: 0.25rem 0.6rem;
+      margin-bottom: 0.45rem;
     }
 
-    .admin-container {
-      position: relative; z-index: 2;
-      max-width: 1000px;
-      margin: 0 auto;
+    .plans-header h2 {
+      margin: 0;
+      font-size: 1.55rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
     }
 
-    .header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 3rem;
-      h1 { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; }
+    .plans-header p {
+      margin: 0.3rem 0 0;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.9rem;
     }
 
-    .table-card {
-      background: white; border-radius: 24px; padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      border: 1px solid #e8e8e8;
+    .header-stats {
+      display: flex;
+      gap: 0.55rem;
+    }
+
+    .stat-pill {
+      min-width: 95px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 0.6rem 0.8rem;
+      text-align: center;
+    }
+
+    .stat-pill--active {
+      background: rgba(248, 52, 65, 0.2);
+      border-color: rgba(248, 52, 65, 0.35);
+    }
+
+    .stat-value { display: block; font-size: 1.35rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.72); }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e9e9e9;
+      border-radius: 18px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #444;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 0.68rem 0.75rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field input:focus {
+      border-color: #f83441;
+      box-shadow: 0 0 0 3px rgba(248, 52, 65, 0.12);
+    }
+
+    .tips-card ul {
+      margin: 0.2rem 0 0;
+      padding-left: 1rem;
+      color: #555;
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
     }
 
     .admin-table {
-      width: 100%; border-collapse: collapse;
-      th { text-align: left; padding: 1.25rem; color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-      td { padding: 1.25rem; border-top: 1px solid #f0f0f0; }
-      .bold { font-weight: 700; color: #0a0a0a; }
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .admin-table th {
+      text-align: left;
+      padding: 0.95rem;
+      color: #888;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .admin-table td {
+      padding: 0.95rem;
+      border-top: 1px solid #efefef;
+      font-size: 0.9rem;
+    }
+
+    .bold {
+      font-weight: 700;
+      color: #151515;
     }
 
     .actions {
-      display: flex; gap: 10px;
-      .icon-btn {
-        width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e8e8e8;
-        background: white; cursor: pointer; transition: all 0.2s;
-        &.edit:hover { background: #f8f9fa; color: #0a0a0a; border-color: #888; }
-        &.delete:hover { background: #fff5f5; color: #e63030; border-color: #ffc1c1; }
-      }
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid #e2e2e2;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn.edit:hover {
+      border-color: #c9c9c9;
+      background: #f7f7f7;
+    }
+
+    .icon-btn.delete:hover {
+      border-color: #f5c4c8;
+      background: #fff5f6;
+      color: #d32030;
     }
 
     .btn {
-      padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s;
-      &:hover { transform: translateY(-2px); opacity: 0.9; }
-    }
-    .btn-red { background: #e63030; color: white; border: none; box-shadow: 0 5px 15px rgba(230,48,48,0.3); }
-    .btn-outline { background: transparent; border: 1px solid #e8e8e8; color: #0a0a0a; }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-      display: flex; justify-content: center; align-items: center; z-index: 100;
+      border: none;
+      border-radius: 10px;
+      padding: 0.65rem 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .modal-content {
-      background: white; padding: 3rem; border-radius: 32px; width: 100%; max-width: 500px;
-      h2 { font-family: 'Syne', sans-serif; margin-bottom: 2rem; }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
-    .form-group {
-      margin-bottom: 1.5rem;
-      label { display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.9rem; }
-      input {
-        width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid #e8e8e8;
-        font-family: 'DM Sans', sans-serif;
-        &:focus { outline: none; border-color: #e63030; }
+    .btn-primary {
+      background: #f83441;
+      color: #fff;
+    }
+
+    .btn-primary:not(:disabled):hover {
+      background: #e62a37;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #444;
+    }
+
+    .btn-outline:hover {
+      border-color: #c8c8c8;
+    }
+
+    @media (max-width: 920px) {
+      .plans-grid {
+        grid-template-columns: 1fr;
       }
     }
 
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
 
-    .fade-in { animation: fadeIn 0.5s ease-out both; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .header-stats {
+        width: 100%;
+      }
+
+      .stat-pill {
+        flex: 1;
+      }
+    }
   `]
 })
 export class AdminPlansComponent implements OnInit {
+  readonly EditIcon: LucideIconData = Edit;
+  readonly DeleteIcon: LucideIconData = XCircle;
   plans: SubscriptionPlan[] = [];
-  showModal = false;
   isEditing = false;
   currentPlan: SubscriptionPlan = this.initPlan();
+  private pendingDeletePlanId: number | null = null;
+  private pendingDeleteTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private subsService: SubsService) { }
+  constructor(
+    private subsService: SubsService,
+    private toast: ToastService
+  ) { }
 
   ngOnInit() { this.loadPlans(); }
 
@@ -184,37 +385,67 @@ export class AdminPlansComponent implements OnInit {
     return { name: '', price: 0, postLimit: 0, durationDays: 30, type: 'SUBSCRIPTION' };
   }
 
-  openCreateModal() {
-    this.isEditing = false;
-    this.currentPlan = this.initPlan();
-    this.showModal = true;
-  }
-
   editPlan(plan: SubscriptionPlan) {
     this.isEditing = true;
     this.currentPlan = { ...plan };
-    this.showModal = true;
   }
 
-  closeModal() { this.showModal = false; }
+  resetForm() {
+    this.isEditing = false;
+    this.currentPlan = this.initPlan();
+  }
 
   savePlan() {
+    if (!this.currentPlan.name?.trim()) {
+      return;
+    }
+
     if (this.isEditing) {
       this.subsService.updatePlan(this.currentPlan.id!, this.currentPlan).subscribe(() => {
         this.loadPlans();
-        this.closeModal();
+        this.resetForm();
       });
     } else {
       this.subsService.createPlan(this.currentPlan).subscribe(() => {
         this.loadPlans();
-        this.closeModal();
+        this.resetForm();
       });
     }
   }
 
   deletePlan(id: number) {
-    if (confirm('Supprimer ce plan ?')) {
-      this.subsService.deletePlan(id).subscribe(() => this.loadPlans());
+    if (this.pendingDeletePlanId !== id) {
+      this.pendingDeletePlanId = id;
+      if (this.pendingDeleteTimer) {
+        clearTimeout(this.pendingDeleteTimer);
+      }
+      this.pendingDeleteTimer = setTimeout(() => {
+        this.pendingDeletePlanId = null;
+        this.pendingDeleteTimer = null;
+      }, 5000);
+      this.toast.warning('Click delete again within 5 seconds to confirm.', 'Confirm delete');
+      return;
     }
+
+    this.pendingDeletePlanId = null;
+    if (this.pendingDeleteTimer) {
+      clearTimeout(this.pendingDeleteTimer);
+      this.pendingDeleteTimer = null;
+    }
+
+    this.subsService.deletePlan(id).subscribe({
+      next: () => {
+        this.toast.success('Plan deleted successfully.');
+        this.loadPlans();
+      },
+      error: (err) => {
+        const message = err?.error?.message || 'Unable to delete plan.';
+        this.toast.error(message, 'Delete failed');
+      }
+    });
+  }
+
+  get paidPlansCount(): number {
+    return this.plans.filter((plan) => (plan.price ?? 0) > 0).length;
   }
 }
