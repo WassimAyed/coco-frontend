@@ -71,7 +71,8 @@ export class AdminLayoutComponent implements OnInit {
   private readonly location = inject(Location);
 
   private readonly moduleUrlMap: Record<string, string> = {
-    carpooling: '/admin/covoiturage'
+    carpooling: '/admin/covoiturage',
+    colocation: '/admin/collocation'
   };
   private readonly userService = inject(UserService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
