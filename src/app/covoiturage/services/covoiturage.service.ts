@@ -9,7 +9,7 @@ import { UserService } from '../../user-security/services/user.service';
 })
 export class CovoiturageService {
 
-  private apiUrl = 'http://localhost:8092/covoiturage';
+  private apiUrl = 'http://localhost:9092/api/covoiturage';
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) {}
@@ -138,7 +138,7 @@ export class CovoiturageService {
   }
 
   getVehiculeImageUrl(filename: string): string {
-    return `http://localhost:8092/imagesVehicules/${filename}`;
+    return `http://localhost:9092/api/covoiturage/imagesVehicules/${filename}`;
   }
 
   // ========== NOTATION ==========

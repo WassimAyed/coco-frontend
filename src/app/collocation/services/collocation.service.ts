@@ -8,7 +8,7 @@ import { UserService } from '../../user-security/services/user.service';
 })
 export class CollocationService {
 
-  private apiUrl = 'http://localhost:8091/collocation';
+  private apiUrl = 'http://localhost:9092/api/collocation';
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) { }
