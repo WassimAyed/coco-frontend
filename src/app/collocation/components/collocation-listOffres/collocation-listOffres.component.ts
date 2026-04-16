@@ -460,11 +460,31 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
      MAP
   ================================= */
   private initMap(): void {
-    this.map = L.map('map').setView([36.8065, 10.1815], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    this.map = L.map('map', {
+      scrollWheelZoom: true,
+      attributionControl: true
+    }).setView([36.8065, 10.1815], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(this.map);
+
+    // CRITICAL: Force map to recalculate its container size
+    // This fixes the "partial blocks" or "grey map" issue.
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+        console.log('[Map] invalidateSize called');
+      }
+    }, 500);
   }
 
   private updateMarkers(): void {
+    if (!this.map) return;
+
+    // Also invalidate size here in case layout shifted
+    this.map.invalidateSize();
+
     this.markers.forEach(m => m.remove());
     this.markers = [];
 
