@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gray-50 py-12">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-foreground">
+        {{ isEditMode ? 'Edit Item' : 'Post Lost/Found Item' }}
+      </h1>
+      <p class="text-slate-600 mt-2">
+        {{ isEditMode ? 'Update your item details' : 'Help others find what they lost' }}
+      </p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Error Alert -->
+        <div *ngIf="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          {{ error }}
+        </div>
+
+        <!-- Type -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+          <select formControlName="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+          </select>
+          <p *ngIf="getFieldError('type')" class="mt-1 text-red-600 text-sm">{{ getFieldError('type') }}</p>
+        </div>
+
+        <!-- Title -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+          <input formControlName="title" type="text" placeholder="e.g., Gold Ring with Initials" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+          <p *ngIf="getFieldError('title')" class="mt-1 text-red-600 text-sm">{{ getFieldError('title') }}</p>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+          <textarea formControlName="description" placeholder="Provide detailed information about the item" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" rows="4"></textarea>
+          <p *ngIf="getFieldError('description')" class="mt-1 text-red-600 text-sm">{{ getFieldError('description') }}</p>
+        </div>
+
+        <!-- Category -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+          <select formControlName="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option value="">Select a category</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select>
+          <p *ngIf="getFieldError('category')" class="mt-1 text-red-600 text-sm">{{ getFieldError('category') }}</p>
+        </div>
+
+        <!-- Location -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+          <select formControlName="location" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option value="">Select a location</option>
+            <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+          </select>
+          <p *ngIf="getFieldError('location')" class="mt-1 text-red-600 text-sm">{{ getFieldError('location') }}</p>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Contact Information *</label>
+          <input formControlName="contactInfo" type="text" placeholder="Phone, email, or other contact method" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+          <p *ngIf="getFieldError('contactInfo')" class="mt-1 text-red-600 text-sm">{{ getFieldError('contactInfo') }}</p>
+        </div>
+
+        <!-- Image URL -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Image URL (optional)</label>
+          <input formControlName="imageUrl" type="text" placeholder="https://example.com/image.jpg" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-4 pt-6">
+          <button 
+            type="submit" 
+            [disabled]="!isFormValid"
+            class="flex-1 bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ loading ? 'Saving...' : (isEditMode ? 'Update Item' : 'Post Item') }}
+          </button>
+          <button 
+            type="button" 
+            (click)="onCancel()"
+            class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -10,19 +10,39 @@ import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
 import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
+import { AdminPlansComponent } from './subs-payment/components/admin-plans/admin-plans.component';
+import { AdminCovoiturageComponent } from './covoiturage/components/admin-covoiturage/admin-covoiturage.component';
 
 
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
 
 @NgModule({
   bootstrap: [AppComponent],
   declarations: [AppComponent, AdminLayoutComponent],
-  imports: [BrowserModule, CommonModule, HttpClientModule, RouterModule, LucideAngularModule, AppRoutingModule, SharedModule, UserSecurityModule],
+  imports: [
+    BrowserModule,
+    CommonModule,
+    HttpClientModule,
+    RouterModule,
+    LucideAngularModule,
+    AppRoutingModule,
+    SharedModule,
+    UserSecurityModule,
+    AdminPlansComponent,
+    AdminCovoiturageComponent
+  ],
   providers: [
     {
       deps: [UserService],
       multi: true,
       provide: APP_INITIALIZER,
       useFactory: (userService: UserService) => () => userService.restoreSession()
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true // important
     }
   ]
 })

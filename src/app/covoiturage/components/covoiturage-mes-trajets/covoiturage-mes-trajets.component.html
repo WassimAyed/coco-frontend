@@ -34,7 +34,7 @@
             <button class="btn btn-outline-primary btn-sm rounded-pill me-1" (click)="viewDetails(t.id!)">
               <i class="fas fa-eye"></i> Details
             </button>
-            <button *ngIf="t.placesDisponibles > 0" class="btn btn-outline-warning btn-sm rounded-pill me-1" (click)="openEditModal(t)">
+            <button *ngIf="t.placesDisponibles > 0 && !isPast(t)" class="btn btn-outline-warning btn-sm rounded-pill me-1" (click)="openEditModal(t)">
               <i class="fas fa-edit"></i> Modifier
             </button>
             <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="deleteTrajet(t.id!)">
@@ -57,12 +57,17 @@
         <div class="modal-body" *ngIf="editTrajet">
           <div *ngIf="editError" class="alert alert-danger">{{ editError }}</div>
 
+          <div *ngIf="hasConfirmedReservation(editTrajet)" class="alert alert-info border-0 rounded-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Une reservation a deja ete confirmee pour ce trajet. Vous pouvez uniquement modifier le <strong>nombre de places</strong>.
+          </div>
+
           <form (ngSubmit)="submitEdit()">
             <div class="row g-3">
               <!-- Depart avec Google Places Autocomplete -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
-                <input #editDepartInput type="text" class="form-control" [value]="editTrajet.pointDepart" placeholder="Rechercher un lieu..." required>
+                <input #editDepartInput type="text" class="form-control" [value]="editTrajet.pointDepart" placeholder="Rechercher un lieu..." required [readonly]="hasConfirmedReservation(editTrajet)">
                 <small *ngIf="editTrajet.lattitudeDepart" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ editTrajet.pointDepart }}
                 </small>
@@ -70,7 +75,7 @@
               <!-- Arrivee avec Google Places Autocomplete -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
-                <input #editArriveeInput type="text" class="form-control" [value]="editTrajet.pointArrivee" placeholder="Rechercher un lieu..." required>
+                <input #editArriveeInput type="text" class="form-control" [value]="editTrajet.pointArrivee" placeholder="Rechercher un lieu..." required [readonly]="hasConfirmedReservation(editTrajet)">
                 <small *ngIf="editTrajet.latitudeArrivee" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ editTrajet.pointArrivee }}
                 </small>
@@ -95,7 +100,7 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de depart *</label>
-                <input type="datetime-local" class="form-control" [(ngModel)]="editTrajet.dateDepart" name="editDateDepart" required>
+                <input type="datetime-local" class="form-control" [(ngModel)]="editTrajet.dateDepart" name="editDateDepart" required [readonly]="hasConfirmedReservation(editTrajet)">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">Nombre de places</label>
@@ -103,11 +108,11 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">Prix par passager (TND)</label>
-                <input type="number" class="form-control" [(ngModel)]="editTrajet.prixParPassager" name="editPrixParPassager" min="0" step="0.5">
+                <input type="number" class="form-control" [(ngModel)]="editTrajet.prixParPassager" name="editPrixParPassager" min="0" step="0.5" [readonly]="hasConfirmedReservation(editTrajet)">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">Vehicule</label>
-                <select class="form-select" [(ngModel)]="editTrajet.vehicleId" name="editVehicleId">
+                <select class="form-select" [(ngModel)]="editTrajet.vehicleId" name="editVehicleId" [disabled]="hasConfirmedReservation(editTrajet)">
                   <option [ngValue]="0" disabled>-- Choisir un vehicule --</option>
                   <option *ngFor="let v of vehicules" [ngValue]="v.id">{{ v.marque }} - {{ v.immatriculation }} ({{ v.couleur }})</option>
                 </select>

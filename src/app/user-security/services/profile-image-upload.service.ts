@@ -1,8 +1,7 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { loadAuthSession } from '../utils/auth-session.util';
 
 function resolveUploadUrl(baseUrl: string, pathOrUrl: string): string {
   const trimmedValue = pathOrUrl.trim();
@@ -69,7 +68,6 @@ export class ProfileImageUploadService {
 
     const response = await firstValueFrom(
       this.http.post<unknown>(uploadUrl, formData, {
-        headers: this.getAuthorizationHeaders(),
         withCredentials: environment.storage.withCredentials,
       }),
     );
@@ -107,14 +105,5 @@ export class ProfileImageUploadService {
         'path',
       ])
     );
-  }
-
-  private getAuthorizationHeaders(): HttpHeaders {
-    const session = loadAuthSession();
-    const accessToken = session?.accessToken?.trim();
-
-    return accessToken
-      ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })
-      : new HttpHeaders();
   }
 }

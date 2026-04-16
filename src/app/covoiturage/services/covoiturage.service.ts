@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Covoiturage, Reservation, Vehicule, Notation } from '../models/covoiturage.model';
+import { UserService } from '../../user-security/services/user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +10,19 @@ import { Covoiturage, Reservation, Vehicule, Notation } from '../models/covoitur
 export class CovoiturageService {
 
   private apiUrl = 'http://localhost:8092/covoiturage';
+  private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) {}
+
+  getCurrentUserId(): number {
+    const user = this.userService.currentUser();
+    if (user?.id) {
+      const parsed = Number(user.id);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    const stored = Number(localStorage.getItem('userId'));
+    return !isNaN(stored) && stored > 0 ? stored : 0;
+  }
 
   // ========== COVOITURAGE ==========
 

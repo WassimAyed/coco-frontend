@@ -1,0 +1,124 @@
+
+
+<div class="create-profile-container">
+  <div class="profile-card">
+
+    <div class="profile-header">
+      <h2>🎓 Créez votre profil</h2>
+      <p>Aidez-nous à trouver votre colocataire idéal</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="profile-form">
+
+      <!-- GRILLE DE BASE -->
+      <div class="form-grid">
+
+        <div class="input-group">
+          <label>Âge *</label>
+          <input type="number" formControlName="age" placeholder="ex. 22">
+        </div>
+
+        <div class="input-group">
+          <label>Genre *</label>
+          <select formControlName="gender">
+            <option value="">Sélectionnez un genre</option>
+            <option value="male">Homme</option>
+            <option value="female">Femme</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>Budget (TND/mois) *</label>
+          <input type="number" formControlName="budget" placeholder="ex. 800">
+        </div>
+
+        <div class="input-group">
+          <label>Ville *</label>
+          <input type="text" formControlName="city" placeholder="Tunis, Ariana">
+        </div>
+
+        <div class="input-group">
+          <label>Rythme de sommeil *</label>
+          <select formControlName="sleepSchedule">
+            <option value="">Sélectionnez un rythme</option>
+            <option value="day">Diurne (lève-tôt)</option>
+            <option value="night">Nocturne (oiseau de nuit)</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>Niveau d'étude *</label>
+          <input type="text" formControlName="studyLevel" placeholder="Licence, Master">
+        </div>
+
+        <div class="input-group full-width">
+          <label>Centres d'intérêt (séparés par des virgules)</label>
+          <input type="text" formControlName="interests"
+                 placeholder="sport, musique, code, lecture">
+        </div>
+
+      </div>
+
+      <!-- INTERRUPTEURS -->
+      <div class="switches-group">
+        <label class="switch-item">
+          <input type="checkbox" formControlName="smoker">
+          <span>🚬 Fumeur / Fumeuse</span>
+        </label>
+
+        <label class="switch-item">
+          <input type="checkbox" formControlName="pets">
+          <span>🐾 A des animaux</span>
+        </label>
+
+        <label class="switch-item">
+          <input type="checkbox" formControlName="acceptsGuests">
+          <span>🏠 Accepte les invités</span>
+        </label>
+      </div>
+
+      <!-- CURSEURS -->
+      <div class="sliders-group">
+
+        <div class="slider-item">
+          <label>
+            🧹 Propreté :
+            <strong>{{ form.get('cleanliness')?.value ?? 3 }}/5</strong>
+          </label>
+          <input type="range" min="1" max="5" step="1"
+                 formControlName="cleanliness">
+        </div>
+
+        <div class="slider-item">
+          <label>
+            🎉 Sociabilité :
+            <strong>{{ form.get('socialLevel')?.value ?? 3 }}/5</strong>
+          </label>
+          <input type="range" min="1" max="5" step="1"
+                 formControlName="socialLevel">
+        </div>
+
+        <div class="slider-item">
+          <label>
+            🔊 Tolérance au bruit :
+            <strong>{{ form.get('noiseTolerance')?.value ?? 3 }}/5</strong>
+          </label>
+          <input type="range" min="1" max="5" step="1"
+                 formControlName="noiseTolerance">
+        </div>
+
+      </div>
+
+      <!-- BOUTON D'ENVOI -->
+      <button type="submit" class="submit-btn" [disabled]="isLoading">
+        {{ isLoading ? 'Création du profil...' : '✨ Enregistrer le profil & trouver des colocs' }}
+      </button>
+
+<button type="button" class="submit-btn" [disabled]="isLoading" (click)="cancel()">
+  Annuler
+</button>
+
+    </form>
+  </div>
+</div>

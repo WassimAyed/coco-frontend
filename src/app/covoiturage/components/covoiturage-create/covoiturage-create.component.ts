@@ -50,6 +50,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   isEditMode = false;
   selectedImageFile: File | null = null;
   imagePreview: string | null = null;
+  
 
   // Google Maps
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
@@ -69,7 +70,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId'));
+    this.currentUserId = this.covoiturageService.getCurrentUserId();
     this.covoiturage.idDriver = this.currentUserId;
     this.loadVehicules();
   }

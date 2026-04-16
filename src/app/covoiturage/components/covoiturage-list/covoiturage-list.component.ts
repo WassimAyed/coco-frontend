@@ -33,7 +33,7 @@ export class CovoiturageListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId'));
+    this.currentUserId = this.covoiturageService.getCurrentUserId();
     this.loadCovoiturages();
   }
 
@@ -41,10 +41,16 @@ export class CovoiturageListComponent implements OnInit {
     this.loading = true;
     this.covoiturageService.getAllCovoiturages().subscribe({
       next: (data) => {
-        this.covoiturages = data;
-        this.filteredCovoiturages = data;
-        this.availableDeparts = [...new Set(data.map(c => c.pointDepart))].sort();
-        this.availableArrivees = [...new Set(data.map(c => c.pointArrivee))].sort();
+        const now = Date.now();
+        const upcoming = (data || []).filter(c => {
+          if (!c.dateDepart) return false;
+          return new Date(c.dateDepart).getTime() > now;
+        });
+
+        this.covoiturages = upcoming;
+        this.filteredCovoiturages = upcoming;
+        this.availableDeparts = [...new Set(upcoming.map(c => c.pointDepart))].sort();
+        this.availableArrivees = [...new Set(upcoming.map(c => c.pointArrivee))].sort();
         this.loading = false;
       },
       error: (err) => {

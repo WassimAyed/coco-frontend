@@ -1,0 +1,107 @@
+<div class="min-h-screen bg-gray-50 py-12">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Back Button -->
+    <button (click)="goBack()" class="mb-6 text-primary hover:text-primary/80 flex items-center gap-2">
+      ← Back to List
+    </button>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p class="mt-4 text-gray-600">Loading item...</p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error && !loading" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      {{ error }}
+    </div>
+
+    <!-- Item Detail -->
+    <div *ngIf="item && !loading" class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <!-- Image -->
+      <div *ngIf="item.imageUrl" class="h-96 bg-gray-200 overflow-hidden">
+        <img [src]="item.imageUrl" [alt]="item.title" class="w-full h-full object-cover">
+      </div>
+      <div *ngIf="!item.imageUrl" class="h-96 bg-gray-200 flex items-center justify-center">
+        <span class="text-gray-500 text-lg">No image available</span>
+      </div>
+
+      <!-- Content -->
+      <div class="p-8">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span [class]="item.type === 'LOST' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'" class="px-4 py-2 rounded-full font-semibold">
+                {{ item.type }}
+              </span>
+              <span *ngIf="item.status === 'RESOLVED'" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-full font-semibold">
+                RESOLVED
+              </span>
+            </div>
+            <h1 class="text-4xl font-bold text-foreground">{{ item.title }}</h1>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-foreground mb-3">Description</h2>
+          <p class="text-gray-700 text-lg leading-relaxed">{{ item.description }}</p>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Category</h3>
+            <p class="text-lg text-gray-900">{{ item.category }}</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Location</h3>
+            <p class="text-lg text-gray-900">{{ item.location }}</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Date Posted</h3>
+            <p class="text-lg text-gray-900">{{ item.dateTime | date: 'full' }}</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Status</h3>
+            <p class="text-lg text-gray-900">{{ item.status }}</p>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8">
+          <h3 class="text-lg font-semibold text-blue-900 mb-3">Contact Information</h3>
+          <div class="flex items-center justify-between">
+            <p class="text-blue-900 text-lg font-mono">{{ item.contactInfo }}</p>
+            <button (click)="copyContactInfo()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+          <button 
+            *ngIf="item.isOwner && item.status === 'ACTIVE'" 
+            (click)="editItem()" 
+            class="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600">
+            Edit Item
+          </button>
+          <button 
+            *ngIf="item.isOwner && item.status === 'ACTIVE'" 
+            (click)="markAsResolved()" 
+            class="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600">
+            Mark as Resolved
+          </button>
+          <button 
+            *ngIf="item.isOwner" 
+            (click)="deleteItem()" 
+            class="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600">
+            Delete Item
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

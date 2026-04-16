@@ -1,6 +1,9 @@
 export const environment = {
   googleMapsApiKey: 'AIzaSyBIaXbRrGVgkj8Ffre1-dHYRrEokUrp-w0',
   apiBaseUrl: 'http://localhost:8090/',
+  paymentApiBaseUrl: 'http://localhost:9092/api/payment',
+  lostFoundApiBaseUrl: 'http://localhost:9092/api/lost-found',
+  eventApiBaseUrl: 'http://localhost:8093/api/events',
   auth: {
     loginPath: '/auth/login',
     registerPath: '/auth/register',

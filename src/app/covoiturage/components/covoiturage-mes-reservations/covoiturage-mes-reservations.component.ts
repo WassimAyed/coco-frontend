@@ -25,7 +25,7 @@ export class CovoiturageMesReservationsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId'));
+    this.currentUserId = this.covoiturageService.getCurrentUserId();
     this.loadMesReservations();
   }
 

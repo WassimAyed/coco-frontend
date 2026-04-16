@@ -1,70 +1,114 @@
 @if (user(); as profile) {
-  <div class="relative" (click)="stopPropagation($event)">
-    <button
-      type="button"
-      class="flex items-center gap-3 rounded-[1.25rem] border border-border bg-card px-2 py-2 text-left shadow-soft transition hover:border-primary/30 hover:bg-secondary"
-      (click)="toggleMenu()"
-    >
-      <img [src]="profile.avatarUrl" [alt]="profile.firstName + ' ' + profile.lastName" class="h-11 w-11 rounded-2xl object-cover" />
+<div class="relative" (click)="stopPropagation($event)">
+  <button type="button"
+    class="flex items-center gap-3 rounded-[1.25rem] border border-border bg-card px-2 py-2 text-left shadow-soft transition hover:border-primary/30 hover:bg-secondary"
+    (click)="toggleMenu()">
+    <img [src]="profile.avatarUrl" [alt]="profile.firstName + ' ' + profile.lastName"
+      class="h-11 w-11 rounded-2xl object-cover" />
 
-      <div class="hidden min-w-0 sm:block">
-        <p class="truncate text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
-        <p class="truncate text-xs text-muted-foreground">{{ profile.email }}</p>
-      </div>
+    <div class="hidden min-w-0 sm:block">
+      <p class="truncate text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
+      <p class="truncate text-xs text-muted-foreground">{{ profile.email }}</p>
+    </div>
 
-      <lucide-icon [img]="ChevronDownIcon" class="hidden text-muted-foreground sm:block" [size]="16"></lucide-icon>
-    </button>
+    <lucide-icon [img]="ChevronDownIcon" class="hidden text-muted-foreground sm:block" [size]="16"></lucide-icon>
+  </button>
 
-    @if (menuOpen()) {
-      <div class="absolute right-0 z-30 mt-3 w-64 rounded-[1.5rem] border border-border bg-card p-2 shadow-float">
-        <div class="rounded-[1.25rem] bg-secondary/70 px-4 py-3">
-          <p class="text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
-          <p class="mt-1 text-xs text-muted-foreground">{{ profile.department }}</p>
-        </div>
+  @if (menuOpen()) {
+  <div class="absolute right-0 z-30 mt-3 w-64 rounded-[1.5rem] border border-border bg-card p-2 shadow-float">
+    <div class="rounded-[1.25rem] bg-secondary/70 px-4 py-3">
+      <p class="text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
+      <p class="mt-1 text-xs text-muted-foreground">{{ profile.department }}</p>
+    </div>
 
-        <div class="mt-2 space-y-1">
-     <!-- Home (already correct) -->
-<a
-  [routerLink]="homeRoute()"
-  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-  (click)="closeMenu()"
->
-  <lucide-icon [img]="HomeIcon" [size]="18"></lucide-icon>
-  {{ homeLabel() }}
-</a>
+    <div class="mt-2 space-y-1">
+      <!-- Home (already correct) -->
+      <a [routerLink]="homeRoute()"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="HomeIcon" [size]="18"></lucide-icon>
+        {{ homeLabel() }}
+      </a>
 
-<!-- Mes Offres de Collocation -->
-<a
-  [routerLink]="mesOffresRoute"
-  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-  (click)="closeMenu()"
->
-  <lucide-icon [img]="BriefcaseIcon" [size]="18"></lucide-icon>
-  Mes Offres de Collocation
-</a>
+      <!-- My Roommate Listings -->
+      <a [routerLink]="mesOffresRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="BriefcaseIcon" [size]="18"></lucide-icon>
+        My Roommate Listings
+      </a>
 
-<!-- Mes Demandes de collocation -->
-<a
-  [routerLink]="mesOffresRequestRoute"
-  class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-  (click)="closeMenu()"
->
-  <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
-  Mes Demandes de collocation
-</a>
+      <!-- My Roommate Requests -->
+      <a [routerLink]="mesOffresRequestRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+        My Roommate Requests
+      </a>
 
+      <!-- My Items (Lost & Found) -->
+      <a [routerLink]="'/lost-found/my-items'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="SearchIcon" [size]="18"></lucide-icon>
+        My Items (Lost & Found)
+      </a>
 
+      <a [routerLink]="'/subs-payment/dashboard'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+        Posts Quota
+      </a>
 
-          <button
-            type="button"
-            class="flex w-full items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-            (click)="logout()"
-          >
-            <lucide-icon [img]="LogOutIcon" [size]="18"></lucide-icon>
-            Logout
-          </button>
-        </div>
-      </div>
-    }
+      <!-- Mes Événements -->
+      <a [routerLink]="myEventsRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
+        Mes Événements
+      </a>
+
+      <!-- Événements Participés -->
+      <a [routerLink]="participatedEventsRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
+        Événements Participés
+      </a>
+
+      <!-- Mes Trajets (Covoiturage) -->
+      <a [routerLink]="'/covoiturage/mes-trajets'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
+        Mes Trajets
+      </a>
+
+      <!-- Mes Réservations (Covoiturage) -->
+      <a [routerLink]="'/covoiturage/mes-reservations'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
+        Mes Réservations
+      </a>
+
+      <!-- Gestion Réservations (Covoiturage) -->
+      <a [routerLink]="'/covoiturage/gestion-reservations'"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
+        Gestion Réservations
+      </a>
+
+      <button type="button"
+        class="flex w-full items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="logout()">
+        <lucide-icon [img]="LogOutIcon" [size]="18"></lucide-icon>
+        Logout
+      </button>
+    </div>
   </div>
+  }
+</div>
 }

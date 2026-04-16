@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { Covoiturage, Reservation, Vehicule, StatusReservation, Notation } from '../../models/covoiturage.model';
+import { UserService } from '../../../user-security/services/user.service';
 
 declare var google: any;
 
@@ -15,6 +16,8 @@ export class CovoiturageDetailComponent implements OnInit {
 
   covoiturage: Covoiturage | null = null;
   vehicule: Vehicule | null = null;
+  similarCovoiturages: Covoiturage[] = [];
+  similarDriverNames: Map<number, string> = new Map();
   reservations: Reservation[] = [];
   passengerNames: Map<number, string> = new Map();
   loading = true;
@@ -58,11 +61,12 @@ export class CovoiturageDetailComponent implements OnInit {
     private router: Router,
     private covoiturageService: CovoiturageService,
     private ngZone: NgZone,
-    private googleMapsLoader: GoogleMapsLoaderService
+    private googleMapsLoader: GoogleMapsLoaderService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId'));
+    this.currentUserId = this.covoiturageService.getCurrentUserId();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.loadCovoiturage(id);
@@ -137,6 +141,7 @@ export class CovoiturageDetailComponent implements OnInit {
 
         this.loadNotations(data.idDriver);
         this.showRouteOnMap();
+        this.loadSimilarCovoiturages(data);
       },
       error: (err) => {
         this.error = 'Impossible de charger ce trajet.';
@@ -164,15 +169,22 @@ export class CovoiturageDetailComponent implements OnInit {
   }
 
   private loadPassengerNames(reservations: Reservation[]): void {
-    const uniqueIds = [...new Set(reservations.map(r => r.idPassenger))];
+    const uniqueIds = [...new Set(reservations.map(r => r.idPassenger))]
+      .filter(id => !!id && !this.passengerNames.has(id));
     uniqueIds.forEach(id => {
-      if (!this.passengerNames.has(id)) {
-        this.covoiturageService.getUserById(id).subscribe({
-          next: (user) => this.passengerNames.set(id, user.username),
-          error: () => this.passengerNames.set(id, `Utilisateur #${id}`)
-        });
-      }
+      this.userService.getProfileByUserId(id).subscribe({
+        next: (profile: any) => this.passengerNames.set(id, this.formatUserName(profile, id)),
+        error: () => this.passengerNames.set(id, `Utilisateur #${id}`)
+      });
     });
+  }
+
+  private formatUserName(profile: any, fallbackId: number): string {
+    if (!profile) return `Utilisateur #${fallbackId}`;
+    const first = profile.firstName || '';
+    const last = profile.lastName || profile.lastname || '';
+    const full = `${first} ${last}`.trim();
+    return full || profile.username || `Utilisateur #${fallbackId}`;
   }
 
   getPassengerName(id: number): string {
@@ -323,6 +335,65 @@ export class CovoiturageDetailComponent implements OnInit {
   closeConfirmModal(): void {
     this.showConfirmModal = false;
     this.confirmModalAction = null;
+  }
+
+  // ========== TRAJETS SIMILAIRES ==========
+
+  loadSimilarCovoiturages(current: Covoiturage): void {
+    this.covoiturageService.getAllCovoiturages().subscribe({
+      next: (all) => {
+        const depart = (current.pointDepart || '').trim().toLowerCase();
+        const arrivee = (current.pointArrivee || '').trim().toLowerCase();
+
+        const now = Date.now();
+        const scored = (all || [])
+          .filter((c) => c.id !== current.id && c.placesDisponibles > 0 && !!c.dateDepart && new Date(c.dateDepart).getTime() > now)
+          .map((c) => {
+            const cDep = (c.pointDepart || '').trim().toLowerCase();
+            const cArr = (c.pointArrivee || '').trim().toLowerCase();
+            let score = 0;
+            if (cDep === depart && cArr === arrivee) score = 3;
+            else if (cDep === depart || cArr === arrivee) score = 2;
+            else if (cDep.includes(depart) || cArr.includes(arrivee) || depart.includes(cDep) || arrivee.includes(cArr)) score = 1;
+            return { c, score };
+          })
+          .filter((x) => x.score > 0)
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return new Date(a.c.dateDepart).getTime() - new Date(b.c.dateDepart).getTime();
+          })
+          .slice(0, 4)
+          .map((x) => x.c);
+
+        this.similarCovoiturages = scored;
+        this.loadSimilarDriverNames(scored);
+      },
+      error: (err) => console.error('Erreur chargement trajets similaires', err)
+    });
+  }
+
+  private loadSimilarDriverNames(trajets: Covoiturage[]): void {
+    const uniqueIds = [...new Set(trajets.map((t) => t.idDriver))];
+    uniqueIds.forEach((id) => {
+      if (!this.similarDriverNames.has(id)) {
+        this.covoiturageService.getUserById(id).subscribe({
+          next: (user) => this.similarDriverNames.set(id, user.username),
+          error: () => this.similarDriverNames.set(id, `Utilisateur #${id}`)
+        });
+      }
+    });
+  }
+
+  getSimilarDriverName(id: number): string {
+    return this.similarDriverNames.get(id) || 'Chargement...';
+  }
+
+  goToSimilarTrajet(id: number | undefined): void {
+    if (!id) return;
+    this.router.navigate(['/covoiturage/detail', id]).then(() => {
+      this.loadCovoiturage(id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   // ========== NOTATION ==========

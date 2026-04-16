@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core'
 import { Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
-import { Covoiturage, Vehicule } from '../../models/covoiturage.model';
+import { Covoiturage, Vehicule, StatusReservation } from '../../models/covoiturage.model';
 
 declare var google: any;
 
@@ -16,6 +16,7 @@ export class CovoiturageMesTrajetsComponent implements OnInit {
   trajets: Covoiturage[] = [];
   loading = false;
   currentUserId: number = 0;
+  confirmedReservationByTrajet = new Map<number, boolean>();
 
   // Confirm modal
   showConfirmModal = false;
@@ -47,7 +48,7 @@ export class CovoiturageMesTrajetsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId'));
+    this.currentUserId = this.covoiturageService.getCurrentUserId();
     this.loadMesTrajets();
     this.loadVehicules();
   }
@@ -55,9 +56,37 @@ export class CovoiturageMesTrajetsComponent implements OnInit {
   loadMesTrajets(): void {
     this.loading = true;
     this.covoiturageService.getCovoituragesByDriver(this.currentUserId).subscribe({
-      next: (data) => { this.trajets = data; this.loading = false; },
+      next: (data) => {
+        this.trajets = data;
+        this.loading = false;
+        this.loadConfirmedReservationsMap();
+      },
       error: (err) => { console.error(err); this.loading = false; }
     });
+  }
+
+  private loadConfirmedReservationsMap(): void {
+    this.confirmedReservationByTrajet.clear();
+    this.covoiturageService.getReservationsByDriver(this.currentUserId).subscribe({
+      next: (reservations) => {
+        (reservations || []).forEach((r) => {
+          if (r.statusReservation === StatusReservation.CONFIRMEE) {
+            this.confirmedReservationByTrajet.set(r.covoiturageId, true);
+          }
+        });
+      },
+      error: (err) => console.error('Erreur chargement reservations', err)
+    });
+  }
+
+  isPast(trajet: Covoiturage): boolean {
+    if (!trajet?.dateDepart) return false;
+    return new Date(trajet.dateDepart).getTime() <= Date.now();
+  }
+
+  hasConfirmedReservation(trajet: Covoiturage | null): boolean {
+    if (!trajet?.id) return false;
+    return this.confirmedReservationByTrajet.get(trajet.id) === true;
   }
 
   loadVehicules(): void {

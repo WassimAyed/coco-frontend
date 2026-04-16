@@ -1,1 +1,230 @@
-<p>event-detail works!</p>
+<div class="min-h-screen bg-background">
+	<section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
+		<div class="section-shell space-y-6">
+			<a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
+				← Back to events
+			</a>
+
+			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
+			<div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
+			<div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+
+			<article *ngIf="event" class="rounded-2xl border border-border bg-white p-6 shadow-sm">
+				<div class="space-y-6">
+					<div
+						class="countdown-banner"
+						[ngClass]="{
+							'countdown-before': countdownStatus === 'before',
+							'countdown-during': countdownStatus === 'during',
+							'countdown-after': countdownStatus === 'after'
+						}"
+					>
+						<div class="countdown-header">
+							<span class="countdown-icon" aria-hidden="true">⏱</span>
+							<span class="countdown-label">{{ countdownLabel }}</span>
+						</div>
+						<p *ngIf="countdownStatus !== 'after'" class="countdown-digits">{{ countdownValue }}</p>
+					</div>
+
+					<div class="relative overflow-hidden rounded-2xl border border-border">
+						<img [src]="getDisplayedImage()" [alt]="event.name || 'Event'" class="h-80 w-full object-cover lg:h-[26rem]" />
+						<div class="event-card-overlay"></div>
+						<div class="hero-info-overlay">
+							<h2 class="text-2xl font-bold text-white">{{ event.name || 'Event' }}</h2>
+							<p class="text-sm text-slate-200">{{ event.location || 'N/A' }}</p>
+						</div>
+						<span class="absolute left-4 top-4" [ngClass]="getStatusBadgeClass(event.status)">
+							{{ event.status || 'PLANNED' }}
+						</span>
+						<button type="button" class="carousel-nav-btn left" (click)="previousImage()" [disabled]="getImageCount() <= 1">←</button>
+						<button type="button" class="carousel-nav-btn right" (click)="nextImage()" [disabled]="getImageCount() <= 1">→</button>
+						<div class="carousel-count">{{ getActiveImageIndex() + 1 }} / {{ getImageCount() }}</div>
+					</div>
+
+					<div #galleryStrip class="gallery-strip" *ngIf="gallery.length > 0; else emptyGalleryTop">
+						<button
+							type="button"
+							*ngFor="let image of gallery"
+							class="gallery-thumb"
+							(click)="setActiveImage(getGalleryImage(image))"
+						>
+							<img [src]="getGalleryImage(image)" alt="Gallery image" class="h-full w-full object-cover" />
+						</button>
+					</div>
+
+					<ng-template #emptyGalleryTop>
+						<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">No gallery images available.</p>
+					</ng-template>
+
+					<div class="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+						<div class="space-y-3 text-sm text-slate-700">
+							<p><strong>Description:</strong> {{ event.description || 'N/A' }}</p>
+							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
+							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
+							<p><strong>End:</strong> {{ formatDate(event.endDate) }}</p>
+							<p><strong>Max capacity:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</p>
+							<p><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</p>
+							<p><strong>Available seats:</strong> {{ getAvailablePlaces() }}</p>
+							<p><strong>Category:</strong> {{ categoryName || 'N/A' }}</p>
+						</div>
+
+						<div class="space-y-3">
+							<div #detailMapContainer class="detail-map"></div>
+							<p *ngIf="!event.latitude || !event.longitude" class="text-sm text-slate-500">Coordinates are not available for map view.</p>
+							<a *ngIf="mapOpenUrl" [href]="mapOpenUrl" target="_blank" rel="noreferrer" class="inline-flex text-sm font-medium text-primary hover:underline">
+								Open in OpenStreetMap
+							</a>
+						</div>
+					</div>
+
+					<div class="rounded-2xl border border-border bg-gray-50 p-4">
+						<h3 class="text-lg font-semibold text-foreground">Reactions</h3>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<button
+								type="button"
+								*ngFor="let reactionType of reactionTypes"
+								class="reaction-btn"
+								[class.reaction-btn-active]="isReactionActive(reactionType)"
+								(click)="react(reactionType)"
+							>
+								<span class="text-lg">{{ reactionEmoji[reactionType] }}</span>
+								<span class="text-xs font-semibold">{{ getReactionCount(reactionType) }}</span>
+							</button>
+						</div>
+						<p class="mt-2 text-xs text-slate-500">
+							 Click once to react, click same emoji again to remove your reaction.
+						</p>
+					</div>
+
+					<div class="grid gap-6 lg:grid-cols-2">
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<div class="flex items-start justify-between gap-4">
+								<div>
+									<h3 class="text-lg font-semibold text-foreground">Event rating</h3>
+									<p class="mt-1 text-sm text-slate-500">Rate this event with one click. Your rating updates the backend directly.</p>
+								</div>
+								<div class="text-right text-sm text-slate-600">
+									<p class="font-semibold text-foreground">{{ getRatingLabel() }}</p>
+									<p *ngIf="selectedRating !== null" class="text-xs text-slate-500">Your rating: {{ selectedRating }}/5</p>
+								</div>
+							</div>
+							<div class="mt-4 flex flex-wrap gap-2">
+								<button
+									type="button"
+									*ngFor="let rating of ratingScale"
+									class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
+									[ngClass]="selectedRating !== null && rating <= selectedRating ? 'border-amber-300 bg-amber-100 text-amber-800' : 'border-border bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50'"
+									[disabled]="isRatingSaving || !canRate()"
+									(click)="rateEvent(rating)"
+								>
+									<span class="text-base leading-none">★</span>
+									<span>{{ rating }}</span>
+								</button>
+							</div>
+							<p class="mt-2 text-xs text-slate-500" *ngIf="!canRate()">Sign in to rate this event.</p>
+						</div>
+
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<div class="flex items-start justify-between gap-4">
+								<div>
+									<h3 class="text-lg font-semibold text-foreground">Participate in this event</h3>
+									<p class="mt-1 text-sm text-slate-500">Register using your current account profile, without any extra fields.</p>
+								</div>
+								<div class="text-right text-sm text-slate-600">
+									<p class="font-semibold text-foreground">{{ participantCount }} participant{{ participantCount === 1 ? '' : 's' }}</p>
+									<p *ngIf="hasCurrentUserParticipated()" class="text-xs text-emerald-600">You are already registered</p>
+								</div>
+							</div>
+							<div class="mt-4 flex flex-wrap items-center gap-3">
+								<button
+									type="button"
+									class="btn-primary !px-4 !py-2"
+									[disabled]="isParticipating || !canParticipate()"
+									(click)="participateInEvent()"
+								>
+									{{ hasCurrentUserParticipated() ? 'Registered' : 'Participate in this event' }}
+								</button>
+								<p class="text-xs text-slate-500" *ngIf="!currentUserEmail">Sign in to participate in this event.</p>
+							</div>
+							<p *ngIf="participationErrorMessage" class="mt-3 text-sm text-red-700">{{ participationErrorMessage }}</p>
+							<p *ngIf="participationSuccessMessage" class="mt-3 text-sm text-emerald-700">{{ participationSuccessMessage }}</p>
+						</div>
+					</div>
+
+					<div class="grid gap-6 lg:grid-cols-2">
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<h3 class="text-lg font-semibold text-foreground">Comments ({{ commentCount }})</h3>
+							<div class="mt-3 space-y-2">
+								<textarea
+									class="form-input"
+									rows="3"
+									placeholder="Write a comment..."
+									[(ngModel)]="commentDraft"
+								></textarea>
+								<button type="button" class="btn-primary !px-4 !py-2" (click)="addComment()">Post comment</button>
+							</div>
+
+							<div class="mt-4 space-y-3" *ngIf="comments.length > 0; else emptyComments">
+								<div *ngFor="let comment of comments" class="rounded-xl border border-border bg-white p-3">
+									<div class="flex items-center justify-between gap-2">
+										<p class="text-xs font-semibold text-slate-600">{{ comment.authorName }}</p>
+										<p class="text-xs text-slate-500">{{ formatShortDate(comment.createdAt) }}</p>
+									</div>
+
+									<p class="mt-2 text-sm text-slate-700" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+
+									<div *ngIf="editingCommentId === comment.id" class="mt-2 space-y-2">
+										<textarea class="form-input" rows="3" [(ngModel)]="editingCommentContent"></textarea>
+										<div class="flex gap-2">
+											<button type="button" class="btn-primary !px-3 !py-2" (click)="saveComment(comment)">Save</button>
+											<button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEditComment()">Cancel</button>
+										</div>
+									</div>
+
+									<div class="mt-2 flex gap-2" *ngIf="canManageComment(comment) && editingCommentId !== comment.id">
+										<button type="button" class="btn-secondary !px-3 !py-2" (click)="startEditComment(comment)">Edit</button>
+										<button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteComment(comment.id)">Delete</button>
+									</div>
+								</div>
+							</div>
+
+							<ng-template #emptyComments>
+								<p class="mt-4 text-sm text-slate-500">No comments yet.</p>
+							</ng-template>
+						</div>
+
+						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+							<h3 class="text-lg font-semibold text-foreground">Participants ({{ participantCount }})</h3>
+							<div class="mt-4 space-y-2" *ngIf="participants.length > 0; else emptyParticipants">
+								<div *ngFor="let participant of participants" class="rounded-xl border border-border bg-white p-3">
+									<p class="text-sm font-semibold text-slate-700">{{ participant.fullName }}</p>
+									<p class="text-xs text-slate-500">{{ participant.email }}</p>
+									<p class="text-xs text-slate-500" *ngIf="participant.registrationDate">{{ formatShortDate(participant.registrationDate) }}</p>
+								</div>
+							</div>
+
+							<ng-template #emptyParticipants>
+								<p class="text-sm text-slate-500">No participants yet.</p>
+							</ng-template>
+						</div>
+					</div>
+
+					<section *ngIf="similarEvents.length > 0" class="rounded-2xl border border-border bg-gray-50 p-4">
+						<h3 class="text-lg font-semibold text-foreground">Events similaires</h3>
+						<div class="similar-grid mt-4">
+								<div *ngFor="let event of similarEvents" class="event-card" [routerLink]="['/event', event.id]">
+								<img [src]="event.imageUrl" [alt]="event.name || 'Event similaire'" />
+								<h4>{{ event.name }}</h4>
+								<p>{{ event.location }}</p>
+								<span class="badge">{{ event.similarityReason }}</span>
+								<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-secondary !mt-3 !inline-flex !px-3 !py-2 text-sm">See details</a>
+							</div>
+						</div>
+					</section>
+
+
+				</div>
+			</article>
+		</div>
+	</section>
+</div>

@@ -1,1 +1,27 @@
-<p>subs-detail works!</p>
+<div class="quota-card" *ngIf="quota">
+    <div class="quota-info">
+        <div class="header">
+            <span class="label">Your Current Quota</span>
+            <span class="status" [ngClass]="quota.canPost ? 'active' : 'blocked'">
+                {{ quota.canPost ? 'ACTIVE' : 'EXHAUSTED' }}
+            </span>
+        </div>
+
+        <div class="posts-count">
+            <span class="number">{{ quota.remaining_posts !== null ? quota.remaining_posts : '∞' }}</span>
+            <span class="text">posts remaining</span>
+        </div>
+
+        <div class="progress-container" *ngIf="quota.remaining_posts !== null">
+            <div class="progress-bar" [style.width]="getProgressBarWidth()"></div>
+        </div>
+
+        <p class="expiry" *ngIf="quota.reason">
+            <i class="icon-warning"></i> {{ quota.reason }}
+        </p>
+
+        <div class="actions">
+            <button class="btn-manage" routerLink="/subs-payment">Manage my subscription</button>
+        </div>
+    </div>
+</div>

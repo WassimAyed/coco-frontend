@@ -120,18 +120,16 @@
     inset: 0;
     visibility: hidden;
     border-radius: 14%;
-    background: linear-gradient(
-      to right,
-      var(--sidebar),
-      var(--primary),
-      var(--accent),
-      var(--card),
-      var(--sidebar-primary),
-      var(--destructive),
-      var(--secondary),
-      var(--primary),
-      var(--sidebar)
-    );
+    background: linear-gradient(to right,
+        var(--sidebar),
+        var(--primary),
+        var(--accent),
+        var(--card),
+        var(--sidebar-primary),
+        var(--destructive),
+        var(--secondary),
+        var(--primary),
+        var(--sidebar));
     background-position: 0% 50%;
     background-size: 1000% 1000%;
     box-shadow: 0 20px 55px color-mix(in srgb, var(--primary) 18%, transparent);
@@ -301,6 +299,7 @@
 }
 
 @keyframes oneMove {
+
   0%,
   14.2857% {
     visibility: visible;
@@ -327,6 +326,7 @@
 }
 
 @keyframes twoMove {
+
   0%,
   14.2857% {
     visibility: visible;
@@ -353,6 +353,7 @@
 }
 
 @keyframes threeMove {
+
   0%,
   14.2857% {
     visibility: visible;
@@ -379,6 +380,7 @@
 }
 
 @keyframes fourMove {
+
   0%,
   14.2857% {
     visibility: visible;
@@ -405,6 +407,7 @@
 }
 
 @keyframes fiveMove {
+
   0%,
   14.2857% {
     visibility: visible;
@@ -431,6 +434,7 @@
 }
 
 @keyframes sixMove {
+
   0%,
   14.2857% {
     visibility: visible;

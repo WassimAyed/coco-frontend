@@ -1,236 +1,247 @@
-<div class="container mt-4">
-  <div class="card shadow-sm col-lg-8 mx-auto">
-    <div class="card-body">
-      <h2 class="card-title text-center mb-4">
-        <i class="fas fa-home me-2 text-success"></i>Créer une offre de collocation
-      </h2>
-
-      <form [formGroup]="offerForm" (ngSubmit)="submit()" enctype="multipart/form-data">
-        <!-- Titre -->
-        <div class="mb-3">
-          <label class="form-label">Titre <span class="text-danger">*</span></label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="titre"
-            placeholder="Ex: Bel appartement partagé"
-            [class.is-invalid]="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched"
-          />
-          <div *ngIf="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched" class="invalid-feedback">
-            Le titre est obligatoire.
+<main class="page-shell">
+  <div class="container pb-5 pt-3">
+    <div class="col-lg-9 mx-auto">
+      
+      <div class="premium-form-card form-appear">
+        <div class="form-header text-center mb-5">
+          <div class="form-icon-wrap mx-auto mb-3">
+            <i class="fas fa-home"></i>
           </div>
+          <h2 class="fw-bold text-dark mb-2">Créer une offre de collocation</h2>
+          <p class="text-muted">Proposez votre logement et trouvez le colocataire idéal rapidement.</p>
         </div>
 
-        <!-- Description -->
-        <div class="mb-3">
-          <label class="form-label">Description <span class="text-danger">*</span></label>
-          <textarea
-            class="form-control"
-            formControlName="description"
-            rows="4"
-            placeholder="Décrivez le logement, les équipements, le quartier..."
-            [class.is-invalid]="offerForm.get('description')?.invalid && offerForm.get('description')?.touched"
-          ></textarea>
-          <div *ngIf="offerForm.get('description')?.invalid && offerForm.get('description')?.touched" class="invalid-feedback">
-            La description est requise.
-          </div>
-        </div>
+        <form [formGroup]="offerForm" (ngSubmit)="submit()" enctype="multipart/form-data">
+          
+          <div class="row g-4">
+            <!-- Titre -->
+            <div class="col-md-12">
+              <label class="form-label premium-label">Titre de l'annonce <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control premium-input"
+                formControlName="titre"
+                placeholder="Ex: Superbe chambre dans appartement spacieux..."
+                [class.is-invalid]="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched"
+              />
+              <div *ngIf="offerForm.get('titre')?.invalid && offerForm.get('titre')?.touched" class="invalid-feedback">
+                Le titre est obligatoire.
+              </div>
+            </div>
 
-        <!-- Prix -->
-        <div class="mb-3">
-          <label class="form-label">Prix (TND) <span class="text-danger">*</span></label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-tag"></i></span>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="prixLoc"
-              placeholder="450"
-              min="0"
-              step="10"
-              [class.is-invalid]="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched"
-            />
-          </div>
-          <div *ngIf="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched" class="invalid-feedback">
-            Prix valide requis.
-          </div>
-        </div>
-
-        <!-- Ville -->
-        <div class="mb-3">
-          <label class="form-label">Ville <span class="text-danger">*</span></label>
-          <select
-            class="form-select"
-            formControlName="ville"
-            [class.is-invalid]="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched"
-          >
-            <option value="" disabled selected>-- Sélectionner une ville --</option>
-            <option *ngFor="let v of tunisianVilles" [value]="v">{{ v }}</option>
-          </select>
-          <div *ngIf="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched" class="invalid-feedback">
-            Ville obligatoire.
-          </div>
-        </div>
-
-        <!-- Chambres -->
-        <div class="mb-3">
-          <label class="form-label">Nombre de chambre(s) <span class="text-danger">*</span></label>
-          <input
-            type="number"
-            class="form-control"
-            formControlName="chambres"
-            placeholder="2"
-            min="1"
-            [class.is-invalid]="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched"
-          />
-          <div *ngIf="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched" class="invalid-feedback">
-            Minimum 1 chambre.
-          </div>
-        </div>
-
-        <!-- Meublé (checkbox) -->
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="meublee" formControlName="meublee" />
-          <label class="form-check-label" for="meublee">
-            <i class="fas fa-couch me-1 text-success"></i>Meublé
-          </label>
-        </div>
-
-        <!-- Carte de localisation -->
-        <div class="mb-3">
-          <label class="form-label">Localisation sur la carte <span class="text-danger">*</span></label>
-          <div #mapContainer class="map-container border rounded"></div>
-          <div class="form-text">
-            <i class="fas fa-info-circle me-1"></i>Cliquez sur la carte ou déplacez le marqueur pour définir l'emplacement exact.
-          </div>
-          <div *ngIf="offerForm.get('latitude')?.value" class="mt-2">
-            <span class="badge bg-light text-dark">
-              <i class="fas fa-map-pin text-danger me-1"></i>
-              Lat: {{ offerForm.get('latitude')?.value | number:'1.4-4' }}, Lng: {{ offerForm.get('longitude')?.value | number:'1.4-4' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Upload d'images -->
-        <div class="mb-3">
-          <label class="form-label">Images <span class="text-danger">*</span></label>
-          <div class="d-flex align-items-center gap-3 flex-wrap">
-            <input
-              type="file"
-              (change)="onFileChange($event)"
-              multiple
-              accept=".jpg,.jpeg,.png"
-              #fileInput
-              class="d-none"
-            />
-            <button type="button" (click)="fileInput.click()" class="btn btn-primary">
-              <i class="fas fa-folder-open me-2"></i>Choisir Images
-            </button>
-            <span class="text-muted small">
-              <i class="fas fa-info-circle me-1"></i>Max 5MB par image (JPG/PNG)
-            </span>
-          </div>
-          <div class="form-text">Vous pouvez sélectionner plusieurs images.</div>
-          <div *ngIf="typeWarning" class="alert alert-warning mt-2 d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle me-2"></i>{{ typeWarning }}
-          </div>
-        </div>
-
-        <!-- Prévisualisation des images avec sélection et suppression -->
-        <div *ngIf="selectedFiles && selectedFiles.length > 0" class="border rounded p-3 bg-light mb-3">
-          <h3 class="h5 mb-3">
-            <i class="fas fa-images me-2 text-success"></i>Images sélectionnées ({{ selectedFiles.length }})
-          </h3>
-
-          <!-- Contrôles groupés -->
-          <div *ngIf="selectedFiles.length > 1" class="d-flex gap-2 mb-3 flex-wrap">
-            <button type="button" (click)="selectAllImages()" class="btn btn-outline-success btn-sm">
-              <i class="fas" [ngClass]="allSelected ? 'fa-check-square' : 'fa-square'"></i>
-              {{ allSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-            </button>
-            <button
-              type="button"
-              (click)="deleteSelectedImages()"
-              class="btn btn-outline-danger btn-sm"
-              [disabled]="!hasSelectedImages()"
-            >
-              <i class="fas fa-trash-alt me-1"></i>Supprimer ({{ getSelectedCount() }})
-            </button>
-            <button type="button" (click)="clearAllImages()" class="btn btn-outline-warning btn-sm">
-              <i class="fas fa-times-circle me-1"></i>Tout effacer
-            </button>
-          </div>
-
-          <!-- Grille d'images (responsive) -->
-          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
-            <div *ngFor="let file of selectedFiles; let i = index" class="col">
-              <div
-                class="card h-100"
-                [class.border-primary]="isImageSelected(i)"
-                (click)="toggleImageSelection(i)"
-                style="cursor: pointer;"
+            <!-- Ville & Prix -->
+            <div class="col-md-6">
+              <label class="form-label premium-label">Ville <span class="text-danger">*</span></label>
+              <select
+                class="form-select premium-select"
+                formControlName="ville"
+                [class.is-invalid]="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched"
               >
-                <div class="position-relative">
-                  <img
-                    [src]="getImageUrl(file)"
-                    class="card-img-top"
-                    alt="{{ file.name }}"
-                    style="height: 140px; object-fit: cover;"
-                  />
-                  <div
-                    *ngIf="isImageSelected(i)"
-                    class="position-absolute top-0 end-0 m-2 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                    style="width: 24px; height: 24px;"
-                  >
-                    <i class="fas fa-check fa-xs"></i>
-                  </div>
-                </div>
-                <div class="card-body p-2">
-                  <p class="card-title small text-truncate" [title]="file.name">
-                    {{ truncateFileName(file.name, 15) }}
-                  </p>
-                  <p class="card-text small text-muted">{{ formatFileSize(file.size) }}</p>
-                  <button
-                    type="button"
-                    (click)="deleteImage(i, $event)"
-                    class="btn btn-outline-danger btn-sm w-100"
-                  >
-                    <i class="fas fa-trash-alt me-1"></i>Retirer
-                  </button>
+                <option value="" disabled selected>-- Choisir une ville --</option>
+                <option *ngFor="let v of tunisianVilles" [value]="v">{{ v }}</option>
+              </select>
+              <div *ngIf="offerForm.get('ville')?.invalid && offerForm.get('ville')?.touched" class="invalid-feedback">
+                La ville est obligatoire.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label premium-label">Loyer mensuel <span class="text-danger">*</span></label>
+              <div class="input-group premium-input-group">
+                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                <input
+                  type="number"
+                  class="form-control premium-input border-start-0"
+                  formControlName="prixLoc"
+                  placeholder="450"
+                  min="0"
+                  step="10"
+                  [class.is-invalid]="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched"
+                />
+                <span class="input-group-text bg-light text-dark fw-bold border-start-0">TND</span>
+              </div>
+              <div *ngIf="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched" class="invalid-feedback d-block">
+                Un prix valide est requis.
+              </div>
+            </div>
+
+            <!-- Chambres & Meublé -->
+            <div class="col-md-6">
+              <label class="form-label premium-label">Nombre de chambre(s) <span class="text-danger">*</span></label>
+              <div class="input-group premium-input-group">
+                <span class="input-group-text"><i class="fas fa-bed"></i></span>
+                <input
+                  type="number"
+                  class="form-control premium-input border-start-0"
+                  formControlName="chambres"
+                  placeholder="1, 2, 3..."
+                  min="1"
+                  [class.is-invalid]="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched"
+                />
+              </div>
+              <div *ngIf="offerForm.get('chambres')?.invalid && offerForm.get('chambres')?.touched" class="invalid-feedback d-block">
+                Minimum 1 chambre.
+              </div>
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="premium-switch-wrap w-100 p-3 rounded d-flex align-items-center mb-1">
+                <div class="form-check form-switch fs-5 mb-0 d-flex align-items-center w-100">
+                  <input class="form-check-input mt-0 me-3" type="checkbox" id="meublee" formControlName="meublee" style="cursor: pointer;" />
+                  <label class="form-check-label text-dark fw-semibold" for="meublee" style="cursor: pointer;">
+                    <i class="fas fa-couch text-danger me-2"></i> Logement Meublé
+                  </label>
                 </div>
               </div>
             </div>
+
+            <!-- Description -->
+            <div class="col-12">
+              <label class="form-label premium-label">Description détaillée <span class="text-danger">*</span></label>
+              <textarea
+                class="form-control premium-input custom-scrollbar"
+                formControlName="description"
+                rows="5"
+                placeholder="Décrivez les avantages de la colocation, le quartier, les transports à proximité..."
+                [class.is-invalid]="offerForm.get('description')?.invalid && offerForm.get('description')?.touched"
+              ></textarea>
+              <div *ngIf="offerForm.get('description')?.invalid && offerForm.get('description')?.touched" class="invalid-feedback">
+                La description est requise.
+              </div>
+            </div>
+
+            <!-- Map -->
+            <div class="col-12">
+              <label class="form-label premium-label d-flex align-items-center gap-2">
+                <i class="fas fa-map-marked-alt text-danger"></i> Localisation précise <span class="text-danger">*</span>
+              </label>
+              <div class="map-wrapper premium-shadow">
+                <div #mapContainer class="map-container"></div>
+                <div class="map-overlay-hint">
+                  <i class="fas fa-mouse-pointer me-2"></i> Ajustez le marqueur sur la carte
+                </div>
+              </div>
+              <div *ngIf="offerForm.get('latitude')?.value" class="mt-3 text-end">
+                <span class="badge premium-badge-light">
+                  <i class="fas fa-crosshairs text-danger me-1"></i>
+                  Position: {{ offerForm.get('latitude')?.value | number:'1.4-4' }}, {{ offerForm.get('longitude')?.value | number:'1.4-4' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Images Upload -->
+            <div class="col-12">
+              <label class="form-label premium-label d-flex align-items-center gap-2">
+                <i class="fas fa-images text-danger"></i> Photos du logement <span class="text-danger">*</span>
+              </label>
+              
+              <div class="upload-dropzone premium-shadow text-center p-4" (click)="fileInput.click()">
+                <div class="upload-icon-pulse mb-3">
+                  <i class="fas fa-cloud-upload-alt fa-3x text-muted"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Cliquez ou glissez-déposez pour ajouter des photos</h6>
+                <p class="text-muted small mb-3">Formats autorisés: JPG, PNG. Taille max: 5Mo/image</p>
+                <input
+                  type="file"
+                  (change)="onFileChange($event)"
+                  multiple
+                  accept=".jpg,.jpeg,.png"
+                  #fileInput
+                  class="d-none"
+                />
+                <button type="button" class="btn btn-dark-red px-4 py-2 mt-2">
+                  <i class="fas fa-folder-open me-2"></i> Parcourir mes fichiers
+                </button>
+              </div>
+              
+              <div *ngIf="typeWarning" class="alert alert-warning mt-3 rounded-3 d-flex align-items-center premium-shadow">
+                <i class="fas fa-exclamation-triangle me-3 fs-5"></i>{{ typeWarning }}
+              </div>
+            </div>
+
+            <!-- Images Preview -->
+            <div class="col-12" *ngIf="selectedFiles && selectedFiles.length > 0">
+              <div class="image-preview-panel premium-shadow p-4 rounded-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                  <h5 class="fw-bold m-0 text-dark">
+                    <i class="fas fa-photo-video text-danger me-2"></i> Galerie ({{ selectedFiles.length }})
+                  </h5>
+                  
+                  <div class="preview-actions" *ngIf="selectedFiles.length > 1">
+                    <button type="button" (click)="selectAllImages()" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                       <i class="fas" [ngClass]="allSelected ? 'fa-check-square' : 'fa-square'"></i>
+                       <span class="d-none d-sm-inline ms-1">{{ allSelected ? 'Désélectionner' : 'Sélectionner' }}</span>
+                    </button>
+                    <button type="button" (click)="deleteSelectedImages()" class="btn btn-sm btn-outline-danger rounded-pill px-3" [disabled]="!hasSelectedImages()">
+                      <i class="fas fa-trash-alt me-1"></i> <span class="d-none d-sm-inline">Supprimer ({{ getSelectedCount() }})</span>
+                    </button>
+                    <button type="button" (click)="clearAllImages()" class="btn btn-sm btn-light text-danger rounded-pill px-3">
+                      <i class="fas fa-times-circle me-1"></i> <span class="d-none d-sm-inline">Vider</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
+                  <div *ngFor="let file of selectedFiles; let i = index" class="col">
+                    <div class="preview-card" [class.selected]="isImageSelected(i)" (click)="toggleImageSelection(i)">
+                      <img [src]="getImageUrl(file)" alt="Aperçu" class="preview-card__img" />
+                      
+                      <!-- Overlay de sélection -->
+                      <div class="preview-card__overlay">
+                        <div class="select-indicator" *ngIf="isImageSelected(i)">
+                          <i class="fas fa-check"></i>
+                        </div>
+                      </div>
+                      
+                      <div class="preview-card__details">
+                        <div class="d-flex flex-column" style="width: calc(100% - 30px)">
+                          <span class="file-name text-truncate" [title]="file.name">{{ file.name }}</span>
+                          <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                        </div>
+                        <button type="button" class="btn-remove-img" (click)="deleteImage(i, $event)" title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="col-12" *ngIf="errorMessage || successMessage">
+              <div *ngIf="errorMessage" class="alert custom-alert alert-danger">
+                <i class="fas fa-times-circle fs-5"></i>
+                <span>{{ errorMessage }}</span>
+              </div>
+              <div *ngIf="successMessage" class="alert custom-alert alert-success">
+                <i class="fas fa-check-circle fs-5"></i>
+                <span>{{ successMessage }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-12 mt-5">
+              <hr class="border-light-gray mb-4">
+              <div class="d-flex flex-column flex-sm-row gap-3 justify-content-end">
+                <button type="button" (click)="resetForm()" class="btn btn-light-gray px-4 py-3 fw-bold rounded-pill" [disabled]="submitting">
+                  <i class="fas fa-eraser me-2"></i> Effacer tout
+                </button>
+                <button type="submit" class="btn btn-dark-red px-5 py-3 fw-bold rounded-pill shadow-lg text-white" [disabled]="submitting || offerForm.invalid || selectedFiles.length === 0">
+                  <span *ngIf="!submitting" class="d-flex align-items-center gap-2">
+                    <i class="fas fa-paper-plane"></i> Publier l'offre
+                  </span>
+                  <span *ngIf="submitting" class="d-flex align-items-center gap-2">
+                    <i class="fas fa-spinner fa-spin"></i> Publication en cours...
+                  </span>
+                </button>
+              </div>
+            </div>
+
           </div>
-        </div>
-
-        <!-- Messages d'erreur / succès -->
-        <div *ngIf="errorMessage" class="alert alert-danger d-flex align-items-center">
-          <i class="fas fa-exclamation-circle me-2"></i>{{ errorMessage }}
-        </div>
-        <div *ngIf="successMessage" class="alert alert-success d-flex align-items-center">
-          <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
-        </div>
-
-        <!-- Boutons d'action -->
-        <div class="d-flex gap-3 mt-4">
-          <button
-            type="submit"
-            [disabled]="submitting || offerForm.invalid || selectedFiles.length === 0"
-            class="btn btn-success flex-fill"
-          >
-            <span *ngIf="!submitting"><i class="fas fa-plus-circle me-2"></i>Créer l'offre</span>
-            <span *ngIf="submitting"><i class="fas fa-spinner fa-spin me-2"></i>Création...</span>
-          </button>
-          <button
-            type="button"
-            (click)="resetForm()"
-            class="btn btn-secondary"
-            [disabled]="submitting"
-          >
-            <i class="fas fa-undo-alt me-2"></i>Réinitialiser
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
+      
     </div>
   </div>
-</div>
+</main>
