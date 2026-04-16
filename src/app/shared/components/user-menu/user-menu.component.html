@@ -46,6 +46,14 @@
         My Roommate Requests
       </a>
 
+      <!-- My Collocation Favorites -->
+      <a [routerLink]="mesFavorisRoute"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="closeMenu()">
+        <lucide-icon [img]="HeartIcon" [size]="18"></lucide-icon>
+        My Collocation Favorites
+      </a>
+
       <!-- My Items (Lost & Found) -->
       <a [routerLink]="'/lost-found/my-items'"
         class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
