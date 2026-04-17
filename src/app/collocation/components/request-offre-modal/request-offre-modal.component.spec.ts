@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RequestOffreModalComponent } from './request-offre-modal.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
 
 describe('RequestOffreModalComponent', () => {
   let component: RequestOffreModalComponent;
@@ -8,7 +10,8 @@ describe('RequestOffreModalComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RequestOffreModalComponent]
+      declarations: [RequestOffreModalComponent],
+      imports: [HttpClientTestingModule, FormsModule]
     })
     .compileComponents();
 
