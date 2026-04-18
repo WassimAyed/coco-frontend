@@ -27,10 +27,6 @@ export class SmartCollocationService {
     return this.http.get<any>(`${this.apiUrl}/smart/trust-score/${userId}`);
   }
 
-  parseSearch(query: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/smart/parse-search`, query);
-  }
-
   predictPrice(requestParams: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/smart/predict-price`, requestParams);
   }

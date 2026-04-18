@@ -458,23 +458,6 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.updateMarkers();
   }
 
-  triggerSmartSearch(): void {
-    if (!this.searchTerm.trim()) return;
-    this.smartCollocationService.parseSearch(this.searchTerm).subscribe({
-      next: (res) => {
-        if (res.city) this.filterVille = res.city;
-        if (res.max_price) this.filterPrixMax = res.max_price;
-        if (res.amenities && res.amenities.includes('meublee')) {
-          this.filterMeublee = 'true';
-        }
-        
-        this.showToast('Recherche intelligente appliquée !');
-        this.applyFilters();
-      },
-      error: (err) => console.error("Smart Search error", err)
-    });
-  }
-
   loadRecommendations(): void {
     if (!this.currentUserId) return;
     this.smartCollocationService.getRecommendations(this.currentUserId).subscribe({
