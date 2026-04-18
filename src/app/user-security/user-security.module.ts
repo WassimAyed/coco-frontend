@@ -12,9 +12,10 @@ import { TwoFactorPageComponent } from './pages/two-factor-page/two-factor-page.
 import { UserProfilePageComponent } from './pages/user-profile-page/user-profile-page.component';
 import { UserListComponent } from './components/user-list/user-list.component';
 import { UserSecurityRoutingModule } from './user-security-routing.module';
+import { CreateProfileComponent } from './pages/create-profile/create-profile.component';
 
 @NgModule({
-  declarations: [EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent],
+  declarations: [EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent,CreateProfileComponent],
   exports: [EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent],
   imports: [
     CommonModule,
@@ -22,7 +23,7 @@ import { UserSecurityRoutingModule } from './user-security-routing.module';
     ReactiveFormsModule,
     RouterModule,
     SharedModule,
-    UserSecurityRoutingModule
+    UserSecurityRoutingModule,
   ]
 })
 export class UserSecurityModule { }

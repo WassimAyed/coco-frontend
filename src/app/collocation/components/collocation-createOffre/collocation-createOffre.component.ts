@@ -1,8 +1,11 @@
-import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 import * as L from 'leaflet';
+import { UserService } from '../../../user-security/services/user.service';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 //  http://localhost:4200/collocation/create-offre
 
@@ -29,6 +32,9 @@ L.Marker.prototype.options.icon = iconDefault;
   styleUrls: ['./collocation-createOffre.component.css']
 })
 export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy {
+
+
+
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
   offerForm: FormGroup;
@@ -40,6 +46,9 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
   submitting = false;
   errorMessage = '';
   successMessage = '';
+  
+  predictedPrice: string = '';
+  isPredictingPrice: boolean = false;
 
   // Allowed image types
   allowedImageTypes = ['image/jpeg', 'image/png'];
@@ -56,12 +65,22 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
   private marker!: L.Marker;
   private readonly defaultCenter: L.LatLngTuple = [36.8065, 10.1815]; // Tunis
 
+
+    private readonly userService = inject(UserService);
+    readonly user = computed(() => this.userService.currentUser());
+
+
+
   constructor(
     private fb: FormBuilder,
     private collocationService: CollocationService,
+    private smartCollocationService: SmartCollocationService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
+
+
+
     this.offerForm = this.fb.group({
       titre: ['', Validators.required],
       description: ['', Validators.required],
@@ -76,6 +95,37 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.setupPricePrediction();
+  }
+
+  isNumeric(val: any): boolean {
+    return val != null && val !== '' && !isNaN(Number(val));
+  }
+
+  setupPricePrediction() {
+    this.offerForm.valueChanges.pipe(
+      debounceTime(800)
+    ).subscribe(val => {
+      if (val.ville && val.chambres) {
+        this.isPredictingPrice = true;
+        this.smartCollocationService.predictPrice({
+          ville: val.ville,
+          chambres: val.chambres,
+          meublee: val.meublee || false
+        }).subscribe({
+          next: res => {
+            this.predictedPrice = res.recommended_price;
+            this.isPredictingPrice = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.isPredictingPrice = false;
+          }
+        })
+      } else {
+        this.predictedPrice = '';
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -298,7 +348,17 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
     // Log the offer being sent (for debugging)
     console.log('Submitting offer:', offer);
 
-    this.collocationService.createOffer(offer, this.selectedFiles).subscribe({
+
+    const currentUser = this.user();
+
+if (!currentUser || !currentUser.id) {
+  this.errorMessage = 'User not authenticated';
+  return;
+}
+
+const userId = currentUser.id;
+
+this.collocationService.createOffer(offer, this.selectedFiles, userId).subscribe({
       next: (res: any) => {
         console.log('Offer created:', res);
         this.successMessage = 'Offer created successfully!';

@@ -1,0 +1,94 @@
+.quota-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-width: 400px;
+    border: 1px solid #edf2f7;
+    font-family: 'Inter', sans-serif;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+
+        .label {
+            font-weight: 700;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .status {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+
+            &.active {
+                background: #ebfbee;
+                color: #2f855a;
+            }
+
+            &.blocked {
+                background: #fff5f5;
+                color: #c53030;
+            }
+        }
+    }
+
+    .posts-count {
+        margin-bottom: 1rem;
+
+        .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2d3748;
+        }
+
+        .text {
+            font-size: 1rem;
+            color: #718096;
+            margin-left: 0.5rem;
+        }
+    }
+
+    .progress-container {
+        height: 8px;
+        background: #edf2f7;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease-out;
+        }
+    }
+
+    .expiry {
+        font-size: 0.85rem;
+        color: #c53030;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-manage {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        background: #f7fafc;
+        color: #4a5568;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+            background: #edf2f7;
+        }
+    }
+}

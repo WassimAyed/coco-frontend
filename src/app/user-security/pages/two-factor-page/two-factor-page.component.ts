@@ -94,6 +94,13 @@ export class TwoFactorPageComponent {
           result.message ?? 'Signed in successfully.',
           '2FA Verified',
         );
+        if (result.session) {
+          try {
+            await this.userService.loadCurrentUserProfile();
+          } catch {
+            // Banner still shows JWT/session user if /users/me fails
+          }
+        }
         await this.router.navigate([
           result.session?.user.role === 'admin' ? '/admin' : '/profile',
         ]);

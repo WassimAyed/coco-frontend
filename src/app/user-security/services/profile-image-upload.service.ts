@@ -1,9 +1,7 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { authStore } from '../state/auth.store';
-import { loadAuthSession } from '../utils/auth-session.util';
 
 function resolveUploadUrl(baseUrl: string, pathOrUrl: string): string {
   const trimmedValue = pathOrUrl.trim();
@@ -70,7 +68,6 @@ export class ProfileImageUploadService {
 
     const response = await firstValueFrom(
       this.http.post<unknown>(uploadUrl, formData, {
-        headers: this.getAuthorizationHeaders(),
         withCredentials: environment.storage.withCredentials,
       }),
     );
@@ -108,25 +105,5 @@ export class ProfileImageUploadService {
         'path',
       ])
     );
-  }
-
-  private getAuthorizationHeaders(): HttpHeaders {
-    const cookieSession = loadAuthSession();
-    const storeSession = authStore.getState().session;
-    const cookieToken = cookieSession?.accessToken?.trim() ?? '';
-    const storeToken = storeSession?.accessToken?.trim() ?? '';
-
-    if (cookieToken && storeToken && cookieToken !== storeToken) {
-      console.warn(
-        '[ProfileImageUploadService] Authorization token mismatch between cookie session and auth store. Using cookie token.',
-      );
-    }
-
-    const session = cookieSession ?? storeSession;
-    const accessToken = session?.accessToken?.trim();
-
-    return accessToken
-      ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })
-      : new HttpHeaders();
   }
 }

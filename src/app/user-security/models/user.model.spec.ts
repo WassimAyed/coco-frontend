@@ -12,6 +12,7 @@ describe('AuthSession model', () => {
         campus: 'ESPRIT Ariana',
         department: 'Software Engineering',
         email: 'student@esprit.tn',
+        phone: '+21612345678',
         firstName: 'Student',
         highlights: ['Verified student access'],
         id: 'student-session',

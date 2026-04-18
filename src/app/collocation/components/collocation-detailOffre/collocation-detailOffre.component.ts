@@ -4,15 +4,20 @@ import {
   OnDestroy,
   ViewChild,
   ElementRef,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  inject,
+  computed
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { UserService } from '../../../user-security/services/user.service';
+import { UserApiService } from '../../../user-security/services/user-api.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 
 // -------- Leaflet icon fix --------
 const iconDefault = L.icon({
@@ -46,15 +51,19 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
 
   contactForm!: ReturnType<FormBuilder['group']>;
 
-  // ✅ ADD THESE PROPERTIES (VERY IMPORTANT)
-  ownerId!: number;
-  ownerEmail!: string;
-  ownerName!: string;
-  ownerAvatar!: string;
+  private readonly userService = inject(UserService);
+  readonly user = computed(() => this.userService.currentUser());
+
+  currentUserId!: string;
+
+  ownerId!: string;
+  owner: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private collocationService: CollocationService,
+    private userApiService: UserApiService,
+    private smartService: SmartCollocationService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {}
@@ -81,21 +90,34 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     this.collocationService.getOfferById(id).subscribe({
-      next: (data) => {
+      next: async (data) => {
         this.offer = data;
         this.loading = false;
 
-        // ✅ Get current user from localStorage
-        const currentUser = JSON.parse(localStorage.getItem('currentUser')!);
+        const currentUser = this.user();
+        if (currentUser) {
+          this.currentUserId = currentUser.id;
+        }
 
-        this.ownerId = currentUser.id;
-        this.ownerEmail = currentUser.email;
-        this.ownerName = currentUser.firstName + ' ' + currentUser.lastName;
-        this.ownerAvatar = currentUser.avatarUrl;
+        this.ownerId = (data as any).ownerId;
 
-        // Map logic
+        if (this.ownerId) {
+          try {
+            this.owner = await this.userApiService.getUserById(this.ownerId);
+            this.smartService.getTrustScore(Number(this.ownerId)).subscribe(trustInfo => {
+              this.owner.trustScore = trustInfo.score;
+              this.owner.trustBadge = trustInfo.category;
+              this.owner.trustColor = trustInfo.color;
+              this.cdr.detectChanges();
+            });
+          } catch (err) {
+            console.error('Error loading owner', err);
+          }
+        }
+
         this.cdr.detectChanges();
 
+        // Map
         if (data.latitude && data.longitude) {
           setTimeout(() => {
             this.initMap(data.latitude!, data.longitude!);
@@ -112,9 +134,7 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
   private initMap(lat: number, lng: number): void {
     if (!this.mapContainer) return;
 
-    if (this.map) {
-      this.map.remove();
-    }
+    if (this.map) this.map.remove();
 
     this.map = L.map(this.mapContainer.nativeElement).setView([lat, lng], 15);
 
@@ -127,13 +147,15 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
       .bindPopup(this.offer?.titre || 'Colocation')
       .openPopup();
 
-    setTimeout(() => {
-      this.map?.invalidateSize();
-    }, 300);
+    setTimeout(() => this.map?.invalidateSize(), 300);
   }
 
   selectImage(index: number): void {
     this.selectedImageIndex = index;
+  }
+
+  isOwner(): boolean {
+    return this.currentUserId === this.ownerId;
   }
 }
 

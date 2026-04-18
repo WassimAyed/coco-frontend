@@ -32,6 +32,14 @@
     </div>
 
     <div>
+      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Phone</label>
+      <input class="form-input" formControlName="phone" placeholder="+21612345678" [disabled]="isSubmitting()" />
+      @if (form.controls.phone.touched && form.controls.phone.invalid) {
+        <p class="mt-2 text-xs font-medium text-destructive">Enter a valid phone number (8 to 15 digits).</p>
+      }
+    </div>
+
+    <div>
       <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Password</label>
       <div class="relative">
         <input class="form-input pr-20" [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="Minimum 8 characters" [disabled]="isSubmitting()" />

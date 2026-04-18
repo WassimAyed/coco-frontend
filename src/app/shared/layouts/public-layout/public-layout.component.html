@@ -2,9 +2,7 @@
   <app-ambient-background />
 
   <!-- ================= HEADER ================= -->
-  <header
-    class="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur"
-  >
+  <header class="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur">
     <div class="section-shell flex h-20 items-center justify-between">
       <app-logo />
 
@@ -13,135 +11,124 @@
 
         <!-- FEATURES DROPDOWN -->
         <div class="relative">
-          <button
-            type="button"
+          <button type="button"
             class="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"
-            (click)="toggleFeaturesDropdown()"
-          >
+            (click)="toggleFeaturesDropdown()">
             Features
-            <lucide-icon
-              [img]="featuresDropdownOpen() ? ChevronUpIcon : ChevronDownIcon"
-              [size]="16"
-            />
+            <lucide-icon [img]="featuresDropdownOpen() ? ChevronUpIcon : ChevronDownIcon" [size]="16" />
           </button>
 
           @if (featuresDropdownOpen()) {
-            <div
-              class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-white shadow-lg z-50"
-            >
-              <a
-                routerLink="/collocation/offres"
-                class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
-                (click)="closeFeaturesDropdown()"
-              >
-                Collocation Service
-              </a>
+          <div class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-white shadow-lg z-50">
+            <a routerLink="/collocation/offres"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Collocation Service
+            </a>
 
-              <a
-                routerLink="/student-services"
-                class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
-                (click)="closeFeaturesDropdown()"
-              >
-                Student Services
-              </a>
+            <a routerLink="/student-services"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Student Services
+            </a>
 
-              <a routerLink="/services/covoiturage"
-                 class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
-                 (click)="closeFeaturesDropdown()">
-                Covoiturage Service
-              </a>
+            <a routerLink="/covoiturage/list" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Covoiturage Service
+            </a>
 
-              <a routerLink="/services/event"
-                 class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              <a routerLink="/event"
+                 class="block px-4 py-2 text-sm hover:bg-secondary"
                  (click)="closeFeaturesDropdown()">
                 Event Service
               </a>
 
-              <a routerLink="/services/marketplace"
-                 class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
-                 (click)="closeFeaturesDropdown()">
-                Marketplace Service
-              </a>
+            <a routerLink="/services/marketplace" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Marketplace Service
+            </a>
 
-              <a routerLink="/services/realestate"
-                 class="block px-4 py-2 text-sm hover:bg-secondary hover:rounded-xl hover:text-primary"
-                 (click)="closeFeaturesDropdown()">
-                Realestate Service
-              </a>
-            </div>
+            <a routerLink="/services/realestate" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Realestate Service
+            </a>
+            <a routerLink="/lost-found" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Lost & Found Service
+            </a>
+            <div class="border-t border-border my-1"></div>
+            <a routerLink="/subs-payment" class="block px-4 py-2 text-sm font-semibold text-red-600 hover:bg-secondary"
+              (click)="closeFeaturesDropdown()">
+              Plans & Pricing
+            </a>
+
+          </div>
           }
         </div>
 
-        <a routerLink="/" fragment="how-it-works"
-           class="text-sm font-medium hover:text-primary">
+        <a routerLink="/" fragment="how-it-works" class="text-sm font-medium hover:text-primary">
           How It Works
         </a>
 
-        <a routerLink="/" fragment="faq"
-           class="text-sm font-medium hover:text-primary">
+        <a routerLink="/" fragment="faq" class="text-sm font-medium hover:text-primary">
           FAQ
         </a>
 
         @if (isAuthenticated()) {
-          <app-user-menu />
+        <app-user-menu />
         } @else {
-          <a routerLink="/login" class="btn-secondary !px-4 !py-2.5">
-            Login
-          </a>
-          <a routerLink="/register" class="btn-primary !px-4 !py-2.5">
-            Get Started
-          </a>
+        <a routerLink="/login" class="btn-secondary !px-4 !py-2.5">
+          Login
+        </a>
+        <a routerLink="/register" class="btn-primary !px-4 !py-2.5">
+          Get Started
+        </a>
         }
       </nav>
 
       <!-- MOBILE BUTTON -->
       <button class="md:hidden" (click)="toggleMenu()">
-        <lucide-icon
-          [img]="mobileMenuOpen() ? XIcon : MenuIcon"
-          [size]="24"
-        />
+        <lucide-icon [img]="mobileMenuOpen() ? XIcon : MenuIcon" [size]="24" />
       </button>
     </div>
 
     <!-- ================= MOBILE MENU ================= -->
     @if (mobileMenuOpen()) {
-      <div class="section-shell space-y-3 border-t py-4 md:hidden">
+    <div class="section-shell space-y-3 border-t py-4 md:hidden">
 
-        <button
-          class="flex w-full justify-between rounded-2xl px-3 py-2 text-sm hover:bg-secondary"
-          (click)="toggleFeaturesDropdownMobile()"
-        >
-          Features
-          <lucide-icon
-            [img]="featuresDropdownMobileOpen() ? ChevronUpIcon : ChevronDownIcon"
-            [size]="16"
-          />
-        </button>
+      <button class="flex w-full justify-between rounded-2xl px-3 py-2 text-sm hover:bg-secondary"
+        (click)="toggleFeaturesDropdownMobile()">
+        Features
+        <lucide-icon [img]="featuresDropdownMobileOpen() ? ChevronUpIcon : ChevronDownIcon" [size]="16" />
+      </button>
 
-        @if (featuresDropdownMobileOpen()) {
-          <div class="ml-4 space-y-1">
-            <a routerLink="/collocation/offres"
-               class="block rounded-2xl px-3 py-2 hover:bg-secondary"
-               (click)="closeMenu()">
-              Collocation Service
-            </a>
-            <a routerLink="/student-services"
-               class="block rounded-2xl px-3 py-2 hover:bg-secondary"
-               (click)="closeMenu()">
-              Student Services
-            </a>
-          </div>
-        }
-
-        <a routerLink="/" fragment="how-it-works"
-           class="block rounded-2xl px-3 py-2 hover:bg-secondary"
-           (click)="closeMenu()">How It Works</a>
-
-        <a routerLink="/" fragment="faq"
-           class="block rounded-2xl px-3 py-2 hover:bg-secondary"
-           (click)="closeMenu()">FAQ</a>
-
+      @if (featuresDropdownMobileOpen()) {
+      <div class="ml-4 space-y-1">
+        <a routerLink="/collocation/offres" class="block rounded-2xl px-3 py-2 hover:bg-secondary"
+          (click)="closeMenu()">
+          Collocation Service
+        </a>
+        <a routerLink="/lost-found" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Lost & Found Service
+        </a>
+        <a routerLink="/subs-payment" class="block rounded-2xl px-3 py-2 text-red-600 font-bold hover:bg-secondary"
+          (click)="closeMenu()">
+          💰 Plans & Tarifs
+        </a>
+        <a routerLink="/subs-payment/dashboard"
+          class="block rounded-2xl px-3 py-2 text-red-600 font-bold hover:bg-secondary" (click)="closeMenu()">
+          📊 Posts Quota
+        </a>
       </div>
+      }
+
+      <a routerLink="/" fragment="how-it-works" class="block rounded-2xl px-3 py-2 hover:bg-secondary"
+        (click)="closeMenu()">How It Works</a>
+
+      <a routerLink="/" fragment="faq" class="block rounded-2xl px-3 py-2 hover:bg-secondary"
+        (click)="closeMenu()">FAQ</a>
+
+    </div>
     }
   </header>
 

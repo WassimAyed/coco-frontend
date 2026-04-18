@@ -12,6 +12,8 @@ import { LOCALE_ID } from '@angular/core';
 import { CollocationDetailComponent } from './components/collocation-detailOffre/collocation-detailOffre.component';
 import { MesOffresComponent } from './components/collocation-mesOffres/mesOffres.component';
 import { MesOffresRequestsComponent } from './components/collocation-mesOffresRequests/mes-offres-request-colloc.component';
+import { RequestOffreModalComponent } from './components/request-offre-modal/request-offre-modal.component';
+import { MesFavorisComponent } from './components/collocation-mesFavoris/mes-favoris.component';
 
 
 @NgModule({
@@ -20,7 +22,9 @@ import { MesOffresRequestsComponent } from './components/collocation-mesOffresRe
     CollocationListComponent ,
     CollocationDetailComponent,
     MesOffresComponent,
-    MesOffresRequestsComponent
+    MesOffresRequestsComponent,
+    RequestOffreModalComponent,
+    MesFavorisComponent
     ],
   imports: [
     CommonModule,                   // provides currency, slice, ngIf, ngFor

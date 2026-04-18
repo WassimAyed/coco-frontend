@@ -2,13 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SubsDetailComponent } from './subs-detail.component';
 
+import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+
 describe('SubsDetailComponent', () => {
   let component: SubsDetailComponent;
   let fixture: ComponentFixture<SubsDetailComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SubsDetailComponent]
+      imports: [SubsDetailComponent, RouterTestingModule, HttpClientTestingModule]
     })
     .compileComponents();
 

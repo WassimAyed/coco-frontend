@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -9,8 +9,6 @@ import {
   UserUpdatePayload,
 } from '../models/auth-api.model';
 import { UserProfile } from '../models/user.model';
-import { authStore } from '../state/auth.store';
-import { loadAuthSession } from '../utils/auth-session.util';
 import { buildAuthSessionFromApiResponse } from '../utils/user-profile.util';
 
 function joinUrl(baseUrl: string, path: string): string {
@@ -28,7 +26,7 @@ export class UserApiService {
   async getCurrentUser(emailHint = ''): Promise<UserProfile> {
     const response = await firstValueFrom(
       this.http.get<unknown>(joinUrl(environment.apiBaseUrl, '/users/me'), {
-        ...this.getAuthorizedOptions(),
+        withCredentials: environment.auth.withCredentials,
       }),
     );
 
@@ -41,7 +39,7 @@ export class UserApiService {
   ): Promise<UserProfile> {
     const response = await firstValueFrom(
       this.http.put<unknown>(joinUrl(environment.apiBaseUrl, '/users/me'), payload, {
-        ...this.getAuthorizedOptions(),
+        withCredentials: environment.auth.withCredentials,
       }),
     );
 
@@ -51,7 +49,7 @@ export class UserApiService {
   updatePassword(payload: PasswordUpdatePayload): Promise<void> {
     return firstValueFrom(
       this.http.put<void>(joinUrl(environment.apiBaseUrl, '/users/me/password'), payload, {
-        ...this.getAuthorizedOptions(),
+        withCredentials: environment.auth.withCredentials,
       }),
     );
   }
@@ -64,7 +62,7 @@ export class UserApiService {
         joinUrl(environment.apiBaseUrl, '/users/me/two-factor'),
         payload,
         {
-          ...this.getAuthorizedOptions(),
+          withCredentials: environment.auth.withCredentials,
         },
       ),
     );
@@ -82,30 +80,13 @@ export class UserApiService {
     return {};
   }
 
-  private getAuthorizedOptions(): {
-    headers: HttpHeaders;
-    withCredentials: boolean;
-  } {
-    const cookieSession = loadAuthSession();
-    const storeSession = authStore.getState().session;
-    const cookieToken = cookieSession?.accessToken?.trim() ?? '';
-    const storeToken = storeSession?.accessToken?.trim() ?? '';
+  async getUserById(id: string): Promise<UserProfile> {
+    const response = await firstValueFrom(
+      this.http.get<unknown>(joinUrl(environment.apiBaseUrl, `/users/${id}`), {
+        withCredentials: environment.auth.withCredentials,
+      }),
+    );
 
-    if (cookieToken && storeToken && cookieToken !== storeToken) {
-      console.warn(
-        '[UserApiService] Authorization token mismatch between cookie session and auth store. Using cookie token.',
-      );
-    }
-
-    const session = cookieSession ?? storeSession;
-    const accessToken = session?.accessToken?.trim();
-    const headers = accessToken
-      ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })
-      : new HttpHeaders();
-
-    return {
-      headers,
-      withCredentials: environment.auth.withCredentials,
-    };
+    return response as UserProfile;
   }
 }

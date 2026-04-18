@@ -1,1 +1,479 @@
-<p>covoiturage-detail works!</p>
+<main class="container my-4">
+
+  <!-- Back button -->
+  <button class="btn btn-outline-secondary rounded-pill mb-3" (click)="goBack()">
+    <i class="fas fa-arrow-left me-1"></i> Retour aux trajets
+  </button>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-danger" role="status"></div>
+    <p class="text-muted mt-2">Chargement...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
+  </div>
+
+  <!-- Detail -->
+  <div *ngIf="covoiturage && !loading">
+    <div class="row g-4">
+
+      <!-- Left: Trajet info -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow rounded-4">
+          <div class="card-body p-4">
+            <h3 class="fw-bold mb-4">{{ covoiturage.pointDepart }} <i class="fas fa-arrow-right text-danger mx-2"></i> {{ covoiturage.pointArrivee }}</h3>
+
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6">
+                <div class="bg-light rounded-3 p-3">
+                  <p class="text-muted small mb-1"><i class="fas fa-calendar-alt text-primary me-1"></i> Date de depart</p>
+                  <p class="fw-bold mb-0">{{ formatDate(covoiturage.dateDepart) }}</p>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="bg-light rounded-3 p-3">
+                  <p class="text-muted small mb-1"><i class="fas fa-road text-info me-1"></i> Distance</p>
+                  <p class="fw-bold mb-0">{{ covoiturage.distance }} km &middot; ~{{ covoiturage.dureeEstimee }} min</p>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="bg-light rounded-3 p-3">
+                  <p class="text-muted small mb-1"><i class="fas fa-users text-success me-1"></i> Places</p>
+                  <p class="fw-bold mb-0">
+                    <span [ngClass]="covoiturage.placesDisponibles > 0 ? 'text-success' : 'text-danger'">
+                      {{ covoiturage.placesDisponibles }}
+                    </span>
+                    / {{ covoiturage.nombrePlaces }} disponibles
+                  </p>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="bg-light rounded-3 p-3">
+                  <p class="text-muted small mb-1"><i class="fas fa-coins text-warning me-1"></i> Prix</p>
+                  <p class="fw-bold fs-4 text-danger mb-0">{{ covoiturage.prixParPassager }} TND</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehicule info -->
+            <div *ngIf="vehicule" class="border rounded-3 p-3">
+              <h6 class="fw-bold mb-2"><i class="fas fa-car text-primary me-2"></i> Vehicule</h6>
+              <div class="d-flex align-items-center gap-3">
+                <img *ngIf="vehicule.image" [src]="getVehiculeImageUrl(vehicule.image)" alt="vehicule"
+                     class="rounded-3 shadow-sm" style="width:150px;height:80px;object-fit:cover;">
+                <div *ngIf="!vehicule.image" class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:80px;height:80px;">
+                  <i class="fas fa-car fa-2x text-muted"></i>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ vehicule.marque }}</span>
+                  <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ vehicule.couleur }}</span>
+                  <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ vehicule.immatriculation }}</span>
+                  <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ vehicule.capacite }} places</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Google Map -->
+            <div *ngIf="covoiturage.lattitudeDepart && covoiturage.latitudeArrivee" class="mt-4">
+              <h6 class="fw-bold mb-2"><i class="fas fa-map text-danger me-2"></i> Itineraire</h6>
+              <div #detailMapContainer class="rounded-3 border" style="width: 100%; height: 350px;"></div>
+            </div>
+
+            <!-- Driver actions -->
+            <div *ngIf="isDriver" class="mt-4 d-flex gap-2">
+              <button class="btn btn-outline-danger rounded-pill" (click)="deleteCovoiturage()">
+                <i class="fas fa-trash me-1"></i> Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== SECTION NOTATION ====== -->
+        <div class="card border-0 shadow rounded-4 mt-4">
+          <div class="card-body p-4">
+
+            <!-- Header avec moyenne -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-star text-warning me-2"></i> {{ isDriver ? 'Vos avis' : 'Avis sur le conducteur' }}</h5>
+              <div *ngIf="notations.length > 0" class="text-end">
+                <span class="fs-4 fw-bold text-warning">{{ getAverageNotation() }}</span>
+                <span class="text-muted">/5</span>
+                <div class="small text-muted">{{ notations.length }} avis</div>
+              </div>
+            </div>
+
+            <!-- Moyenne etoiles -->
+            <div *ngIf="notations.length > 0" class="mb-3">
+              <span *ngFor="let s of [1,2,3,4,5]" class="fs-5">
+                <i class="fas fa-star" [ngClass]="s <= getAverageNotation() ? 'text-warning' : 'text-muted'" style="opacity: 0.4;" [style.opacity]="s <= getAverageNotation() ? '1' : '0.3'"></i>
+              </span>
+            </div>
+            <div *ngIf="notations.length === 0" class="text-muted mb-3">
+              <i class="fas fa-info-circle me-1"></i> Aucun avis pour le moment.
+            </div>
+
+            <!-- Formulaire notation (passager avec reservation confirmee, pas encore note) -->
+            <div *ngIf="!isDriver && myReservation && myReservation.statusReservation === 'CONFIRMEE' && !myNotation"
+                 class="border rounded-3 p-3 mb-3 bg-light">
+              <h6 class="fw-bold mb-2"><i class="fas fa-pen me-1"></i> Laisser un avis</h6>
+
+              <div *ngIf="notationSuccess" class="alert alert-success py-2">{{ notationSuccess }}</div>
+              <div *ngIf="notationError" class="alert alert-danger py-2">{{ notationError }}</div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Note</label>
+                <div class="star-rating">
+                  <span *ngFor="let s of [1,2,3,4,5]" class="star-btn"
+                        (click)="setRating(s)" (mouseenter)="hoverRating = s" (mouseleave)="hoverRating = 0">
+                    <i class="fas fa-star fs-4"
+                       [ngClass]="(hoverRating || newNotation) >= s ? 'text-warning' : 'text-muted'"
+                       style="cursor:pointer;"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Commentaire</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="newComment"
+                          placeholder="Partagez votre experience..."></textarea>
+              </div>
+              <button class="btn btn-warning rounded-pill px-4" (click)="submitNotation()">
+                <i class="fas fa-paper-plane me-1"></i> Envoyer
+              </button>
+            </div>
+
+            <!-- Ma notation existante (lecture / edition) -->
+            <div *ngIf="!isDriver && myNotation && !editingNotation"
+                 class="border rounded-3 p-3 mb-3 border-warning bg-light">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="badge bg-warning text-dark rounded-pill mb-1">Mon avis</span>
+                  <div class="mb-1">
+                    <span *ngFor="let s of [1,2,3,4,5]">
+                      <i class="fas fa-star" [ngClass]="s <= myNotation.notation ? 'text-warning' : 'text-muted'"></i>
+                    </span>
+                  </div>
+                  <p class="mb-0 text-muted" *ngIf="myNotation.comment">{{ myNotation.comment }}</p>
+                </div>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-warning rounded-pill" (click)="editingNotation = true">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="deleteMyNotation()">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edition de ma notation -->
+            <div *ngIf="!isDriver && myNotation && editingNotation"
+                 class="border rounded-3 p-3 mb-3 border-warning bg-light">
+              <h6 class="fw-bold mb-2"><i class="fas fa-edit me-1"></i> Modifier mon avis</h6>
+
+              <div *ngIf="notationSuccess" class="alert alert-success py-2">{{ notationSuccess }}</div>
+              <div *ngIf="notationError" class="alert alert-danger py-2">{{ notationError }}</div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Note</label>
+                <div class="star-rating">
+                  <span *ngFor="let s of [1,2,3,4,5]" class="star-btn"
+                        (click)="setRating(s)" (mouseenter)="hoverRating = s" (mouseleave)="hoverRating = 0">
+                    <i class="fas fa-star fs-4"
+                       [ngClass]="(hoverRating || newNotation) >= s ? 'text-warning' : 'text-muted'"
+                       style="cursor:pointer;"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Commentaire</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="newComment"></textarea>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-warning rounded-pill px-4" (click)="updateMyNotation()">
+                  <i class="fas fa-save me-1"></i> Enregistrer
+                </button>
+                <button class="btn btn-outline-secondary rounded-pill" (click)="editingNotation = false">
+                  Annuler
+                </button>
+              </div>
+            </div>
+
+            <!-- Liste des avis -->
+            <div *ngIf="notations.length > 0">
+              <hr>
+              <div *ngFor="let n of notations" class="mb-3 p-3 bg-light rounded-3">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <span class="fw-bold small">
+                      <i class="fas fa-user-circle me-1 text-secondary"></i>
+                      {{ getDonneurName(n.idDonneur) }}
+                      <span *ngIf="n.idDonneur === currentUserId" class="badge bg-info text-dark ms-1">Vous</span>
+                    </span>
+                    <div class="mt-1">
+                      <span *ngFor="let s of [1,2,3,4,5]">
+                        <i class="fas fa-star small" [ngClass]="s <= n.notation ? 'text-warning' : 'text-muted'"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p *ngIf="n.comment" class="mb-0 mt-1 text-muted small">{{ n.comment }}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Reservations (visible by driver) -->
+        <div *ngIf="isDriver && reservations.length > 0" class="card border-0 shadow rounded-4 mt-4">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-list me-2"></i> Reservations ({{ reservations.length }})</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Passager</th>
+                    <th>Nb passagers</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of reservations">
+                    <td><i class="fas fa-user me-1"></i> {{ getPassengerName(r.idPassenger) }}</td>
+                    <td>{{ r.nbPassengers }}</td>
+                    <td>{{ formatDate(r.dateReservation!) }}</td>
+                    <td><span class="badge rounded-pill" [ngClass]="getStatusClass(r.statusReservation)">{{ getStatusLabel(r.statusReservation) }}</span></td>
+                    <td>
+                      <div *ngIf="r.statusReservation === 'EN_ATTENTE'" class="d-flex gap-1">
+                        <button class="btn btn-sm btn-success rounded-pill" (click)="updateReservationStatus(r, StatusReservation.CONFIRMEE)">
+                          <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger rounded-pill" (click)="updateReservationStatus(r, StatusReservation.REFUSEE)">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                      <span *ngIf="r.statusReservation !== 'EN_ATTENTE'" class="text-muted small">--</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Reservation panel (for passengers) -->
+      <div class="col-lg-4">
+
+        <!-- Conducteur -->
+        <div *ngIf="isDriver" class="card border-0 shadow rounded-4">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-steering-wheel fa-3x text-primary mb-3"></i>
+            <p class="fw-bold">Vous etes le conducteur de ce trajet.</p>
+          </div>
+        </div>
+
+        <!-- Passager : chargement en cours -->
+        <div *ngIf="!isDriver && loadingMyReservation" class="card border-0 shadow rounded-4">
+          <div class="card-body p-4 text-center">
+            <div class="spinner-border text-danger" role="status"></div>
+          </div>
+        </div>
+
+        <!-- ====== PAS DE RESERVATION : formulaire de creation ====== -->
+        <div *ngIf="!isDriver && !loadingMyReservation && !myReservation && covoiturage.placesDisponibles > 0"
+             class="card border-0 shadow rounded-4 sticky-top" style="top:100px;">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-ticket-alt text-danger me-2"></i> Reserver</h5>
+
+            <div *ngIf="reservationSuccess" class="alert alert-success">{{ reservationSuccess }}</div>
+            <div *ngIf="reservationError" class="alert alert-danger">{{ reservationError }}</div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nombre de passagers</label>
+              <input type="number" class="form-control" [(ngModel)]="nbPassengers" min="1" [max]="covoiturage.placesDisponibles">
+              <small class="text-muted">Max {{ covoiturage.placesDisponibles }} places</small>
+            </div>
+
+            <div class="bg-light rounded-3 p-3 mb-3">
+              <div class="d-flex justify-content-between">
+                <span>{{ nbPassengers }} x {{ covoiturage.prixParPassager }} TND</span>
+                <span class="fw-bold text-danger">{{ nbPassengers * covoiturage.prixParPassager }} TND</span>
+              </div>
+            </div>
+
+            <button class="btn btn-danger w-100 rounded-pill py-2" (click)="reserver()">
+              <i class="fas fa-check me-1"></i> Confirmer la reservation
+            </button>
+          </div>
+        </div>
+
+        <!-- Pas de reservation + trajet complet -->
+        <div *ngIf="!isDriver && !loadingMyReservation && !myReservation && covoiturage.placesDisponibles === 0"
+             class="card border-0 shadow rounded-4">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-ban fa-3x text-muted mb-3"></i>
+            <p class="fw-bold text-muted">Ce trajet est complet.</p>
+          </div>
+        </div>
+
+        <!-- ====== RESERVATION EXISTANTE : EN_ATTENTE → modifier ====== -->
+        <div *ngIf="!isDriver && !loadingMyReservation && myReservation && myReservation.statusReservation === 'EN_ATTENTE'"
+             class="card border-0 shadow rounded-4 border-start border-4 border-warning sticky-top" style="top:100px;">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+              <i class="fas fa-edit text-warning me-2"></i> Modifier ma reservation
+            </h5>
+
+            <div class="mb-3">
+              <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                <i class="fas fa-clock me-1"></i> En attente de confirmation
+              </span>
+            </div>
+
+            <div *ngIf="reservationSuccess" class="alert alert-success">{{ reservationSuccess }}</div>
+            <div *ngIf="reservationError" class="alert alert-danger">{{ reservationError }}</div>
+
+            <!-- Places disponibles > 0 : peut modifier -->
+            <div *ngIf="covoiturage.placesDisponibles > 0">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nombre de passagers</label>
+                <input type="number" class="form-control" [(ngModel)]="nbPassengers" min="1"
+                       [max]="covoiturage.placesDisponibles">
+                <small class="text-muted">Max {{ covoiturage.placesDisponibles }} places disponibles</small>
+              </div>
+
+              <div class="bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between">
+                  <span>{{ nbPassengers }} x {{ covoiturage.prixParPassager }} TND</span>
+                  <span class="fw-bold text-danger">{{ nbPassengers * covoiturage.prixParPassager }} TND</span>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button class="btn btn-warning w-100 rounded-pill py-2" (click)="modifierReservation()">
+                  <i class="fas fa-save me-1"></i> Enregistrer
+                </button>
+                <button class="btn btn-outline-danger rounded-pill py-2 px-3" (click)="annulerReservation()">
+                  <i class="fas fa-times me-1"></i> Annuler
+                </button>
+              </div>
+            </div>
+
+            <!-- Places disponibles = 0 : ne peut plus modifier, seulement annuler -->
+            <div *ngIf="covoiturage.placesDisponibles === 0">
+              <div class="alert alert-secondary text-center mb-3">
+                <i class="fas fa-ban me-1"></i> Plus de places disponibles, modification impossible.
+              </div>
+              <button class="btn btn-outline-danger w-100 rounded-pill py-2" (click)="annulerReservation()">
+                <i class="fas fa-times me-1"></i> Annuler ma reservation
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== RESERVATION EXISTANTE : CONFIRMEE → lecture seule ====== -->
+        <div *ngIf="!isDriver && !loadingMyReservation && myReservation && myReservation.statusReservation === 'CONFIRMEE'"
+             class="card border-0 shadow rounded-4 border-start border-4 border-success">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5 class="fw-bold text-success">Reservation confirmee !</h5>
+            <p class="text-muted mb-2">Votre reservation a ete acceptee par le conducteur.</p>
+            <div class="bg-light rounded-3 p-3 mt-3">
+              <p class="mb-1"><strong>Passagers :</strong> {{ myReservation.nbPassengers }}</p>
+              <p class="mb-0"><strong>Total :</strong>
+                <span class="text-danger fw-bold">{{ myReservation.nbPassengers * covoiturage.prixParPassager }} TND</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== RESERVATION EXISTANTE : REFUSEE → lecture seule ====== -->
+        <div *ngIf="!isDriver && !loadingMyReservation && myReservation && myReservation.statusReservation === 'REFUSEE'"
+             class="card border-0 shadow rounded-4 border-start border-4 border-danger">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+            <h5 class="fw-bold text-danger">Reservation refusee</h5>
+            <p class="text-muted mb-0">Votre reservation a ete refusee par le conducteur.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ====== TRAJETS SIMILAIRES ====== -->
+    <div *ngIf="similarCovoiturages.length > 0" class="mt-5">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold mb-0">
+          <i class="fas fa-route text-danger me-2"></i>Trajets similaires
+        </h4>
+        <span class="badge bg-light text-dark rounded-pill px-3 py-2">
+          {{ similarCovoiturages.length }} trajet(s)
+        </span>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6 col-lg-3" *ngFor="let s of similarCovoiturages">
+          <div class="card h-100 border-0 shadow-sm rounded-4 similar-card"
+               style="cursor: pointer; transition: transform .2s, box-shadow .2s;"
+               (click)="goToSimilarTrajet(s.id)"
+               (mouseenter)="$any($event.currentTarget).style.transform='translateY(-4px)'"
+               (mouseleave)="$any($event.currentTarget).style.transform='translateY(0)'">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center mb-2">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center"
+                     style="width: 36px; height: 36px;">
+                  <i class="fas fa-car"></i>
+                </div>
+                <div class="ms-2 flex-grow-1 text-truncate">
+                  <small class="text-muted d-block">Conducteur</small>
+                  <strong class="text-truncate d-block">{{ getSimilarDriverName(s.idDriver) }}</strong>
+                </div>
+              </div>
+
+              <div class="border-top pt-2">
+                <div class="d-flex align-items-center mb-1 small">
+                  <i class="fas fa-map-marker-alt text-success me-2" style="width: 14px;"></i>
+                  <span class="text-truncate">{{ s.pointDepart }}</span>
+                </div>
+                <div class="d-flex align-items-center mb-2 small">
+                  <i class="fas fa-flag-checkered text-danger me-2" style="width: 14px;"></i>
+                  <span class="text-truncate">{{ s.pointArrivee }}</span>
+                </div>
+
+                <div class="d-flex align-items-center mb-2 small text-muted">
+                  <i class="fas fa-clock me-2"></i>
+                  <span>{{ formatDate(s.dateDepart) }}</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
+                    <i class="fas fa-user me-1"></i>{{ s.placesDisponibles }} place(s)
+                  </span>
+                  <strong class="text-danger">{{ s.prixParPassager }} TND</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<app-confirm-modal
+  [show]="showConfirmModal"
+  [title]="confirmModalTitle"
+  [message]="confirmModalMessage"
+  confirmText="Confirmer"
+  confirmClass="btn-danger"
+  [icon]="confirmModalIcon"
+  (confirmed)="onConfirm()"
+  (cancelled)="closeConfirmModal()">
+</app-confirm-modal>
+</main>

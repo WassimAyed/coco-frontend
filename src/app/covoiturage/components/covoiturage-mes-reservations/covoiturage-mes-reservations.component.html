@@ -1,0 +1,69 @@
+<main class="container my-4">
+  <button class="btn btn-outline-secondary rounded-pill mb-3" (click)="goBack()">
+    <i class="fas fa-arrow-left me-1"></i> Retour
+  </button>
+
+  <h3 class="fw-bold mb-4"><i class="fas fa-ticket-alt text-primary me-2"></i> Mes Reservations</h3>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-danger" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading && reservations.length === 0" class="text-center py-5 text-muted">
+    <i class="fas fa-ticket-alt fa-4x mb-3"></i>
+    <p class="fs-5">Vous n'avez aucune reservation.</p>
+  </div>
+
+  <div *ngIf="!loading && reservations.length > 0" class="d-flex flex-column gap-3">
+    <div class="card border-0 shadow-sm rounded-4" *ngFor="let r of reservations">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <!-- Trajet info -->
+          <div class="col-md-4">
+            <div *ngIf="getCovoiturage(r.covoiturageId) as c">
+              <p class="fw-bold mb-1">{{ c.pointDepart }} <i class="fas fa-arrow-right text-danger mx-1"></i> {{ c.pointArrivee }}</p>
+              <p class="text-muted small mb-0">{{ formatDate(c.dateDepart) }}</p>
+            </div>
+            <div *ngIf="!getCovoiturage(r.covoiturageId)">
+              <p class="text-muted mb-0">Trajet #{{ r.covoiturageId }}</p>
+            </div>
+          </div>
+          <!-- Passagers -->
+          <div class="col-md-2 text-center">
+            <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ r.nbPassengers }} passager(s)</span>
+          </div>
+          <!-- Status -->
+          <div class="col-md-2 text-center">
+            <span class="badge rounded-pill" [ngClass]="getStatusClass(r.statusReservation)">
+              {{ getStatusLabel(r.statusReservation) }}
+            </span>
+          </div>
+          <!-- Date reservation -->
+          <div class="col-md-2 text-center">
+            <small class="text-muted">{{ formatDate(r.dateReservation!) }}</small>
+          </div>
+          <!-- Actions -->
+          <div class="col-md-2 text-end">
+            <button class="btn btn-outline-primary btn-sm rounded-pill me-1" (click)="viewTrajet(r.covoiturageId)">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button *ngIf="r.statusReservation === 'EN_ATTENTE'" class="btn btn-outline-danger btn-sm rounded-pill" (click)="cancelReservation(r.id!)">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-confirm-modal
+    [show]="showConfirmModal"
+    title="Annuler la reservation"
+    message="Voulez-vous vraiment annuler cette reservation ?"
+    confirmText="Annuler la reservation"
+    confirmClass="btn-danger"
+    icon="fas fa-times-circle text-danger"
+    (confirmed)="onConfirmCancel()"
+    (cancelled)="closeConfirmModal()">
+  </app-confirm-modal>
+</main>

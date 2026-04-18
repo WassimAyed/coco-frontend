@@ -28,6 +28,7 @@ export class RegisterPageComponent {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{8,15}$/)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', Validators.required],
     agreeToTerms: [false, Validators.requiredTrue],
@@ -69,6 +70,7 @@ export class RegisterPageComponent {
       email: this.form.controls.email.value.trim(),
       username: this.form.controls.firstName.value.trim(),
       lastname: this.form.controls.lastName.value.trim(),
+      phone: this.form.controls.phone.value.trim(),
       password: this.form.controls.password.value,
       confirmPassword: this.form.controls.confirmPassword.value,
     };
