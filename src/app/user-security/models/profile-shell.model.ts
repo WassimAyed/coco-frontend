@@ -1,4 +1,4 @@
-export type ProfileSectionId = 'profile' | 'settings' | 'chat' | 'signals';
+export type ProfileSectionId = 'profile' | 'settings' | 'chat' | 'signals' | 'services';
 
 export interface ProfileSection {
   id: ProfileSectionId;

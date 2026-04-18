@@ -44,8 +44,11 @@ import { UserService } from '../../services/user.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
 import {
+  ServiceCategory,
+  StudentService,
   StudentServiceChatMessage,
   StudentServiceChatTypingIndicator,
+  StudentServiceRequest,
 } from '../../../student-services/models/student-service.model';
 import { StudentServicesApiService } from '../../../student-services/services/student-services-api.service';
 import { StudentServiceChatSocketService } from '../../../student-services/services/student-service-chat-socket.service';
@@ -166,6 +169,31 @@ export class UserProfilePageComponent implements OnDestroy {
       ) ?? null,
   );
 
+  readonly serviceCategories = signal<ServiceCategory[]>([]);
+  readonly myServices = signal<StudentService[]>([]);
+  readonly providerRequests = signal<StudentServiceRequest[]>([]);
+  readonly isLoadingServices = signal(false);
+  readonly myServicesPage = signal(1);
+  readonly providerRequestsPage = signal(1);
+  readonly servicesPageSize = 4;
+  readonly serviceCategoryLookup = computed(
+    () => new Map(this.serviceCategories().map((c) => [c.id, c])),
+  );
+  readonly paginatedMyServices = computed(() => {
+    const start = (this.myServicesPage() - 1) * this.servicesPageSize;
+    return this.myServices().slice(start, start + this.servicesPageSize);
+  });
+  readonly paginatedProviderRequests = computed(() => {
+    const start = (this.providerRequestsPage() - 1) * this.servicesPageSize;
+    return this.providerRequests().slice(start, start + this.servicesPageSize);
+  });
+  readonly myServicesTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.myServices().length / this.servicesPageSize)),
+  );
+  readonly providerRequestsTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.providerRequests().length / this.servicesPageSize)),
+  );
+
   readonly profileForm = this.fb.nonNullable.group({
     email: [
       { disabled: true, value: '' },
@@ -194,7 +222,8 @@ export class UserProfilePageComponent implements OnDestroy {
     if (
       this.requestedSection === 'profile' ||
       this.requestedSection === 'settings' ||
-      this.requestedSection === 'chat'
+      this.requestedSection === 'chat' ||
+      this.requestedSection === 'services'
     ) {
       this.activeSection.set(this.requestedSection);
     }
@@ -227,6 +256,12 @@ export class UserProfilePageComponent implements OnDestroy {
           void this.loadStudentServiceConversations(true);
         });
       }
+
+      if (this.activeSection() === 'services') {
+        queueMicrotask(() => {
+          void this.loadServicesAndRequests();
+        });
+      }
     });
   }
 
@@ -245,6 +280,10 @@ export class UserProfilePageComponent implements OnDestroy {
 
     if (sectionId === 'chat') {
       void this.loadStudentServiceConversations(true);
+    }
+
+    if (sectionId === 'services') {
+      void this.loadServicesAndRequests();
     }
   }
 
@@ -698,6 +737,59 @@ export class UserProfilePageComponent implements OnDestroy {
 
   cancelSignalEdit(): void {
     this.resetSignalComposer();
+  }
+
+  getServiceCategory(service: StudentService): ServiceCategory | undefined {
+    return this.serviceCategoryLookup().get(service.categoryId);
+  }
+
+  acceptProviderRequest(requestId: string): void {
+    this.studentServicesApiService
+      .updateRequestStatus(requestId, 'accepted')
+      .subscribe((request) => {
+        if (!request) {
+          this.toastService.error('Unable to accept this request.', 'Update Failed');
+          return;
+        }
+        this.toastService.success('Request accepted.', 'Request Accepted');
+        void this.loadServicesAndRequests();
+      });
+  }
+
+  declineProviderRequest(requestId: string): void {
+    this.studentServicesApiService
+      .updateRequestStatus(requestId, 'declined')
+      .subscribe((request) => {
+        if (!request) {
+          this.toastService.error('Unable to decline this request.', 'Update Failed');
+          return;
+        }
+        this.toastService.info('Request declined.', 'Request Updated');
+        void this.loadServicesAndRequests();
+      });
+  }
+
+  deleteMyService(serviceId: string): void {
+    this.studentServicesApiService.deleteService(serviceId).subscribe((deleted) => {
+      if (!deleted) {
+        this.toastService.error('Unable to delete this post.', 'Delete Failed');
+        return;
+      }
+      this.toastService.success('Service post deleted.', 'Post Removed');
+      void this.loadServicesAndRequests();
+    });
+  }
+
+  setMyServicesPage(page: number): void {
+    if (page >= 1 && page <= this.myServicesTotalPages()) {
+      this.myServicesPage.set(page);
+    }
+  }
+
+  setProviderRequestsPage(page: number): void {
+    if (page >= 1 && page <= this.providerRequestsTotalPages()) {
+      this.providerRequestsPage.set(page);
+    }
   }
 
   private startChatPolling(): void {
@@ -1247,6 +1339,36 @@ export class UserProfilePageComponent implements OnDestroy {
     this.editingSignalId.set(null);
     this.signalForm.reset();
     this.clearSelectedSignalImage();
+  }
+
+  private async loadServicesAndRequests(): Promise<void> {
+    if (!this.user()) {
+      return;
+    }
+
+    this.isLoadingServices.set(true);
+
+    try {
+      const [categories, services, requests] = await Promise.all([
+        firstValueFrom(this.studentServicesApiService.getCategories()),
+        firstValueFrom(this.studentServicesApiService.getMyServices()),
+        firstValueFrom(this.studentServicesApiService.getProviderRequests()),
+      ]);
+
+      this.serviceCategories.set(categories);
+      this.myServices.set(services);
+      this.providerRequests.set(requests);
+      this.myServicesPage.set(1);
+      this.providerRequestsPage.set(1);
+    } catch (error) {
+      const message = this.authApiService.extractErrorMessage(
+        error,
+        'Unable to load your services right now.',
+      );
+      this.toastService.error(message, 'Services Load Failed');
+    } finally {
+      this.isLoadingServices.set(false);
+    }
   }
 
   private buildConversationPreview(
