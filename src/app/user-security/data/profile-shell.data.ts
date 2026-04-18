@@ -1,6 +1,6 @@
-import { BellRing, BookOpen, LucideIconData, MessageCircleMore, Settings2, UserRound } from 'lucide-angular';
+import { LucideIconData, MessageCircleMore, Settings2, UserRound } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../shared/utils/avatar.util';
-import { ChatConversation, ProfileActivity, ProfileSection } from '../models/profile-shell.model';
+import { ChatConversation, ProfileActivity, ProfileSection, ProfileShortcut } from '../models/profile-shell.model';
 import { UserProfile } from '../models/user.model';
 
 export interface ProfileSidebarSection extends ProfileSection {
@@ -31,18 +31,6 @@ export const PROFILE_SECTIONS: ProfileSidebarSection[] = [
     icon: MessageCircleMore,
     id: 'chat',
     label: 'Chat'
-  },
-  {
-    description: 'Create and manage your own alerts with optional screenshots.',
-    icon: BellRing,
-    id: 'signals',
-    label: 'Signals'
-  },
-  {
-    description: 'View and manage your service posts and incoming requests.',
-    icon: BookOpen,
-    id: 'services',
-    label: 'Services'
   }
 ];
 
@@ -71,7 +59,23 @@ export const DEFAULT_PREFERENCES: PreferenceCard[] = [
 
 
 
-
+export const PROFILE_SHORTCUTS: ProfileShortcut[] = [
+  {
+    caption: 'Open requests waiting for action',
+    title: 'Pending actions',
+    value: '04'
+  },
+  {
+    caption: 'Verified spaces and student services',
+    title: 'Active boards',
+    value: '12'
+  },
+  {
+    caption: 'Trusted classmates connected this week',
+    title: 'Fresh matches',
+    value: '08'
+  }
+];
 
 export const PROFILE_ACTIVITY_FEED: ProfileActivity[] = [
   {
