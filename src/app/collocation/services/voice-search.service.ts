@@ -34,7 +34,11 @@ export class VoiceSearchService {
       };
 
       this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        let transcript = event.results[0][0].transcript;
+        
+        // Remove trailing full stop points and extra spaces that speech-to-text often adds
+        transcript = transcript.replace(/\.+$/, '').trim();
+
         this.zone.run(() => {
           this.textSubject.next(transcript);
         });
