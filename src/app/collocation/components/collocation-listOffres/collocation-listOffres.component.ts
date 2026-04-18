@@ -16,6 +16,7 @@ import { CollocationOffer } from '../../models/collocationOffre.model';
 import { UserService } from './../../../user-security/services/user.service';
 import { MatchingService } from '../../../user-security/services/matchingColloc.service';
 import { VoiceSearchService } from '../../services/voice-search.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
@@ -94,10 +95,13 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private readonly matchingService = inject(MatchingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly voiceSearchService = inject(VoiceSearchService);
+  private readonly smartCollocationService = inject(SmartCollocationService);
 
   readonly user = computed(() => this.userService.currentUser());
   currentUserId!: number;
   currentUserProfile: any = null; // Stored user profile
+
+  recommendedOffers: CollocationOffer[] = [];
 
   matchingEnabled = false;
   isMatchingLoading = false;
@@ -174,6 +178,12 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
+    
+    setTimeout(() => {
+      if (this.currentUserId) {
+        this.loadRecommendations();
+      }
+    }, 1000); // load after offers
 
     // Voice Search Subscriptions
     this.voiceSearchService.setLanguage('fr-FR');
@@ -446,6 +456,16 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     }
 
     this.updateMarkers();
+  }
+
+  loadRecommendations(): void {
+    if (!this.currentUserId) return;
+    this.smartCollocationService.getRecommendations(this.currentUserId).subscribe({
+      next: (ids) => {
+        this.recommendedOffers = this.offers.filter(o => ids.includes(o.id));
+      },
+      error: err => console.error("Could not load recommendations", err)
+    });
   }
 
   toggleVoiceSearch(): void {
