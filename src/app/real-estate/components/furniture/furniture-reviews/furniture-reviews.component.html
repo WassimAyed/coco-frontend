@@ -1,0 +1,98 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>⭐ Avis & Notation</h1>
+      <p>{{ reviews.length }} avis pour cet article</p>
+    </div>
+    <a [routerLink]="['/furniture', furnitureId]" class="btn-back">← Retour</a>
+  </div>
+
+  <div *ngIf="success" class="alert-success">{{ success }}</div>
+  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+  <div *ngIf="loading" class="loading">⏳ Chargement...</div>
+
+  <div class="content-grid">
+
+    <!-- FORMULAIRE -->
+    <div class="review-form">
+      <h2>📝 Laisser un avis</h2>
+
+      <div class="stars-input">
+        <label>Note *</label>
+        <div class="stars-row">
+          <span *ngFor="let s of [1,2,3,4,5]"
+            class="star-btn"
+            [class.active]="s <= newReview.rating"
+            [class.hovered]="s <= hoveredStar"
+            (mouseenter)="hoveredStar = s"
+            (mouseleave)="hoveredStar = 0"
+            (click)="setRating(s)">★</span>
+        </div>
+        <span class="rating-label">
+          {{ newReview.rating === 0 ? 'Cliquez pour noter' :
+             newReview.rating === 1 ? 'Très mauvais' :
+             newReview.rating === 2 ? 'Mauvais' :
+             newReview.rating === 3 ? 'Correct' :
+             newReview.rating === 4 ? 'Bien' : 'Excellent !' }}
+        </span>
+      </div>
+
+      <div class="form-row">
+        <label>Commentaire (optionnel)</label>
+        <textarea [(ngModel)]="newReview.comment"
+          placeholder="Partagez votre expérience..." rows="4"></textarea>
+      </div>
+
+      <button (click)="submitReview()" class="btn-submit" [disabled]="loading">
+        ⭐ Publier l'avis
+      </button>
+    </div>
+
+    <!-- RÉSUMÉ -->
+    <div class="rating-summary" *ngIf="reviews.length > 0">
+      <h2>📊 Résumé</h2>
+      <div class="avg-rating">
+        <span class="avg-number">{{ getAverageRating() }}</span>
+        <div class="avg-stars">
+          <span *ngFor="let s of getStars(getAverageRating())">{{ s }}</span>
+        </div>
+        <span class="avg-label">sur {{ reviews.length }} avis</span>
+      </div>
+
+      <div class="rating-bars">
+        <div *ngFor="let s of [5,4,3,2,1]" class="rating-bar-item">
+          <span class="star-num">{{ s }}★</span>
+          <div class="bar-bg">
+            <div class="bar-fill" [style.width]="getBarWidth(s)"></div>
+          </div>
+          <span class="bar-count">{{ getRatingCount(s) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE AVIS -->
+  <div *ngIf="reviews.length > 0" class="reviews-list">
+    <h2>💬 Tous les avis</h2>
+    <div *ngFor="let r of reviews" class="review-card">
+      <div class="review-header">
+        <div class="reviewer-info">
+          <div class="avatar">👤</div>
+          <div>
+            <strong>Étudiant #{{ r.reviewerId }}</strong>
+            <p class="review-date">{{ r.createdAt | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
+        <div class="review-rating">
+          <span *ngFor="let s of getStars(r.rating)">{{ s }}</span>
+        </div>
+      </div>
+      <p class="review-comment">{{ r.comment || 'Aucun commentaire.' }}</p>
+      <button (click)="deleteReview(r.id)" class="btn-delete">🗑 Supprimer</button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && reviews.length === 0" class="empty">
+    Aucun avis pour le moment. Soyez le premier à noter !
+  </div>
+</div>

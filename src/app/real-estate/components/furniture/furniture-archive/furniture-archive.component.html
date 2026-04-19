@@ -1,0 +1,60 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>📦 Archivage des Articles</h1>
+      <p>{{ archivedItems.length }} article(s) archivé(s)</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="runArchive()" class="btn-archive" [disabled]="loading">
+        🔄 Lancer l'archivage
+      </button>
+      <a routerLink="/furniture" class="btn-back">← Retour</a>
+    </div>
+  </div>
+
+  <div *ngIf="success" class="alert-success">{{ success }}</div>
+  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+  <div *ngIf="loading" class="loading">⏳ Chargement...</div>
+
+  <!-- RÉSULTAT ARCHIVAGE -->
+  <div *ngIf="archiveResult" class="archive-result">
+    <div class="result-card">
+      <div class="result-icon">📦</div>
+      <div class="result-info">
+        <h3>Archivage terminé</h3>
+        <p>{{ archiveResult.archivedCount }} article(s) ont été archivés automatiquement</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE ARCHIVÉS -->
+  <div *ngIf="!loading && archivedItems.length > 0" class="archived-list">
+    <h2>🗂 Articles archivés</h2>
+    <div class="archived-grid">
+      <div *ngFor="let item of archivedItems" class="archived-card">
+        <div class="card-image">
+          <img [src]="item.imageUrl || item.imageBase64 || 'https://via.placeholder.com/200x120?text=No+Image'"
+            [alt]="item.title" />
+          <span class="badge-archived">📦 ARCHIVÉ</span>
+        </div>
+        <div class="card-body">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description }}</p>
+          <div class="card-meta">
+            <span class="badge-cat">{{ item.category }}</span>
+            <span class="card-price">{{ item.price | number:'1.2-2' }} DT</span>
+          </div>
+          <button (click)="restore(item.id)" class="btn-restore">
+            🔄 Restaurer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && archivedItems.length === 0" class="empty">
+    <div class="empty-icon">📭</div>
+    <p>Aucun article archivé pour le moment.</p>
+    <p class="empty-sub">Cliquez sur "Lancer l'archivage" pour archiver les articles vendus.</p>
+  </div>
+</div>

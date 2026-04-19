@@ -1,0 +1,187 @@
+﻿<div class="wizard-page">
+
+  <!-- PROGRESS BAR -->
+  <div class="wizard-progress">
+    <div class="wizard-steps">
+      <div class="wizard-step" *ngFor="let s of steps; let i = index"
+           [class.active]="currentStep === i"
+           [class.done]="currentStep > i"
+           (click)="goToStep(i)">
+        <div class="step-circle">
+          <span *ngIf="currentStep <= i">{{ i + 1 }}</span>
+          <span *ngIf="currentStep > i">&#10003;</span>
+        </div>
+        <span class="step-label">{{ s }}</span>
+      </div>
+    </div>
+    <div class="wizard-bar-track">
+      <div class="wizard-bar-fill" [style.width.%]="(currentStep / (steps.length - 1)) * 100"></div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="wiz-loading">Chargement...</div>
+  <div *ngIf="error" class="wiz-error">{{ error }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+
+    <!-- STEP 1 -->
+    <div class="wizard-panel" *ngIf="currentStep === 0">
+      <div class="panel-header">
+        <h2>Informations de l'article</h2>
+        <p>Decrivez votre meuble pour attirer les acheteurs</p>
+      </div>
+
+      <div class="wiz-field">
+        <label>Titre <span class="req">*</span></label>
+        <input formControlName="title" placeholder="Ex: Canape 3 places en cuir brun..." class="wiz-input" />
+      </div>
+
+      <div class="wiz-field">
+        <div class="label-row">
+          <label>Description</label>
+          <button type="button" class="btn-ai-wiz" (click)="generateDescription()" [disabled]="aiGenerating">
+            {{ aiGenerating ? 'Generation...' : 'Generer avec IA' }}
+          </button>
+        </div>
+        <textarea formControlName="description" placeholder="Decrivez l'etat, les dimensions, l'histoire..." rows="4" class="wiz-textarea"></textarea>
+      </div>
+
+      <div class="wiz-field">
+        <label>Categorie <span class="req">*</span></label>
+        <div class="category-grid">
+          <button type="button" *ngFor="let c of categories"
+            class="cat-chip"
+            [class.selected]="form.get('category')?.value === c"
+            (click)="form.get('category')?.setValue(c)">
+            {{ c }}
+          </button>
+        </div>
+      </div>
+
+      <div class="wiz-next">
+        <button type="button" class="btn-next" (click)="nextStep()" [disabled]="!form.get('title')?.value">
+          Suivant
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="wizard-panel" *ngIf="currentStep === 1">
+      <div class="panel-header">
+        <h2>Details &amp; Prix</h2>
+        <p>Etat, quantite et prix de vente</p>
+      </div>
+
+      <div class="wiz-field">
+        <label>Condition <span class="req">*</span></label>
+        <div class="condition-cards">
+          <div class="cond-card" *ngFor="let cond of conditionOptions"
+            [class.selected]="form.get('condition')?.value === cond.value"
+            (click)="form.get('condition')?.setValue(cond.value)">
+            <span class="cond-label">{{ cond.label }}</span>
+            <span class="cond-desc">{{ cond.desc }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiz-row-2">
+        <div class="wiz-field">
+          <label>Prix (DT) <span class="req">*</span></label>
+          <div class="price-input-wrap">
+            <input type="number" formControlName="price" min="0" placeholder="0" class="wiz-input" />
+            <span class="price-unit">DT</span>
+          </div>
+        </div>
+        <div class="wiz-field">
+          <label>Quantite <span class="req">*</span></label>
+          <input type="number" formControlName="quantity" min="1" placeholder="1" class="wiz-input" />
+        </div>
+      </div>
+
+      <div class="wiz-field">
+        <label>Statut</label>
+        <div class="status-row">
+          <button type="button" *ngFor="let s of statusOptions"
+            class="status-chip"
+            [class.selected]="form.get('status')?.value === s.value"
+            [ngClass]="'status-' + s.value.toLowerCase()"
+            (click)="form.get('status')?.setValue(s.value)">
+            {{ s.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="wiz-nav">
+        <button type="button" class="btn-prev" (click)="prevStep()">Retour</button>
+        <button type="button" class="btn-next" (click)="nextStep()">Suivant</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="wizard-panel" *ngIf="currentStep === 2">
+      <div class="panel-header">
+        <h2>Photo de l'article</h2>
+        <p>Une belle photo multiplie vos chances de vente par 3</p>
+      </div>
+
+      <button type="button" class="btn-cloud-upload-wiz" (click)="openCloudinaryWidget()" [disabled]="uploadingToCloud">
+        {{ uploadingToCloud ? 'Ouverture...' : 'Importer depuis Cloudinary' }}
+      </button>
+
+      <div class="upload-divider"><span>ou photo locale</span></div>
+
+      <div class="upload-zone-wiz" (click)="fileInput.click()">
+        <div *ngIf="!imagePreview" class="upload-placeholder-wiz">
+          <div class="upload-icon-wiz">+</div>
+          <p>Cliquer pour ajouter une photo</p>
+          <small>JPG, PNG — max 2MB</small>
+        </div>
+        <div *ngIf="imagePreview" class="preview-wrap-wiz">
+          <img [src]="imagePreview" alt="preview" class="preview-img-wiz" />
+          <button type="button" class="btn-remove-wiz" (click)="$event.stopPropagation(); removeImage()">X</button>
+        </div>
+      </div>
+      <input #fileInput type="file" accept="image/*" style="display:none" (change)="onImageSelected($event)" />
+
+      <p *ngIf="cloudinaryUrl" class="cloud-ok">Image Cloudinary liee avec succes</p>
+
+      <div class="wiz-nav">
+        <button type="button" class="btn-prev" (click)="prevStep()">Retour</button>
+        <button type="button" class="btn-next" (click)="nextStep()">Suivant</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="wizard-panel" *ngIf="currentStep === 3">
+      <div class="panel-header">
+        <h2>Recapitulatif</h2>
+        <p>Verifiez avant de publier</p>
+      </div>
+
+      <div class="recap-grid">
+        <div class="recap-img-col">
+          <img *ngIf="imagePreview" [src]="imagePreview" alt="preview" class="recap-img" />
+          <div *ngIf="!imagePreview" class="recap-no-img">Pas de photo</div>
+        </div>
+        <div class="recap-info-col">
+          <div class="recap-title">{{ form.get('title')?.value || '—' }}</div>
+          <div class="recap-price">{{ form.get('price')?.value | number:'1.2-2' }} DT</div>
+          <div class="recap-badges">
+            <span class="rec-badge cat">{{ form.get('category')?.value }}</span>
+            <span class="rec-badge cond">{{ form.get('condition')?.value }}</span>
+            <span class="rec-badge stat">{{ form.get('status')?.value }}</span>
+          </div>
+          <p class="recap-desc">{{ form.get('description')?.value }}</p>
+        </div>
+      </div>
+
+      <div class="wiz-nav">
+        <button type="button" class="btn-prev" (click)="prevStep()">Modifier</button>
+        <button type="submit" class="btn-publish" [disabled]="loading || form.invalid">
+          {{ loading ? 'Publication...' : (isEdit ? 'Mettre a jour' : 'Publier l\'annonce') }}
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>

@@ -1,0 +1,85 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>💰 Offres & Recommandations</h1>
+      <p *ngIf="currentFurniture">Article : <strong>{{ currentFurniture.title }}</strong> — {{ currentFurniture.price | number:'1.2-2' }} DT</p>
+    </div>
+    <a [routerLink]="['/furniture']" class="btn-back">← Retour</a>
+  </div>
+
+  <div *ngIf="success" class="alert-success">{{ success }}</div>
+  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+
+  <!-- BUDGET SEARCH -->
+  <div class="budget-section">
+    <h2>🔍 Trouver par budget</h2>
+    <p>Entrez votre budget pour voir des articles similaires</p>
+    <div class="budget-row">
+      <input type="number" [(ngModel)]="budget" placeholder="Ex: 150" min="1" class="budget-input" />
+      <button (click)="searchByBudget()" class="btn-search" [disabled]="loading">🔍 Par budget</button>
+      <button (click)="searchSimilar()" class="btn-similar" [disabled]="loading">🤖 Similaires IA</button>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div *ngIf="recommendations.length > 0" class="recommendations">
+    <h2>✨ Articles recommandés (±30% de {{ budget | number:'1.2-2' }} DT)</h2>
+    <div class="rec-grid">
+      <div *ngFor="let r of recommendations" class="rec-card">
+        <div class="rec-image">
+          <img [src]="r.imageUrl || r.imageBase64 || 'https://via.placeholder.com/200x120?text=No+Image'" [alt]="r.title" />
+          <span class="price-diff" [class.over]="r.price > budget" [class.under]="r.price < budget">
+            {{ getPriceDiff(r.price) }}
+          </span>
+        </div>
+        <div class="rec-body">
+          <h3>{{ r.title }}</h3>
+          <p>{{ r.description }}</p>
+          <div class="rec-meta">
+            <span class="badge-cat">{{ r.category }}</span>
+            <span class="rec-price">{{ r.price | number:'1.2-2' }} DT</span>
+          </div>
+          <div class="rec-actions">
+            <a [routerLink]="['/furniture', r.id]" class="btn-view">👁 Voir</a>
+            <button (click)="makeOffer(r)" class="btn-offer">💰 Faire une offre</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && recommendations.length === 0 && budget > 0" class="empty">
+    Aucun article trouvé dans cette fourchette de prix.
+  </div>
+
+  <!-- OFFRE PERSONNALISÉE -->
+  <div class="custom-offer">
+    <h2>📝 Faire une offre sur cet article</h2>
+    <div class="form-row">
+      <label>Prix proposé (DT)</label>
+      <input type="number" [(ngModel)]="newOffer.proposedPrice" min="1" placeholder="Ex: 120" />
+    </div>
+    <div class="form-row">
+      <label>Message</label>
+      <textarea [(ngModel)]="newOffer.message" placeholder="Bonjour, je suis intéressé..."></textarea>
+    </div>
+    <button (click)="sendCustomOffer()" class="btn-submit">💰 Envoyer l'offre</button>
+  </div>
+
+  <!-- OFFRES REÇUES -->
+  <div *ngIf="offers.length > 0" class="offers-list">
+    <h2>📋 Offres reçues ({{ offers.length }})</h2>
+    <div *ngFor="let o of offers" class="offer-card">
+      <div class="offer-header">
+        <span class="offer-price">{{ o.proposedPrice | number:'1.2-2' }} DT</span>
+        <span class="offer-badge" [ngClass]="getStatusClass(o.status)">{{ o.status }}</span>
+      </div>
+      <p>{{ o.message || 'Aucun message' }}</p>
+      <p class="offer-meta">👤 Acheteur ID: {{ o.buyerId }} | 📅 {{ o.createdAt | date:'dd/MM/yyyy' }}</p>
+      <div *ngIf="o.status === 'PENDING'" class="offer-actions">
+        <button (click)="accept(o.id)" class="btn-accept">✅ Accepter</button>
+        <button (click)="reject(o.id)" class="btn-reject">❌ Refuser</button>
+      </div>
+    </div>
+  </div>
+</div>

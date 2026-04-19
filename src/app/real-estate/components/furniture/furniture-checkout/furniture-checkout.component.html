@@ -1,0 +1,229 @@
+﻿<div class="page">
+
+  <!-- Floating WhatsApp -->
+<a href="https://wa.me/21655424245" target="_blank" class="wa-float-btn">
+  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  <div class="wa-float-text"><span class="wa-float-label">WhatsApp Business</span><span class="wa-float-num">+216 55 424 245</span></div>
+</a>
+
+<!-- Confirmation -->
+<div *ngIf="confirmed" class="conf-screen">
+  <div class="conf-check-wrap">
+    <div class="conf-check">&#10003;</div>
+  </div>
+  <h2 class="conf-title">Commande confirm&eacute;e !</h2>
+  <p class="conf-order">Commande <strong>#{{ orderId }}</strong> pass&eacute;e avec succ&egrave;s.</p>
+
+  <div class="conf-email-box">
+    <div class="conf-email-icon">&#128236;</div>
+    <p>Un email de confirmation a &eacute;t&eacute; envoy&eacute; &agrave;</p>
+    <strong class="conf-email">syrinemami997&#64;gmail.com</strong>
+  </div>
+
+  <div class="conf-whatsapp-block">
+    <p class="conf-wa-label">Ou contacte-nous directement sur WhatsApp Business</p>
+    <a href="https://wa.me/21655424245?text=Bonjour%2C%20commande%20%23{{ orderId }}" target="_blank" class="conf-wa-btn">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <div><span class="conf-wa-btn-title">WhatsApp Business</span><span class="conf-wa-btn-num">+216 55 424 245</span></div>
+    </a>
+  </div>
+
+  <div class="payment-info" *ngIf="form.paymentMethod === 'CIB'">
+    <h3>&#128179; Paiement par CIB</h3>
+    <p>Carte s&eacute;lectionn&eacute;e : <strong>{{ selectedCard?.label }}</strong></p>
+    <p>R&eacute;f&eacute;rence : <strong>{{ paymentRef }}</strong></p>
+  </div>
+  <div class="payment-info" *ngIf="form.paymentMethod === 'VIREMENT'">
+    <h3>&#127981; Virement via {{ selectedVirement?.label }}</h3>
+    <p>RIB : <strong>{{ selectedVirement?.rib }}</strong></p>
+    <p>Montant : <strong>{{ total | number:'1.2-2' }} DT</strong></p>
+    <p>R&eacute;f&eacute;rence : <strong>{{ paymentRef }}</strong></p>
+  </div>
+
+  <button (click)="goHome()" class="conf-home-btn">
+    &#127968; Retour &agrave; l'accueil
+  </button>
+</div>
+<!-- Checkout Form -->
+  <div *ngIf="!confirmed">
+    <div class="header">
+      <h1>💳 Finaliser la commande</h1>
+      <a routerLink="/furniture/cart" class="btn-back">← Retour au panier</a>
+    </div>
+
+    <div class="checkout-grid">
+
+      <!-- Formulaire -->
+      <div class="form-section">
+        <h2>📋 Vos informations</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prénom *</label>
+            <input [(ngModel)]="form.firstName" placeholder="Prénom" />
+          </div>
+          <div class="form-group">
+            <label>Nom *</label>
+            <input [(ngModel)]="form.lastName" placeholder="Nom" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Adresse *</label>
+          <input [(ngModel)]="form.address" placeholder="Adresse complète" />
+        </div>
+        <div class="form-group">
+          <label>Téléphone *</label>
+          <input [(ngModel)]="form.phone" placeholder="+216 XX XXX XXX" />
+        </div>
+
+        <!-- Méthode de paiement -->
+        <h2>💰 Méthode de paiement</h2>
+        <div class="payment-methods">
+          <div class="payment-option"
+            [class.selected]="form.paymentMethod === 'CIB'"
+            (click)="selectMethod('CIB')">
+            <span class="payment-icon">💳</span>
+            <span>Carte CIB</span>
+          </div>
+          <div class="payment-option"
+            [class.selected]="form.paymentMethod === 'VIREMENT'"
+            (click)="selectMethod('VIREMENT')">
+            <span class="payment-icon">🏦</span>
+            <span>Virement</span>
+          </div>
+          <div class="payment-option"
+            [class.selected]="form.paymentMethod === 'CASH'"
+            (click)="selectMethod('CASH')">
+            <span class="payment-icon">💵</span>
+            <span>Espèces</span>
+          </div>
+        </div>
+
+        <!-- CIB Options -->
+        <div *ngIf="form.paymentMethod === 'CIB'" class="sub-options">
+          <h3>Choisissez votre carte :</h3>
+          <div class="card-options">
+            <div *ngFor="let card of cibCards"
+              class="card-option"
+              [class.selected]="selectedCard?.id === card.id"
+              (click)="selectedCard = card">
+              <img [src]="card.logo" [alt]="card.label" class="bank-logo" />
+              <span>{{ card.label }}</span>
+            </div>
+          </div>
+          <div *ngIf="selectedCard" class="card-form">
+            <div class="form-group">
+              <label>Numéro de carte</label>
+              <input [(ngModel)]="cardNumber" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date d'expiration</label>
+                <input [(ngModel)]="cardExpiry" placeholder="MM/AA" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label>CVV</label>
+                <input [(ngModel)]="cardCvv" placeholder="XXX" maxlength="3" type="password" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Virement Options -->
+        <div *ngIf="form.paymentMethod === 'VIREMENT'" class="sub-options">
+          <h3>Choisissez votre méthode :</h3>
+          <div class="virement-options">
+            <div *ngFor="let v of virements"
+              class="virement-option"
+              [class.selected]="selectedVirement?.id === v.id"
+              (click)="selectedVirement = v">
+              <img [src]="v.logo" [alt]="v.label" class="bank-logo" />
+              <div>
+                <strong>{{ v.label }}</strong>
+                <p>{{ v.description }}</p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="selectedVirement" class="virement-info">
+            <p>📌 RIB : <strong>{{ selectedVirement.rib }}</strong></p>
+            <p>📱 {{ selectedVirement.instruction }}</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Résumé -->
+      <div class="summary-section">
+        <h2>🧾 Résumé</h2>
+        <div class="order-items">
+          <div *ngFor="let item of items" class="order-item">
+            <span>{{ item.furnitureTitle }} × {{ item.quantity }}</span>
+            <span>{{ item.price * item.quantity | number:'1.2-2' }} DT</span>
+          </div>
+        </div>
+        <div class="order-total">
+          <strong>Total</strong>
+          <strong class="total">{{ total | number:'1.2-2' }} DT</strong>
+        </div>
+        <button (click)="confirm()"
+          class="btn-confirm"
+          [disabled]="loading || !canConfirm()">
+          {{ loading ? '⏳ Traitement...' : '✅ Confirmer la commande' }}
+        </button>
+        <p *ngIf="!canConfirm()" class="hint">
+          ⚠️
+          <span *ngIf="!form.firstName || !form.lastName || !form.address || !form.phone">Remplissez tous vos informations</span>
+          <span *ngIf="form.firstName && form.lastName && form.address && form.phone && !form.paymentMethod">Choisissez une méthode de paiement</span>
+          <span *ngIf="form.paymentMethod === 'CIB' && (!selectedCard || !cardNumber || !cardExpiry || !cardCvv)">Remplissez les informations de votre carte</span>
+          <span *ngIf="form.paymentMethod === 'VIREMENT' && !selectedVirement">Choisissez votre méthode de virement</span>
+          <span *ngIf="form.paymentMethod === 'CASH' && !deliveryChoice">Choisissez votre mode de livraison</span>
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Modal Espèces -->
+    <div *ngIf="showDeliveryModal" class="modal-overlay" (click)="showDeliveryModal = false">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <h2>💵 Paiement en Espèces</h2>
+        <p>Comment souhaitez-vous récupérer votre commande ?</p>
+
+        <div class="delivery-choices">
+          <div class="delivery-card"
+            [class.selected]="deliveryChoice === 'SYRINE_DELIVERY'"
+            (click)="deliveryChoice = 'SYRINE_DELIVERY'">
+            <div class="delivery-icon">🚚</div>
+            <h3>Syrine Delivery</h3>
+            <p>Livraison partout en Tunisie</p>
+            <p class="delivery-price">Petits articles : <strong>7 DT</strong></p>
+            <p class="delivery-price">Grands articles : tarif négociable</p>
+          </div>
+
+          <div class="delivery-card"
+            [class.selected]="deliveryChoice === 'CONTACT_SELLER'"
+            (click)="deliveryChoice = 'CONTACT_SELLER'">
+            <div class="delivery-icon">📞</div>
+            <h3>Contacter le vendeur</h3>
+            <p>Récupérer en main propre</p>
+            <p class="delivery-price">Coordonnez directement avec le vendeur pour la localisation</p>
+          </div>
+        </div>
+
+        <div *ngIf="deliveryChoice === 'SYRINE_DELIVERY'" class="delivery-info">
+          🚚 <strong>Syrine Delivery</strong> — Livraison sur toute la Tunisie !<br>
+          Petits articles : <strong>7 DT</strong><br>
+          Grands articles : contactez-nous via WhatsApp après confirmation
+        </div>
+
+        <div *ngIf="deliveryChoice === 'CONTACT_SELLER'" class="delivery-info">
+          📞 Le vendeur vous contactera au <strong>{{ form.phone }}</strong> pour convenir d'un rendez-vous.
+        </div>
+
+        <button class="btn-confirm"
+          [disabled]="!deliveryChoice"
+          (click)="showDeliveryModal = false">
+          ✅ Confirmer le choix
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

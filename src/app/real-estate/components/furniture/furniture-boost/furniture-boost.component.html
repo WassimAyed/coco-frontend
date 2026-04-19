@@ -1,0 +1,188 @@
+﻿<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/21655424245" target="_blank" class="boost-wa-float">
+  <svg class="wa-logo" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  <div class="boost-wa-text">
+    <span class="boost-wa-label">WhatsApp Business</span>
+    <span class="boost-wa-name">Coco Market</span>
+  </div>
+</a>
+
+<div class="boost-page">
+
+  <!-- SUCCESS SCREEN -->
+  <div *ngIf="success" class="boost-success-screen">
+    <div class="boost-success-icon">&#128640;</div>
+    <h2 class="boost-success-title">Annonce boost&#233;e !</h2>
+    <p class="boost-success-msg">
+      Votre annonce <strong>{{ furniture?.title }}</strong> est maintenant mise en avant
+      pendant <strong>{{ selectedDuration }} jour(s)</strong> !
+    </p>
+    <p class="boost-success-sub">Elle appara&#238;tra en premier avec le badge &#11088; FEATURED</p>
+    <button (click)="goBack()" class="boost-back-btn">&#8592; Retour &#224; l'annonce</button>
+  </div>
+
+  <div *ngIf="!success">
+
+    <!-- HEADER -->
+    <div class="boost-header">
+      <button (click)="goBack()" class="boost-btn-back">&#8592; Retour</button>
+      <div class="boost-header-text">
+        <h1 class="boost-main-title">Analyse IA : Comment booster au maximum ta visibilit&#233; en Tunisie</h1>
+        <p class="boost-main-sub" *ngIf="furniture">L'IA analyse ton annonce <strong>{{ furniture.title }}</strong> et te propose le plan le plus adapt&#233;</p>
+      </div>
+    </div>
+
+    <!-- ALREADY BOOSTED BANNER -->
+    <div *ngIf="alreadyBoosted" class="already-boosted">
+      &#128293; Cette annonce est d&#233;j&#224; boost&#233;e et active !
+    </div>
+
+    <!-- AI SECTION -->
+    <div class="boost-ai-section">
+      <div class="boost-ai-header">
+        <span class="boost-ai-badge">&#129302; Analyse IA</span>
+        <h2 class="boost-ai-title">Recommandations intelligentes</h2>
+      </div>
+
+      <div *ngIf="analyzing" class="boost-analyzing">
+        <div class="boost-spinner"></div>
+        <p>&#129302; L'IA analyse votre annonce...</p>
+      </div>
+
+      <div *ngIf="!analyzing && analysis" class="boost-analysis-grid">
+
+        <!-- Scores -->
+        <div class="boost-analysis-card">
+          <h3>&#128202; Scores de votre annonce</h3>
+          <div class="boost-score-item">
+            <span>Prix du march&#233;</span>
+            <div class="boost-score-bar">
+              <div class="boost-score-fill"
+                [style.width.%]="analysis.currentPriceScore"
+                [style.background]="getScoreColor(analysis.currentPriceScore)">
+              </div>
+            </div>
+            <span class="boost-score-val" [style.color]="getScoreColor(analysis.currentPriceScore)">
+              {{ analysis.currentPriceScore }}/100 &#8212; {{ getScoreLabel(analysis.currentPriceScore) }}
+            </span>
+          </div>
+          <div class="boost-score-item">
+            <span>Visibilit&#233; pr&#233;dite</span>
+            <div class="boost-score-bar">
+              <div class="boost-score-fill"
+                [style.width.%]="analysis.visibilityScore"
+                [style.background]="getScoreColor(analysis.visibilityScore)">
+              </div>
+            </div>
+            <span class="boost-score-val" [style.color]="getScoreColor(analysis.visibilityScore)">
+              {{ analysis.visibilityScore }}/100 &#8212; {{ getScoreLabel(analysis.visibilityScore) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="boost-analysis-card">
+          <h3>&#128161; Suggestions IA</h3>
+          <div class="boost-suggestion">
+            <span class="boost-sug-label">&#128176; Prix sugg&#233;r&#233;</span>
+            <span class="boost-sug-value">{{ analysis.suggestedPrice }} DT
+              <small *ngIf="furniture">(actuel: {{ furniture.price }} DT)</small>
+            </span>
+          </div>
+          <div class="boost-suggestion">
+            <span class="boost-sug-label">&#127991;&#65039; Cat&#233;gorie</span>
+            <span class="boost-sug-value">{{ analysis.suggestedCategory }}</span>
+          </div>
+          <div class="boost-suggestion">
+            <span class="boost-sug-label">&#128221; Titre am&#233;lior&#233;</span>
+            <span class="boost-sug-value">{{ analysis.improvedTitle }}</span>
+          </div>
+          <div class="boost-suggestion">
+            <span class="boost-sug-label">&#128196; Description</span>
+            <span class="boost-sug-value desc">{{ analysis.improvedDescription }}</span>
+          </div>
+        </div>
+
+        <!-- Recommended duration -->
+        <div class="boost-analysis-card boost-full-width">
+          <h3>&#9201;&#65039; Dur&#233;e recommand&#233;e par l'IA</h3>
+          <div class="boost-rec-duration">
+            <span class="boost-rec-days">{{ analysis.recommendedDuration }} jour(s)</span>
+            <p>{{ analysis.reasoning }}</p>
+          </div>
+        </div>
+
+      </div>
+
+      <button *ngIf="!analyzing" (click)="analyzeWithAI()" class="boost-btn-reanalyze">
+        &#128260; R&#233;analyser
+      </button>
+    </div>
+
+    <!-- PLAN CARDS -->
+    <div class="boost-plans-section">
+      <h2 class="boost-plans-title">&#127919; Choisissez votre plan</h2>
+      <div class="boost-plans-grid">
+        <div *ngFor="let plan of plans; let i = index"
+          class="boost-plan-card"
+          [class.boost-plan-selected]="selectedDuration === plan.days"
+          [class.boost-plan-recommended]="analysis?.recommendedDuration === plan.days"
+          [ngClass]="'boost-plan-color-' + (i + 1)"
+          (click)="selectPlan(plan.days)">
+          <div *ngIf="analysis?.recommendedDuration === plan.days" class="boost-rec-badge">
+            &#129302; Recommand&#233; par l'IA
+          </div>
+          <div class="boost-plan-icon">{{ plan.icon }}</div>
+          <h3 class="boost-plan-label">{{ plan.label }}</h3>
+          <p class="boost-plan-desc">{{ plan.desc }}</p>
+          <div class="boost-plan-price">{{ plan.price }} DT</div>
+          <div class="boost-plan-per-day">
+            {{ (plan.price / plan.days).toFixed(1) }} DT/jour
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT METHODS -->
+    <div class="boost-payment-section">
+      <h2 class="boost-payment-title">Choisissez votre mode de paiement</h2>
+      <div class="boost-payment-grid">
+        <div
+          *ngFor="let pm of paymentMethods"
+          class="boost-pay-card"
+          [class.selected]="selectedPayment() === pm.key"
+          (click)="selectPayment(pm.key)"
+          role="button"
+          [attr.aria-pressed]="selectedPayment() === pm.key">
+          <div class="boost-pay-icon">
+            <lucide-angular [img]="pm.icon" [size]="26" [color]="selectedPayment() === pm.key ? '#fff' : '#8B0000'"></lucide-angular>
+          </div>
+          <div class="boost-pay-name">{{ pm.name }}</div>
+          <div class="boost-pay-desc">{{ pm.desc }}</div>
+          <lucide-angular *ngIf="selectedPayment() === pm.key" [img]="Check" [size]="16" color="#fff" class="pay-check"></lucide-angular>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECAP + PAY BUTTON -->
+    <div *ngIf="selectedDuration" class="boost-recap">
+      <div class="boost-recap-info">
+        <span>{{ furniture?.title }}</span>
+        <span>{{ selectedDuration }} jour(s)</span>
+        <span class="boost-recap-price">{{ selectedPrice }} DT</span>
+      </div>
+      <button (click)="boost()" class="boost-pay-btn" [disabled]="loading || alreadyBoosted || !selectedPayment()">
+        <ng-container *ngIf="!loading && !alreadyBoosted">
+          <lucide-angular [img]="Zap" [size]="16" color="#fff"></lucide-angular>
+          Payer maintenant
+        </ng-container>
+        <span *ngIf="loading">Traitement...</span>
+        <ng-container *ngIf="alreadyBoosted && !loading">
+          <lucide-angular [img]="Check" [size]="16" color="#fff"></lucide-angular>
+          Déjà boosté
+        </ng-container>
+      </button>
+    </div>
+
+  </div>
+</div>

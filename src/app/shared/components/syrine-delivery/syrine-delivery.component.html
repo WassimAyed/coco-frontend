@@ -1,0 +1,89 @@
+<div class="delivery-section">
+  <div class="delivery-header">
+    <span class="delivery-icon">🚚</span>
+    <div>
+      <h3 class="delivery-title">Syrine Delivery — Livraison sur toute la Tunisie</h3>
+      <p class="delivery-sub">7 DT pour petits articles · gros articles à négocier 🇹🇳</p>
+    </div>
+  </div>
+
+  <div class="delivery-info">
+    <div class="info-card" *ngIf="!isLargeItem()">
+      <span class="info-icon">📦</span>
+      <div>
+        <strong>Petits articles</strong>
+        <p>Livraison express <span class="price-tag">7 DT</span> seulement</p>
+      </div>
+    </div>
+    <div class="info-card">
+      <span class="info-icon">🪑</span>
+      <div>
+        <strong>Articles volumineux</strong>
+        <p *ngIf="!isLargeItem()">Envoyez une photo via l'Assistant pour un devis.</p>
+        <p *ngIf="isLargeItem()" class="price-tag-large">Prix : À négocier via Assistant</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="delivery-total" *ngIf="deliveryCost() !== null">
+    <span>💰 Livraison :</span>
+    <strong class="cost">+ {{ deliveryCost() }} DT</strong>
+  </div>
+
+  <button (click)="openChat()" class="btn-chatbot">
+    🤖 Ouvrir l'Assistant Coco Market
+  </button>
+</div>
+
+<!-- OVERLAY -->
+<div class="modal-overlay" *ngIf="showModal()" (click)="closeChat()"></div>
+
+<!-- CHATBOT MODAL -->
+<div class="chatbot-modal" *ngIf="showModal()">
+  <div class="chat-header">
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-header-info">
+      <strong>Assistant Coco Market</strong>
+      <span class="online-dot"></span>
+      <p>En ligne · Répond instantanément</p>
+    </div>
+    <button (click)="closeChat()" class="btn-close-chat">✕</button>
+  </div>
+
+  <div class="chat-quick-actions">
+    <button (click)="setInput('livraison'); send()" class="qa-btn">🚚 Livraison</button>
+    <button (click)="setInput('code promo'); send()" class="qa-btn">🏷️ Promo</button>
+    <button (click)="setInput('réservation'); send()" class="qa-btn">🔒 Réserver</button>
+    <button (click)="setInput('paiement'); send()" class="qa-btn">💳 Paiement</button>
+    <button (click)="setInput('small business'); send()" class="qa-btn">🏪 Business</button>
+  </div>
+
+  <div class="chat-body" #chatBody>
+    <div *ngFor="let msg of messages()" class="message" [class.user]="msg.role === 'user'" [class.bot]="msg.role === 'bot'">
+      <div class="bubble">
+        <img *ngIf="msg.imagePreview" [src]="msg.imagePreview" alt="photo" class="chat-img" />
+        <span>{{ msg.text }}</span>
+        <span class="msg-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+      </div>
+    </div>
+    <div class="typing" *ngIf="botTyping()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="chat-input-row">
+    <input
+      type="text"
+      [value]="userInput()"
+      (input)="setInput($any($event.target).value)"
+      (keyup.enter)="send()"
+      placeholder="Posez votre question..."
+      class="chat-input"
+    />
+    <label class="btn-upload" title="Envoyer une photo">
+      📷
+      <input type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none" />
+    </label>
+    <button (click)="send()" class="btn-send" [disabled]="!userInput().trim()">➤</button>
+  </div>
+</div>

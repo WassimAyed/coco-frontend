@@ -1,0 +1,38 @@
+<div class="page">
+  <div class="header">
+    <h1>🛒 Mon Panier</h1>
+    <a routerLink="/furniture" class="btn-back">← Continuer les achats</a>
+  </div>
+
+  <div *ngIf="items.length === 0" class="empty">
+    <div class="empty-icon">🛒</div>
+    <p>Votre panier est vide</p>
+    <a routerLink="/furniture" class="btn-shop">Voir les meubles</a>
+  </div>
+
+  <div *ngIf="items.length > 0">
+    <div class="cart-items">
+      <div *ngFor="let item of items" class="cart-item">
+        <div class="item-info">
+          <h3>{{ item.furnitureTitle }}</h3>
+          <p class="item-price">{{ item.price | number:'1.2-2' }} DT × {{ item.quantity }}</p>
+        </div>
+        <div class="item-total">
+          <strong>{{ item.price * item.quantity | number:'1.2-2' }} DT</strong>
+          <button (click)="removeItem(item.furnitureId)" class="btn-remove">🗑</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-summary">
+      <div class="summary-row">
+        <span>Total</span>
+        <strong class="total-price">{{ total | number:'1.2-2' }} DT</strong>
+      </div>
+      <div class="summary-actions">
+        <button (click)="clearCart()" class="btn-clear">🗑 Vider le panier</button>
+        <button (click)="checkout()" class="btn-checkout">💳 Passer la commande</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,63 +1,85 @@
 <div class="coupon-page">
+  <!-- Header -->
   <div class="coupon-header">
     <h1>🎉 Bons Plans Etudiants</h1>
     <p>Decouvre les meilleures offres exclusives pour les etudiants CoCo</p>
   </div>
 
-  <div *ngIf="userCluster" class="cluster-banner">
-    🧠 Profil detecte : <strong>{{ userCluster.clusterName }}</strong>
-    — Categories recommandees : {{ userCluster.recommendedCategories?.join(', ') }}
-  </div>
-
-  <div *ngIf="claimedMessage" class="alert" [ngClass]="claimedMessageType">{{ claimedMessage }}</div>
-
-  <div class="category-filters">
-    <button *ngFor="let cat of categories"
-            [class.active]="selectedCategory === cat"
-            (click)="filterByCategory(cat)">
-      {{ cat === 'ALL' ? '🏷️ Tous' : getCategoryIcon(cat) + ' ' + cat }}
-    </button>
-  </div>
-
-  <div class="coupons-grid">
-    <div *ngFor="let coupon of filteredCoupons" class="coupon-card"
-         [class.recommended]="getPrediction(coupon.id)?.recommendation === 'FORTEMENT_RECOMMANDE'">
-
-      <div class="coupon-badge">{{ getCategoryIcon(coupon.category) }} {{ coupon.category }}</div>
-
-      <div *ngIf="getPrediction(coupon.id)?.recommendation === 'FORTEMENT_RECOMMANDE'" class="ml-badge top">
-        🎯 Recommande pour vous ({{ getPrediction(coupon.id)?.percentage }}%)
+  <!-- 🤖 BANNIÈRE IA EN HAUT - Design voyant avec animation -->
+  <div *ngIf="userCluster" class="ai-hero-banner">
+    <div class="ai-hero-content">
+      <div class="ai-hero-icon">
+        <span class="ai-pulse">🤖</span>
       </div>
-      <div *ngIf="getPrediction(coupon.id)?.recommendation === 'RECOMMANDE'" class="ml-badge medium">
-        👍 Peut vous interesser ({{ getPrediction(coupon.id)?.percentage }}%)
+      <div class="ai-hero-text">
+        <div class="ai-hero-label">✨ INTELLIGENCE ARTIFICIELLE ACTIVÉE</div>
+        <h2>Ton profil détecté : <span class="ai-segment">{{ userCluster.segmentName }}</span></h2>
+        <p>{{ userCluster.description }}</p>
       </div>
-
-      <img [src]="coupon.imageUrl" [alt]="coupon.title" class="coupon-image">
-
-      <div class="coupon-content">
-        <h3>{{ coupon.title }}</h3>
-        <p class="coupon-partner">📍 {{ coupon.partnerName }}</p>
-        <p class="coupon-desc">{{ coupon.description }}</p>
-        <div class="coupon-meta">
-          <span class="discount">
-            {{ coupon.discountType === 'PERCENTAGE' ? coupon.discountValue + '%' : coupon.discountValue + ' DT' }}
-          </span>
-          <span class="expiry">⏰ {{ getDaysLeft(coupon.expirationDate) }} jours restants</span>
+      <div class="ai-hero-stats">
+        <div class="ai-stat">
+          <div class="ai-stat-num">{{ predictions.size }}</div>
+          <div class="ai-stat-label">recommandations</div>
         </div>
-        <div class="coupon-usage">
-          <div class="usage-bar">
-            <div class="usage-fill" [style.width.%]="(coupon.currentUsage / coupon.maxUsage) * 100"></div>
-          </div>
-          <span>{{ coupon.currentUsage }}/{{ coupon.maxUsage }} utilises</span>
-        </div>
-        <button class="claim-btn" (click)="claimCoupon(coupon.id)">
-          🎫 Recuperer ce coupon
-        </button>
       </div>
     </div>
   </div>
 
-  <div *ngIf="filteredCoupons.length === 0" class="empty-state">
-    <p>😔 Aucun coupon disponible dans cette categorie</p>
+  <!-- Message de notification -->
+  <div *ngIf="claimedMessage" [class]="'alert alert-' + claimedMessageType">
+    {{ claimedMessage }}
+  </div>
+
+  <!-- Filtres catégories -->
+  <div class="category-filters">
+    <button *ngFor="let cat of categories"
+            [class.active]="selectedCategory === cat"
+            (click)="filterByCategory(cat)">
+      <span>{{ getCategoryIcon(cat) }}</span>
+      {{ cat === 'ALL' ? 'Tous' : cat }}
+    </button>
+  </div>
+
+  <!-- Grille de coupons -->
+  <div class="coupons-grid">
+    <div *ngFor="let coupon of filteredCoupons"
+         class="coupon-card"
+         [class.ai-recommended]="getPrediction(coupon.id)?.probability > 0.7">
+
+      <!-- 🎯 BADGE TOP MATCH sur carte recommandée -->
+      <div *ngIf="getPrediction(coupon.id)?.probability > 0.7" class="top-match-badge">
+        🎯 TOP MATCH {{ (getPrediction(coupon.id).probability * 100) | number:'1.0-0' }}%
+      </div>
+
+      <div class="coupon-badge">{{ getCategoryIcon(coupon.category) }} {{ coupon.category }}</div>
+
+      <img [src]="coupon.imageUrl || 'https://via.placeholder.com/400x200'"
+           [alt]="coupon.title"
+           class="coupon-image">
+
+      <div class="coupon-content">
+        <h3>{{ coupon.title }}</h3>
+        <p class="coupon-merchant">📍 {{ coupon.partnerName }}</p>
+        <p class="coupon-description">{{ coupon.description }}</p>
+
+        <div class="coupon-footer">
+          <div class="discount-badge">
+            {{ coupon.discountType === 'PERCENTAGE' ? coupon.discountValue + '%' : coupon.discountValue + ' DT' }}
+          </div>
+          <div class="days-left">
+            ⏰ {{ getDaysLeft(coupon.expirationDate) }} jours restants
+          </div>
+        </div>
+
+        <div class="usage-bar">
+          <div class="usage-fill" [style.width.%]="(coupon.currentUsage / coupon.maxUsage) * 100"></div>
+        </div>
+        <p class="usage-text">{{ coupon.currentUsage }}/{{ coupon.maxUsage }} utilises</p>
+
+        <button class="claim-btn" (click)="claimCoupon(coupon.id)">
+          Recuperer ce coupon
+        </button>
+      </div>
+    </div>
   </div>
 </div>

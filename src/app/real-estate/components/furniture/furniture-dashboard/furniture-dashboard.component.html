@@ -1,0 +1,155 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div>
+      <h1>📊 Dashboard Statistiques</h1>
+      <p>Vue d'ensemble du Furniture Marketplace</p>
+    </div>
+    <a routerLink="/furniture" class="btn-back">← Retour au Marketplace</a>
+  </div>
+
+  <div *ngIf="loading" class="loading">⏳ Chargement des statistiques...</div>
+  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+
+  <ng-container *ngIf="stats && !loading">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-value">{{ stats.totalFurniture }}</div>
+        <div class="kpi-label">Total Articles</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-value">{{ stats.totalAvailable }}</div>
+        <div class="kpi-label">Disponibles</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-value">{{ stats.totalOffers }}</div>
+        <div class="kpi-label">Total Offres</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-icon">🚨</div>
+        <div class="kpi-value">{{ stats.totalReports }}</div>
+        <div class="kpi-label">Signalements</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-icon">💵</div>
+        <div class="kpi-value">{{ stats.averagePrice | number:'1.0-0' }} DT</div>
+        <div class="kpi-label">Prix Moyen</div>
+      </div>
+      <div class="kpi-card teal">
+        <div class="kpi-icon">🏆</div>
+        <div class="kpi-value">{{ stats.maxPrice | number:'1.0-0' }} DT</div>
+        <div class="kpi-label">Prix Max</div>
+      </div>
+    </div>
+
+    <!-- STATUS ROW -->
+    <div class="section-grid">
+
+      <!-- STATUS BARS -->
+      <div class="card">
+        <h2>📈 Statut des articles</h2>
+        <div class="status-bars">
+          <div class="status-item">
+            <div class="status-label">
+              <span class="dot green"></span> Disponibles
+              <strong>{{ stats.totalAvailable }}</strong>
+            </div>
+            <div class="bar-bg">
+              <div class="bar green-bar"
+                [style.width]="getBarWidth(stats.totalAvailable, stats.totalFurniture)"></div>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">
+              <span class="dot orange"></span> Vendus
+              <strong>{{ stats.totalSold }}</strong>
+            </div>
+            <div class="bar-bg">
+              <div class="bar orange-bar"
+                [style.width]="getBarWidth(stats.totalSold, stats.totalFurniture)"></div>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">
+              <span class="dot gray"></span> Archivés
+              <strong>{{ stats.totalArchived }}</strong>
+            </div>
+            <div class="bar-bg">
+              <div class="bar gray-bar"
+                [style.width]="getBarWidth(stats.totalArchived, stats.totalFurniture)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONDITION -->
+      <div class="card">
+        <h2>🔧 État des articles</h2>
+        <div class="status-bars">
+          <div *ngFor="let c of getConditions()" class="status-item">
+            <div class="status-label">
+              <span class="dot blue"></span> {{ c }}
+              <strong>{{ stats.countByCondition[c] }}</strong>
+            </div>
+            <div class="bar-bg">
+              <div class="bar blue-bar"
+                [style.width]="getBarWidth(stats.countByCondition[c], stats.totalFurniture)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFERS & REPORTS -->
+      <div class="card">
+        <h2>⚡ En attente</h2>
+        <div class="pending-grid">
+          <div class="pending-item orange">
+            <div class="pending-value">{{ stats.pendingOffers }}</div>
+            <div class="pending-label">Offres en attente</div>
+          </div>
+          <div class="pending-item red">
+            <div class="pending-value">{{ stats.pendingReports }}</div>
+            <div class="pending-label">Signalements en attente</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="card full-width">
+      <h2>🗂 Articles par catégorie</h2>
+      <div class="category-bars">
+        <div *ngFor="let cat of getCategories()" class="category-item">
+          <div class="category-header">
+            <span>{{ cat }}</span>
+            <span>{{ stats.countByCategory[cat] }} articles — moy. {{ stats.avgPriceByCategory[cat] | number:'1.0-0' }} DT</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar blue-bar"
+              [style.width]="getBarWidth(stats.countByCategory[cat], getMaxCategoryCount())"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP 5 -->
+    <div class="card full-width">
+      <h2>🏆 Top 5 Articles les plus chers</h2>
+      <div class="top5-grid">
+        <div *ngFor="let f of stats.top5Expensive; let i = index" class="top5-card">
+          <div class="top5-rank">#{{ i + 1 }}</div>
+          <div class="top5-body">
+            <h3>{{ f.title }}</h3>
+            <span class="badge-cat">{{ f.category }}</span>
+          </div>
+          <div class="top5-price">{{ f.price | number:'1.2-2' }} DT</div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

@@ -1,0 +1,37 @@
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>❤️ Mes Favoris</h1>
+      <p>{{ favorites.length }} article(s) sauvegardé(s)</p>
+    </div>
+    <a routerLink="/furniture" class="btn-back">← Retour au Marketplace</a>
+  </div>
+
+  <div *ngIf="favorites.length === 0" class="empty">
+    <p>😕 Aucun favori pour le moment.</p>
+    <a routerLink="/furniture" class="btn-back">Parcourir les articles</a>
+  </div>
+
+  <div *ngIf="favorites.length > 0" class="cards-grid">
+    <div *ngFor="let f of favorites" class="card">
+      <div class="card-image">
+        <img [src]="f.imageBase64 || f.imageUrl || 'https://via.placeholder.com/300x180?text=' + f.title"
+             [alt]="f.title" />
+        <span class="badge-status">{{ f.status }}</span>
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">{{ f.title }}</h3>
+        <p class="card-desc">{{ f.description }}</p>
+        <div class="card-meta">
+          <span class="badge-category">{{ f.category }}</span>
+          <span class="badge-condition" [ngClass]="getConditionClass(f.condition)">{{ f.condition }}</span>
+        </div>
+        <p class="card-price">{{ f.price | number:'1.2-2' }} DT</p>
+        <div class="card-actions">
+          <a [routerLink]="['/furniture', f.id]" class="btn-view">👁 View</a>
+          <button (click)="removeFavorite(f.id)" class="btn-delete">🗑 Retirer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

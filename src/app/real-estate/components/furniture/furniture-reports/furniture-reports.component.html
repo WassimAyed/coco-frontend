@@ -1,0 +1,42 @@
+<div class="reports-page">
+
+  <div class="reports-header">
+    <div>
+      <h1>🚨 Signalements</h1>
+      <p>{{ filtered().length }} signalement(s) {{ filter() !== 'ALL' ? '— ' + filter() : '' }}</p>
+    </div>
+    <a routerLink="/furniture" class="btn-back">← Retour</a>
+  </div>
+
+  <div class="filter-bar">
+    <button *ngFor="let f of filters"
+      class="filter-chip"
+      [class.active]="filter() === f"
+      (click)="filter.set(f)">
+      {{ f === 'ALL' ? '📋 Tous' : f === 'PENDING' ? '⏳ En attente' : f === 'REVIEWED' ? '👁 Examinés' : '✅ Résolus' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="loading">Chargement...</div>
+
+  <div *ngIf="!loading() && filtered().length === 0" class="empty">
+    <span>📭</span>
+    <p>Aucun signalement pour ce filtre.</p>
+  </div>
+
+  <div class="reports-list" *ngIf="!loading() && filtered().length > 0">
+    <div class="report-card" *ngFor="let r of filtered()">
+      <div class="report-top">
+        <span class="report-reason">{{ getReasonLabel(r.reason) }}</span>
+        <span class="report-status" [ngClass]="getStatusClass(r.status)">{{ r.status }}</span>
+      </div>
+      <p class="report-desc">{{ r.description || 'Aucune description fournie.' }}</p>
+      <div class="report-meta">
+        <span>🛋️ Article #{{ r.furnitureId }}</span>
+        <span>👤 Utilisateur #{{ r.userId }}</span>
+        <span>📅 {{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        <a [routerLink]="['/furniture', r.furnitureId]" class="link-view">Voir l'article →</a>
+      </div>
+    </div>
+  </div>
+</div>

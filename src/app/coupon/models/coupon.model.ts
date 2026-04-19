@@ -1,4 +1,5 @@
 export interface Coupon {
+merchantName: any;
   id: number;
   code: string;
   title: string;
