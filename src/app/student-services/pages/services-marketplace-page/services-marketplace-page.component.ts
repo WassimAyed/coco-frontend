@@ -22,7 +22,6 @@ export class ServicesMarketplacePageComponent {
   readonly categories = signal<ServiceCategory[]>([]);
   readonly isAuthenticated = this.userService.isAuthenticated;
   readonly myServices = signal<StudentService[]>([]);
-  // readonly myPendingServicesCount = signal(0);
   readonly services = signal<StudentService[]>([]);
   readonly currentPage = signal(1);
   readonly isLoading = signal(true);
@@ -34,9 +33,9 @@ export class ServicesMarketplacePageComponent {
     const startIndex = (this.currentPage() - 1) * this.pageSize;
     return this.services().slice(startIndex, startIndex + this.pageSize);
   });
-  // readonly highlightedCount = computed(
-  //   () => this.services().filter((service) => service.featured).length,
-  // );
+  readonly highlightedCount = computed(
+    () => this.services().filter((service) => service.featured).length,
+  );
   readonly categoryLookup = computed(() =>
     new Map(this.categories().map((category) => [category.id, category])),
   );
@@ -121,20 +120,16 @@ export class ServicesMarketplacePageComponent {
   private loadMyServices(): void {
     if (!this.isAuthenticated()) {
       this.myServices.set([]);
-      // this.myPendingServicesCount.set(0);
       return;
     }
 
     this.studentServicesApiService.getMyServices().subscribe({
       next: (services) => {
         this.myServices.set(services);
-        // this.myPendingServicesCount.set(
-        //   services.filter((service) => service.moderationStatus === 'pending').length,
-        // );
+      
       },
       error: () => {
         this.myServices.set([]);
-        // this.myPendingServicesCount.set(0); 
       },
     });
   }

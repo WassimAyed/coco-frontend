@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { authStore } from '../state/auth.store';
 import { loadAuthSession } from '../utils/auth-session.util';
 import { UserSignal } from '../models/profile-shell.model';
 
@@ -85,18 +84,7 @@ export class SignalApiService {
   }
 
   private getAuthorizationHeaders(): HttpHeaders {
-    const cookieSession = loadAuthSession();
-    const storeSession = authStore.getState().session;
-    const cookieToken = cookieSession?.accessToken?.trim() ?? '';
-    const storeToken = storeSession?.accessToken?.trim() ?? '';
-
-    if (cookieToken && storeToken && cookieToken !== storeToken) {
-      console.warn(
-        '[SignalApiService] Authorization token mismatch between cookie session and auth store. Using cookie token.',
-      );
-    }
-
-    const session = cookieSession ?? storeSession;
+    const session = loadAuthSession();
     const accessToken = session?.accessToken?.trim();
     return accessToken
       ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })

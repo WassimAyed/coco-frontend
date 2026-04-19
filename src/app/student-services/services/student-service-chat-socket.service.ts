@@ -48,6 +48,11 @@ export class StudentServiceChatSocketService implements OnDestroy {
     return this.socketService.isConnected(this.connectionKey);
   }
 
+  resetBindings(): void {
+    this.messageTopicBindings.clear();
+    this.typingTopicBindings.clear();
+  }
+
   watchConversationMessages(
     conversationId: string,
   ): Observable<StudentServiceChatMessage> {

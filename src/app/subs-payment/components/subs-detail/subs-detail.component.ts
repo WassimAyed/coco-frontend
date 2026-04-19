@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { SubsService } from '../../services/subs.service';
 
 @Component({
-  standalone: false,
   selector: 'app-subs-detail',
   standalone: true,
   imports: [CommonModule],

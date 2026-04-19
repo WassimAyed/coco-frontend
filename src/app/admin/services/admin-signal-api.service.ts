@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { authStore } from '../../user-security/state/auth.store';
 import { loadAuthSession } from '../../user-security/utils/auth-session.util';
 import { AdminSignal } from '../models/admin-signal.model';
 
@@ -44,10 +43,8 @@ export class AdminSignalApiService {
   }
 
   private getAuthorizationHeaders(): HttpHeaders {
-    const cookieSession = loadAuthSession();
-    const storeSession = authStore.getState().session;
-    const accessToken =
-      cookieSession?.accessToken?.trim() || storeSession?.accessToken?.trim();
+    const session = loadAuthSession();
+    const accessToken = session?.accessToken?.trim();
 
     return accessToken
       ? new HttpHeaders({ Authorization: `Bearer ${accessToken}` })

@@ -43,7 +43,6 @@ export class ServiceFormPageComponent implements OnDestroy {
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(8)]],
     shortDescription: ['', [Validators.required, Validators.minLength(20)]],
-    description: ['', [Validators.required, Validators.minLength(50)]],
     categoryId: ['academic', Validators.required],
     priceLabel: ['', Validators.required],
     deliveryMode: ['online', Validators.required],
@@ -69,7 +68,6 @@ export class ServiceFormPageComponent implements OnDestroy {
           this.form.patchValue({
             title: service.title,
             shortDescription: service.shortDescription,
-            description: service.description,
             categoryId: service.categoryId,
             priceLabel: service.priceLabel,
             deliveryMode: service.deliveryMode,

@@ -1,4 +1,4 @@
-export type ProfileSectionId = 'profile' | 'settings' | 'chat';
+export type ProfileSectionId = 'profile' | 'settings' | 'chat' | 'signals' | 'services';
 
 export interface ProfileSection {
   id: ProfileSectionId;
@@ -10,12 +10,18 @@ export interface ChatMessage {
   id: string;
   author: 'me' | 'other';
   content: string;
+  imageUrl?: string | null;
+  isDeleted?: boolean;
+  isEdited?: boolean;
+  rawSentAt?: string;
   timestamp: string;
   dayLabel?: string;
 }
 
 export interface ChatConversation {
   id: string;
+  requestId?: string;
+  serviceTitle?: string;
   name: string;
   role: string;
   avatarUrl: string;
@@ -40,4 +46,13 @@ export interface ProfileActivity {
   title: string;
   description: string;
   time: string;
+}
+
+export interface UserSignal {
+  id: number;
+  description: string;
+  imageUrl: string | null;
+  userId: number;
+  username: string;
+  createdAt: string | null;
 }

@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { SharedModule } from '../shared/shared.module';
+import { AdminCollocationComponent } from '../collocation/components/admin-collocation/admin-collocation.component';
+import { AdminCovoiturageComponent } from '../covoiturage/components/admin-covoiturage/admin-covoiturage.component';
+import { AdminPlansComponent } from '../subs-payment/components/admin-plans/admin-plans.component';
+import { EventPaginationModule } from '../event/event-pagination.module';
+import { AdminEventsComponent } from './components/admin-events/admin-events.component';
 import { AdminOverviewPanelComponent } from './components/admin-overview-panel/admin-overview-panel.component';
 import { AdminSettingsPanelComponent } from './components/admin-settings-panel/admin-settings-panel.component';
 import { AdminServicesPanelComponent } from './components/admin-services-panel/admin-services-panel.component';
@@ -15,6 +20,7 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
 @NgModule({
   declarations: [
     AdminLayoutComponent,
+    AdminEventsComponent,
     AdminOverviewPanelComponent,
     AdminSettingsPanelComponent,
     AdminServicesPanelComponent,
@@ -24,6 +30,16 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
     AdminUserManagementComponent,
   ],
   exports: [AdminLayoutComponent],
-  imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, SharedModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    ReactiveFormsModule,
+    SharedModule,
+    EventPaginationModule,
+    AdminPlansComponent,
+    AdminCovoiturageComponent,
+    AdminCollocationComponent,
+  ],
 })
 export class AdminModule {}

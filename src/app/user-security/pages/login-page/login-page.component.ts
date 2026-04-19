@@ -8,6 +8,7 @@ import { environment } from '../../../../environments/environment';
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
 
 @Component({
+  standalone: false,
   selector: 'app-login-page',
   templateUrl: './login-page.component.html',
 })

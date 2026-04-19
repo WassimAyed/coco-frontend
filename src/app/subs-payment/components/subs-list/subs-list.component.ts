@@ -5,7 +5,6 @@ import { SubsService } from '../../services/subs.service';
 import { SubscriptionPlan } from '../../models/subscription.model';
 
 @Component({
-  standalone: false,
   selector: 'app-subs-list',
   standalone: true,
   imports: [CommonModule],

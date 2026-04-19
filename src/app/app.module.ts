@@ -12,16 +12,11 @@ import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
 import { AuthCookieInterceptor } from './shared/interceptors/auth-cookie.interceptor';
-import { AdminEventsComponent } from './admin/components/admin-events/admin-events.component';
-import { EventPaginationModule } from './event/event-pagination.module';
-import { AdminPlansComponent } from './subs-payment/components/admin-plans/admin-plans.component';
-import { AdminCovoiturageComponent } from './covoiturage/components/admin-covoiturage/admin-covoiturage.component';
-import { AdminCollocationComponent } from './collocation/components/admin-collocation/admin-collocation.component';
 import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
 
 @NgModule({
   bootstrap: [AppComponent],
-  declarations: [AppComponent, AdminEventsComponent],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     CommonModule,
@@ -32,11 +27,7 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
     AppRoutingModule,
     AdminModule,
     SharedModule,
-    EventPaginationModule,
     UserSecurityModule,
-    AdminPlansComponent,
-    AdminCovoiturageComponent,
-    AdminCollocationComponent,
   ],
   providers: [
     {

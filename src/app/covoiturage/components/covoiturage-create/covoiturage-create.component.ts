@@ -7,6 +7,7 @@ import { Covoiturage, Vehicule } from '../../models/covoiturage.model';
 declare var google: any;
 
 @Component({
+  standalone: false,
   selector: 'app-covoiturage-create',
   templateUrl: './covoiturage-create.component.html',
   styleUrls: ['./covoiturage-create.component.scss']

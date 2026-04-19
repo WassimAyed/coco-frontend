@@ -5,7 +5,9 @@
       [alt]="service.title"
       class="h-52 w-full object-cover"
     />
-    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+    ></div>
     <div class="absolute left-4 top-4 flex flex-wrap gap-2">
       <span
         class="rounded-full border px-3 py-1 text-xs font-semibold"
@@ -14,7 +16,9 @@
         {{ categoryLabel }}
       </span>
       @if (service.featured) {
-        <span class="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+        <span
+          class="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white"
+        >
           Featured
         </span>
       }
@@ -27,17 +31,15 @@
         </span>
       }
     </div>
-    <div class="absolute bottom-4 left-4 right-4">
-      <h3 class="text-xl font-black text-white">{{ service.title }}</h3>
-      <p class="mt-2 text-sm leading-6 text-white/80">{{ service.shortDescription }}</p>
-    </div>
   </div>
 
   <div class="p-5">
     <div class="flex items-center justify-between gap-4">
       <div>
-        <p class="text-sm font-semibold text-foreground">{{ service.providerName }}</p>
-        <p class="mt-1 text-sm text-muted-foreground">{{ service.providerHeadline }}</p>
+        <h3 class="text-xl font-semibold text-foreground">{{ service.title }}</h3>
+        <p class="mt-2 text-sm leading-6  text-muted-foreground">
+          {{ service.shortDescription }}
+        </p>
       </div>
       <img
         [src]="service.providerAvatar"
@@ -49,45 +51,49 @@
     <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
       <div class="rounded-[1.1rem] bg-white border px-4 py-3">
         <p class="text-muted-foreground">Price</p>
-        <p class="mt-1 font-semibold text-foreground">{{ service.priceLabel }}</p>
-      </div>
-      <div class="rounded-[1.1rem] bg-white border  px-4 py-3">
-        <p class="text-muted-foreground">Rating</p>
-        <p class="mt-1 font-semibold text-foreground">{{ service.rating }}/5</p>
+        <p class="mt-1 font-semibold text-foreground">
+          {{ service.priceLabel }}
+        </p>
       </div>
       <div class="rounded-[1.1rem] bg-white border px-4 py-3">
         <p class="text-muted-foreground">Mode</p>
-        <p class="mt-1 font-semibold capitalize text-foreground">{{ service.deliveryMode }}</p>
+        <p class="mt-1 font-semibold capitalize text-foreground">
+          {{ service.deliveryMode }}
+        </p>
       </div>
       <div class="rounded-[1.1rem] bg-white border px-4 py-3">
         <p class="text-muted-foreground">Requests</p>
-        <p class="mt-1 font-semibold text-foreground">{{ service.requestCount }}</p>
+        <p class="mt-1 font-semibold text-foreground">
+          {{ service.requestCount }}
+        </p>
       </div>
     </div>
 
     <div class="mt-5 flex flex-wrap gap-2">
       @for (tag of service.tags; track tag) {
-        <span class="rounded-full border border-border bg-white px-3 py-1 text-xs font-medium text-muted-foreground">
+        <span
+          class="rounded-full border border-border bg-white px-3 py-1 text-xs font-medium text-muted-foreground"
+        >
           #{{ tag }}
         </span>
       }
     </div>
 
     <div class="mt-6 flex flex-wrap gap-3">
-      <a [routerLink]="detailLink" class="btn-primary">
-        View details
-      </a>
+      <a [routerLink]="detailLink" class="btn-primary"> View details </a>
 
       @if (showContactAction) {
-        <a [routerLink]="contactLink" [queryParams]="{ section: 'chat' }" class="btn-secondary">
+        <a
+          [routerLink]="contactLink"
+          [queryParams]="{ section: 'chat' }"
+          class="btn-secondary"
+        >
           Contact
         </a>
       }
 
       @if (showManageActions) {
-        <a [routerLink]="editLink" class="btn-secondary">
-          Edit
-        </a>
+        <a [routerLink]="editLink" class="btn-secondary"> Edit </a>
         <button type="button" class="btn-secondary" (click)="onDelete()">
           Delete
         </button>

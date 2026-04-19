@@ -5,7 +5,6 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { UserService } from '../../../user-security/services/user.service';
 import {
   ServiceCategory,
-  ServiceReview,
   StudentService,
   StudentServiceRequest,
   StudentServiceRequestFormValue,
@@ -25,7 +24,6 @@ export class ServiceDetailPageComponent {
   private readonly userService = inject(UserService);
 
   readonly service = signal<StudentService | null>(null);
-  readonly reviews = signal<ServiceReview[]>([]);
   readonly categories = signal<ServiceCategory[]>([]);
   readonly currentRequest = signal<StudentServiceRequest | null>(null);
   readonly isSubmittingRequest = signal(false);
@@ -67,12 +65,6 @@ export class ServiceDetailPageComponent {
     });
 
     this.loadCurrentRequest(serviceId);
-
-    this.studentServicesApiService
-      .getReviewsForService(serviceId)
-      .subscribe((reviews) => {
-        this.reviews.set(reviews);
-      });
   }
 
   submitRequest(): void {

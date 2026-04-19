@@ -37,7 +37,6 @@ interface StudentServiceApiDto {
   title: string;
   slug: string;
   shortDescription: string;
-  description: string;
   category: ApiServiceCategory;
   priceLabel: string;
   deliveryMode: ApiDeliveryMode;
@@ -50,8 +49,6 @@ interface StudentServiceApiDto {
   providerDepartment: string;
   coverImageUrl: string;
   featured: boolean;
-  rating: number;
-  reviewCount: number;
   requestCount: number;
   moderationStatus: ApiModerationStatus;
   moderatedAt: string | null;
@@ -77,16 +74,6 @@ interface StudentServiceRequestApiDto {
   createdAt: string;
 }
 
-interface StudentServiceReviewApiDto {
-  id: number;
-  serviceId: number;
-  reviewerId?: number;
-  reviewerName: string;
-  reviewerDepartment: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
 
 interface StudentServiceRecommendationApiDto {
   serviceId: number;
@@ -162,9 +149,6 @@ export class StudentServicesApiService {
     }
     if (filters?.deliveryMode && filters.deliveryMode !== 'all') {
       params = params.set('deliveryMode', filters.deliveryMode);
-    }
-    if (filters?.minRating && filters.minRating > 0) {
-      params = params.set('minRating', String(filters.minRating));
     }
     if (filters?.featuredOnly) {
       params = params.set('featuredOnly', 'true');
@@ -423,27 +407,6 @@ export class StudentServicesApiService {
       );
   }
 
-  getReviewsForService(serviceId: string) {
-    return this.http
-      .get<StudentServiceReviewApiDto[]>(
-        this.buildStudentServicesUrl(`/${serviceId}/reviews`),
-        this.getAuthorizedOptions(),
-      )
-      .pipe(
-        map((reviews) =>
-          reviews.map((review) => ({
-            comment: review.comment,
-            createdAt: review.createdAt,
-            id: String(review.id),
-            rating: review.rating,
-            reviewerDepartment: review.reviewerDepartment,
-            reviewerName: review.reviewerName,
-            serviceId: String(review.serviceId),
-          })),
-        ),
-      );
-  }
-
   getRecommendations(): Observable<ServiceRecommendation[]> {
     let params = new HttpParams();
     const currentUserId = this.getRequiredCurrentUserId(false);
@@ -656,7 +619,6 @@ export class StudentServicesApiService {
       category: this.toApiCategory(payload.categoryId),
       coverImageUrl: payload.coverImage.trim(),
       deliveryMode: this.toApiDeliveryMode(payload.deliveryMode),
-      description: payload.description.trim(),
       featured: false,
       location: payload.location.trim(),
       priceLabel: payload.priceLabel.trim(),
@@ -680,7 +642,6 @@ export class StudentServicesApiService {
       coverImage: service.coverImageUrl,
       createdAt: service.createdAt,
       deliveryMode: this.fromApiDeliveryMode(service.deliveryMode),
-      description: service.description,
       featured: service.featured,
       id: String(service.id),
       location: service.location,
@@ -690,9 +651,7 @@ export class StudentServicesApiService {
       providerHeadline: service.providerHeadline,
       providerId: String(service.providerId),
       providerName: service.providerName,
-      rating: Number(service.rating),
       requestCount: service.requestCount,
-      reviewCount: service.reviewCount,
       moderationStatus: this.fromApiModerationStatus(service.moderationStatus),
       moderatedAt: service.moderatedAt,
       shortDescription: service.shortDescription,

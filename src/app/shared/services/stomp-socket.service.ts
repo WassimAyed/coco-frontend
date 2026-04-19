@@ -83,8 +83,9 @@ export class StompSocketService {
     const state = signal<SocketConnectionState>('connecting');
     const connection: SocketConnectionRecord = {
       client: new Client({
-        debug: () => undefined,
-        reconnectDelay: 3000,
+        heartbeatIncoming: 10000,
+        heartbeatOutgoing: 10000,
+        reconnectDelay: 5000,
         webSocketFactory: () => new SockJS(socketUrl),
       }),
       socketUrl,
@@ -105,8 +106,18 @@ export class StompSocketService {
       connection.subscriptions.clear();
     };
 
-    connection.client.onStompError = () => {
+    connection.client.onStompError = (frame) => {
+      console.error('[STOMP] Protocol error — removing stale connection:', frame);
       connection.state.set('error');
+      connection.subscriptions.clear();
+      this.connections.delete(connectionKey);
+    };
+
+    connection.client.onWebSocketError = (event) => {
+      console.error('[STOMP] WebSocket transport error:', event);
+      connection.state.set('error');
+      connection.subscriptions.clear();
+      this.connections.delete(connectionKey);
     };
 
     connection.client.activate();

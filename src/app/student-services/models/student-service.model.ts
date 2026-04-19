@@ -26,22 +26,11 @@ export interface ServiceCategory {
   accentClass: string;
 }
 
-export interface ServiceReview {
-  id: string;
-  serviceId: string;
-  reviewerName: string;
-  reviewerDepartment: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
-
 export interface StudentService {
   id: string;
   title: string;
   slug: string;
   shortDescription: string;
-  description: string;
   categoryId: ServiceCategoryId;
   priceLabel: string;
   deliveryMode: ServiceDeliveryMode;
@@ -54,8 +43,6 @@ export interface StudentService {
   providerDepartment: string;
   coverImage: string;
   featured: boolean;
-  rating: number;
-  reviewCount: number;
   requestCount: number;
   moderationStatus: ServiceModerationStatus;
   moderatedAt?: string | null;
@@ -140,14 +127,12 @@ export interface StudentServiceFilters {
   search: string;
   categoryId: ServiceCategoryId | 'all';
   deliveryMode: ServiceDeliveryMode | 'all';
-  minRating: number;
   featuredOnly: boolean;
 }
 
 export interface StudentServiceFormValue {
   title: string;
   shortDescription: string;
-  description: string;
   categoryId: ServiceCategoryId;
   priceLabel: string;
   deliveryMode: ServiceDeliveryMode;
