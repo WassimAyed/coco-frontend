@@ -25,6 +25,7 @@ import { catchError, filter, forkJoin, of, Subject, switchMap, tap, map } from '
 declare var bootstrap: any;
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
   styleUrls: ['./collocation-listOffres.component.css']

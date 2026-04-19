@@ -20,6 +20,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'app-event-detail',
   templateUrl: './event-detail.component.html',
   styleUrl: './event-detail.component.css'
@@ -1048,3 +1049,4 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 }
+

@@ -1,0 +1,37 @@
+<aside class="sticky top-0 hidden min-h-screen w-72 self-start border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
+  <div class="border-b border-sidebar-border p-6">
+    <app-logo />
+  </div>
+
+  <nav class="flex-1 space-y-1 overflow-y-auto p-4">
+    @for (module of modules; track module.id) {
+      <button
+        type="button"
+        class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors"
+        [ngClass]="selectedModuleId === module.id ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'"
+        (click)="moduleSelected.emit(module.id)"
+      >
+        <lucide-icon [img]="module.icon" [size]="20"></lucide-icon>
+        <span class="text-sm font-semibold">{{ module.name }}</span>
+      </button>
+    }
+  </nav>
+
+  <div class="border-t border-sidebar-border p-4">
+    <button
+      type="button"
+      class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+    >
+      <lucide-icon [img]="SettingsIcon" [size]="20"></lucide-icon>
+      <span class="text-sm font-semibold">Settings</span>
+    </button>
+    <button
+      type="button"
+      class="mt-1 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+      (click)="logoutClicked.emit()"
+    >
+      <lucide-icon [img]="LogOutIcon" [size]="20"></lucide-icon>
+      <span class="text-sm font-semibold">Logout</span>
+    </button>
+  </div>
+</aside>

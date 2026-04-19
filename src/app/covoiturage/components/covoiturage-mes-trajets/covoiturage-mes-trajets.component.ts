@@ -7,6 +7,7 @@ import { Covoiturage, Vehicule, StatusReservation } from '../../models/covoitura
 declare var google: any;
 
 @Component({
+  standalone: false,
   selector: 'app-covoiturage-mes-trajets',
   templateUrl: './covoiturage-mes-trajets.component.html',
   styleUrls: ['./covoiturage-mes-trajets.component.scss']

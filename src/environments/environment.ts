@@ -17,8 +17,14 @@ export const environment = {
     withCredentials: true
   },
   storage: {
-    profileImageUploadUrl: '',
-    profileImageFormFieldName: 'file',
+    profileImageUploadUrl: '/users/me/profile-image',
+    profileImageFormFieldName: 'image',
     withCredentials: true
+  },
+  studentServices: {
+    apiBaseUrl: 'http://localhost:8095',
+    basePath: '/student-services',
+    websocketPath: '/ws-student-services',
+    withCredentials: false
   }
 };

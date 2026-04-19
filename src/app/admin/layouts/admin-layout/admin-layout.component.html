@@ -31,7 +31,8 @@
 
   <div class="flex min-w-0 flex-1 flex-col">
     <header class="sticky top-0 z-10 border-b border-border bg-white">
-      <div class="flex h-16 items-center justify-between px-4 lg:px-8">
+      <div class="flex h-16 items-cente
+      r justify-between px-4 lg:px-8">
         <div class="lg:hidden">
           <app-logo />
         </div>
@@ -450,6 +451,23 @@
       <app-admin-covoiturage></app-admin-covoiturage>
       } @else if (selectedModule() === 'colocation') {
       <app-admin-collocation></app-admin-collocation>
+      } @else if (selectedModule() === 'signals') {
+        <app-admin-signals-panel
+          [errorMessage]="signalsError()"
+          [isLoading]="isLoadingSignals()"
+          [signals]="signals()"
+        />
+      } @else if (selectedModule() === 'services') {
+        <app-admin-services-panel
+          [currentFilter]="servicesModerationFilter()"
+          [isLoading]="isLoadingServices()"
+          [services]="services()"
+          (approve)="approveService($event)"
+          (delete)="deleteServicePost($event)"
+          (filterChanged)="setServicesModerationFilter($event)"
+          (reject)="rejectService($event)"
+          (tagsChanged)="updateServiceTags($event)"
+        />
       } @else {
       <article class="rounded-2xl bg-white p-12 text-center">
         <div class="mx-auto max-w-md">

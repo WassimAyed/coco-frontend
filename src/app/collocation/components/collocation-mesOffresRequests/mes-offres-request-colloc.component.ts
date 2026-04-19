@@ -7,6 +7,7 @@ import { SmartCollocationService } from '../../services/smart-collocation.servic
 declare const bootstrap: any;
 
 @Component({
+  standalone: false,
   selector: 'app-mes-offres-requests',
   templateUrl: './mes-offres-request-colloc.component.html',
   styleUrls: ['./mes-offres-request-colloc.component.css']
@@ -237,3 +238,4 @@ closeMessageModal() {
   this.showMessageModal = false;
 }
 }
+

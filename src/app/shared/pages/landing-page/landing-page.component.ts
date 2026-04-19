@@ -42,6 +42,7 @@ function sameViewer(a: UserProfile | null, b: UserProfile | null): boolean {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html',
 })
@@ -296,3 +297,4 @@ export class LandingPageComponent {
     return Array.from({ length: rating }, (_, i) => i);
   }
 }
+

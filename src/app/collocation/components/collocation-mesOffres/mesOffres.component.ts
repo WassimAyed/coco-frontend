@@ -4,6 +4,7 @@ import { CollocationService } from '../../services/collocation.service';
 import { UserService } from './../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-mes-offres',
   templateUrl: './mesOffres.component.html',
   styleUrls: ['./mesOffres.component.css']

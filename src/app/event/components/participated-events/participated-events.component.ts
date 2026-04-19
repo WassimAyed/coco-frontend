@@ -14,6 +14,7 @@ import { ReactionService } from '../../services/reaction.service';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 
 @Component({
+  standalone: false,
   selector: 'app-participated-events',
   templateUrl: './participated-events.component.html',
   styleUrl: './participated-events.component.css'

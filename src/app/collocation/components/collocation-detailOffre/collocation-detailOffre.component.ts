@@ -31,6 +31,7 @@ L.Marker.prototype.options.icon = iconDefault;
 // ---------------------------------
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-detail',
   templateUrl: './collocation-detailOffre.component.html',
   styleUrls: ['./collocation-detailOffre.component.css']
@@ -157,3 +158,4 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
     return this.currentUserId === this.ownerId;
   }
 }
+

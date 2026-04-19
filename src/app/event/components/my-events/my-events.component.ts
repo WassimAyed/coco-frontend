@@ -16,6 +16,7 @@ import { ParticipantDto } from '../../models/participant.model';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-my-events',
   templateUrl: './my-events.component.html',
   styleUrl: './my-events.component.css'

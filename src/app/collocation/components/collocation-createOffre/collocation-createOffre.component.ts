@@ -26,6 +26,7 @@ const iconDefault = L.icon({
 L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-create-offre',
   templateUrl: './collocation-createOffre.component.html',
   styleUrls: ['./collocation-createOffre.component.css']
@@ -395,3 +396,4 @@ this.collocationService.createOffer(offer, this.selectedFiles, userId).subscribe
     this.cdr.detectChanges();
   }
 }
+

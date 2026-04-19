@@ -1,0 +1,43 @@
+@if (totalPages > 1) {
+  <div class="mt-8 flex flex-col gap-4 rounded-[1.5rem] border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm text-muted-foreground">
+      Showing {{ startItem }}-{{ endItem }} of {{ totalItems }} {{ itemLabel }}
+    </p>
+
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      <button
+        type="button"
+        class="btn-secondary !rounded-[1rem] !px-4 !py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="currentPage === 1"
+        (click)="changePage(currentPage - 1)"
+      >
+        Previous
+      </button>
+
+      @for (page of pageNumbers; track page) {
+        <button
+          type="button"
+          class="inline-flex h-11 min-w-11 items-center justify-center rounded-[1rem] border px-4 text-sm font-semibold transition"
+          [class.border-primary]ُ="page === currentPage"
+          [class.bg-red-700]="page === currentPage"
+          [class.text-primary-foreground]="page === currentPage"
+          [class.border-border]="page !== currentPage"
+          [class.bg-white]="page !== currentPage"
+          [class.text-foreground]="page !== currentPage"
+          (click)="changePage(page)"
+        >
+          {{ page }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="btn-secondary !rounded-[1rem] !px-4 !py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="currentPage === totalPages"
+        (click)="changePage(currentPage + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+}

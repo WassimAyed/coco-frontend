@@ -8,6 +8,7 @@ import { UserService } from '../../../user-security/services/user.service';
 declare var google: any;
 
 @Component({
+  standalone: false,
   selector: 'app-covoiturage-detail',
   templateUrl: './covoiturage-detail.component.html',
   styleUrls: ['./covoiturage-detail.component.css']
@@ -544,3 +545,4 @@ export class CovoiturageDetailComponent implements OnInit {
     }
   }
 }
+

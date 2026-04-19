@@ -13,6 +13,7 @@ import { RecommendationService } from '../../services/recommendation.service';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-event-list',
   templateUrl: './event-list.component.html',
   styleUrl: './event-list.component.css'
@@ -870,3 +871,4 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 }
+

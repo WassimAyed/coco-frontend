@@ -44,6 +44,7 @@ interface CreatorRow {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-admin-events',
   templateUrl: './admin-events.component.html',
   styleUrl: './admin-events.component.css'
