@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CovoiturageListComponent } from './covoiturage-list.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
 
 describe('CovoiturageListComponent', () => {
   let component: CovoiturageListComponent;
@@ -8,7 +10,8 @@ describe('CovoiturageListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CovoiturageListComponent]
+      declarations: [CovoiturageListComponent],
+      imports: [HttpClientTestingModule, FormsModule]
     })
     .compileComponents();
 

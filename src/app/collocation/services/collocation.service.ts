@@ -8,7 +8,7 @@ import { UserService } from '../../user-security/services/user.service';
 })
 export class CollocationService {
 
-  private apiUrl = 'http://localhost:8091/collocation';
+  private apiUrl = 'http://localhost:9092/api/collocation';
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) { }
@@ -66,16 +66,16 @@ export class CollocationService {
     return this.http.get<number[]>(`${this.apiUrl}/favorites/${id}`);
   }
 
-addFavorite(userId: number, offerId: number) {
-  return this.http.post(
-    `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
-  );
-}
+  addFavorite(userId: number, offerId: number) {
+    return this.http.post(
+      `${this.apiUrl}/favorites/${userId}/${offerId}`, {}
+    );
+  }
 
   removeFavorite(offerId: number, userId?: number) {
     const id = userId ?? this.userService.currentUser()?.id;
     if (!id) throw new Error('User not authenticated');
-    return this.http.delete(`${this.apiUrl}/favorites/${offerId}/${id}`);
+    return this.http.delete(`${this.apiUrl}/favorites/${offerId}/${id}`, { responseType: 'text' });
   }
 
   getNearbyOffers(lat: number, lng: number, radius: number) {

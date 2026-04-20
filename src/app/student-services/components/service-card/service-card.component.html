@@ -1,0 +1,103 @@
+<article class="surface-card overflow-hidden">
+  <div class="relative">
+    <img
+      [src]="service.coverImage"
+      [alt]="service.title"
+      class="h-52 w-full object-cover"
+    />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"
+    ></div>
+    <div class="absolute left-4 top-4 flex flex-wrap gap-2">
+      <span
+        class="rounded-full border px-3 py-1 text-xs font-semibold"
+        [ngClass]="categoryClass"
+      >
+        {{ categoryLabel }}
+      </span>
+      @if (service.featured) {
+        <span
+          class="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white"
+        >
+          Featured
+        </span>
+      }
+      @if (showManageActions) {
+        <span
+          class="rounded-full border px-3 py-1 text-xs font-semibold"
+          [ngClass]="moderationBadgeClass()"
+        >
+          {{ moderationLabel() }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <div class="p-5">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-foreground">{{ service.title }}</h3>
+        <p class="mt-2 text-sm leading-6  text-muted-foreground">
+          {{ service.shortDescription }}
+        </p>
+      </div>
+      <img
+        [src]="service.providerAvatar"
+        [alt]="service.providerName"
+        class="h-12 w-12 rounded-2xl object-cover"
+      />
+    </div>
+
+    <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
+      <div class="rounded-[1.1rem] bg-white border px-4 py-3">
+        <p class="text-muted-foreground">Price</p>
+        <p class="mt-1 font-semibold text-foreground">
+          {{ service.priceLabel }}
+        </p>
+      </div>
+      <div class="rounded-[1.1rem] bg-white border px-4 py-3">
+        <p class="text-muted-foreground">Mode</p>
+        <p class="mt-1 font-semibold capitalize text-foreground">
+          {{ service.deliveryMode }}
+        </p>
+      </div>
+      <div class="rounded-[1.1rem] bg-white border px-4 py-3">
+        <p class="text-muted-foreground">Requests</p>
+        <p class="mt-1 font-semibold text-foreground">
+          {{ service.requestCount }}
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      @for (tag of service.tags; track tag) {
+        <span
+          class="rounded-full border border-border bg-white px-3 py-1 text-xs font-medium text-muted-foreground"
+        >
+          #{{ tag }}
+        </span>
+      }
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a [routerLink]="detailLink" class="btn-primary"> View details </a>
+
+      @if (showContactAction) {
+        <a
+          [routerLink]="contactLink"
+          [queryParams]="{ section: 'chat' }"
+          class="btn-secondary"
+        >
+          Contact
+        </a>
+      }
+
+      @if (showManageActions) {
+        <a [routerLink]="editLink" class="btn-secondary"> Edit </a>
+        <button type="button" class="btn-secondary" (click)="onDelete()">
+          Delete
+        </button>
+      }
+    </div>
+  </div>
+</article>

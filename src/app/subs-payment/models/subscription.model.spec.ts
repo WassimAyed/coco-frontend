@@ -1,7 +1,12 @@
-import { Subscription } from './subscription.model';
+import { SubscriptionPlan } from './subscription.model';
 
-describe('Subscription', () => {
-  it('should create an instance', () => {
-    expect(new Subscription()).toBeTruthy();
+describe('SubscriptionPlan', () => {
+  it('should be able to create an object that satisfies the interface', () => {
+    const plan: SubscriptionPlan = {
+      name: 'Test Plan',
+      price: 10,
+      type: 'monthly'
+    };
+    expect(plan).toBeTruthy();
   });
 });

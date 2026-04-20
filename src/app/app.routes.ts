@@ -43,6 +43,7 @@ export const routes: Routes = [
     children: [
       { path: 'landing', component: LandingPageComponent },
       { path: 'profile', canActivate: [profileGuard], component: UserProfilePageComponent },
+      { path: 'student-services', loadChildren: () => import('./student-services/student-services.module').then((m) => m.StudentServicesModule) },
       { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then((m) => m.CollocationModule) },
       { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then((m) => m.CovoiturageModule) },
       { path: 'event', loadChildren: () => import('./event/event.module').then((m) => m.EventModule) },
@@ -57,6 +58,18 @@ export const routes: Routes = [
     path: 'admin',
     canActivate: [adminGuard],
     component: AdminLayoutComponent
+  },
+  {
+    path: 'admin/covoiturage',
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent,
+    data: { module: 'carpooling' }
+  },
+  {
+    path: 'admin/collocation',
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent,
+    data: { module: 'colocation' }
   },
   { path: '**', redirectTo: 'landing' }
 ];

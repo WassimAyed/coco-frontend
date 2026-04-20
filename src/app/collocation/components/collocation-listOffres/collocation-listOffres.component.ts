@@ -16,6 +16,7 @@ import { CollocationOffer } from '../../models/collocationOffre.model';
 import { UserService } from './../../../user-security/services/user.service';
 import { MatchingService } from '../../../user-security/services/matchingColloc.service';
 import { VoiceSearchService } from '../../services/voice-search.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
@@ -24,6 +25,7 @@ import { catchError, filter, forkJoin, of, Subject, switchMap, tap, map } from '
 declare var bootstrap: any;
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-list',
   templateUrl: './collocation-listOffres.component.html',
   styleUrls: ['./collocation-listOffres.component.css']
@@ -94,10 +96,13 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   private readonly matchingService = inject(MatchingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly voiceSearchService = inject(VoiceSearchService);
+  private readonly smartCollocationService = inject(SmartCollocationService);
 
   readonly user = computed(() => this.userService.currentUser());
   currentUserId!: number;
   currentUserProfile: any = null; // Stored user profile
+
+  recommendedOffers: CollocationOffer[] = [];
 
   matchingEnabled = false;
   isMatchingLoading = false;
@@ -174,6 +179,12 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.loadOffers();
     this.loadFavorites();
     this.getUserLocation();
+    
+    setTimeout(() => {
+      if (this.currentUserId) {
+        this.loadRecommendations();
+      }
+    }, 1000); // load after offers
 
     // Voice Search Subscriptions
     this.voiceSearchService.setLanguage('fr-FR');
@@ -230,20 +241,40 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
   }
 
   isUserProfileComplete(): boolean {
-    const profile = this.currentUserProfile;
-    if (!profile) return false;
+    const p = this.currentUserProfile;
+    if (!p) return false;
 
-    // Check required fields based on Python API needs
-    return !!(
-      profile.age &&
-      profile.budget &&
-      profile.cleanliness !== undefined &&
-      profile.pets !== undefined &&
-      profile.city &&
-      profile.gender &&
-      profile.latitude !== undefined &&
-      profile.longitude !== undefined
+    // Check required fields for the AI Matching Python API
+    return (
+      (p.age != null && p.age > 0) &&
+      (p.budget != null && p.budget > 0) &&
+      (p.cleanliness !== undefined && p.cleanliness !== null) &&
+      (p.pets !== undefined && p.pets !== null) &&
+      (p.city && p.city.trim() !== '') &&
+      (p.gender && p.gender.trim() !== '') &&
+      (p.latitude != null) &&
+      (p.longitude != null)
     );
+  }
+
+  private mapToProfileRequest(profile: any, userId: number): any {
+    return {
+      userId: userId.toString(),
+      age: profile.age,
+      gender: profile.gender,
+      budget: profile.budget,
+      city: profile.city,
+      smoker: profile.smoker ?? false,
+      pets: profile.pets ?? false,
+      cleanliness: profile.cleanliness ?? 5,
+      sleepSchedule: profile.sleepSchedule || 'flexible',
+      studyLevel: profile.studyLevel || 'other',
+      socialLevel: profile.socialLevel ?? 5,
+      acceptsGuests: profile.acceptsGuests ?? true,
+      noiseTolerance: profile.noiseTolerance ?? 5,
+      latitude: profile.latitude,
+      longitude: profile.longitude
+    };
   }
 
   private executeMatchingPipeline() {
@@ -282,12 +313,19 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
         );
 
         return forkJoin(profileRequests).pipe(
-          map(profiles => profiles.filter(p => p !== null)),
+          map(profilesWithIds => {
+            // Each profileRequest returns the profile object. We need to pair it with its ID.
+            return profilesWithIds
+              .map((p, index) => p ? this.mapToProfileRequest(p, uniqueIds[index]) : null)
+              .filter(p => p !== null);
+          }),
           switchMap(publisherProfiles => {
             if (publisherProfiles.length === 0) return of([]);
-            console.log(`[AI Match] Sending ${publisherProfiles.length} profiles to AI...`);
+            console.log(`[AI Match] Sending ${publisherProfiles.length} candidate profiles to AI...`);
 
-            return this.matchingService.match(currentUserProfile, publisherProfiles).pipe(
+            const mappedCurrentUser = this.mapToProfileRequest(this.currentUserProfile, Number(currentUserId));
+
+            return this.matchingService.match(mappedCurrentUser, publisherProfiles).pipe(
               map((rawScores: any[]) => {
                 return rawScores.map((result, index) => {
                   const correctId = uniqueIds[index];
@@ -329,7 +367,7 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
         // We received existing_score from Python API as percentage (0-100)
         // Let's calculate the Budget compatibility on the Frontend to be able to access the Offer details
         const offerPrice = offre.prixLoc || 0;
-        
+
         if (userBudget !== 0) {
           const difference = Math.abs(userBudget - offerPrice);
           const normalizedBudgetScore = Math.max(0, 1 - (difference / userBudget));
@@ -421,6 +459,16 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
     this.updateMarkers();
   }
 
+  loadRecommendations(): void {
+    if (!this.currentUserId) return;
+    this.smartCollocationService.getRecommendations(this.currentUserId).subscribe({
+      next: (ids) => {
+        this.recommendedOffers = this.offers.filter(o => ids.includes(o.id));
+      },
+      error: err => console.error("Could not load recommendations", err)
+    });
+  }
+
   toggleVoiceSearch(): void {
     if (this.isListening) {
       this.voiceSearchService.stopListening();
@@ -433,11 +481,31 @@ export class CollocationListComponent implements OnInit, AfterViewInit {
      MAP
   ================================= */
   private initMap(): void {
-    this.map = L.map('map').setView([36.8065, 10.1815], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    this.map = L.map('map', {
+      scrollWheelZoom: true,
+      attributionControl: true
+    }).setView([36.8065, 10.1815], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(this.map);
+
+    // CRITICAL: Force map to recalculate its container size
+    // This fixes the "partial blocks" or "grey map" issue.
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+        console.log('[Map] invalidateSize called');
+      }
+    }, 500);
   }
 
   private updateMarkers(): void {
+    if (!this.map) return;
+
+    // Also invalidate size here in case layout shifted
+    this.map.invalidateSize();
+
     this.markers.forEach(m => m.remove());
     this.markers = [];
 

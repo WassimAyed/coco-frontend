@@ -26,7 +26,13 @@
               Collocation Service
             </a>
 
-            <a routerLink="/services/covoiturage" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+            <a routerLink="/student-services"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
+              (click)="closeFeaturesDropdown()">
+              Student Services
+            </a>
+
+            <a routerLink="/covoiturage/list" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
               Covoiturage Service
             </a>

@@ -39,6 +39,7 @@ interface SplashRing {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-ambient-background',
   template: `
     <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -361,3 +362,4 @@ export class AmbientBackgroundComponent implements OnInit, AfterViewInit {
     return fallback;
   }
 }
+

@@ -7,6 +7,7 @@ import { UserService } from '../../../user-security/services/user.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
+  standalone: false,
   selector: 'app-create-profile',
 
   templateUrl: './create-profile.component.html',

@@ -27,6 +27,7 @@
               <th class="ps-3">Image</th>
               <th>Offre</th>
               <th>Demandeur</th>
+              <th>Match IA</th>
               <th>Message</th>
               <th>Date</th>
               <th>Statut</th>
@@ -66,12 +67,28 @@
                         {{ sender.firstName }} {{ sender.lastName }}
                       </div>
                       <div class="text-muted" style="font-size:0.75rem;">{{ sender.email }}</div>
+                      <div *ngIf="sender.trustBadge" class="mt-1 d-flex gap-1" style="font-size:0.7rem;">
+                        <span class="badge" [style.backgroundColor]="sender.trustColor">
+                          {{ sender.trustBadge }}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </ng-container>
                 <ng-template #loadingUser>
                   <span class="text-muted small"><i class="fas fa-spinner fa-spin me-1"></i>Chargement...</span>
                 </ng-template>
+              </td>
+              <!-- MATCH IA -->
+              <td>
+                <div *ngIf="req.aiRankScore" class="d-flex flex-column">
+                  <span class="badge rounded-pill fw-bold" 
+                        [ngClass]="{'bg-success': req.aiRankBadge === 'Best Match', 'bg-info': req.aiRankBadge === 'Strong Candidate', 'bg-secondary': !req.aiRankBadge || req.aiRankBadge === 'Normal Candidate'}">
+                    {{ req.aiRankBadge || 'Candidat Normal' }}
+                  </span>
+                  <small class="text-muted fw-bold text-center mt-1">{{ req.aiRankScore | number:'1.0-0' }} pts</small>
+                </div>
+                <div *ngIf="!req.aiRankScore" class="text-muted small">N/A</div>
               </td>
               <!-- MESSAGE with popup button -->
               <td>
@@ -175,6 +192,16 @@
                       <span class="text-muted" style="font-size:0.75rem;">Chargement...</span>
                     </ng-container>
                   </div>
+
+                  <!-- AI Rank Mobile -->
+                  <div *ngIf="req.aiRankScore" class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge" 
+                          [ngClass]="{'bg-success': req.aiRankBadge === 'Best Match', 'bg-info': req.aiRankBadge === 'Strong Candidate', 'bg-secondary': req.aiRankBadge === 'Normal Candidate'}">
+                      {{ req.aiRankBadge }}
+                    </span>
+                    <span class="text-muted small">{{ req.aiRankScore | number:'1.0-0' }} pts</span>
+                  </div>
+
                   <!-- Message with popup button (mobile) -->
 
                   <div class="d-flex align-items-start gap-2 mb-2">

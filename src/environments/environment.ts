@@ -1,8 +1,11 @@
 export const environment = {
+  googleMapsApiKey: 'AIzaSyBIaXbRrGVgkj8Ffre1-dHYRrEokUrp-w0',
   apiBaseUrl: 'http://localhost:8090/',
+  collocationApiBaseUrl: 'http://localhost:9092/collocationservice/collocation',
   paymentApiBaseUrl: 'http://localhost:9092/api/payment',
   lostFoundApiBaseUrl: 'http://localhost:9092/api/lost-found',
-  eventApiBaseUrl: 'http://localhost:8093/api/events',
+  eventApiBaseUrl: 'http://localhost:9092/api/event/api/events',
+  eventServiceUrl: 'http://localhost:9092/api/event',
   auth: {
     loginPath: '/auth/login',
     registerPath: '/auth/register',
@@ -14,8 +17,14 @@ export const environment = {
     withCredentials: true
   },
   storage: {
-    profileImageUploadUrl: '',
-    profileImageFormFieldName: 'file',
+    profileImageUploadUrl: '/users/me/profile-image',
+    profileImageFormFieldName: 'image',
     withCredentials: true
+  },
+  studentServices: {
+    apiBaseUrl: 'http://localhost:8095',
+    basePath: '/student-services',
+    websocketPath: '/ws-student-services',
+    withCredentials: false
   }
 };

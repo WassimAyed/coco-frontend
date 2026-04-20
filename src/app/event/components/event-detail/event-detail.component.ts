@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
 import { EventDto } from '../../models/event.model';
@@ -13,12 +13,14 @@ import { EventService } from '../../services/event.service';
 import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
+import { BehaviorService } from '../../services/behavior.service';
 import { UserService } from '../../../user-security/services/user.service';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'app-event-detail',
   templateUrl: './event-detail.component.html',
   styleUrl: './event-detail.component.css'
@@ -82,6 +84,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly commentService: CommentService,
     private readonly ratingService: EventRatingService,
     private readonly participantService: ParticipantService,
+    private readonly behaviorService: BehaviorService,
     private readonly userService: UserService
   ) {}
 
@@ -288,6 +291,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isParticipating = false;
         this.loadParticipants(this.eventId!);
         this.loadParticipantCount(this.eventId!);
+        this.recordBehavior('PARTICIPATE');
     });
   }
 
@@ -597,6 +601,26 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.updateDetailMap(event.latitude, event.longitude);
       this.detailMap?.resize();
     }, 0);
+    this.recordBehavior('VIEW');
+  }
+
+  private recordBehavior(actionType: 'VIEW' | 'PARTICIPATE' | 'BOOKMARK'): void {
+    if (!this.currentUserId || !this.eventId || !this.event) {
+      return;
+    }
+
+    this.behaviorService.record({
+      userId: this.currentUserId,
+      eventId: this.eventId,
+      categoryId: this.event.categoryId,
+      actionType,
+      lat: this.event.latitude,
+      lng: this.event.longitude
+    }).subscribe({
+      error: () => {
+        // Behavior tracking should never block UX.
+      }
+    });
   }
 
   getAvailablePlaces(): number | 'N/A' {
@@ -747,19 +771,31 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeImageUrl = slides[nextIndex];
   }
 
-  getStatusBadgeClass(status?: string): string {
-    switch ((status || '').toUpperCase()) {
-      case 'EN_COURS':
-      case 'ONGOING':
-        return 'status-badge status-ongoing';
-      case 'TERMINE':
-      case 'COMPLETED':
-        return 'status-badge status-completed';
-      case 'ANNULE':
-      case 'CANCELLED':
-        return 'status-badge status-cancelled';
+  isFreeEvent(event?: EventDto | null): boolean {
+    if (!event) {
+      return false;
+    }
+
+    const price = Number(event.price);
+    return Number.isFinite(price) && price === 0;
+  }
+
+  getStatusBadgeClass(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'status-badge status-completed' : '';
+  }
+
+  getStatusLabel(event?: EventDto | null): string {
+    return this.isFreeEvent(event) ? 'Gratuit' : '';
+  }
+
+  private normalizeStatus(status?: string): string {
+    switch (String(status || '').toUpperCase()) {
+      case 'ACCEPTED':
+        return 'APPROVED';
+      case 'REFUSED':
+        return 'REJECTED';
       default:
-        return 'status-badge status-planned';
+        return String(status || '').toUpperCase();
     }
   }
 
@@ -932,9 +968,10 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       style: 'https://demotiles.maplibre.org/style.json',
       center: [lng, lat],
       zoom: 12,
-      attributionControl: false,
-      interactive: false
+      attributionControl: false
     });
+
+    this.detailMap.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     this.detailMap.on('load', () => {
       this.updateDetailMap(this.event?.latitude, this.event?.longitude);
@@ -1012,3 +1049,4 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 }
+

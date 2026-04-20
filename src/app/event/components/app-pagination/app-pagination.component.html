@@ -1,0 +1,18 @@
+<nav *ngIf="totalPages > 1" class="pagination-wrap" aria-label="Pagination">
+  <button type="button" class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 0">
+    Prev
+  </button>
+
+  <button
+    *ngFor="let page of pages"
+    type="button"
+    class="page-btn"
+    [class.active]="page === currentPage"
+    (click)="goToPage(page)">
+    {{ page + 1 }}
+  </button>
+
+  <button type="button" class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
+    Next
+  </button>
+</nav>

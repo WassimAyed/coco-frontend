@@ -1,4 +1,4 @@
-import { LucideIconData, MessageCircleMore, Settings2, UserRound } from 'lucide-angular';
+import { BellRing, BookOpen, LucideIconData, MessageCircleMore, Settings2, UserRound } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../shared/utils/avatar.util';
 import { ChatConversation, ProfileActivity, ProfileSection, ProfileShortcut } from '../models/profile-shell.model';
 import { UserProfile } from '../models/user.model';
@@ -31,6 +31,18 @@ export const PROFILE_SECTIONS: ProfileSidebarSection[] = [
     icon: MessageCircleMore,
     id: 'chat',
     label: 'Chat'
+  },
+  {
+    description: 'Create and manage your own alerts with optional screenshots.',
+    icon: BellRing,
+    id: 'signals',
+    label: 'Signals'
+  },
+  {
+    description: 'View and manage your service posts and incoming requests.',
+    icon: BookOpen,
+    id: 'services',
+    label: 'Services'
   }
 ];
 

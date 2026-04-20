@@ -2,8 +2,10 @@ import { Component, AfterViewInit, OnDestroy, ElementRef, ViewChild, ChangeDetec
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CollocationService } from '../../services/collocation.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 import * as L from 'leaflet';
 import { UserService } from '../../../user-security/services/user.service';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 //  http://localhost:4200/collocation/create-offre
 
@@ -24,6 +26,7 @@ const iconDefault = L.icon({
 L.Marker.prototype.options.icon = iconDefault;
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-create-offre',
   templateUrl: './collocation-createOffre.component.html',
   styleUrls: ['./collocation-createOffre.component.css']
@@ -43,6 +46,9 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
   submitting = false;
   errorMessage = '';
   successMessage = '';
+  
+  predictedPrice: string = '';
+  isPredictingPrice: boolean = false;
 
   // Allowed image types
   allowedImageTypes = ['image/jpeg', 'image/png'];
@@ -68,6 +74,7 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
   constructor(
     private fb: FormBuilder,
     private collocationService: CollocationService,
+    private smartCollocationService: SmartCollocationService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
@@ -88,6 +95,37 @@ export class CollocationCreateOffreComponent implements AfterViewInit, OnDestroy
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.setupPricePrediction();
+  }
+
+  isNumeric(val: any): boolean {
+    return val != null && val !== '' && !isNaN(Number(val));
+  }
+
+  setupPricePrediction() {
+    this.offerForm.valueChanges.pipe(
+      debounceTime(800)
+    ).subscribe(val => {
+      if (val.ville && val.chambres) {
+        this.isPredictingPrice = true;
+        this.smartCollocationService.predictPrice({
+          ville: val.ville,
+          chambres: val.chambres,
+          meublee: val.meublee || false
+        }).subscribe({
+          next: res => {
+            this.predictedPrice = res.recommended_price;
+            this.isPredictingPrice = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.isPredictingPrice = false;
+          }
+        })
+      } else {
+        this.predictedPrice = '';
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -358,3 +396,4 @@ this.collocationService.createOffer(offer, this.selectedFiles, userId).subscribe
     this.cdr.detectChanges();
   }
 }
+
