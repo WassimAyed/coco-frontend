@@ -7,8 +7,8 @@ import { Coupon, UserCoupon } from '../models/coupon.model';
   providedIn: 'root'
 })
 export class CouponService {
-  private apiUrl = 'http://localhost:8094/api/coupons';
-  private userCouponUrl = 'http://localhost:8094/api/user-coupons';
+  private apiUrl = 'http://localhost:8099/api/coupons';
+  private userCouponUrl = 'http://localhost:8099/api/user-coupons';
 
   constructor(private http: HttpClient) {}
 

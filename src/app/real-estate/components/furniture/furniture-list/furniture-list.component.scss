@@ -5,7 +5,7 @@
   max-width: 1400px;
   margin: 0 auto;
   font-family: 'DM Sans', sans-serif;
-  background: #111;
+  background: #F5F5F5;
   min-height: 100vh;
 }
 
@@ -20,14 +20,14 @@
     font-family: 'Playfair Display', serif;
     font-size: 2.25rem;
     font-weight: 900;
-    color: #fff;
+    color: #111111;
     margin: 0;
     letter-spacing: -0.5px;
   }
 
   p {
     font-family: 'DM Sans', sans-serif;
-    color: rgba(255, 255, 255, 0.6);
+    color: #666666;
     margin: 0.5rem 0 0;
     font-size: 0.95rem;
   }
@@ -51,8 +51,8 @@
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.04);
+  color: #444444;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -60,23 +60,23 @@
   white-space: nowrap;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: rgba(0, 0, 0, 0.06);
+    color: #111111;
   }
 
   &--dashboard {
     background: rgba(139, 0, 0, 0.08);
-    color: rgba(255, 182, 182, 0.9);
+    color: #8B0000;
 
     &:hover {
       background: rgba(139, 0, 0, 0.15);
-      color: #ffb3b3;
+      color: #660000;
     }
   }
 
   &--archive {
     background: rgba(139, 0, 0, 0.05);
-    color: rgba(255, 255, 255, 0.7);
+    color: #555555;
 
     &:hover {
       background: rgba(139, 0, 0, 0.1);
@@ -86,17 +86,17 @@
 
   &--reports {
     background: rgba(139, 0, 0, 0.08);
-    color: rgba(255, 182, 182, 0.9);
+    color: #8B0000;
 
     &:hover {
       background: rgba(139, 0, 0, 0.15);
-      color: #ffb3b3;
+      color: #660000;
     }
   }
 
   &--notif {
     background: rgba(139, 0, 0, 0.1);
-    color: rgba(255, 255, 255, 0.9);
+    color: #333333;
 
     &:hover {
       background: rgba(139, 0, 0, 0.18);
@@ -106,7 +106,7 @@
 
   &--cart {
     background: rgba(139, 0, 0, 0.1);
-    color: rgba(255, 255, 255, 0.9);
+    color: #333333;
 
     &:hover {
       background: rgba(139, 0, 0, 0.18);
@@ -115,11 +115,11 @@
   }
 
   &--fav {
-    background: rgba(255, 182, 182, 0.1);
-    color: rgba(255, 182, 182, 0.9);
+    background: rgba(139, 0, 0, 0.06);
+    color: #8B0000;
 
     &:hover {
-      background: rgba(255, 182, 182, 0.15);
+      background: rgba(139, 0, 0, 0.12);
     }
   }
 
@@ -159,7 +159,7 @@
   margin-bottom: 2rem;
   flex-wrap: wrap;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: #FFFFFF;
   border-radius: 8px;
   border: 1px solid rgba(139, 0, 0, 0.1);
 }
@@ -168,21 +168,21 @@
 .filter-select {
   font-family: 'DM Sans', sans-serif;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border: 2px solid #dddddd;
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #333333;
   font-size: 0.9rem;
   outline: none;
   transition: all 0.2s ease;
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: #aaaaaa;
   }
 
   &:focus {
     border-color: #8B0000;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.04);
     box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
   }
 }
@@ -197,13 +197,13 @@
   cursor: pointer;
 
   option {
-    background: #333;
-    color: #fff;
+    background: #FFFFFF;
+    color: #111111;
   }
 }
 
 .results-info {
-  color: rgba(255, 255, 255, 0.6);
+  color: #666666;
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
   font-weight: 500;
@@ -227,7 +227,7 @@
 
 .card {
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
   border: 1px solid rgba(139, 0, 0, 0.2);
   overflow: hidden;
   transition: all 0.2s ease;
@@ -237,7 +237,7 @@
     transform: translateY(-4px);
     border-color: rgba(139, 0, 0, 0.4);
     box-shadow: 0 8px 24px rgba(139, 0, 0, 0.2);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.04);
   }
 }
 
@@ -291,7 +291,7 @@
 
   &.active {
     background: #8B0000;
-    color: #fff;
+    color: #111111;
   }
 }
 
@@ -308,7 +308,7 @@
   font-family: 'Playfair Display', serif;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: #111111;
   margin: 0 0 0.35rem;
   letter-spacing: -0.3px;
 }
@@ -499,7 +499,7 @@
     padding: 0.5rem 0.75rem;
     border: 1px solid rgba(139, 0, 0, 0.3);
     background: rgba(139, 0, 0, 0.05);
-    color: rgba(255, 255, 255, 0.8);
+    color: #444444;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -519,7 +519,7 @@
     &.active {
       background: #8B0000;
       border-color: #8B0000;
-      color: #fff;
+      color: #111111;
     }
   }
 }
@@ -529,7 +529,7 @@
   text-align: center;
   padding: 2rem;
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #555555;
   background: rgba(139, 0, 0, 0.05);
   border-radius: 8px;
   border: 1px solid rgba(139, 0, 0, 0.1);
@@ -718,7 +718,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #b71c1c, #d32f2f);
-  color: #fff;
+  color: #111111;
   padding: 0.75rem 1.5rem;
   border-radius: 30px;
   font-size: 0.9rem;
@@ -736,7 +736,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #8B0000, #b71c1c);
-  color: #fff;
+  color: #111111;
   padding: 0.75rem 1.5rem;
   border-radius: 30px;
   font-size: 0.9rem;

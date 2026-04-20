@@ -5,7 +5,7 @@ import { Furniture } from '../models/furniture';
 
 @Injectable({ providedIn: 'root' })
 export class FurnitureService {
-  private baseUrl = 'http://localhost:8094/api/furniture';
+  private baseUrl = 'http://localhost:8099/api/furniture';
 
   constructor(private http: HttpClient) {}
 

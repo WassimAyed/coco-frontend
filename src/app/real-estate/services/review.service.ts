@@ -5,7 +5,7 @@ import { Review } from '../models/review.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
-  private baseUrl = 'http://localhost:8094/api/reviews';
+  private baseUrl = 'http://localhost:8099/api/reviews';
   constructor(private http: HttpClient) {}
 
   create(review: Review): Observable<Review> {

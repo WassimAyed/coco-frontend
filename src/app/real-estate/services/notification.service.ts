@@ -5,7 +5,7 @@ import { Notification } from '../models/notification.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private baseUrl = 'http://localhost:8094/api/notifications';
+  private baseUrl = 'http://localhost:8099/api/notifications';
   constructor(private http: HttpClient) {}
 
   getByUser(userId: number): Observable<Notification[]> {
