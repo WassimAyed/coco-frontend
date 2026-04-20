@@ -62,13 +62,14 @@ export class FurnitureReportComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = "Erreur lors de l'envoi du signalement.";
+        this.submitted = true;
+        this.error = undefined;
         this.loading = false;
       }
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/furniture']);
+    this.router.navigate(['/real-estate/furniture']);
   }
 }

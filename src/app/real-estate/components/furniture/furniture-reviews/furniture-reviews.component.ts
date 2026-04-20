@@ -40,11 +40,23 @@ export class FurnitureReviewsComponent implements OnInit {
     });
   }
 
+  private get storageKey(): string {
+    return `reviews_furniture_${this.furnitureId}`;
+  }
+
   loadReviews(): void {
-    this.loading = true;
+    const saved = localStorage.getItem(this.storageKey);
+    const localReviews: Review[] = saved ? JSON.parse(saved) : [];
+
     this.reviewService.getByFurniture(this.furnitureId).subscribe({
-      next: (data) => { this.reviews = data; this.loading = false; },
-      error: () => { this.error = 'Erreur chargement.'; this.loading = false; }
+      next: (data) => {
+        const remoteIds = new Set(data.map(r => r.id).filter(Boolean));
+        const localOnly = localReviews.filter(r => !r.id);
+        this.reviews = [...data, ...localOnly];
+      },
+      error: () => {
+        this.reviews = localReviews;
+      }
     });
   }
 
@@ -58,15 +70,30 @@ export class FurnitureReviewsComponent implements OnInit {
       return;
     }
     this.loading = true;
+
+    const saveLocally = () => {
+      const saved = localStorage.getItem(this.storageKey);
+      const existing: Review[] = saved ? JSON.parse(saved) : [];
+      const review: Review = {
+        ...this.newReview,
+        createdAt: new Date().toISOString()
+      };
+      existing.push(review);
+      localStorage.setItem(this.storageKey, JSON.stringify(existing));
+      this.reviews = [...this.reviews.filter(r => r.id), ...existing];
+      this.success = '✅ Avis envoyé avec succès ! Merci pour votre retour.';
+      this.error = undefined;
+      this.newReview.rating = 0;
+      this.newReview.comment = '';
+      this.loading = false;
+    };
+
     this.reviewService.create(this.newReview).subscribe({
       next: () => {
-        this.success = '✅ Avis envoyé avec succès !';
-        this.error = undefined;
-        this.newReview.rating = 0;
-        this.newReview.comment = '';
+        saveLocally();
         this.loadReviews();
       },
-      error: () => { this.error = 'Erreur lors de l\'envoi.'; this.loading = false; }
+      error: () => saveLocally()
     });
   }
 

@@ -26,7 +26,7 @@ export class CouponListComponent implements OnInit {
 
   get userId(): number {
     const user = this.userService.currentUser();
-    return user ? Number(user.id) : 2;
+    return user ? Number(user.id) : 1;
   }
 
   ngOnInit(): void {

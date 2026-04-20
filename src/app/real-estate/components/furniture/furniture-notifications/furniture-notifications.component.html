@@ -11,7 +11,7 @@
       <button (click)="markAllAsRead()" class="btn-read-all" [disabled]="unreadCount === 0">
         <lucide-angular [img]="Check" [size]="14"></lucide-angular> Tout marquer lu
       </button>
-      <a routerLink="/furniture" class="btn-back">← Retour</a>
+      <a routerLink="/real-estate/furniture" class="btn-back">← Retour</a>
     </div>
   </div>
 
@@ -38,7 +38,7 @@
         <button *ngIf="!n.isRead" (click)="markAsRead(n.id)" class="btn-mark">
           <lucide-angular [img]="Eye" [size]="14"></lucide-angular> Lu
         </button>
-        <a *ngIf="n.furnitureId" [routerLink]="['/furniture', n.furnitureId]" class="btn-view">Voir</a>
+        <a *ngIf="n.furnitureId" [routerLink]="['/real-estate/furniture', n.furnitureId]" class="btn-view">Voir</a>
         <button (click)="delete(n.id)" class="btn-delete">
           <lucide-angular [img]="Trash2" [size]="14"></lucide-angular>
         </button>

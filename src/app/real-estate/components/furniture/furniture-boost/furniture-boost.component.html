@@ -143,40 +143,18 @@
       </div>
     </div>
 
-    <!-- PAYMENT METHODS -->
-    <div class="boost-payment-section">
-      <h2 class="boost-payment-title">Choisissez votre mode de paiement</h2>
-      <div class="boost-payment-grid">
-        <div
-          *ngFor="let pm of paymentMethods"
-          class="boost-pay-card"
-          [class.selected]="selectedPayment() === pm.key"
-          (click)="selectPayment(pm.key)"
-          role="button"
-          [attr.aria-pressed]="selectedPayment() === pm.key">
-          <div class="boost-pay-icon">
-            <lucide-angular [img]="pm.icon" [size]="26" [color]="selectedPayment() === pm.key ? '#fff' : '#8B0000'"></lucide-angular>
-          </div>
-          <div class="boost-pay-name">{{ pm.name }}</div>
-          <div class="boost-pay-desc">{{ pm.desc }}</div>
-          <lucide-angular *ngIf="selectedPayment() === pm.key" [img]="Check" [size]="16" color="#fff" class="pay-check"></lucide-angular>
-        </div>
-      </div>
-    </div>
-
-    <!-- RECAP + PAY BUTTON -->
+    <!-- ACTIVER LE BOOST -->
     <div *ngIf="selectedDuration" class="boost-recap">
       <div class="boost-recap-info">
         <span>{{ furniture?.title }}</span>
         <span>{{ selectedDuration }} jour(s)</span>
-        <span class="boost-recap-price">{{ selectedPrice }} DT</span>
       </div>
-      <button (click)="boost()" class="boost-pay-btn" [disabled]="loading || alreadyBoosted || !selectedPayment()">
+      <button (click)="boost()" class="boost-pay-btn" [disabled]="loading || alreadyBoosted">
         <ng-container *ngIf="!loading && !alreadyBoosted">
           <lucide-angular [img]="Zap" [size]="16" color="#fff"></lucide-angular>
-          Payer maintenant
+          ⚡ Activer le boost
         </ng-container>
-        <span *ngIf="loading">Traitement...</span>
+        <span *ngIf="loading">Activation...</span>
         <ng-container *ngIf="alreadyBoosted && !loading">
           <lucide-angular [img]="Check" [size]="16" color="#fff"></lucide-angular>
           Déjà boosté

@@ -730,6 +730,24 @@
   white-space: nowrap;
 }
 
+.cart-toast-fav {
+  position: fixed;
+  bottom: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #8B0000, #b71c1c);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  z-index: 9999;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+  animation: toastSlideIn 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 @keyframes toastSlideIn {
   from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }

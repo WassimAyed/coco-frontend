@@ -1,13 +1,13 @@
 <div class="page">
   <div class="header">
     <h1>🛒 Mon Panier</h1>
-    <a routerLink="/furniture" class="btn-back">← Continuer les achats</a>
+    <a routerLink="/real-estate/furniture" class="btn-back">← Continuer les achats</a>
   </div>
 
   <div *ngIf="items.length === 0" class="empty">
     <div class="empty-icon">🛒</div>
     <p>Votre panier est vide</p>
-    <a routerLink="/furniture" class="btn-shop">Voir les meubles</a>
+    <a routerLink="/real-estate/furniture" class="btn-shop">Voir les meubles</a>
   </div>
 
   <div *ngIf="items.length > 0">

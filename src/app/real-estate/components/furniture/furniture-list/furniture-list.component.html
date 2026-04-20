@@ -6,13 +6,11 @@
       <p>Browse and manage available furniture</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/furniture/dashboard" class="hdr-btn hdr-btn--dashboard">Dashboard</a>
-      <a routerLink="/furniture/archive" class="hdr-btn hdr-btn--archive">Archives</a>
-      <a routerLink="/furniture/reports" class="hdr-btn hdr-btn--reports">Reports</a>
-      <a routerLink="/furniture/notifications" class="hdr-btn hdr-btn--notif">Notifications <span *ngIf="unreadCount > 0" class="hdr-badge">{{ unreadCount }}</span></a>
-      <a routerLink="/furniture/cart" class="hdr-btn hdr-btn--cart">Cart <span *ngIf="cartCount > 0" class="hdr-badge">{{ cartCount }}</span></a>
-      <a routerLink="/furniture/favorites" class="hdr-btn hdr-btn--fav">Favorites</a>
-      <a routerLink="/furniture/new" class="hdr-btn hdr-btn--primary">+ Add New</a>
+      <a routerLink="/real-estate/furniture/reports" class="hdr-btn hdr-btn--reports">Reports</a>
+      <a routerLink="/real-estate/furniture/notifications" class="hdr-btn hdr-btn--notif">Notifications <span *ngIf="unreadCount > 0" class="hdr-badge">{{ unreadCount }}</span></a>
+      <a routerLink="/real-estate/furniture/cart" class="hdr-btn hdr-btn--cart">Cart <span *ngIf="cartCount > 0" class="hdr-badge">{{ cartCount }}</span></a>
+      <a routerLink="/real-estate/furniture/favorites" class="hdr-btn hdr-btn--fav">Favorites</a>
+      <a routerLink="/real-estate/furniture/new" class="hdr-btn hdr-btn--primary">+ Add New</a>
     </div>
   </div>
 
@@ -73,18 +71,18 @@
         <p class="card-price">{{ f.price | number:'1.2-2' }} DT</p>
 
         <div class="card-actions">
-          <a [routerLink]="['/furniture', f.id]" class="btn-view">👁 View</a>
-          <a [routerLink]="['/furniture/edit', f.id]" class="btn-edit">✏️ Edit</a>
-          <a [routerLink]="['/furniture', f.id, 'offers']" class="btn-offers">💰 Offres</a>
-          <a [routerLink]="['/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
-          <a [routerLink]="['/furniture', f.id, 'reviews']" class="btn-reviews">⭐ Avis</a>
+          <a [routerLink]="['/real-estate/furniture', f.id]" class="btn-view">👁 View</a>
+          <a *ngIf="isOwner(f)" [routerLink]="['/real-estate/furniture/edit', f.id]" class="btn-edit">✏️ Edit</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'offers']" class="btn-offers">💰 Offres</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'reviews']" class="btn-reviews">⭐ Avis</a>
           <button (click)="exportToPdf(f)" class="btn-pdf">📄 PDF</button>
           <button (click)="addToCart(f)" class="btn-add-cart">🛒 Ajouter</button>
-          <button (click)="archiveFurniture(f.id, f.title)" class="btn-archive">📦 Archiver</button>
-          <button (click)="deleteFurniture(f.id)" class="btn-delete">🗑 Delete</button>
+          <button *ngIf="isOwner(f)" (click)="archiveFurniture(f.id, f.title)" class="btn-archive">📦 Archiver</button>
+          <button *ngIf="isOwner(f)" (click)="deleteFurniture(f.id)" class="btn-delete">🗑 Delete</button>
         </div>
 
-        <a [routerLink]="['/furniture', f.id, 'boost']" class="btn-boost-cta">
+        <a [routerLink]="['/real-estate/furniture', f.id, 'boost']" class="btn-boost-cta">
           ⚡ Booster mon annonce
           <span class="boost-cta-sub">Analyse IA + mise en avant ⭐ FEATURED</span>
         </a>
@@ -105,4 +103,6 @@
   </div>
   <!-- CART DEDUP TOAST -->
   <div *ngIf="cartErrorVisible" class="cart-toast-error">{{ cartErrorMsg }}</div>
+  <!-- FAVORIS TOAST -->
+  <div *ngIf="favToastVisible" class="cart-toast-fav">{{ favToastMsg }}</div>
 </div>

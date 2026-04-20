@@ -4,7 +4,7 @@
       <h1>💰 Offres & Recommandations</h1>
       <p *ngIf="currentFurniture">Article : <strong>{{ currentFurniture.title }}</strong> — {{ currentFurniture.price | number:'1.2-2' }} DT</p>
     </div>
-    <a [routerLink]="['/furniture']" class="btn-back">← Retour</a>
+    <a [routerLink]="['/real-estate/furniture']" class="btn-back">← Retour</a>
   </div>
 
   <div *ngIf="success" class="alert-success">{{ success }}</div>
@@ -40,7 +40,7 @@
             <span class="rec-price">{{ r.price | number:'1.2-2' }} DT</span>
           </div>
           <div class="rec-actions">
-            <a [routerLink]="['/furniture', r.id]" class="btn-view">👁 Voir</a>
+            <a [routerLink]="['/real-estate/furniture', r.id]" class="btn-view">👁 Voir</a>
             <button (click)="makeOffer(r)" class="btn-offer">💰 Faire une offre</button>
           </div>
         </div>
@@ -58,10 +58,6 @@
     <div class="form-row">
       <label>Prix proposé (DT)</label>
       <input type="number" [(ngModel)]="newOffer.proposedPrice" min="1" placeholder="Ex: 120" />
-    </div>
-    <div class="form-row">
-      <label>Message</label>
-      <textarea [(ngModel)]="newOffer.message" placeholder="Bonjour, je suis intéressé..."></textarea>
     </div>
     <button (click)="sendCustomOffer()" class="btn-submit">💰 Envoyer l'offre</button>
   </div>

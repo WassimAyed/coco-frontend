@@ -4,12 +4,12 @@
       <h1>❤️ Mes Favoris</h1>
       <p>{{ favorites.length }} article(s) sauvegardé(s)</p>
     </div>
-    <a routerLink="/furniture" class="btn-back">← Retour au Marketplace</a>
+    <a routerLink="/real-estate/furniture" class="btn-back">← Retour au Marketplace</a>
   </div>
 
   <div *ngIf="favorites.length === 0" class="empty">
     <p>😕 Aucun favori pour le moment.</p>
-    <a routerLink="/furniture" class="btn-back">Parcourir les articles</a>
+    <a routerLink="/real-estate/furniture" class="btn-back">Parcourir les articles</a>
   </div>
 
   <div *ngIf="favorites.length > 0" class="cards-grid">
@@ -28,7 +28,7 @@
         </div>
         <p class="card-price">{{ f.price | number:'1.2-2' }} DT</p>
         <div class="card-actions">
-          <a [routerLink]="['/furniture', f.id]" class="btn-view">👁 View</a>
+          <a [routerLink]="['/real-estate/furniture', f.id]" class="btn-view">👁 View</a>
           <button (click)="removeFavorite(f.id)" class="btn-delete">🗑 Retirer</button>
         </div>
       </div>

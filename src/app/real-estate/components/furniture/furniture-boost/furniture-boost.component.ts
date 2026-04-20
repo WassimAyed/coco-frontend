@@ -1,7 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, CreditCard, Truck, Wallet, Zap, Check } from 'lucide-angular';
+import { LucideAngularModule, Zap, Check } from 'lucide-angular';
 import { FurnitureService } from '../../../services/furniture.service';
 import { BoostService } from '../../../services/boost.service';
 import { BoostAnalysis } from '../../../models/boost.model';
@@ -23,18 +23,9 @@ export class FurnitureBoostComponent implements OnInit {
   boosted = false;
   success = false;
   alreadyBoosted = false;
-  selectedPayment = signal<string | null>(null);
 
-  readonly CreditCard = CreditCard;
-  readonly Truck = Truck;
-  readonly Wallet = Wallet;
   readonly Zap = Zap;
   readonly Check = Check;
-
-  paymentMethods = [
-    { key: 'flouci', name: 'Flouci', desc: 'Paiement mobile instantané', icon: Wallet },
-    { key: 'd17',    name: 'D17',    desc: 'Paiement via carte D17',     icon: CreditCard },
-  ];
 
   plans = [
     { days: 1, price: 9.9, label: '1 Jour', icon: '⚡', desc: 'Boost express' },
@@ -100,12 +91,8 @@ export class FurnitureBoostComponent implements OnInit {
     this.selectedDuration = days;
   }
 
-  selectPayment(method: string): void {
-    this.selectedPayment.set(method);
-  }
-
   boost(): void {
-    if (!this.selectedDuration || !this.furniture || !this.selectedPayment()) return;
+    if (!this.selectedDuration || !this.furniture) return;
     this.loading = true;
     this.boostService.create({
       furnitureId: this.furniture.id,
@@ -121,6 +108,6 @@ export class FurnitureBoostComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/furniture', this.furniture.id]);
+    this.router.navigate(['/real-estate/furniture', this.furniture?.id]);
   }
 }

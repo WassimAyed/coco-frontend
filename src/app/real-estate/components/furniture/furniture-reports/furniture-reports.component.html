@@ -5,7 +5,7 @@
       <h1>🚨 Signalements</h1>
       <p>{{ filtered().length }} signalement(s) {{ filter() !== 'ALL' ? '— ' + filter() : '' }}</p>
     </div>
-    <a routerLink="/furniture" class="btn-back">← Retour</a>
+    <a routerLink="/real-estate/furniture" class="btn-back">← Retour</a>
   </div>
 
   <div class="filter-bar">
@@ -35,7 +35,7 @@
         <span>🛋️ Article #{{ r.furnitureId }}</span>
         <span>👤 Utilisateur #{{ r.userId }}</span>
         <span>📅 {{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-        <a [routerLink]="['/furniture', r.furnitureId]" class="link-view">Voir l'article →</a>
+        <a [routerLink]="['/real-estate/furniture', r.furnitureId]" class="link-view">Voir l'article →</a>
       </div>
     </div>
   </div>

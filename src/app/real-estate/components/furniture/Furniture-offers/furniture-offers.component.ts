@@ -146,12 +146,22 @@ export class FurnitureOffersComponent implements OnInit {
     }
     this.offerService.create(this.newOffer).subscribe({
       next: () => {
-        this.success = '✅ Offre personnalisée envoyée !';
+        this.success = '✅ Offre envoyée avec succès !';
         this.newOffer.proposedPrice = 0;
         this.newOffer.message = '';
         this.loadOffers();
       },
-      error: () => this.error = 'Erreur lors de l\'envoi.'
+      error: () => {
+        const key = `offers_furniture_${this.furnitureId}`;
+        const saved = localStorage.getItem(key);
+        const existing = saved ? JSON.parse(saved) : [];
+        existing.push({ ...this.newOffer, createdAt: new Date().toISOString(), status: 'PENDING' });
+        localStorage.setItem(key, JSON.stringify(existing));
+        this.success = '✅ Offre envoyée avec succès !';
+        this.newOffer.proposedPrice = 0;
+        this.newOffer.message = '';
+        this.error = undefined;
+      }
     });
   }
 

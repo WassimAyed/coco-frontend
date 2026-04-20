@@ -1,10 +1,9 @@
 ﻿<div class="recs-section" *ngIf="recommendations.length > 0">
   <div class="recs-header">
-    <span class="recs-ai-icon">&#129302;</span>
-    <h3 class="recs-title">Les Tunisiens qui ont vu cet article ont aussi aime...</h3>
+    <h3 class="recs-title">Les Tunisiens qui ont vu cet article ont aussi aimé...</h3>
   </div>
   <div class="recs-grid">
-    <a *ngFor="let r of recommendations" [routerLink]="['/furniture', r.id]" class="rec-card">
+    <a *ngFor="let r of recommendations" [routerLink]="['/real-estate/furniture', r.id]" class="rec-card">
       <div class="rec-img-wrap">
         <img [src]="optimizedImg(r.imageUrl)" [alt]="r.title" class="rec-img" loading="lazy"
              onerror="this.style.background='#F5F5F5';this.src=''" />

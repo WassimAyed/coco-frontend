@@ -9,7 +9,7 @@ import { CartService } from '../../../services/cart.service';
 import { BoostService } from '../../../services/boost.service';
 import { CloudinaryService } from '../../../../shared/services/cloudinary.service';
 import { Furniture } from '../../../models/furniture';
-
+import { UserService } from '../../../../user-security/services/user.service';
 @Component({
   selector: 'app-furniture-list',
   standalone: true,
@@ -37,9 +37,9 @@ export class FurnitureListComponent implements OnInit {
   selectedStatus = '';
   selectedCondition = '';
 
-  categories = ['Salon', 'Chambre', 'Cuisine', 'Bureau', 'Meuble'];
+  categories = ['LIVING_ROOM', 'BEDROOM', 'OFFICE', 'KITCHEN', 'OTHER'];
   statuses = ['AVAILABLE', 'SOLD', 'RESERVED'];
-  conditions = ['GOOD', 'FAIR', 'POOR'];
+  conditions = ['NEW', 'USED', 'GOOD', 'FAIR', 'POOR'];
 
   pageSize = 6;
   currentPage = 1;
@@ -50,7 +50,17 @@ export class FurnitureListComponent implements OnInit {
     private cartService: CartService,
     private boostService: BoostService,
     private cloudinary: CloudinaryService,
+    private userService: UserService,
   ) {}
+
+  get currentUserId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 0;
+  }
+
+  isOwner(f: Furniture): boolean {
+    return this.currentUserId > 0 && f.sellerId === this.currentUserId;
+  }
 
   ngOnInit(): void {
     this.loadFavorites();
@@ -108,14 +118,23 @@ export class FurnitureListComponent implements OnInit {
     this.favorites = saved ? JSON.parse(saved) : [];
   }
 
+  favToastMsg = '';
+  favToastVisible = false;
+  private favToastTimer?: ReturnType<typeof setTimeout>;
+
   toggleFavorite(f: Furniture): void {
     f.isFavorite = !f.isFavorite;
     if (f.isFavorite) {
       this.favorites.push(f);
+      this.favToastMsg = '❤️ Élément ajouté à la liste des favoris !';
     } else {
       this.favorites = this.favorites.filter(fav => fav.id !== f.id);
+      this.favToastMsg = 'Élément retiré des favoris';
     }
     localStorage.setItem('furniture_favorites', JSON.stringify(this.favorites));
+    this.favToastVisible = true;
+    clearTimeout(this.favToastTimer);
+    this.favToastTimer = setTimeout(() => { this.favToastVisible = false; }, 3000);
   }
 
   isFavorite(f: Furniture): boolean {

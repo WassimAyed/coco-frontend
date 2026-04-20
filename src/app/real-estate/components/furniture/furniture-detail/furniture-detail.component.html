@@ -59,12 +59,6 @@
       </div>
     </div>
 
-    <!-- PROMO CODE -->
-    <app-promo-code-bar
-      [originalPrice]="item.price"
-      (discountApplied)="onDiscountApplied($event)">
-    </app-promo-code-bar>
-
     <!-- CART FEEDBACK -->
     <div *ngIf="cartError()" class="cart-feedback" [class.cart-feedback--ok]="cartError()!.startsWith('&#10003;')">
       {{ cartError() }}
@@ -78,7 +72,7 @@
       <button class="det-btn det-btn-offer" (click)="openOfferForm()">
         &#128176; Faire une offre
       </button>
-      <a routerLink="/furniture" class="det-btn det-btn-back">&#8592; Retour</a>
+      <a routerLink="/real-estate/furniture" class="det-btn det-btn-back">&#8592; Retour</a>
     </div>
 
     <!-- PAYMENT BADGES -->
@@ -97,17 +91,22 @@
       </div>
     </div>
 
-    <!-- SYRINE DELIVERY -->
-    <app-syrine-delivery [isLargeItem]="item.category === 'Salon' || item.category === 'Chambre'"></app-syrine-delivery>
-
-    <!-- VIEWS + AI RECS HEADER -->
-    <div class="det-recs-header">
-      <span class="det-recs-views">&#128065; 1 245 Tunisiens ont consult&eacute; cet article</span>
-      <h3 class="det-recs-title">Les Tunisiens qui ont vu cet article ont aussi aimé...</h3>
+    <!-- SIMILAR ITEMS -->
+    <div *ngIf="similarItems.length > 0" class="det-similar-section">
+      <h3 class="det-similar-title">Les Tunisiens qui ont vu cet article ont aussi aimé...</h3>
+      <div class="det-similar-grid">
+        <a *ngFor="let s of similarItems" [routerLink]="['/real-estate/furniture', s.id]" class="det-sim-card">
+          <div class="det-sim-img-wrap">
+            <img [src]="getSimilarImage(s)" [alt]="s.title" class="det-sim-img"
+                 onerror="this.src='https://placehold.co/280x180/f5f5f5/999?text=No+Image'" />
+          </div>
+          <div class="det-sim-info">
+            <p class="det-sim-title">{{ s.title }}</p>
+            <p class="det-sim-price">{{ s.price | number:'1.0-0' }} DT</p>
+          </div>
+        </a>
+      </div>
     </div>
-
-    <!-- AI PRODUCT RECOMMENDATIONS -->
-    <app-product-recommendations [currentId]="item.id || 0"></app-product-recommendations>
 
   </div>
 </div>
@@ -132,15 +131,6 @@
       placeholder="Ex: 150"
       min="1"
     />
-
-    <label class="offer-label">Message au vendeur</label>
-    <textarea
-      class="offer-textarea"
-      [ngModel]="offerMessage()"
-      (ngModelChange)="offerMessage.set($event)"
-      placeholder="Bonjour, je suis interesse(e) par cet article..."
-      rows="3"
-    ></textarea>
 
     <div *ngIf="offerError()" class="offer-error">{{ offerError() }}</div>
 

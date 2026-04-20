@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { Furniture } from '../models/furniture';
 
 @Injectable({ providedIn: 'root' })
@@ -27,5 +27,9 @@ export class FurnitureService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  getSimilar(id: number): Observable<Furniture[]> {
+    return this.http.get<Furniture[]>(`${this.baseUrl}/${id}/similar`);
   }
 }

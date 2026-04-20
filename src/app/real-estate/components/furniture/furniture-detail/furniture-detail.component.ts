@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,14 +7,12 @@ import { FurnitureService } from '../../../services/furniture.service';
 import { CartService } from '../../../services/cart.service';
 import { CloudinaryService } from '../../../../shared/services/cloudinary.service';
 import { Furniture } from '../../../models/furniture';
-import { PromoCodeBarComponent } from '../../../../shared/components/promo-code-bar/promo-code-bar.component';
-import { SyrineDeliveryComponent } from '../../../../shared/components/syrine-delivery/syrine-delivery.component';
 import { ProductRecommendationsComponent } from '../../../../shared/components/product-recommendations/product-recommendations.component';
 
 @Component({
   selector: 'app-furniture-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PromoCodeBarComponent, SyrineDeliveryComponent, ProductRecommendationsComponent, LucideAngularModule],
+  imports: [CommonModule, RouterModule, FormsModule, ProductRecommendationsComponent, LucideAngularModule],
   templateUrl: './furniture-detail.component.html',
   styleUrls: ['./furniture-detail.component.scss'],
 })
@@ -23,11 +21,9 @@ export class FurnitureDetailComponent implements OnInit {
   displayPrice = 0;
   loading = false;
   error?: string;
+  similarItems: Furniture[] = [];
 
-  // Cart
   readonly cartError = signal<string | null>(null);
-
-  // Offer form
   readonly showOfferForm = signal(false);
   readonly offerPrice = signal('');
   readonly offerMessage = signal('');
@@ -55,11 +51,11 @@ export class FurnitureDetailComponent implements OnInit {
           this.load(id);
         } else {
           this.error = 'ID de meuble invalide';
-          setTimeout(() => this.router.navigate(['/furniture']), 2000);
+          setTimeout(() => this.router.navigate(['/real-estate/furniture']), 2000);
         }
       } else {
         this.error = 'Aucun ID fourni';
-        setTimeout(() => this.router.navigate(['/furniture']), 2000);
+        setTimeout(() => this.router.navigate(['/real-estate/furniture']), 2000);
       }
     });
   }
@@ -72,17 +68,31 @@ export class FurnitureDetailComponent implements OnInit {
         this.item = f;
         this.displayPrice = f.price;
         this.loading = false;
+        this.loadSimilar(id);
       },
       error: () => {
         this.error = 'Erreur de chargement du meuble.';
         this.loading = false;
-        setTimeout(() => this.router.navigate(['/furniture']), 2000);
+        setTimeout(() => this.router.navigate(['/real-estate/furniture']), 2000);
       }
     });
   }
 
-  onDiscountApplied(newPrice: number): void {
-    this.displayPrice = newPrice;
+  loadSimilar(id: number): void {
+    this.service.getSimilar(id).subscribe({
+      next: (items) => {
+        this.similarItems = items.filter(f => f.id !== id).slice(0, 4);
+      },
+      error: () => {
+        this.service.getAll().subscribe({
+          next: (all) => {
+            this.similarItems = all
+              .filter(f => f.id !== id && f.category === this.item?.category && f.status === 'AVAILABLE')
+              .slice(0, 4);
+          }
+        });
+      }
+    });
   }
 
   getItemImage(): string {
@@ -91,6 +101,15 @@ export class FurnitureDetailComponent implements OnInit {
     if (!url) return '';
     if (url.startsWith('https://res.cloudinary.com')) {
       return this.cloudinary.getOptimizedUrl(url, 600, 380);
+    }
+    return url;
+  }
+
+  getSimilarImage(f: Furniture): string {
+    const url = f.imageUrl || f.imageBase64;
+    if (!url) return 'https://placehold.co/280x180/f5f5f5/999?text=No+Image';
+    if (url.startsWith('https://res.cloudinary.com')) {
+      return this.cloudinary.getOptimizedUrl(url, 280, 180);
     }
     return url;
   }
@@ -129,12 +148,7 @@ export class FurnitureDetailComponent implements OnInit {
       this.offerError.set('Veuillez saisir un prix valide.');
       return;
     }
-    if (!this.offerMessage().trim()) {
-      this.offerError.set('Veuillez ajouter un message.');
-      return;
-    }
     this.offerError.set('');
-    // Simulate submission
     setTimeout(() => {
       this.offerSubmitted.set(true);
     }, 800);
