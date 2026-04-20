@@ -230,11 +230,27 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
     this.covoiturage.placesDisponibles = this.covoiturage.nombrePlaces;
 
     this.covoiturageService.addCovoiturage(this.covoiturage).subscribe({
-      next: () => this.router.navigate(['/covoiturage/list']),
+      next: () => {
+        this.sendPriceFeedback();
+        this.router.navigate(['/covoiturage/list']);
+      },
       error: (err) => {
         this.error = 'Erreur lors de la creation du trajet.';
         console.error(err);
       }
+    });
+  }
+
+  private sendPriceFeedback(): void {
+    if (this.covoiturage.prixParPassager <= 0 || this.covoiturage.distance <= 0) return;
+    this.covoiturageService.sendPriceFeedback({
+      distance_km: this.covoiturage.distance,
+      duree_min: this.covoiturage.dureeEstimee,
+      nombre_places: this.covoiturage.nombrePlaces,
+      prix_par_passager_user: this.covoiturage.prixParPassager
+    }).subscribe({
+      next: (res) => console.log('Feedback ML:', res),
+      error: (err) => console.warn('Feedback ML non envoye (non bloquant):', err)
     });
   }
 
@@ -251,6 +267,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
     }).subscribe({
       next: (result) => {
         this.mlPrediction = result;
+        this.covoiturage.prixSuggereParAI = result?.contribution_par_passager_ml;
         this.mlLoading = false;
       },
       error: (err) => {

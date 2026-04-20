@@ -124,6 +124,10 @@ export class CovoiturageListComponent implements OnInit {
     return c.idDriver !== this.currentUserId && c.placesDisponibles > 0;
   }
 
+  getCO2Saved(c: Covoiturage): number {
+    return this.covoiturageService.estimateCO2SavedKg(c);
+  }
+
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const d = new Date(dateStr);

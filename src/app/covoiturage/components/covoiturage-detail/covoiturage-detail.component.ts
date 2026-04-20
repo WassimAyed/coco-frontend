@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, NgZone } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
-import { Covoiturage, Reservation, Vehicule, StatusReservation, Notation } from '../../models/covoiturage.model';
+import { Covoiturage, Reservation, Vehicule, StatusReservation, Notation, CO2Impact } from '../../models/covoiturage.model';
 import { UserService } from '../../../user-security/services/user.service';
 
 declare var google: any;
@@ -16,6 +16,7 @@ export class CovoiturageDetailComponent implements OnInit {
 
   covoiturage: Covoiturage | null = null;
   vehicule: Vehicule | null = null;
+  co2Impact: CO2Impact | null = null;
   similarCovoiturages: Covoiturage[] = [];
   similarDriverNames: Map<number, string> = new Map();
   reservations: Reservation[] = [];
@@ -142,12 +143,20 @@ export class CovoiturageDetailComponent implements OnInit {
         this.loadNotations(data.idDriver);
         this.showRouteOnMap();
         this.loadSimilarCovoiturages(data);
+        this.loadCO2Impact(id);
       },
       error: (err) => {
         this.error = 'Impossible de charger ce trajet.';
         this.loading = false;
         console.error(err);
       }
+    });
+  }
+
+  loadCO2Impact(covoiturageId: number): void {
+    this.covoiturageService.getCO2Impact(covoiturageId).subscribe({
+      next: (impact) => this.co2Impact = impact,
+      error: (err) => console.error('Erreur chargement impact CO2', err)
     });
   }
 

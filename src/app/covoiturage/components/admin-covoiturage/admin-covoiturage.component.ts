@@ -59,12 +59,12 @@ declare var google: any;
           </div>
         </article>
         <article class="stat-card">
-          <div class="stat-icon stat-icon--purple">
-            <lucide-icon [img]="RouteIcon" [size]="22"></lucide-icon>
+          <div class="stat-icon stat-icon--green">
+            <i class="fas fa-leaf" style="font-size:22px;"></i>
           </div>
           <div>
-            <span class="stat-label">Distance totale</span>
-            <strong class="stat-value">{{ totalDistance | number:'1.0-0' }} km</strong>
+            <span class="stat-label">CO2 économisé</span>
+            <strong class="stat-value">{{ totalCO2Saved | number:'1.0-1' }} kg</strong>
           </div>
         </article>
       </div>
@@ -109,14 +109,24 @@ declare var google: any;
             <canvas #priceDistChart></canvas>
           </div>
         </article>
+
+        <article class="chart-card chart-card--wide">
+          <header class="chart-head">
+            <h4><i class="fas fa-leaf" style="color:#16a34a;margin-right:.375rem;"></i>CO2 économisé par jour</h4>
+            <span class="chart-sub">7 derniers jours · total : {{ co2Saved7Days | number:'1.0-1' }} kg</span>
+          </header>
+          <div class="chart-canvas-wrap">
+            <canvas #co2Chart></canvas>
+          </div>
+        </article>
       </div>
 
       <div class="toolbar">
         <div class="search-box">
           <lucide-icon [img]="SearchIcon" [size]="16"></lucide-icon>
-          <input type="text" placeholder="Rechercher par ville ou conducteur…" [(ngModel)]="search" />
+          <input type="text" placeholder="Rechercher par ville ou conducteur…" [(ngModel)]="search" (ngModelChange)="onSearchChange()" />
         </div>
-        <select [(ngModel)]="sortKey" class="select">
+        <select [(ngModel)]="sortKey" (ngModelChange)="onSortChange()" class="select">
           <option value="dateDepart">Trier : Date</option>
           <option value="prixParPassager">Trier : Prix</option>
           <option value="distance">Trier : Distance</option>
@@ -139,12 +149,13 @@ declare var google: any;
               <th>Conducteur</th>
               <th>Places</th>
               <th>Prix</th>
+              <th>Prix IA</th>
               <th>Distance</th>
               <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (c of filteredCovoiturages; track c.id) {
+            @for (c of paginatedCovoiturages; track c.id) {
             <tr>
               <td>
                 <div class="route">
@@ -159,6 +170,12 @@ declare var google: any;
                 <span class="chip">{{ c.placesDisponibles }}/{{ c.nombrePlaces }}</span>
               </td>
               <td>{{ c.prixParPassager | number:'1.0-2' }} DT</td>
+              <td>
+                <span *ngIf="c.prixSuggereParAI != null; else noAI" class="chip chip--ai">
+                  {{ c.prixSuggereParAI | number:'1.0-2' }} DT
+                </span>
+                <ng-template #noAI><span class="mono">—</span></ng-template>
+              </td>
               <td>{{ c.distance | number:'1.0-1' }} km</td>
               <td class="text-right">
                 <div class="actions">
@@ -178,6 +195,25 @@ declare var google: any;
           </tbody>
         </table>
       </article>
+
+      @if (totalPages > 1) {
+      <nav class="pagination">
+        <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+          ‹ Précédent
+        </button>
+        @for (p of pageNumbers; track p) {
+          <button class="page-btn" [class.page-btn--active]="p === currentPage" (click)="goToPage(p)">
+            {{ p }}
+          </button>
+        }
+        <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+          Suivant ›
+        </button>
+        <span class="page-info">
+          Page {{ currentPage }} / {{ totalPages }} — {{ filteredCovoiturages.length }} trajet(s)
+        </span>
+      </nav>
+      }
       }
     </section>
 
@@ -312,6 +348,16 @@ declare var google: any;
               <strong>{{ viewingDetail.prixParPassager | number:'1.0-2' }} DT</strong>
             </div>
           </div>
+          <div class="info-tile info-tile--ai" *ngIf="viewingDetail.prixSuggereParAI != null">
+            <lucide-icon [img]="DollarSignIcon" [size]="18"></lucide-icon>
+            <div>
+              <span class="info-label">Prix suggeré IA</span>
+              <strong>{{ viewingDetail.prixSuggereParAI | number:'1.0-2' }} DT</strong>
+              <span class="ai-delta" [class.ai-delta--over]="getPriceDelta(viewingDetail) > 0" [class.ai-delta--under]="getPriceDelta(viewingDetail) < 0">
+                {{ getPriceDelta(viewingDetail) > 0 ? '+' : '' }}{{ getPriceDelta(viewingDetail) | number:'1.0-2' }} DT vs prix choisi
+              </span>
+            </div>
+          </div>
           <div class="info-tile">
             <lucide-icon [img]="RouteIcon" [size]="18"></lucide-icon>
             <div>
@@ -438,6 +484,7 @@ declare var google: any;
     .point { font-weight: 500; }
     .arrow { color: #94a3b8; }
     .chip { background: #eff6ff; color: #1d4ed8; padding: .125rem .5rem; border-radius: 9999px; font-size: .75rem; font-weight: 600; }
+    .chip--ai { background: #ede9fe; color: #7c3aed; }
 
     .actions { display: inline-flex; gap: .25rem; }
     .icon-btn { background: transparent; border: 1px solid #e2e8f0; border-radius: .5rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: all .15s; }
@@ -455,6 +502,14 @@ declare var google: any;
 
     .empty { background: white; border-radius: 1rem; padding: 3rem; text-align: center; color: #64748b; }
     .empty--error { color: #dc2626; }
+
+    .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .375rem; padding: .5rem 0; }
+    .page-btn { background: white; border: 1px solid #e2e8f0; border-radius: .5rem; padding: .5rem .875rem; font-size: .875rem; font-weight: 600; color: #475569; cursor: pointer; transition: all .15s; min-width: 40px; }
+    .page-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
+    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .page-btn--active { background: #6366f1; border-color: #6366f1; color: white; }
+    .page-btn--active:hover:not(:disabled) { background: #4f46e5; border-color: #4f46e5; }
+    .page-info { margin-left: .75rem; font-size: .75rem; color: #64748b; }
 
     .cov-modal-backdrop { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(15, 23, 42, 0.55); display: flex !important; align-items: center; justify-content: center; z-index: 9999 !important; padding: 1rem; }
     .cov-modal { display: block !important; background: white; border-radius: 1rem; max-width: 520px; width: 100%; padding: 1.5rem; box-shadow: 0 25px 50px rgb(0 0 0 / .25); max-height: 90vh; overflow-y: auto; position: relative; }
@@ -484,6 +539,11 @@ declare var google: any;
     .info-tile lucide-icon { color: #6366f1; }
     .info-label { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
     .info-tile strong { display: block; color: #0f172a; font-size: .875rem; font-weight: 600; }
+    .info-tile--ai { background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); }
+    .info-tile--ai lucide-icon { color: #8b5cf6; }
+    .ai-delta { display: block; font-size: .7rem; font-weight: 600; margin-top: .125rem; }
+    .ai-delta--over { color: #dc2626; }
+    .ai-delta--under { color: #16a34a; }
     .detail-section h4 { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 .75rem 0; }
 
     .btn-danger { background: #dc2626; color: white; }
@@ -523,10 +583,12 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
   @ViewChild('occupancyChart') occupancyCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('topRoutesChart') topRoutesCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('priceDistChart') priceDistCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('co2Chart') co2Canvas?: ElementRef<HTMLCanvasElement>;
   private tripsPerDayChartRef?: Chart;
   private occupancyChartRef?: Chart;
   private topRoutesChartRef?: Chart;
   private priceDistChartRef?: Chart;
+  private co2ChartRef?: Chart;
 
   @ViewChild('detailMap') detailMapEl?: ElementRef<HTMLDivElement>;
   @ViewChild('editMap') editMapEl?: ElementRef<HTMLDivElement>;
@@ -544,6 +606,9 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
   error = '';
   search = '';
   sortKey: 'dateDepart' | 'prixParPassager' | 'distance' = 'dateDepart';
+
+  currentPage = 1;
+  readonly pageSize = 5;
 
   editing: Covoiturage | null = null;
   saving = false;
@@ -573,6 +638,7 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     this.occupancyChartRef?.destroy();
     this.topRoutesChartRef?.destroy();
     this.priceDistChartRef?.destroy();
+    this.co2ChartRef?.destroy();
   }
 
   loadAll(): void {
@@ -651,6 +717,66 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     this.renderOccupancy();
     this.renderTopRoutes();
     this.renderPriceDist();
+    this.renderCO2PerDay();
+  }
+
+  private getCO2PerDay(): { labels: string[]; values: number[] } {
+    const days: { label: string; key: string }[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit' });
+      days.push({ label, key });
+    }
+    const values = days.map((d) =>
+      this.covoiturages
+        .filter((c) => c.dateDepart && new Date(c.dateDepart).toISOString().slice(0, 10) === d.key)
+        .reduce((sum, c) => sum + this.service.estimateCO2SavedKg(c), 0)
+    );
+    return { labels: days.map((d) => d.label), values: values.map((v) => Math.round(v * 10) / 10) };
+  }
+
+  get totalCO2Saved(): number {
+    return this.covoiturages.reduce((sum, c) => sum + this.service.estimateCO2SavedKg(c), 0);
+  }
+
+  get co2Saved7Days(): number {
+    return this.getCO2PerDay().values.reduce((sum, v) => sum + v, 0);
+  }
+
+  private renderCO2PerDay(): void {
+    if (!this.co2Canvas?.nativeElement) return;
+    const { labels, values } = this.getCO2PerDay();
+    this.co2ChartRef?.destroy();
+    this.co2ChartRef = new Chart(this.co2Canvas.nativeElement, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'CO2 économisé (kg)',
+          data: values,
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22, 163, 74, 0.15)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 4,
+          pointBackgroundColor: '#16a34a'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} kg CO2` } }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: (v) => `${v} kg` } }
+        }
+      }
+    });
   }
 
   private renderTripsPerDay(): void {
@@ -766,6 +892,11 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     return this.driverNames.get(id) || 'Chargement…';
   }
 
+  getPriceDelta(c: Covoiturage): number {
+    if (c.prixSuggereParAI == null) return 0;
+    return Math.round((c.prixParPassager - c.prixSuggereParAI) * 100) / 100;
+  }
+
   getPassengerName(id: number): string {
     return this.passengerNames.get(id) || 'Chargement…';
   }
@@ -818,6 +949,32 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
       }
       return (b[this.sortKey] as number) - (a[this.sortKey] as number);
     });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredCovoiturages.length / this.pageSize));
+  }
+
+  get paginatedCovoiturages(): Covoiturage[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredCovoiturages.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+  }
+
+  onSortChange(): void {
+    this.currentPage = 1;
   }
 
   get uniqueDriversCount(): number {
@@ -986,6 +1143,7 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     this.service.deleteCovoiturage(id).subscribe({
       next: () => {
         this.covoiturages = this.covoiturages.filter((c) => c.id !== id);
+        if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
         this.toast.success('Trajet supprimé.');
         this.deletingInProgress = false;
         this.deleting = null;
