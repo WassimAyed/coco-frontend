@@ -383,12 +383,41 @@
   &:hover { box-shadow: 0 6px 24px rgba(21,101,192,0.5); }
 }
 
+.det-btn-pdf {
+  background: #1565C0;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(21,101,192,0.3);
+  &:hover { box-shadow: 0 6px 24px rgba(21,101,192,0.5); }
+}
+
 .det-btn-back {
   background: #ede7f6;
   color: #4a148c;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   &:hover { background: #d1c4e9; }
 }
+
+.det-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  background: #f5f5f5;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+.det-qty-label { font-weight: 700; color: #444; font-size: 0.9rem; }
+.det-qty-input {
+  width: 70px;
+  padding: 0.4rem 0.6rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  &:focus { outline: none; border-color: #8B0000; }
+}
+.det-qty-max { color: #888; font-size: 0.85rem; }
 
 /* Payment badges */
 .det-payment-badges {

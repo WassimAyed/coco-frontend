@@ -22,6 +22,7 @@ export class AdminCouponsComponent implements OnInit {
   editMode = false;
   editId: number | null = null;
   searchTerm = '';
+  selectedCategoryFilter = '';
   aiAnalysis = '';
   aiLoading = false;
   submitted = false;
@@ -53,12 +54,19 @@ export class AdminCouponsComponent implements OnInit {
     });
   }
 
+  get totalCount(): number { return this.coupons.length; }
+  get activeCount(): number { return this.coupons.filter(c => c.isActive).length; }
+  get inactiveCount(): number { return this.coupons.filter(c => !c.isActive).length; }
+  get expiredCount(): number { return this.coupons.filter(c => new Date(c.expirationDate) < new Date()).length; }
+
   filterCoupons(): void {
     const term = this.searchTerm.toLowerCase();
-    this.filteredCoupons = this.coupons.filter(c =>
-      c.code.toLowerCase().includes(term) || c.title.toLowerCase().includes(term) ||
-      c.partnerName?.toLowerCase().includes(term) || c.category.toLowerCase().includes(term)
-    );
+    this.filteredCoupons = this.coupons.filter(c => {
+      const matchSearch = !term || c.code.toLowerCase().includes(term) || c.title.toLowerCase().includes(term) ||
+        c.partnerName?.toLowerCase().includes(term) || c.category.toLowerCase().includes(term);
+      const matchCat = !this.selectedCategoryFilter || c.category === this.selectedCategoryFilter;
+      return matchSearch && matchCat;
+    });
   }
 
   exportPDF(): void {

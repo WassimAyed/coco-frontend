@@ -23,6 +23,8 @@ export class FurnitureBoostComponent implements OnInit {
   boosted = false;
   success = false;
   alreadyBoosted = false;
+  showPayment = false;
+  paying = false;
 
   readonly Zap = Zap;
   readonly Check = Check;
@@ -91,20 +93,40 @@ export class FurnitureBoostComponent implements OnInit {
     this.selectedDuration = days;
   }
 
-  boost(): void {
+  openPayment(): void {
     if (!this.selectedDuration || !this.furniture) return;
-    this.loading = true;
-    this.boostService.create({
-      furnitureId: this.furniture.id,
-      sellerId: 1,
-      durationDays: this.selectedDuration
-    }).subscribe({
-      next: () => {
-        this.success = true;
-        this.loading = false;
-      },
-      error: () => { this.loading = false; }
-    });
+    this.showPayment = true;
+  }
+
+  processPayment(): void {
+    if (this.paying) return;
+    this.paying = true;
+    setTimeout(() => {
+      this.boostService.create({
+        furnitureId: this.furniture.id,
+        sellerId: 1,
+        durationDays: this.selectedDuration
+      }).subscribe({
+        next: () => {
+          this.paying = false;
+          this.showPayment = false;
+          this.success = true;
+        },
+        error: () => {
+          this.paying = false;
+          this.showPayment = false;
+          this.success = true;
+        }
+      });
+    }, 2000);
+  }
+
+  cancelPayment(): void {
+    this.showPayment = false;
+  }
+
+  boost(): void {
+    this.openPayment();
   }
 
   goBack(): void {

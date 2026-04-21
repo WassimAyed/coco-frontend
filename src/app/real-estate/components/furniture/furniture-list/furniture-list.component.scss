@@ -165,7 +165,8 @@
 }
 
 .search-input,
-.filter-select {
+.filter-select,
+.filter-price-input {
   font-family: 'DM Sans', sans-serif;
   padding: 0.75rem 1rem;
   background: #FFFFFF;
@@ -200,6 +201,10 @@
     background: #FFFFFF;
     color: #111111;
   }
+}
+
+.filter-price-input {
+  width: 120px;
 }
 
 .results-info {
@@ -719,6 +724,24 @@
   transform: translateX(-50%);
   background: linear-gradient(135deg, #8B0000, #b71c1c);
   color: #111111;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  z-index: 9999;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+  animation: toastSlideIn 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.cart-toast-success {
+  position: fixed;
+  bottom: 6.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2E7D32;
+  color: #fff;
   padding: 0.75rem 1.5rem;
   border-radius: 30px;
   font-size: 0.9rem;

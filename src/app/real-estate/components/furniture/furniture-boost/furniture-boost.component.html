@@ -64,20 +64,55 @@
     <div *ngIf="selectedDuration" class="boost-recap">
       <div class="boost-recap-info">
         <span>{{ furniture?.title }}</span>
-        <span>{{ selectedDuration }} jour(s)</span>
+        <span>{{ selectedDuration }} jour(s) — {{ selectedPrice }} DT</span>
       </div>
-      <button (click)="boost()" class="boost-pay-btn" [disabled]="loading || alreadyBoosted">
-        <ng-container *ngIf="!loading && !alreadyBoosted">
+      <button (click)="openPayment()" class="boost-pay-btn" [disabled]="alreadyBoosted">
+        <ng-container *ngIf="!alreadyBoosted">
           <lucide-angular [img]="Zap" [size]="16" color="#fff"></lucide-angular>
-          ⚡ Activer le boost
+          ⚡ Passer au paiement
         </ng-container>
-        <span *ngIf="loading">Activation...</span>
-        <ng-container *ngIf="alreadyBoosted && !loading">
+        <ng-container *ngIf="alreadyBoosted">
           <lucide-angular [img]="Check" [size]="16" color="#fff"></lucide-angular>
           Déjà boosté
         </ng-container>
       </button>
     </div>
 
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div *ngIf="showPayment" class="payment-overlay" (click)="cancelPayment()"></div>
+<div *ngIf="showPayment" class="payment-modal">
+  <div class="payment-modal-header">
+    <h3>&#128179; Passer au paiement</h3>
+    <button class="payment-close-btn" (click)="cancelPayment()">&times;</button>
+  </div>
+
+  <div *ngIf="!paying" class="payment-modal-body">
+    <div class="payment-recap-card">
+      <div class="payment-recap-row">
+        <span class="payment-recap-label">Annonce</span>
+        <span class="payment-recap-value">{{ furniture?.title }}</span>
+      </div>
+      <div class="payment-recap-row">
+        <span class="payment-recap-label">Durée</span>
+        <span class="payment-recap-value">{{ selectedDuration }} jour(s)</span>
+      </div>
+      <div class="payment-recap-row payment-recap-total">
+        <span class="payment-recap-label">Total</span>
+        <span class="payment-recap-value">{{ selectedPrice }} DT</span>
+      </div>
+    </div>
+    <p class="payment-secure-note">&#128274; Paiement sécurisé — Stripe</p>
+    <div class="payment-actions">
+      <button class="btn-confirm-pay" (click)="processPayment()">&#128640; Confirmer et payer</button>
+      <button class="btn-cancel-pay" (click)="cancelPayment()">Annuler</button>
+    </div>
+  </div>
+
+  <div *ngIf="paying" class="payment-loading">
+    <div class="payment-spinner"></div>
+    <p>Traitement du paiement...</p>
   </div>
 </div>

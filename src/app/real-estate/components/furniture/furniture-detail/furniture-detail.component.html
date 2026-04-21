@@ -34,7 +34,7 @@
       <h1 class="detail-hero-title">{{ item.title }}</h1>
       <div class="det-meta-row">
         <span class="det-cat-badge">&#128197; {{ item.category }}</span>
-        <span class="det-views-counter">&#128065; 1 245 vues</span>
+        <span class="det-views-counter">&#128065; {{ viewCount }} vues</span>
       </div>
       <div class="det-price-big">{{ displayPrice | number:'1.0-0' }} <span class="det-price-unit">DT</span></div>
     </div>
@@ -56,7 +56,7 @@
         </div>
         <div class="det-info-item">
           <span class="det-info-label">Vendeur</span>
-          <span class="det-info-value">#{{ item.sellerId }}</span>
+          <span class="det-info-value">{{ sellerName }}</span>
         </div>
       </div>
     </div>
@@ -66,6 +66,14 @@
       {{ cartError() }}
     </div>
 
+    <!-- QUANTITY SELECTOR -->
+    <div *ngIf="item.quantity > 1" class="det-qty-row">
+      <label class="det-qty-label">Quantité :</label>
+      <input type="number" class="det-qty-input" [(ngModel)]="selectedQty"
+             [min]="1" [max]="item.quantity" />
+      <span class="det-qty-max">/ {{ item.quantity }} disponibles</span>
+    </div>
+
     <!-- ACTION BUTTONS -->
     <div class="det-actions">
       <button class="det-btn det-btn-cart" (click)="addToCart()">
@@ -73,6 +81,9 @@
       </button>
       <button class="det-btn det-btn-offer" (click)="openOfferForm()">
         &#128176; Faire une offre
+      </button>
+      <button class="det-btn det-btn-pdf" (click)="exportToPdf()">
+        &#128196; PDF
       </button>
       <a routerLink="/real-estate/furniture" class="det-btn det-btn-back">&#8592; Retour</a>
     </div>

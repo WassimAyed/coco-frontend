@@ -47,12 +47,29 @@ export class FurnitureReportComponent implements OnInit {
     });
   }
 
+  saveReportLocally(): void {
+    const existing = JSON.parse(localStorage.getItem('furniture_reports') || '[]');
+    const entry = {
+      id: Date.now(),
+      furnitureId: this.furnitureId,
+      furnitureTitle: `Article #${this.furnitureId}`,
+      sellerId: 0,
+      reason: this.newReport.reason,
+      description: this.newReport.description,
+      reportedBy: this.newReport.reporterId || 1,
+      date: new Date().toISOString()
+    };
+    existing.push(entry);
+    localStorage.setItem('furniture_reports', JSON.stringify(existing));
+  }
+
   submitReport(): void {
     if (!this.newReport.reason) {
       this.error = 'Veuillez choisir une raison.';
       return;
     }
     this.loading = true;
+    this.saveReportLocally();
     this.reportService.create(this.newReport).subscribe({
       next: () => {
         this.submitted = true;

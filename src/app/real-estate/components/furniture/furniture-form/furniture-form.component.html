@@ -177,7 +177,7 @@
 
       <div class="wiz-nav">
         <button type="button" class="btn-prev" (click)="prevStep()">Modifier</button>
-        <button type="submit" class="btn-publish" [disabled]="loading || form.invalid">
+        <button type="submit" class="btn-publish" [disabled]="loading || !form.get('title')?.value?.trim()">
           {{ loading ? 'Publication...' : (isEdit ? 'Mettre a jour' : 'Publier l\'annonce') }}
         </button>
       </div>

@@ -36,6 +36,8 @@ export class FurnitureListComponent implements OnInit {
   selectedCategory = '';
   selectedStatus = '';
   selectedCondition = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
 
   categories = ['LIVING_ROOM', 'BEDROOM', 'OFFICE', 'KITCHEN', 'OTHER'];
   statuses = ['AVAILABLE', 'SOLD', 'RESERVED'];
@@ -62,6 +64,8 @@ export class FurnitureListComponent implements OnInit {
     return this.currentUserId > 0 && f.sellerId === this.currentUserId;
   }
 
+  successMsg = '';
+
   ngOnInit(): void {
     this.loadFavorites();
     this.load();
@@ -69,6 +73,12 @@ export class FurnitureListComponent implements OnInit {
     this.cartService.cart$.subscribe(() => {
       this.cartCount = this.cartService.getCount();
     });
+    const msg = localStorage.getItem('furniture_success');
+    if (msg) {
+      this.successMsg = msg;
+      localStorage.removeItem('furniture_success');
+      setTimeout(() => this.successMsg = '', 4000);
+    }
   }
 
   checkBoosts(): void {
@@ -191,7 +201,9 @@ export class FurnitureListComponent implements OnInit {
       const matchCategory = !this.selectedCategory || f.category === this.selectedCategory;
       const matchStatus = !this.selectedStatus || f.status === this.selectedStatus;
       const matchCondition = !this.selectedCondition || f.condition === this.selectedCondition;
-      return matchSearch && matchCategory && matchStatus && matchCondition;
+      const matchMin = this.minPrice == null || f.price >= this.minPrice;
+      const matchMax = this.maxPrice == null || f.price <= this.maxPrice;
+      return matchSearch && matchCategory && matchStatus && matchCondition && matchMin && matchMax;
     });
   }
 

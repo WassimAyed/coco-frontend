@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { LucideAngularModule, ShieldCheck, ShoppingCart, Zap } from 'lucide-angular';
 import { FurnitureService } from '../../../services/furniture.service';
 import { CartService } from '../../../services/cart.service';
@@ -13,6 +14,7 @@ import { ProductRecommendationsComponent } from '../../../../shared/components/p
   selector: 'app-furniture-detail',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, ProductRecommendationsComponent, LucideAngularModule],
+  providers: [],
   templateUrl: './furniture-detail.component.html',
   styleUrls: ['./furniture-detail.component.scss'],
 })
@@ -22,6 +24,9 @@ export class FurnitureDetailComponent implements OnInit {
   loading = false;
   error?: string;
   similarItems: Furniture[] = [];
+  viewCount = 0;
+  sellerName = '';
+  selectedQty = 1;
 
   readonly cartError = signal<string | null>(null);
   readonly showOfferForm = signal(false);
@@ -40,6 +45,7 @@ export class FurnitureDetailComponent implements OnInit {
     private router: Router,
     private cartService: CartService,
     private cloudinary: CloudinaryService,
+    private http: HttpClient,
   ) {}
 
   ngOnInit(): void {
@@ -63,18 +69,35 @@ export class FurnitureDetailComponent implements OnInit {
   load(id: number): void {
     this.loading = true;
     this.error = undefined;
+    this.incrementViews(id);
     this.service.getById(id).subscribe({
       next: (f) => {
         this.item = f;
         this.displayPrice = f.price;
         this.loading = false;
         this.loadSimilar(id);
+        this.loadSellerName(f.sellerId);
       },
       error: () => {
         this.error = 'Erreur de chargement du meuble.';
         this.loading = false;
         setTimeout(() => this.router.navigate(['/real-estate/furniture']), 2000);
       }
+    });
+  }
+
+  incrementViews(id: number): void {
+    const key = `furniture_views_${id}`;
+    const current = parseInt(localStorage.getItem(key) || '0', 10);
+    this.viewCount = current + 1;
+    localStorage.setItem(key, String(this.viewCount));
+  }
+
+  loadSellerName(sellerId?: number): void {
+    if (!sellerId) { this.sellerName = 'Vendeur anonyme'; return; }
+    this.http.get<any>(`http://localhost:8090/api/users/${sellerId}`).subscribe({
+      next: (u) => { this.sellerName = u.username || u.firstName || u.name || `Vendeur #${sellerId}`; },
+      error: () => { this.sellerName = `Vendeur #${sellerId}`; }
     });
   }
 
@@ -116,18 +139,55 @@ export class FurnitureDetailComponent implements OnInit {
 
   addToCart(): void {
     if (!this.item) return;
+    const qty = Math.max(1, Math.min(this.selectedQty || 1, this.item.quantity || 1));
     const added = this.cartService.addItem({
       furnitureId: this.item.id!,
       furnitureTitle: this.item.title,
       price: this.displayPrice,
-      quantity: 1
+      quantity: qty
     });
     if (added) {
-      this.cartError.set('\u2705 Article ajoute au panier !');
+      this.cartError.set(`\u2705 ${qty}x "${this.item.title}" ajouté au panier !`);
     } else {
-      this.cartError.set('\u26A0\uFE0F Cet article est deja dans votre panier !');
+      this.cartError.set('\u26A0\uFE0F Cet article est déjà dans votre panier !');
     }
     setTimeout(() => this.cartError.set(null), 3000);
+  }
+
+  exportToPdf(): void {
+    if (!this.item) return;
+    const f = this.item;
+    const imgTag = (f.imageUrl && !f.imageUrl.startsWith('data:'))
+      ? `<img src="${f.imageUrl}" style="max-width:300px;border-radius:8px;margin-bottom:1rem" /><br/>`
+      : '';
+    const html = `
+      <html><head><title>${f.title}</title>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 2rem; color: #111; max-width: 700px; margin: 0 auto; }
+        h1 { color: #8B0000; font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .badge { display:inline-block; background:#8B0000; color:#fff; padding:4px 12px; border-radius:20px; font-size:0.85rem; margin-right:6px; }
+        .price { font-size:2rem; font-weight:900; color:#8B0000; margin:1rem 0; }
+        table { width:100%; border-collapse:collapse; margin-top:1rem; }
+        td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; }
+        td:first-child { font-weight:700; color:#555; width:35%; }
+        footer { margin-top:2rem; color:#999; font-size:0.8rem; text-align:center; }
+      </style></head><body>
+      ${imgTag}
+      <h1>${f.title}</h1>
+      <span class="badge">${f.category}</span>
+      <span class="badge">${f.condition}</span>
+      <div class="price">${f.price} DT</div>
+      <table>
+        <tr><td>Description</td><td>${f.description || '—'}</td></tr>
+        <tr><td>Quantité</td><td>${f.quantity || 1}</td></tr>
+        <tr><td>Statut</td><td>${f.status}</td></tr>
+        <tr><td>Vendeur</td><td>${this.sellerName}</td></tr>
+        <tr><td>Date</td><td>${new Date().toLocaleDateString('fr-FR')}</td></tr>
+      </table>
+      <footer>CoCo PI_DEV ESPRIT — Marketplace Meubles Etudiants</footer>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); w.print(); }
   }
 
   openOfferForm(): void {

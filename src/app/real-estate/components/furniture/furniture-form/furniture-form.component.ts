@@ -5,6 +5,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, CloudUpload, Check, X } from 'lucide-angular';
 import { FurnitureService } from '../../../services/furniture.service';
 import { CloudinaryService } from '../../../../shared/services/cloudinary.service';
+import { UserService } from '../../../../user-security/services/user.service';
 import { Furniture } from '../../../models/furniture';
 
 @Component({
@@ -78,17 +79,23 @@ export class FurnitureFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cloudinary: CloudinaryService,
+    private userService: UserService,
   ) {
     this.form = this.fb.group({
       title: ['', Validators.required],
       description: [''],
       category: [this.categories[0]],
       condition: ['GOOD'],
-      price: [0, [Validators.min(0)]],
-      quantity: [1, [Validators.min(0)]],
+      price: [0],
+      quantity: [1],
       status: ['AVAILABLE'],
       sellerId: [1],
     });
+  }
+
+  get currentSellerId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 1;
   }
 
   ngOnInit(): void {
@@ -179,31 +186,39 @@ export class FurnitureFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.form.get('title')?.value) {
+    if (!this.form.get('title')?.value?.trim()) {
       this.error = 'Le titre est obligatoire.';
       return;
     }
     this.loading = true;
     this.error = undefined;
+    const defaultImg = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400';
     const payload: Furniture = {
       ...this.form.value,
-      sellerId: this.form.value.sellerId || 1,
-      imageBase64: this.imageBase64,
-      imageUrl: this.cloudinaryUrl,
+      sellerId: this.currentSellerId,
+      imageBase64: this.imageBase64 || undefined,
+      imageUrl: this.cloudinaryUrl || defaultImg,
+      status: this.form.value.status || 'AVAILABLE',
     };
     if (this.isEdit && this.id) {
       this.service.update(this.id, payload).subscribe({
-        next: () => this.router.navigate(['/real-estate/furniture']),
-        error: () => {
-          this.error = 'Erreur lors de la mise à jour. Vérifiez que le backend est démarré.';
+        next: () => {
+          localStorage.setItem('furniture_success', 'Annonce mise à jour avec succès !');
+          this.router.navigate(['/real-estate/furniture']);
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors de la mise à jour. Vérifiez que le backend tourne sur le port 8099.';
           this.loading = false;
         },
       });
     } else {
       this.service.create(payload).subscribe({
-        next: () => this.router.navigate(['/real-estate/furniture']),
-        error: () => {
-          this.error = 'Erreur lors de la création. Vérifiez que le backend est démarré (port 8099).';
+        next: () => {
+          localStorage.setItem('furniture_success', 'Annonce publiée avec succès !');
+          this.router.navigate(['/real-estate/furniture']);
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors de la création. Vérifiez que le backend tourne sur le port 8099.';
           this.loading = false;
         },
       });

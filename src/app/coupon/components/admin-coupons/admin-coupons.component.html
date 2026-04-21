@@ -8,6 +8,26 @@
     </div>
   </div>
 
+  <!-- STATS -->
+  <div class="admin-stats">
+    <div class="stat-card stat-total">
+      <span class="stat-num">{{ totalCount }}</span>
+      <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-card stat-active">
+      <span class="stat-num">{{ activeCount }}</span>
+      <span class="stat-label">Actifs</span>
+    </div>
+    <div class="stat-card stat-inactive">
+      <span class="stat-num">{{ inactiveCount }}</span>
+      <span class="stat-label">Inactifs</span>
+    </div>
+    <div class="stat-card stat-expired">
+      <span class="stat-num">{{ expiredCount }}</span>
+      <span class="stat-label">Expirés</span>
+    </div>
+  </div>
+
   <div *ngIf="message" class="alert" [ngClass]="messageType">{{ message }}</div>
 
   <div *ngIf="aiLoading" class="ai-loading">🤖 Analyse en cours...</div>
@@ -20,6 +40,10 @@
   <div class="search-bar">
     <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
            placeholder="🔍 Rechercher par code, titre, partenaire ou categorie...">
+    <select [(ngModel)]="selectedCategoryFilter" (ngModelChange)="filterCoupons()" class="cat-filter">
+      <option value="">Toutes catégories</option>
+      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+    </select>
   </div>
 
   <!-- FORMULAIRE -->
@@ -92,8 +116,12 @@
     </div>
   </div>
 
+  <div *ngIf="filteredCoupons.length === 0 && !showForm" class="empty-state">
+    Aucun coupon trouvé.
+  </div>
+
   <!-- TABLEAU -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="filteredCoupons.length > 0">
     <table>
       <thead>
         <tr>

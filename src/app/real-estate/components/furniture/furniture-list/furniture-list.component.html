@@ -33,6 +33,8 @@
       <option value="FAIR">Fair</option>
       <option value="POOR">Poor</option>
     </select>
+    <input type="number" placeholder="Prix min (DT)" [(ngModel)]="minPrice" (ngModelChange)="applyFilters()" class="filter-price-input" min="0" />
+    <input type="number" placeholder="Prix max (DT)" [(ngModel)]="maxPrice" (ngModelChange)="applyFilters()" class="filter-price-input" min="0" />
   </div>
 
   <div *ngIf="loading" class="loading">⏳ Loading...</div>
@@ -76,7 +78,6 @@
           <a [routerLink]="['/real-estate/furniture', f.id, 'offers']" class="btn-offers">💰 Offres</a>
           <a [routerLink]="['/real-estate/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
           <a [routerLink]="['/real-estate/furniture', f.id, 'reviews']" class="btn-reviews">⭐ Avis</a>
-          <button (click)="exportToPdf(f)" class="btn-pdf">📄 PDF</button>
           <button (click)="addToCart(f)" class="btn-add-cart">🛒 Ajouter</button>
           <button *ngIf="isOwner(f)" (click)="archiveFurniture(f.id, f.title)" class="btn-archive">📦 Archiver</button>
           <button *ngIf="isOwner(f)" (click)="deleteFurniture(f.id)" class="btn-delete">🗑 Delete</button>
@@ -101,6 +102,8 @@
       [class.active]="p === currentPage" class="page-btn">{{ p }}</button>
     <button (click)="goToPage(currentPage+1)" [disabled]="currentPage===totalPages" class="page-btn">Next →</button>
   </div>
+  <!-- SUCCESS TOAST -->
+  <div *ngIf="successMsg" class="cart-toast-success">{{ successMsg }}</div>
   <!-- CART DEDUP TOAST -->
   <div *ngIf="cartErrorVisible" class="cart-toast-error">{{ cartErrorMsg }}</div>
   <!-- FAVORIS TOAST -->
