@@ -120,6 +120,10 @@ export class CovoiturageListComponent implements OnInit {
     this.router.navigate(['/covoiturage/gestion-reservations']);
   }
 
+  mesSchedules(): void {
+    this.router.navigate(['/covoiturage/mes-schedules']);
+  }
+
   canReserve(c: Covoiturage): boolean {
     return c.idDriver !== this.currentUserId && c.placesDisponibles > 0;
   }

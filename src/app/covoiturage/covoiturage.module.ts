@@ -11,6 +11,8 @@ import { CovoiturageMesTrajetsComponent } from './components/covoiturage-mes-tra
 import { CovoiturageMesReservationsComponent } from './components/covoiturage-mes-reservations/covoiturage-mes-reservations.component';
 import { CovoiturageGestionReservationsComponent } from './components/covoiturage-gestion-reservations/covoiturage-gestion-reservations.component';
 import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { CovoiturageScheduleCreateComponent } from './components/covoiturage-schedule-create/covoiturage-schedule-create.component';
+import { CovoiturageMesSchedulesComponent } from './components/covoiturage-mes-schedules/covoiturage-mes-schedules.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +22,9 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     CovoiturageMesTrajetsComponent,
     CovoiturageMesReservationsComponent,
     CovoiturageGestionReservationsComponent,
-    ConfirmModalComponent
+    ConfirmModalComponent,
+    CovoiturageScheduleCreateComponent,
+    CovoiturageMesSchedulesComponent
   ],
   imports: [
     CommonModule,

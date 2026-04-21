@@ -409,4 +409,8 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   goBack(): void {
     this.router.navigate(['/covoiturage/list']);
   }
+
+  goToSchedule(): void {
+    this.router.navigate(['/covoiturage/schedule/create']);
+  }
 }

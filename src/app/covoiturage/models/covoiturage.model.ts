@@ -50,6 +50,32 @@ export interface Notation {
   idRecepteur: number;
 }
 
+export type ScheduleFrequency = 'DAILY' | 'WEEKLY';
+
+export interface CovoiturageSchedule {
+  id?: number;
+  pointDepart: string;
+  pointArrivee: string;
+  nombrePlaces: number;
+  lattitudeDepart: number;
+  longitudeDepart: number;
+  latitudeArrivee: number;
+  longitudeArrivee: number;
+  prixParPassager: number;
+  distance: number;
+  dureeEstimee: number;
+  idDriver: number;
+  vehicleId: number;
+  frequency: ScheduleFrequency;
+  daysOfWeek?: string;         // "MON,WED,FRI" for WEEKLY
+  heureDepart: string;         // "HH:mm" or "HH:mm:ss"
+  startDate?: string;          // "YYYY-MM-DD"
+  endDate?: string;            // "YYYY-MM-DD"
+  active: boolean;
+  lastGeneratedDate?: string;
+  createdAt?: string;
+}
+
 export interface CO2Impact {
   covoiturageId: number;
   distanceKm: number;
