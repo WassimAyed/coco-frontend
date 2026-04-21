@@ -51,24 +51,24 @@
               class="flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-slate-100">
               <lucide-icon [img]="BellIcon" [size]="20"></lucide-icon>
             </button>
-            <span *ngIf="pendingEvents.length > 0"
+            <span *ngIf="pendingEvents().length > 0"
               class="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-center text-xs font-semibold text-white">
-              {{ pendingEvents.length }}
+              {{ pendingEvents().length }}
             </span>
 
             <div *ngIf="showNotifications()"
               class="absolute right-0 top-12 z-30 w-96 max-w-[90vw] rounded-xl border border-border bg-white p-3 shadow-xl">
               <div class="mb-2 flex items-center justify-between">
                 <p class="text-sm font-semibold text-foreground">Pending Event Notifications</p>
-                <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{{ pendingEvents.length }}</span>
+                <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{{ pendingEvents().length }}</span>
               </div>
 
-              <div *ngIf="pendingEvents.length === 0" class="py-4 text-center text-sm text-slate-500">
+              <div *ngIf="pendingEvents().length === 0" class="py-4 text-center text-sm text-slate-500">
                 No pending notifications
               </div>
 
-              <div *ngIf="pendingEvents.length > 0" class="max-h-80 space-y-2 overflow-y-auto pr-1">
-                @for (notif of pendingEvents; track notif.id) {
+              <div *ngIf="pendingEvents().length > 0" class="max-h-80 space-y-2 overflow-y-auto pr-1">
+                @for (notif of pendingEvents(); track notif.id) {
                 <article class="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <p class="text-sm font-semibold text-foreground">{{ notif.title }}</p>
                   <p class="mt-1 text-xs text-slate-600">{{ notif.username }} {{ notif.lastname }}</p>

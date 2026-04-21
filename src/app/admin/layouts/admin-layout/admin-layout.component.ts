@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { catchError, forkJoin, map, of } from 'rxjs';
+import { AdminEventNotificationsService } from '../../services/admin-event-notifications.service';
 import {
   AlertTriangle,
   BarChart3,
@@ -65,7 +66,7 @@ interface PendingEvent {
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html'
 })
-export class AdminLayoutComponent implements OnInit {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
@@ -76,50 +77,58 @@ export class AdminLayoutComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
   private readonly toast = inject(ToastService);
+  private readonly eventNotifications = inject(AdminEventNotificationsService);
 
   readonly selectedModule = signal('overview');
   readonly searchQuery = signal('');
   readonly user = this.userService.currentUser;
 
-  // ─── Colleagues' notification panel ─────────────────────────────────────────
+  // ─── Real-time event notifications (SSE) ────────────────────────────────────
   readonly showNotifications = signal(false);
 
-  pendingEvents: PendingEvent[] = [
-    {
-      id: 1,
-      title: 'New user registration awaiting approval',
-      time: '5 min ago',
-      type: 'user',
-      username: 'Ahmed',
-      lastname: 'Ben Ali',
-      email: 'ahmed.benali@esprit.tn'
-    },
-    {
-      id: 2,
-      title: 'Marketplace listing flagged for review',
-      time: '20 min ago',
-      type: 'marketplace',
-      username: 'Sarah',
-      lastname: 'Tounsi',
-      email: 'sarah.tounsi@esprit.tn'
-    },
-    {
-      id: 3,
-      title: 'Event created pending validation',
-      time: '1 hour ago',
+  readonly pendingEvents = computed<PendingEvent[]>(() =>
+    this.eventNotifications.notifications().map(n => ({
+      id: n.id,
+      title: `Nouvel evenement cree : ${n.name}`,
+      time: this.formatRelative(n.receivedAt),
       type: 'event',
-      username: 'Mohamed',
-      lastname: 'Karim',
-      email: 'mohamed.karim@esprit.tn'
-    }
-  ];
+      username: n.location ?? '',
+      lastname: '',
+      email: n.userId != null ? `Cree par user #${n.userId}` : ''
+    }))
+  );
+
+  private lastSeenNotifId: number | null = null;
+
+  constructor() {
+    effect(() => {
+      const list = this.eventNotifications.notifications();
+      if (list.length === 0) return;
+      const latest = list[0];
+      if (this.lastSeenNotifId !== latest.id) {
+        this.lastSeenNotifId = latest.id;
+        this.toast.info(`Nouvel evenement : ${latest.name}`);
+      }
+    });
+  }
 
   toggleNotifications(): void {
     this.showNotifications.update(v => !v);
   }
 
   markAsRead(notifId: number): void {
-    this.pendingEvents = this.pendingEvents.filter(e => e.id !== notifId);
+    this.eventNotifications.dismiss(notifId);
+  }
+
+  private formatRelative(ts: number): string {
+    const seconds = Math.floor((Date.now() - ts) / 1000);
+    if (seconds < 60) return 'a l\'instant';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    const days = Math.floor(hours / 24);
+    return `il y a ${days} j`;
   }
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -227,6 +236,7 @@ export class AdminLayoutComponent implements OnInit {
   // ────────────────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    this.eventNotifications.connect();
     this.route.data.subscribe((data) => {
       const moduleId = data['module'];
       if (moduleId && this.modules.some((module) => module.id === moduleId)) {
@@ -239,6 +249,10 @@ export class AdminLayoutComponent implements OnInit {
         this.selectModule(moduleId);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.eventNotifications.disconnect();
   }
 
   selectModule(moduleId: string): void {

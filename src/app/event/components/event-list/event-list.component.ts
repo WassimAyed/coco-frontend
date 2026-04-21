@@ -78,9 +78,18 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly fallbackCover = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
 
   ngOnInit(): void {
-    this.currentUserId = Number(localStorage.getItem('userId')) || null;
+    this.currentUserId = this.resolveCurrentUserId();
     this.loadCategories();
     this.loadAll();
+  }
+
+  private resolveCurrentUserId(): number | null {
+    const fromSession = Number(this.userService.currentUser()?.id);
+    if (Number.isFinite(fromSession) && fromSession > 0) {
+      return fromSession;
+    }
+    const fromStorage = Number(localStorage.getItem('userId'));
+    return Number.isFinite(fromStorage) && fromStorage > 0 ? fromStorage : null;
   }
 
   ngAfterViewInit(): void {

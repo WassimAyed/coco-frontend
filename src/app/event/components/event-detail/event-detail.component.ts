@@ -273,7 +273,8 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       fullName: this.currentUserName || 'User',
       email: this.currentUserEmail,
       phone: normalizedPhone || undefined,
-      eventId
+      eventId,
+      userId: this.currentUserId ?? undefined
     }).pipe(
       map(() => true),
       catchError(err => {
