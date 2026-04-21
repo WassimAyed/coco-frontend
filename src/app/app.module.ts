@@ -2,27 +2,21 @@ import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
+import { AdminModule } from './admin/admin.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { SharedModule } from './shared/shared.module';
 import { UserSecurityModule } from './user-security/user-security.module';
 import { UserService } from './user-security/services/user.service';
-import { AdminLayoutComponent } from './admin/layouts/admin-layout/admin-layout.component';
-import { AdminEventsComponent } from './admin/components/admin-events/admin-events.component';
-import { EventPaginationModule } from './event/event-pagination.module';
-import { AdminPlansComponent } from './subs-payment/components/admin-plans/admin-plans.component';
-import { AdminCovoiturageComponent } from './covoiturage/components/admin-covoiturage/admin-covoiturage.component';
-
-
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthCookieInterceptor } from './shared/interceptors/auth-cookie.interceptor';
 import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
 
 @NgModule({
   bootstrap: [AppComponent],
-  declarations: [AppComponent, AdminLayoutComponent, AdminEventsComponent],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     CommonModule,
@@ -31,24 +25,27 @@ import { AuthInterceptor } from './user-security/interceptors/auth.interceptor';
     RouterModule,
     LucideAngularModule,
     AppRoutingModule,
+    AdminModule,
     SharedModule,
-    EventPaginationModule,
     UserSecurityModule,
-    AdminPlansComponent,
-    AdminCovoiturageComponent
   ],
   providers: [
+    {
+      multi: true,
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthCookieInterceptor,
+    },
     {
       deps: [UserService],
       multi: true,
       provide: APP_INITIALIZER,
-      useFactory: (userService: UserService) => () => userService.restoreSession()
+      useFactory: (userService: UserService) => () => userService.restoreSession(),
     },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
-      multi: true // important
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class AppModule {}

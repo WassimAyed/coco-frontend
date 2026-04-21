@@ -49,11 +49,6 @@
         </header>
 
         <section class="content-body">
-          @if (saveMessage()) {
-            <div class="alert-box">
-              {{ saveMessage() }}
-            </div>
-          }
 
           @if (activeSection() === 'profile') {
             <div class="create-profile-container-embedded">
@@ -277,15 +272,525 @@
                 </div>
               }
             </div>
+          } @else if (activeSection() === 'settings') {
+            <div class="space-y-6">
+
+              <!-- Update Profile -->
+              @if (user(); as profile) {
+                <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                  <div>
+                    <p class="text-base font-semibold text-foreground">Update profile</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">Change your display name and profile picture.</p>
+                  </div>
+                  <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">First name</label>
+                      <input class="form-input" formControlName="username" />
+                    </div>
+                    <div>
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Last name</label>
+                      <input class="form-input" formControlName="lastname" />
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Email</label>
+                      <input class="form-input opacity-70" formControlName="email" />
+                    </div>
+                    <div class="md:col-span-2 rounded-[1.5rem] border border-border bg-white/50 p-4">
+                      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div class="flex items-center gap-4">
+                          <img [src]="effectiveProfileImageUrl()" [alt]="profile.firstName + ' ' + profile.lastName" class="h-16 w-16 rounded-[1.2rem] object-cover shadow-soft" />
+                          <div>
+                            <p class="text-sm font-semibold text-foreground">Profile image</p>
+                            @if (selectedProfileImageFileName()) {
+                              <p class="mt-1 text-xs font-medium text-primary">Selected: {{ selectedProfileImageFileName() }}</p>
+                            }
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                          <label class="btn-secondary cursor-pointer">
+                            <input type="file" accept="image/*" class="hidden" (change)="onProfileImageSelected($event)" />
+                            Choose image
+                          </label>
+                          @if (selectedProfileImageFileName()) {
+                            <button type="button" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold transition hover:bg-secondary" (click)="clearSelectedProfileImage()">Remove</button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isSavingProfile() || isUploadingProfileImage()">
+                      <lucide-icon [img]="SaveIcon" class="mr-2" [size]="16"></lucide-icon>
+                      {{ isUploadingProfileImage() ? 'Uploading...' : isSavingProfile() ? 'Saving...' : 'Update profile' }}
+                    </button>
+                  </div>
+                </form>
+              }
+
+              <!-- 2FA -->
+              <form class="space-y-6" [formGroup]="settingsForm">
+                <label class="flex items-start justify-between gap-4 rounded-[1.5rem] border border-border bg-card p-5">
+                  <div>
+                    <p class="text-base font-semibold text-foreground">Enable two-factor authentication</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                      When enabled, every login sends a 6-digit security code to your email before access is granted.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    class="mt-1 h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                    formControlName="twoFactorEnabled"
+                  />
+                </label>
+                <div class="flex justify-end">
+                  <button
+                    type="button"
+                    class="btn-primary disabled:cursor-not-allowed disabled:opacity-70"
+                    [disabled]="isSavingSettings()"
+                    (click)="saveSettings()"
+                  >
+                    <lucide-icon [img]="SettingsIcon" class="mr-2" [size]="16"></lucide-icon>
+                    {{ isSavingSettings() ? 'Saving...' : 'Save security settings' }}
+                  </button>
+                </div>
+              </form>
+
+              <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+                <div>
+                  <p class="text-base font-semibold text-foreground">Update password</p>
+                  <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                    Change your current password using your existing password and a new secure one.
+                  </p>
+                </div>
+                <div class="grid gap-5 md:grid-cols-2">
+                  <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Current password</label>
+                    <input class="form-input" type="password" formControlName="oldPassword" />
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-secondary-foreground">New password</label>
+                    <input class="form-input" type="password" formControlName="newPassword" />
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Confirm new password</label>
+                    <input class="form-input" type="password" formControlName="confirmPassword" />
+                  </div>
+                </div>
+                @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) {
+                  <p class="text-xs font-medium text-destructive">New password must be at least 8 characters.</p>
+                }
+                @if (passwordForm.controls.confirmPassword.touched && !passwordsMatch) {
+                  <p class="text-xs font-medium text-destructive">Passwords do not match.</p>
+                }
+                <div class="flex justify-end">
+                  <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isUpdatingPassword()">
+                    {{ isUpdatingPassword() ? 'Updating...' : 'Update password' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+          } @else if (activeSection() === 'signals') {
+            <div class="space-y-6">
+              <form class="space-y-5 rounded-[1.5rem] border border-border bg-card p-5" [formGroup]="signalForm" (ngSubmit)="saveSignal()">
+                <div>
+                  <p class="text-base font-semibold text-foreground">
+                    {{ editingSignalId() ? 'Update signal' : 'Create signal' }}
+                  </p>
+                  <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                    Report a problem or flag content to review it later from your profile space.
+                  </p>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-secondary-foreground">Description</label>
+                  <textarea class="form-input min-h-32 resize-none" formControlName="description" placeholder="Describe the issue you want to report..."></textarea>
+                </div>
+                <div class="rounded-[1.5rem] border border-border bg-white/60 p-5">
+                  <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p class="text-sm font-semibold text-foreground">Signal image</p>
+                      <p class="mt-2 text-sm leading-6 text-muted-foreground">Add an optional screenshot or image to make the signal clearer.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                      <label class="btn-secondary cursor-pointer">
+                        <input type="file" accept="image/*" class="hidden" (change)="onSignalImageSelected($event)" />
+                        <lucide-icon [img]="ImagePlusIcon" class="mr-2" [size]="16"></lucide-icon>
+                        Choose image
+                      </label>
+                      @if (signalImagePreviewUrl()) {
+                        <button type="button" class="rounded-[1.1rem] border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary" (click)="clearSelectedSignalImage()">
+                          Remove image
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  @if (signalImagePreviewUrl()) {
+                    <img [src]="signalImagePreviewUrl()!" alt="Signal preview" class="mt-4 h-40 rounded-[1.2rem] object-cover shadow-soft" />
+                  }
+                </div>
+                <div class="flex justify-end gap-3">
+                  @if (editingSignalId()) {
+                    <button type="button" class="btn-secondary" (click)="cancelSignalEdit()">Cancel edit</button>
+                  }
+                  <button type="submit" class="btn-primary disabled:cursor-not-allowed disabled:opacity-70" [disabled]="isSavingSignal()">
+                    <lucide-icon [img]="BellRingIcon" class="mr-2" [size]="16"></lucide-icon>
+                    {{ isSavingSignal() ? 'Saving...' : editingSignalId() ? 'Update signal' : 'Send signal' }}
+                  </button>
+                </div>
+              </form>
+
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <p class="text-lg font-bold text-foreground">My signals</p>
+                  @if (isLoadingSignals()) {
+                    <p class="text-sm text-muted-foreground">Loading...</p>
+                  }
+                </div>
+
+                @for (signal of userSignals(); track signal.id) {
+                  <article class="rounded-[1.5rem] border border-border bg-card p-4">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ signal.createdAt || 'Signal' }}</p>
+                        <p class="mt-3 text-sm leading-7 text-foreground">{{ signal.description }}</p>
+                        @if (signal.imageUrl) {
+                          <img [src]="signal.imageUrl" alt="Signal image" class="mt-4 max-h-56 rounded-[1.2rem] object-cover shadow-soft" />
+                        }
+                      </div>
+                      <div class="flex gap-2">
+                        <button type="button" class="rounded-[1.1rem] border border-border px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary" (click)="editSignal(signal)">
+                          <lucide-icon [img]="PencilIcon" [size]="16"></lucide-icon>
+                        </button>
+                        <button type="button" class="rounded-[1.1rem] border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50" (click)="deleteSignal(signal.id)">
+                          <lucide-icon [img]="Trash2Icon" [size]="16"></lucide-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                } @empty {
+                  @if (!isLoadingSignals()) {
+                    <div class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center">
+                      <p class="text-lg font-semibold text-foreground">No signals yet</p>
+                      <p class="mt-2 text-sm text-muted-foreground">Create your first signal and track it from here.</p>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+          } @else if (activeSection() === 'services') {
+            <div class="space-y-8">
+              @if (isLoadingServices()) {
+                <div class="py-10 text-center text-sm text-muted-foreground">Loading services...</div>
+              } @else {
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between gap-4">
+                    <p class="text-lg font-bold text-foreground">My service posts</p>
+                    <a routerLink="/student-services/new" class="btn-primary">Create post</a>
+                  </div>
+
+                  @for (service of paginatedMyServices(); track service.id) {
+                    <article class="rounded-[1.5rem] border border-border bg-card p-5">
+                      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex gap-4">
+                          <img [src]="service.coverImage" [alt]="service.title" class="h-16 w-16 shrink-0 rounded-[1.2rem] object-cover" />
+                          <div>
+                            <div class="flex flex-wrap gap-2">
+                              <span class="rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                                [ngClass]="getServiceCategory(service)?.accentClass ?? 'bg-card text-muted-foreground border-border'">
+                                {{ getServiceCategory(service)?.label ?? service.categoryId }}
+                              </span>
+                              <span class="rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                                [ngClass]="{
+                                  'border-emerald-200 bg-emerald-50 text-emerald-700': service.moderationStatus === 'approved',
+                                  'border-amber-200 bg-amber-50 text-amber-700': service.moderationStatus === 'pending',
+                                  'border-red-200 bg-red-50 text-red-700': service.moderationStatus === 'rejected'
+                                }">
+                                {{ service.moderationStatus }}
+                              </span>
+                            </div>
+                            <p class="mt-2 text-base font-black text-foreground">{{ service.title }}</p>
+                            <p class="mt-1 text-sm text-muted-foreground">{{ service.priceLabel }} · {{ service.deliveryMode }}</p>
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3 sm:shrink-0">
+                          <a [routerLink]="['/student-services', service.id]" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary">View</a>
+                          <a [routerLink]="['/student-services', service.id, 'edit']" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary">Edit</a>
+                          <button type="button" class="rounded-[1.1rem] border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50" (click)="deleteMyService(service.id)">Delete</button>
+                        </div>
+                      </div>
+                    </article>
+                  } @empty {
+                    <div class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center">
+                      <p class="text-lg font-semibold text-foreground">No service posts yet</p>
+                      <p class="mt-2 text-sm text-muted-foreground">Create your first service post to appear in the marketplace.</p>
+                    </div>
+                  }
+
+                  @if (myServicesTotalPages() > 1) {
+                    <div class="flex items-center justify-between pt-2">
+                      <button type="button" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold disabled:opacity-50" [disabled]="myServicesPage() <= 1" (click)="setMyServicesPage(myServicesPage() - 1)">Previous</button>
+                      <span class="text-sm text-muted-foreground">{{ myServicesPage() }} / {{ myServicesTotalPages() }}</span>
+                      <button type="button" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold disabled:opacity-50" [disabled]="myServicesPage() >= myServicesTotalPages()" (click)="setMyServicesPage(myServicesPage() + 1)">Next</button>
+                    </div>
+                  }
+                </div>
+
+                <div class="space-y-4">
+                  <p class="text-lg font-bold text-foreground">Received requests</p>
+
+                  @for (request of paginatedProviderRequests(); track request.id) {
+                    <article class="rounded-[1.5rem] border border-border bg-card p-5">
+                      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div class="flex gap-4">
+                          <img [src]="request.requesterAvatar" [alt]="request.requesterName" class="h-12 w-12 shrink-0 rounded-[1.1rem] object-cover" />
+                          <div>
+                            <p class="text-base font-black text-foreground">{{ request.requesterName }}</p>
+                            <p class="text-sm text-muted-foreground">{{ request.requesterDepartment }}</p>
+                            <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ request.message }}</p>
+                            <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                              <span class="rounded-full border border-border bg-white px-3 py-1 text-muted-foreground">{{ request.serviceTitle }}</span>
+                              <span class="rounded-full border border-border bg-white px-3 py-1 text-muted-foreground">{{ request.preferredDate }}</span>
+                              <span class="rounded-full border border-border bg-white px-3 py-1 text-muted-foreground">{{ request.budgetLabel }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="flex flex-col gap-3 xl:items-end xl:shrink-0">
+                          <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase text-primary">{{ request.status }}</span>
+                          @if (request.status === 'pending') {
+                            <div class="flex flex-wrap gap-2">
+                              <button type="button" class="btn-primary" (click)="acceptProviderRequest(request.id)">Accept</button>
+                              <button type="button" class="btn-secondary" (click)="declineProviderRequest(request.id)">Decline</button>
+                            </div>
+                          } @else if (request.status === 'accepted' || request.status === 'completed') {
+                            <a routerLink="/profile" [queryParams]="{ section: 'chat', requestId: request.id }" class="btn-primary">Open messages</a>
+                          } @else {
+                            <span class="rounded-[1.1rem] border border-dashed border-border bg-white/70 px-4 py-2 text-xs text-muted-foreground">Messaging locked</span>
+                          }
+                        </div>
+                      </div>
+                    </article>
+                  } @empty {
+                    <div class="rounded-[1.5rem] border border-dashed border-border bg-white/40 p-8 text-center">
+                      <p class="text-lg font-semibold text-foreground">No requests received yet</p>
+                      <p class="mt-2 text-sm text-muted-foreground">Get a service post approved and incoming requests will appear here.</p>
+                    </div>
+                  }
+
+                  @if (providerRequestsTotalPages() > 1) {
+                    <div class="flex items-center justify-between pt-2">
+                      <button type="button" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold disabled:opacity-50" [disabled]="providerRequestsPage() <= 1" (click)="setProviderRequestsPage(providerRequestsPage() - 1)">Previous</button>
+                      <span class="text-sm text-muted-foreground">{{ providerRequestsPage() }} / {{ providerRequestsTotalPages() }}</span>
+                      <button type="button" class="rounded-[1.1rem] border border-border px-4 py-2 text-sm font-semibold disabled:opacity-50" [disabled]="providerRequestsPage() >= providerRequestsTotalPages()" (click)="setProviderRequestsPage(providerRequestsPage() + 1)">Next</button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+          } @else if (activeSection() === 'chat') {
+
+            <!-- ── CHAT SECTION ─────────────────────────────────────────── -->
+            <div class="chat-shell">
+
+              <!-- LEFT: Conversation list -->
+              <aside class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                  <p class="text-base font-bold text-foreground">Messages</p>
+                  @if (isLoadingChat()) {
+                    <span class="text-xs text-muted-foreground">Loading...</span>
+                  }
+                </div>
+
+                <div class="chat-search-wrap">
+                  <lucide-icon [img]="SearchIcon" [size]="16" class="chat-search-icon"></lucide-icon>
+                  <input
+                    class="chat-search-input"
+                    type="text"
+                    placeholder="Search conversations..."
+                    [value]="chatSearch()"
+                    (input)="onChatSearchChange($event)"
+                  />
+                </div>
+
+                <div class="chat-conv-list">
+                  @if (sortedConversations().length === 0 && !isLoadingChat()) {
+                    <div class="chat-empty-convs">
+                      <lucide-icon [img]="MessageCircleIcon" [size]="28"></lucide-icon>
+                      <p>No conversations yet.</p>
+                      <span>Accept a service request to start chatting.</span>
+                    </div>
+                  }
+                  @for (conv of sortedConversations(); track conv.id) {
+                    <button
+                      type="button"
+                      class="chat-conv-item"
+                      [class.active]="selectedConversationId() === conv.id"
+                      (click)="selectConversation(conv.id)"
+                    >
+                      <div class="chat-conv-avatar-wrap">
+                        <img [src]="conv.avatarUrl" [alt]="conv.name" class="chat-conv-avatar" onerror="this.src='/assets/default-avatar.png'" />
+                        <span class="chat-conv-status" [class.online]="conv.status === 'online'" [class.away]="conv.status === 'away'"></span>
+                      </div>
+                      <div class="chat-conv-info">
+                        <div class="chat-conv-top">
+                          <span class="chat-conv-name">{{ conv.name }}</span>
+                          <span class="chat-conv-time">{{ conv.lastMessageTime }}</span>
+                        </div>
+                        <div class="chat-conv-bottom">
+                          <span class="chat-conv-role">{{ conv.role }}</span>
+                          @if (conv.unreadCount > 0) {
+                            <span class="chat-conv-badge">{{ conv.unreadCount }}</span>
+                          }
+                        </div>
+                        <p class="chat-conv-preview" [class.italic]="conv.isTyping">
+                          {{ conv.isTyping ? 'Typing...' : conv.lastMessage }}
+                        </p>
+                      </div>
+                    </button>
+                  }
+                </div>
+              </aside>
+
+              <!-- RIGHT: Message thread -->
+              <div class="chat-main">
+                @if (selectedConversation(); as conv) {
+
+                  <!-- Thread header -->
+                  <div class="chat-thread-header">
+                    <img [src]="conv.avatarUrl" [alt]="conv.name" class="chat-thread-avatar" onerror="this.src='/assets/default-avatar.png'" />
+                    <div class="chat-thread-header-info">
+                      <p class="chat-thread-name">{{ conv.name }}</p>
+                      <p class="chat-thread-sub">
+                        {{ conv.isTyping ? 'Typing...' : conv.lastSeen }}
+                      </p>
+                    </div>
+                    <span class="chat-thread-service-badge">{{ conv.serviceTitle }}</span>
+                  </div>
+
+                  <!-- Messages -->
+                  <div class="chat-messages">
+                    @if (conv.messages.length === 0) {
+                      <div class="chat-no-messages">
+                        <lucide-icon [img]="MessageCircleIcon" [size]="32"></lucide-icon>
+                        <p>No messages yet. Say hello!</p>
+                      </div>
+                    }
+                    @for (msg of conv.messages; track msg.id) {
+                      @if (msg.dayLabel) {
+                        <div class="chat-day-label">
+                          <span>{{ msg.dayLabel }}</span>
+                        </div>
+                      }
+                      <div class="chat-msg-row" [class.me]="msg.author === 'me'" [class.other]="msg.author === 'other'">
+                        <div class="chat-bubble" [class.bubble-me]="msg.author === 'me'" [class.bubble-other]="msg.author === 'other'" [class.deleted]="msg.isDeleted">
+
+                          @if (editingMessageId() === msg.id) {
+                            <!-- Edit mode -->
+                            <div class="chat-edit-wrap">
+                              <input
+                                class="chat-edit-input"
+                                type="text"
+                                [value]="messageEditDraft()"
+                                (input)="onMessageEditDraftChange($event)"
+                                (keyup.enter)="saveEditedMessage(msg.id)"
+                                (keyup.escape)="cancelEditingMessage()"
+                              />
+                              <div class="chat-edit-actions">
+                                <button type="button" class="chat-edit-save" (click)="saveEditedMessage(msg.id)">Save</button>
+                                <button type="button" class="chat-edit-cancel" (click)="cancelEditingMessage()">Cancel</button>
+                              </div>
+                            </div>
+                          } @else {
+                            @if (msg.imageUrl) {
+                              <img [src]="msg.imageUrl" alt="Image" class="chat-msg-image" />
+                            }
+                            @if (msg.isDeleted) {
+                              <span class="chat-deleted-text">Message deleted</span>
+                            } @else {
+                              <p class="chat-msg-text">{{ msg.content }}</p>
+                            }
+                            <div class="chat-msg-meta">
+                              <span class="chat-msg-time">{{ msg.timestamp }}</span>
+                              @if (msg.isEdited && !msg.isDeleted) {
+                                <span class="chat-msg-edited">edited</span>
+                              }
+                            </div>
+                          }
+                        </div>
+
+                        @if (msg.author === 'me' && !msg.isDeleted && editingMessageId() !== msg.id) {
+                          <div class="chat-msg-actions">
+                            <button type="button" class="chat-action-btn" title="Edit" (click)="startEditingMessage(msg)">
+                              <lucide-icon [img]="PencilIcon" [size]="13"></lucide-icon>
+                            </button>
+                            <button type="button" class="chat-action-btn danger" title="Delete" (click)="deleteMessage(msg.id)">
+                              <lucide-icon [img]="Trash2Icon" [size]="13"></lucide-icon>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                    @if (conv.isTyping) {
+                      <div class="chat-msg-row other">
+                        <div class="chat-bubble bubble-other">
+                          <span class="chat-typing-dots"><span></span><span></span><span></span></span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Composer -->
+                  <div class="chat-composer">
+                    @if (chatImagePreviewUrl()) {
+                      <div class="chat-image-preview-wrap">
+                        <img [src]="chatImagePreviewUrl()!" alt="Preview" class="chat-image-preview" />
+                        <button type="button" class="chat-image-remove" (click)="clearSelectedChatImage()">
+                          <lucide-icon [img]="Trash2Icon" [size]="14"></lucide-icon>
+                        </button>
+                      </div>
+                    }
+                    <div class="chat-composer-row">
+                      <label class="chat-attach-btn" title="Attach image">
+                        <input type="file" accept="image/*" class="hidden" (change)="onChatImageSelected($event)" />
+                        <lucide-icon [img]="ImagePlusIcon" [size]="18"></lucide-icon>
+                      </label>
+                      <input
+                        class="chat-composer-input"
+                        type="text"
+                        placeholder="Type a message..."
+                        [value]="messageDraft()"
+                        (input)="onDraftChange($event)"
+                        (blur)="onMessageComposerBlur()"
+                        (keyup.enter)="sendMessage()"
+                      />
+                      <button
+                        type="button"
+                        class="chat-send-btn"
+                        [disabled]="!messageDraft().trim() && !selectedChatImageFile()"
+                        (click)="sendMessage()"
+                      >
+                        <lucide-icon [img]="SendIcon" [size]="18"></lucide-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                } @else {
+                  <div class="chat-no-selection">
+                    <lucide-icon [img]="MessageCircleIcon" [size]="40"></lucide-icon>
+                    <p>Select a conversation to start messaging.</p>
+                  </div>
+                }
+              </div>
+            </div>
+
           } @else {
             <div class="empty-state">
               <div class="empty-icon" style="color: var(--gray-dark);">
                 <lucide-icon [img]="Clock3Icon" [size]="32"></lucide-icon>
               </div>
               <h4 class="empty-title">Section en construction</h4>
-              <p class="empty-desc">
-                Le contenu de cette section n'est pas encore disponible.
-              </p>
+              <p class="empty-desc">Le contenu de cette section n'est pas encore disponible.</p>
             </div>
           }
         </section>

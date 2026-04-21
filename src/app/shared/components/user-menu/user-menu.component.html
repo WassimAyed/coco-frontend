@@ -5,104 +5,132 @@
     (click)="toggleMenu()">
     <img [src]="profile.avatarUrl" [alt]="profile.firstName + ' ' + profile.lastName"
       class="h-11 w-11 rounded-2xl object-cover" />
-
     <div class="hidden min-w-0 sm:block">
       <p class="truncate text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
       <p class="truncate text-xs text-muted-foreground">{{ profile.email }}</p>
     </div>
-
     <lucide-icon [img]="ChevronDownIcon" class="hidden text-muted-foreground sm:block" [size]="16"></lucide-icon>
   </button>
 
   @if (menuOpen()) {
   <div class="absolute right-0 z-30 mt-3 w-64 rounded-[1.5rem] border border-border bg-card p-2 shadow-float">
-    <div class="rounded-[1.25rem] bg-secondary/70 px-4 py-3">
-      <p class="text-sm font-semibold text-foreground">{{ profile.firstName }} {{ profile.lastName }}</p>
-      <p class="mt-1 text-xs text-muted-foreground">{{ profile.department }}</p>
-    </div>
+    <div class="mt-2 space-y-0.5">
 
-    <div class="mt-2 space-y-1">
-      <!-- Home (already correct) -->
+      <!-- Home / Dashboard -->
       <a [routerLink]="homeRoute()"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
         (click)="closeMenu()">
         <lucide-icon [img]="HomeIcon" [size]="18"></lucide-icon>
         {{ homeLabel() }}
       </a>
 
-      <!-- My Roommate Listings -->
-      <a [routerLink]="mesOffresRoute"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+      <!-- Profile -->
+      <!-- <a routerLink="/profile"
+        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
         (click)="closeMenu()">
-        <lucide-icon [img]="BriefcaseIcon" [size]="18"></lucide-icon>
-        My Roommate Listings
-      </a>
+        <lucide-icon [img]="UserRoundIcon" [size]="18"></lucide-icon>
+        My Profile
+      </a> -->
 
-      <!-- My Roommate Requests -->
-      <a [routerLink]="mesOffresRequestRoute"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
-        My Roommate Requests
-      </a>
+      <div class="my-1 border-t border-border"></div>
 
-      <!-- My Items (Lost & Found) -->
-      <a [routerLink]="'/lost-found/my-items'"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="SearchIcon" [size]="18"></lucide-icon>
-        My Items (Lost & Found)
-      </a>
+      <!-- Collocation group -->
+      <button type="button"
+        class="flex w-full items-center justify-between rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="toggleGroup('collocation')">
+        <div class="flex items-center gap-3">
+          <lucide-icon [img]="BriefcaseIcon" [size]="18"></lucide-icon>
+          <span>Collocation</span>
+        </div>
+        <lucide-icon [img]="openGroup() === 'collocation' ? ChevronUpIcon : ChevronDownIcon" [size]="14" class="text-muted-foreground"></lucide-icon>
+      </button>
+      @if (openGroup() === 'collocation') {
+        <div class="ml-8 space-y-0.5">
+          <a [routerLink]="mesOffresRoute"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">My Listings</a>
+          <a [routerLink]="mesOffresRequestRoute"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">My Requests</a>
+          <a [routerLink]="mesFavorisRoute"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">My Favorites</a>
+        </div>
+      }
 
-      <a [routerLink]="'/subs-payment/dashboard'"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
-        Posts Quota
-      </a>
+      <!-- Services group -->
+      <button type="button"
+        class="flex w-full items-center justify-between rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="toggleGroup('services')">
+        <div class="flex items-center gap-3">
+          <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+          <span>Services</span>
+        </div>
+        <lucide-icon [img]="openGroup() === 'services' ? ChevronUpIcon : ChevronDownIcon" [size]="14" class="text-muted-foreground"></lucide-icon>
+      </button>
+      @if (openGroup() === 'services') {
+        <div class="ml-8 space-y-0.5">
+          <a routerLink="/profile" [queryParams]="{ section: 'services' }"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">My Services</a>
+          <a routerLink="/subs-payment/dashboard"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Posts Quota</a>
+          <a routerLink="/lost-found/my-items"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Lost & Found</a>
+        </div>
+      }
 
-      <!-- Mes Événements -->
-      <a [routerLink]="myEventsRoute"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
-        Mes Événements
-      </a>
+      <!-- Events group -->
+      <button type="button"
+        class="flex w-full items-center justify-between rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="toggleGroup('events')">
+        <div class="flex items-center gap-3">
+          <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
+          <span>Events</span>
+        </div>
+        <lucide-icon [img]="openGroup() === 'events' ? ChevronUpIcon : ChevronDownIcon" [size]="14" class="text-muted-foreground"></lucide-icon>
+      </button>
+      @if (openGroup() === 'events') {
+        <div class="ml-8 space-y-0.5">
+          <a [routerLink]="myEventsRoute"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">My Events</a>
+          <a [routerLink]="participatedEventsRoute"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Participated</a>
+        </div>
+      }
 
-      <!-- Événements Participés -->
-      <a [routerLink]="participatedEventsRoute"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="CalendarIcon" [size]="18"></lucide-icon>
-        Événements Participés
-      </a>
+      <!-- Covoiturage group -->
+      <button type="button"
+        class="flex w-full items-center justify-between rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
+        (click)="toggleGroup('covoiturage')">
+        <div class="flex items-center gap-3">
+          <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
+          <span>Covoiturage</span>
+        </div>
+        <lucide-icon [img]="openGroup() === 'covoiturage' ? ChevronUpIcon : ChevronDownIcon" [size]="14" class="text-muted-foreground"></lucide-icon>
+      </button>
+      @if (openGroup() === 'covoiturage') {
+        <div class="ml-8 space-y-0.5">
+          <a routerLink="/covoiturage/mes-trajets"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Mes Trajets</a>
+          <a routerLink="/covoiturage/mes-reservations"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Mes Réservations</a>
+          <a routerLink="/covoiturage/gestion-reservations"
+            class="block rounded-[1.1rem] px-4 py-2 text-sm text-foreground transition hover:bg-secondary"
+            (click)="closeMenu()">Gestion Réservations</a>
+        </div>
+      }
 
-      <!-- Mes Trajets (Covoiturage) -->
-      <a [routerLink]="'/covoiturage/mes-trajets'"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
-        Mes Trajets
-      </a>
-
-      <!-- Mes Réservations (Covoiturage) -->
-      <a [routerLink]="'/covoiturage/mes-reservations'"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
-        Mes Réservations
-      </a>
-
-      <!-- Gestion Réservations (Covoiturage) -->
-      <a [routerLink]="'/covoiturage/gestion-reservations'"
-        class="flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-        (click)="closeMenu()">
-        <lucide-icon [img]="CarIcon" [size]="18"></lucide-icon>
-        Gestion Réservations
-      </a>
+      <div class="my-1 border-t border-border"></div>
 
       <button type="button"
-        class="flex w-full items-center gap-3 rounded-[1.1rem] px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+        class="flex w-full items-center gap-3 rounded-[1.1rem] px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
         (click)="logout()">
         <lucide-icon [img]="LogOutIcon" [size]="18"></lucide-icon>
         Logout

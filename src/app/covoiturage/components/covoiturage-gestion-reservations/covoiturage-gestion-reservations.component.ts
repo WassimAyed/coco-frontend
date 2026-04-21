@@ -4,6 +4,7 @@ import { CovoiturageService } from '../../services/covoiturage.service';
 import { Reservation, Covoiturage, StatusReservation } from '../../models/covoiturage.model';
 
 @Component({
+  standalone: false,
   selector: 'app-covoiturage-gestion-reservations',
   templateUrl: './covoiturage-gestion-reservations.component.html',
   styleUrls: ['./covoiturage-gestion-reservations.component.scss']

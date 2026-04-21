@@ -63,6 +63,22 @@
               <div *ngIf="offerForm.get('prixLoc')?.invalid && offerForm.get('prixLoc')?.touched" class="invalid-feedback d-block">
                 Un prix valide est requis.
               </div>
+              
+              <!-- Pricing Assistant Widget -->
+              <div class="mt-2 p-2 rounded bg-light border border-info d-flex align-items-center" *ngIf="isPredictingPrice || predictedPrice" style="font-size: 0.9rem;">
+                <i class="fas fa-robot text-info fa-lg me-2"></i>
+                <div *ngIf="isPredictingPrice" class="text-muted fst-italic">
+                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  Analyse du marché en cours...
+                </div>
+                <div *ngIf="!isPredictingPrice && predictedPrice" class="text-dark">
+                  <strong>Assistant Prix :</strong> Le prix recommandé est d'environ 
+                  <strong class="text-success">
+                    {{ isNumeric(predictedPrice) ? (predictedPrice | number:'1.0-0') : predictedPrice }}
+                    <span *ngIf="isNumeric(predictedPrice)">TND</span>
+                  </strong>. 
+                </div>
+              </div>
             </div>
 
             <!-- Chambres & Meublé -->

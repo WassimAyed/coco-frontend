@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { CategoryDto } from '../../models/category.model';
 import { CreateEventRequest, EventDto, EventStatus } from '../../models/event.model';
@@ -13,6 +13,7 @@ import { RecommendationService } from '../../services/recommendation.service';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-event-list',
   templateUrl: './event-list.component.html',
   styleUrl: './event-list.component.css'
@@ -879,3 +880,4 @@ export class EventListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 }
+

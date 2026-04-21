@@ -4,6 +4,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { UserService } from '../../services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-oauth-callback-page',
   templateUrl: './oauth-callback-page.component.html',
 })
@@ -16,6 +17,10 @@ export class OauthCallbackPageComponent {
   readonly errorMessage = signal<string | null>(null);
 
   constructor() {
+    void this.handleCallback();
+  }
+
+  private async handleCallback(): Promise<void> {
     const queryParams = this.route.snapshot.queryParamMap;
     const accessToken = queryParams.get('accessToken')?.trim() ?? '';
     const refreshToken = queryParams.get('refreshToken')?.trim() ?? '';
@@ -23,11 +28,14 @@ export class OauthCallbackPageComponent {
     const message = queryParams.get('message')?.trim() ?? '';
 
     if (error || message) {
-      this.errorMessage.set(message || error || 'Google login failed.');
-      this.toastService.error(
-        message || error || 'Google login failed.',
-        'Google Login Failed',
-      );
+      const detail = message || error || 'Google login failed.';
+      const lower = detail.toLowerCase();
+      if (lower.includes('disabled') || lower.includes('suspended') || lower.includes('locked')) {
+        await this.router.navigate(['/account-disabled']);
+        return;
+      }
+      this.errorMessage.set(detail);
+      this.toastService.error(detail, 'Google Login Failed');
       return;
     }
 
@@ -38,7 +46,10 @@ export class OauthCallbackPageComponent {
       return;
     }
 
-    this.userService.completeOAuthLogin(accessToken, refreshToken || undefined);
+    await this.userService.completeOAuthLogin(
+      accessToken,
+      refreshToken || undefined,
+    );
     this.toastService.success('Signed in with Google successfully.', 'Google Login');
     void (async () => {
       try {
@@ -50,3 +61,4 @@ export class OauthCallbackPageComponent {
     })();
   }
 }
+

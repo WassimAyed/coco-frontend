@@ -32,11 +32,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
-            ],
-            "scripts": []
               "src/styles.css",
-              "node_modules/leaflet/dist/leaflet.css"
+              "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/maplibre-gl/dist/maplibre-gl.css"
             ],
             "scripts": [
               "node_modules/leaflet/dist/leaflet.js"
@@ -47,13 +45,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "5MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kB",
-                  "maximumError": "10kB"
+                  "maximumWarning": "20kB",
+                  "maximumError": "30kB"
                 }
               ],
               "outputHashing": "all"
@@ -84,12 +82,13 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
+            "karmaConfig": "karma.conf.js",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               {
                 "glob": "**/*",
@@ -97,14 +96,12 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-                "src/styles.css",
-                 "node_modules/bootstrap/dist/css/bootstrap.min.css"
+              "src/styles.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/maplibre-gl/dist/maplibre-gl.css"
             ],
             "scripts": [
-              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
-                "node_modules/@popperjs/core/dist/umd/popper.min.js",
-                "node_modules/bootstrap/dist/js/bootstrap.min.js"
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
             ]
           }
         }

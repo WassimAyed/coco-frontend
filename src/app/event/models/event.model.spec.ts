@@ -1,7 +1,12 @@
-import { Event } from './event.model';
+import { EventDto } from './event.model';
 
-describe('Event', () => {
-  it('should create an instance', () => {
-    expect(new Event()).toBeTruthy();
+describe('EventDto', () => {
+  it('should be able to create an object that satisfies the interface', () => {
+    const event: EventDto = {
+      id: 1,
+      name: 'Test Event',
+      location: 'Test Location'
+    };
+    expect(event).toBeTruthy();
   });
 });

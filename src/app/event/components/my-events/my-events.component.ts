@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { forkJoin, map, Observable, of } from 'rxjs';
 import { CommentDto } from '../../models/comment.model';
 import { EventImageDto } from '../../models/event-image.model';
@@ -16,6 +16,7 @@ import { ParticipantDto } from '../../models/participant.model';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-my-events',
   templateUrl: './my-events.component.html',
   styleUrl: './my-events.component.css'

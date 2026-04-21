@@ -1,0 +1,138 @@
+<article class="rounded-3xl border border-border bg-white p-6 shadow-sm">
+  <div
+    class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+  >
+    <div>
+      <h3 class="text-xl font-black text-foreground">User Management</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        Display all users, show their current image, and enable or disable
+        accounts.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      @for (filter of ['all', 'active', 'disabled', 'admin']; track filter) {
+        <button
+          type="button"
+          class="rounded-2xl border px-4 py-2 text-sm font-semibold transition"
+          [ngClass]="statusFilter === filter ? 'border-primary bg-primary text-white' : 'border-border bg-white text-foreground'"
+          (click)="setStatusFilter($any(filter))"
+        >
+          {{ filter === 'all' ? 'All' : (filter | titlecase) }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="relative mb-6">
+    <lucide-icon
+      [img]="SearchIcon"
+      class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+      [size]="16"
+    ></lucide-icon>
+    <input
+      class="w-full rounded-2xl border border-border py-3 pl-11 pr-4 text-sm outline-none"
+      placeholder="Search by username, email, or role..."
+      [value]="searchTerm"
+      (input)="searchTerm = $any($event.target).value"
+    />
+  </div>
+
+  @if (errorMessage) {
+    <p class="py-12 text-center font-medium text-red-600">{{ errorMessage }}</p>
+  } @else if (isLoading) {
+    <p class="py-12 text-center text-slate-500">Loading users...</p>
+  } @else if (filteredUsers.length === 0) {
+    <p class="py-12 text-center text-slate-500">
+      No users match the current filter.
+    </p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead>
+          <tr class="border-b border-border text-left text-sm text-slate-500">
+            <th class="px-4 py-3 font-semibold">User</th>
+            <th class="px-4 py-3 font-semibold">Role</th>
+            <th class="px-4 py-3 font-semibold">Security</th>
+            <th class="px-4 py-3 font-semibold">Status</th>
+            <th class="px-4 py-3 text-right font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers; track user.id) {
+            <tr class="border-b border-slate-100 align-top">
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-3">
+                  <img
+                    [src]="resolveAvatar(user)"
+                    [alt]="user.username"
+                    class="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p class="font-semibold text-foreground">
+                      {{ user.username }} {{ user.lastname }}
+                    </p>
+                    <p class="text-sm text-slate-500">{{ user.email }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-4">
+                <span
+                  class="inline-flex rounded-full border border-border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="px-4 py-4">
+                <span
+                  class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                  [ngClass]="user.twoFactorEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'"
+                >
+                  <lucide-icon [img]="ShieldCheckIcon" [size]="14"></lucide-icon>
+                  {{ user.twoFactorEnabled ? '2FA enabled' : '2FA disabled' }}
+                </span>
+              </td>
+              <td class="px-4 py-4">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                  [ngClass]="isEnabled(user) ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'"
+                >
+                  {{ isEnabled(user) ? 'Active' : 'Disabled' }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-right">
+                @if (user.role.toUpperCase() === 'ADMIN') {
+                  <span
+                    class="inline-flex rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500"
+                  >
+                    Admin protected
+                  </span>
+                } @else if (isEnabled(user)) {
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    [disabled]="isBusy(user.id)"
+                    (click)="disableUser.emit(user.id)"
+                  >
+                    <lucide-icon [img]="BanIcon" [size]="16"></lucide-icon>
+                    {{ isBusy(user.id) ? 'Updating...' : 'Disable' }}
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    [disabled]="isBusy(user.id)"
+                    (click)="enableUser.emit(user.id)"
+                  >
+                    <lucide-icon [img]="CheckCircleIcon" [size]="16"></lucide-icon>
+                    {{ isBusy(user.id) ? 'Updating...' : 'Enable' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</article>

@@ -1,0 +1,201 @@
+<div class="offres-page">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <span class="header-eyebrow">
+          <i class="fas fa-heart me-2"></i>Mes Favoris
+        </span>
+        <h1 class="header-title">Mes Collocations Favorites</h1>
+        <p class="header-subtitle">Retrouvez toutes les annonces que vous avez ajoutées en favoris</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill">
+          <span class="stat-num">{{ favorites.length }}</span>
+          <span class="stat-label">Favori{{ favorites.length > 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-decoration">
+      <div class="deco-circle deco-circle--1"></div>
+      <div class="deco-circle deco-circle--2"></div>
+    </div>
+  </div>
+
+  <!-- ===== SEARCH BAR ===== -->
+  <div class="content-area" *ngIf="favorites.length > 0">
+    <div class="search-bar-wrap">
+      <div class="search-bar">
+        <i class="fas fa-search search-bar__icon"></i>
+        <input
+          type="text"
+          class="search-bar__input"
+          placeholder="Rechercher par titre, ville, description..."
+          [(ngModel)]="searchTerm"
+          (input)="filterFavorites()"
+        />
+        <button *ngIf="searchTerm" class="search-bar__clear" (click)="searchTerm = ''; filterFavorites()" title="Effacer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <span class="search-result-count" *ngIf="searchTerm">
+        {{ filteredFavorites.length }} résultat{{ filteredFavorites.length !== 1 ? 's' : '' }} pour
+        <strong>"{{ searchTerm }}"</strong>
+      </span>
+    </div>
+  </div>
+
+  <!-- ===== CONTENT AREA ===== -->
+  <div class="content-area">
+
+    <!-- LOADING STATE -->
+    <div *ngIf="loading" class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-ring"></div>
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <h3 class="empty-title">Chargement...</h3>
+      <p class="empty-desc">Récupération de vos favoris en cours.</p>
+    </div>
+
+    <!-- EMPTY STATE (no favorites at all) -->
+    <div *ngIf="!loading && favorites.length === 0" class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-ring"></div>
+        <i class="fas fa-heart"></i>
+      </div>
+      <h3 class="empty-title">Aucun favori pour le moment</h3>
+      <p class="empty-desc">Vous n'avez pas encore ajouté d'annonce en favoris.<br>Explorez les offres et ajoutez celles qui vous intéressent !</p>
+      <a routerLink="/collocation/offres" class="explore-btn">
+        <i class="fas fa-compass me-2"></i>Explorer les offres
+      </a>
+    </div>
+
+    <!-- EMPTY SEARCH RESULTS -->
+    <div *ngIf="!loading && favorites.length > 0 && filteredFavorites.length === 0" class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-ring"></div>
+        <i class="fas fa-search"></i>
+      </div>
+      <h3 class="empty-title">Aucun résultat</h3>
+      <p class="empty-desc">Aucun favori ne correspond à <strong>"{{ searchTerm }}"</strong>.<br>Essayez un autre mot-clé.</p>
+      <button class="search-reset-btn" (click)="searchTerm = ''; filterFavorites()">
+        <i class="fas fa-undo me-2"></i>Réinitialiser la recherche
+      </button>
+    </div>
+
+    <!-- FAVORITES GRID -->
+    <div *ngIf="!loading && favorites.length > 0" class="offers-grid">
+      <div *ngFor="let offer of paginatedFavorites" class="offer-card">
+
+        <!-- Card Image -->
+        <div class="card-img-wrap">
+          <img *ngIf="offer.imagesColoc?.length"
+               [src]="offer.imagesColoc[0].url"
+               class="card-img"
+               alt="{{ offer.titre }}">
+          <div *ngIf="!offer.imagesColoc?.length" class="card-img card-img--placeholder">
+            <i class="fas fa-home fa-2x"></i>
+          </div>
+          <!-- Favorite floating badge -->
+          <span class="floating-badge badge-favorite">
+            <i class="fas fa-heart"></i>
+            Favori
+          </span>
+          <!-- Status floating badge -->
+          <span class="floating-badge floating-badge--status" [ngClass]="offer.expired ? 'badge-expired' : 'badge-active'">
+            <i [class]="offer.expired ? 'fas fa-clock' : 'fas fa-check-circle'"></i>
+            {{ offer.expired ? 'Expirée' : 'Active' }}
+          </span>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">{{ offer.titre }}</h3>
+            <div class="card-price">
+              <span class="price-amount">{{ offer.prixLoc | number:'1.0-0' }}</span>
+              <span class="price-currency">TND<span class="price-period">/mois</span></span>
+            </div>
+          </div>
+
+          <div class="card-meta">
+            <span class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ offer.ville }}
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-bed"></i>
+              {{ offer.chambres }} chambre{{ offer.chambres > 1 ? 's' : '' }}
+            </span>
+          </div>
+
+          <div class="card-tags">
+            <span class="tag" [ngClass]="offer.meublee ? 'tag--furnished' : 'tag--unfurnished'">
+              <i [class]="offer.meublee ? 'fas fa-couch' : 'fas fa-times'"></i>
+              {{ offer.meublee ? 'Meublé' : 'Non meublé' }}
+            </span>
+          </div>
+
+          <div class="card-actions">
+            <button class="action-btn action-btn--view" (click)="viewDetails(offer.id)" title="Voir les détails">
+              <i class="fas fa-eye"></i>
+              <span>Voir détails</span>
+            </button>
+            <button class="action-btn action-btn--remove" (click)="openRemoveModal(offer.id)" title="Retirer des favoris">
+              <i class="fas fa-heart-broken"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <nav *ngIf="totalPages > 1" class="pagination-wrap">
+      <button class="page-btn page-btn--nav"
+              [disabled]="currentPage === 1"
+              (click)="setPage(currentPage - 1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+
+      <div class="page-numbers">
+        <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                class="page-btn"
+                [class.page-btn--active]="currentPage === i + 1"
+                (click)="setPage(i + 1)">
+          {{ i + 1 }}
+        </button>
+      </div>
+
+      <button class="page-btn page-btn--nav"
+              [disabled]="currentPage === totalPages"
+              (click)="setPage(currentPage + 1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </nav>
+
+  </div>
+</div>
+
+<!-- ===== REMOVE FROM FAVORITES MODAL ===== -->
+<div *ngIf="showRemoveModal" class="modal-overlay" (click)="closeRemoveModal()">
+  <div class="modal-box modal-box--sm" (click)="$event.stopPropagation()">
+    <div class="modal-close-btn" (click)="closeRemoveModal()">
+      <i class="fas fa-times"></i>
+    </div>
+    <div class="modal-icon modal-icon--danger">
+      <i class="fas fa-heart-broken"></i>
+    </div>
+    <h4 class="modal-title">Retirer des favoris</h4>
+    <p class="modal-desc">Êtes-vous sûr de vouloir retirer cette annonce de vos favoris ?<br>
+      <span class="text-muted-small">Vous pourrez toujours la retrouver dans la liste des offres.</span>
+    </p>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn--ghost" (click)="closeRemoveModal()">Annuler</button>
+      <button class="modal-btn modal-btn--danger" (click)="confirmRemove()">
+        <i class="fas fa-heart-broken me-1"></i> Retirer
+      </button>
+    </div>
+  </div>
+</div>

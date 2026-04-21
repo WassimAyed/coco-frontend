@@ -4,6 +4,7 @@ import { CovoiturageService } from '../../services/covoiturage.service';
 import { Covoiturage } from '../../models/covoiturage.model';
 
 @Component({
+  standalone: false,
   selector: 'app-covoiturage-list',
   templateUrl: './covoiturage-list.component.html',
   styleUrls: ['./covoiturage-list.component.css']
@@ -138,3 +139,4 @@ export class CovoiturageListComponent implements OnInit {
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }
+

@@ -6,6 +6,7 @@ import { LandingPageComponent } from './shared/pages/landing-page/landing-page.c
 import { adminGuard } from './user-security/guards/admin.guard';
 import { guestGuard } from './user-security/guards/guest.guard';
 import { profileGuard } from './user-security/guards/profile.guard';
+import { AccountDisabledPageComponent } from './user-security/pages/account-disabled-page/account-disabled-page.component';
 import { EmailVerificationPageComponent } from './user-security/pages/email-verification-page/email-verification-page.component';
 import { LoginPageComponent } from './user-security/pages/login-page/login-page.component';
 import { OauthCallbackPageComponent } from './user-security/pages/oauth-callback-page/oauth-callback-page.component';
@@ -17,6 +18,7 @@ import { CreateProfileComponent } from './user-security/pages/create-profile/cre
 
 export const routes: Routes = [
   { path: '', redirectTo: 'landing', pathMatch: 'full' },
+  { path: 'account-disabled', component: AccountDisabledPageComponent },
   { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
   { path: 'auth/register', redirectTo: 'register', pathMatch: 'full' },
 {
@@ -43,6 +45,7 @@ export const routes: Routes = [
     children: [
       { path: 'landing', component: LandingPageComponent },
       { path: 'profile', canActivate: [profileGuard], component: UserProfilePageComponent },
+      { path: 'student-services', loadChildren: () => import('./student-services/student-services.module').then((m) => m.StudentServicesModule) },
       { path: 'collocation', loadChildren: () => import('./collocation/collocation.module').then((m) => m.CollocationModule) },
       { path: 'covoiturage', loadChildren: () => import('./covoiturage/covoiturage.module').then((m) => m.CovoiturageModule) },
       { path: 'event', loadChildren: () => import('./event/event.module').then((m) => m.EventModule) },
@@ -63,6 +66,12 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     component: AdminLayoutComponent,
     data: { module: 'carpooling' }
+  },
+  {
+    path: 'admin/collocation',
+    canActivate: [adminGuard],
+    component: AdminLayoutComponent,
+    data: { module: 'colocation' }
   },
   { path: '**', redirectTo: 'landing' }
 ];

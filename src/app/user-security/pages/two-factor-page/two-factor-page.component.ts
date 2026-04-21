@@ -14,6 +14,7 @@ interface PendingTwoFactorContext {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-two-factor-page',
   templateUrl: './two-factor-page.component.html',
 })
@@ -210,3 +211,4 @@ export class TwoFactorPageComponent {
     }
   }
 }
+

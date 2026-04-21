@@ -1,9 +1,12 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ChevronDown, LogOut, UserRound, Clipboard } from 'lucide-angular';
+import { ChevronDown, ChevronUp, LogOut, UserRound, Clipboard } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
-import { Home, Briefcase, FileText, Search, Calendar, Car } from 'lucide-angular';
+import { Home, Briefcase, FileText, Search, Calendar, Car, Heart } from 'lucide-angular';
+
+type MenuGroup = 'collocation' | 'services' | 'events' | 'covoiturage';
 @Component({
+  standalone: false,
   selector: 'app-user-menu',
   templateUrl: './user-menu.component.html'
 })
@@ -21,6 +24,7 @@ export class UserMenuComponent {
   private readonly userService = inject(UserService);
 
   readonly ChevronDownIcon = ChevronDown;
+  readonly ChevronUpIcon = ChevronUp;
   readonly UserRoundIcon = UserRound;
   readonly LogOutIcon = LogOut;
 
@@ -29,6 +33,7 @@ export class UserMenuComponent {
   readonly MesOffresRequestIcon = Clipboard;
 
   readonly menuOpen = signal(false);
+  readonly openGroup = signal<MenuGroup | null>(null);
   /** Direct reference to session user signal (same source as login / landing). */
   readonly user = this.userService.currentUser;
   readonly homeRoute = this.userService.homeRoute;
@@ -41,6 +46,8 @@ export class UserMenuComponent {
   readonly mesOffresRequestRoute = '/collocation/mesOffresRequest';
   readonly myEventsRoute = '/event/my-events';
   readonly participatedEventsRoute = '/event/participated-events';
+  readonly mesFavorisRoute = '/collocation/mesFavoris';
+  readonly HeartIcon = Heart;
 
   toggleMenu(): void {
     this.menuOpen.update((value) => !value);
@@ -48,6 +55,11 @@ export class UserMenuComponent {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+    this.openGroup.set(null);
+  }
+
+  toggleGroup(group: MenuGroup): void {
+    this.openGroup.update(current => current === group ? null : group);
   }
 
   async logout(): Promise<void> {
@@ -65,3 +77,4 @@ export class UserMenuComponent {
     event.stopPropagation();
   }
 }
+

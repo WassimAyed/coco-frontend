@@ -7,6 +7,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 const PENDING_VERIFICATION_EMAIL_KEY = 'pendingVerificationEmail';
 
 @Component({
+  standalone: false,
   selector: 'app-email-verification-page',
   templateUrl: './email-verification-page.component.html',
 })
@@ -163,3 +164,4 @@ export class EmailVerificationPageComponent {
     }
   }
 }
+

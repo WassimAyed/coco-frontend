@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, signal } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'app-loading',
   templateUrl: './app-loading.component.html'
 })
@@ -17,3 +18,4 @@ export class AppLoadingComponent implements OnInit {
     });
   }
 }
+

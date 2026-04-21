@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Menu, X } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
+  standalone: false,
   selector: 'app-public-layout',
   templateUrl: './public-layout.component.html'
 })
@@ -54,3 +55,4 @@ export class PublicLayoutComponent {
     this.featuresDropdownMobileOpen.update(v => !v);
   }
 }
+
