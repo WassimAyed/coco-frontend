@@ -13,6 +13,9 @@
       <button class="btn btn-outline-warning rounded-pill px-3" (click)="gestionReservations()">
         <i class="fas fa-clipboard-list me-1"></i> Gestion Reservations
       </button>
+      <button class="btn btn-outline-info rounded-pill px-3" (click)="mesSchedules()">
+        <i class="fas fa-calendar-alt me-1"></i> Mes Programmations
+      </button>
       <button class="btn btn-danger rounded-pill px-4" (click)="createTrajet()">
         <i class="fas fa-plus me-2"></i> Proposer un trajet
       </button>
@@ -118,6 +121,9 @@
           <div class="col-md-2 text-center">
             <p class="fs-4 fw-bold text-danger mb-0">{{ c.prixParPassager }} TND</p>
             <p class="text-muted small mb-0">par passager</p>
+            <span *ngIf="getCO2Saved(c) > 0" class="badge bg-success bg-opacity-25 text-success rounded-pill mt-1" title="CO2 economise vs voiture solo">
+              <i class="fas fa-leaf me-1"></i>-{{ getCO2Saved(c) }} kg CO2
+            </span>
           </div>
 
           <!-- Actions -->

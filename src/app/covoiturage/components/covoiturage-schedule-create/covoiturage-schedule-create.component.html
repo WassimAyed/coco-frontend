@@ -1,0 +1,140 @@
+<main class="container my-4">
+  <button class="btn btn-outline-secondary rounded-pill mb-3" (click)="goBack()">
+    <i class="fas fa-arrow-left me-1"></i> Retour
+  </button>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow rounded-4">
+        <div class="card-body p-4">
+          <h3 class="fw-bold mb-1">
+            <i class="fas fa-calendar-alt text-danger me-2"></i> Programmer un trajet recurrent
+          </h3>
+          <p class="text-muted mb-4">
+            Votre trajet sera publie automatiquement selon la frequence choisie.
+          </p>
+
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+          <form (ngSubmit)="submit()">
+            <div class="row g-3">
+
+              <!-- Depart -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
+                <input #departInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="schedule.lattitudeDepart" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ schedule.pointDepart }}
+                </small>
+              </div>
+
+              <!-- Arrivee -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
+                <input #arriveeInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <small *ngIf="schedule.latitudeArrivee" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i> {{ schedule.pointArrivee }}
+                </small>
+              </div>
+
+              <!-- Map -->
+              <div class="col-md-12">
+                <div #mapContainer class="rounded-3 border" style="width: 100%; height: 320px;"></div>
+              </div>
+
+              <!-- Distance / Duree -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-road text-info me-1"></i> Distance (km)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="schedule.distance" name="distance" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-clock text-info me-1"></i> Duree estimee (min)</label>
+                <input type="number" class="form-control bg-light" [ngModel]="schedule.dureeEstimee" name="dureeEstimee" readonly>
+              </div>
+
+              <!-- Places / Prix -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Nombre de places</label>
+                <input type="number" class="form-control" [(ngModel)]="schedule.nombrePlaces" name="nombrePlaces" min="1">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Prix par passager (TND)</label>
+                <input type="number" class="form-control" [(ngModel)]="schedule.prixParPassager" name="prixParPassager" min="0" step="0.5">
+              </div>
+
+              <!-- Vehicule -->
+              <div class="col-md-12">
+                <label class="form-label fw-bold">Vehicule *</label>
+                <select class="form-select" [(ngModel)]="schedule.vehicleId" name="vehicleId" required>
+                  <option [ngValue]="0" disabled>-- Choisir un vehicule --</option>
+                  <option *ngFor="let v of vehicules" [ngValue]="v.id">
+                    {{ v.marque }} - {{ v.immatriculation }} ({{ v.couleur }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- ========== RECURRENCE ========== -->
+              <div class="col-md-12">
+                <hr>
+                <h5 class="fw-bold mb-3"><i class="fas fa-sync-alt text-danger me-2"></i>Recurrence</h5>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Frequence *</label>
+                <select class="form-select" [(ngModel)]="schedule.frequency" name="frequency">
+                  <option value="DAILY">Tous les jours</option>
+                  <option value="WEEKLY">Certains jours de la semaine</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold"><i class="fas fa-clock me-1"></i> Heure de depart *</label>
+                <input type="time" class="form-control" [(ngModel)]="schedule.heureDepart" name="heureDepart" required>
+              </div>
+
+              <div class="col-md-12" *ngIf="schedule.frequency === 'WEEKLY'">
+                <label class="form-label fw-bold">Jours de la semaine *</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <button type="button"
+                          *ngFor="let d of allDays"
+                          class="btn rounded-pill"
+                          [class.btn-danger]="isDaySelected(d.code)"
+                          [class.btn-outline-secondary]="!isDaySelected(d.code)"
+                          (click)="toggleDay(d.code)">
+                    {{ d.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Date de debut</label>
+                <input type="date" class="form-control" [(ngModel)]="schedule.startDate" name="startDate">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Date de fin <span class="text-muted small">(optionnel)</span></label>
+                <input type="date" class="form-control" [(ngModel)]="schedule.endDate" name="endDate">
+              </div>
+
+              <div class="col-md-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" [(ngModel)]="schedule.active" name="active" id="activeSwitch">
+                  <label class="form-check-label fw-bold" for="activeSwitch">
+                    Activer la programmation immediatement
+                  </label>
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="col-md-12 mt-4">
+                <button type="submit" class="btn btn-danger rounded-pill px-4" [disabled]="submitting">
+                  <i class="fas fa-calendar-check me-1"></i>
+                  {{ submitting ? 'Enregistrement...' : 'Programmer le trajet' }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
