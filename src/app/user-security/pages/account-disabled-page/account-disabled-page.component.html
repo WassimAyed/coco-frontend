@@ -1,0 +1,86 @@
+<div class="disabled-bg fixed inset-0 overflow-hidden">
+
+  <!-- Animated radial gradient layer -->
+  <div class="disabled-bg__radials absolute inset-0 pointer-events-none"></div>
+
+  <!-- Floating orbs -->
+  <div class="disabled-orb disabled-orb--1 absolute rounded-full pointer-events-none"></div>
+  <div class="disabled-orb disabled-orb--2 absolute rounded-full pointer-events-none"></div>
+  <div class="disabled-orb disabled-orb--3 absolute rounded-full pointer-events-none"></div>
+
+  <!-- Noise grain overlay -->
+  <div class="absolute inset-0 pointer-events-none opacity-[0.03]"
+       style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/></filter><rect width=%22200%22 height=%22200%22 filter=%22url(%23n)%22 opacity=%221%22/></svg>');
+               background-size: 200px 200px;">
+  </div>
+
+  <!-- Main content -->
+  <div class="relative flex min-h-screen items-center justify-center px-4 py-12">
+
+    <div class="disabled-card w-full max-w-[420px] rounded-3xl px-8 py-10 text-center">
+
+      <!-- Icon ring -->
+      <div class="mb-7 flex justify-center">
+        <div class="disabled-icon-ring flex h-[88px] w-[88px] items-center justify-center rounded-2xl">
+          <lucide-icon
+            [img]="ShieldOffIcon"
+            [size]="42"
+            style="color: #f87171; display: flex;">
+          </lucide-icon>
+        </div>
+      </div>
+
+      <!-- Badge -->
+      <div class="disabled-fade-up-1 mb-5 flex justify-center">
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+              style="background: rgba(185,28,28,0.15); color: #fca5a5; border: 1px solid rgba(185,28,28,0.3);">
+          <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full" style="background:#ef4444;"></span>
+          Account Suspended
+        </span>
+      </div>
+
+      <!-- Heading -->
+      <h1 class="disabled-fade-up-2 mb-3 text-[1.75rem] font-bold leading-tight tracking-tight"
+          style="color: #f1f5f9;">
+        Access Restricted
+      </h1>
+
+      <!-- Description -->
+      <p class="disabled-fade-up-3 mb-2 text-sm leading-relaxed"
+         style="color: #94a3b8;">
+        Your account has been suspended by an administrator. You cannot access this platform at this time.
+      </p>
+      <p class="disabled-fade-up-3 mb-8 text-sm leading-relaxed"
+         style="color: #64748b;">
+        If you believe this is a mistake, please reach out to the support team to resolve the issue.
+      </p>
+
+      <!-- Divider -->
+      <div class="disabled-fade-up-4 mb-7 border-t"
+           style="border-color: rgba(255,255,255,0.06);"></div>
+
+      <!-- Actions -->
+      <div class="disabled-fade-up-4 flex flex-col gap-3">
+
+        <button
+          (click)="goToLogin()"
+          class="disabled-btn-primary w-full rounded-xl py-3.5 text-sm font-semibold text-white">
+          Back to Login
+        </button>
+
+        <a
+          href="mailto:support@espritlife.tn"
+          class="disabled-btn-secondary flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-medium">
+          Contact Support
+        </a>
+
+      </div>
+
+      <!-- Footnote -->
+      <p class="disabled-fade-up-4 mt-7 text-xs" style="color: #334155;">
+        ESPRIT Life &nbsp;·&nbsp; Student Platform
+      </p>
+
+    </div>
+  </div>
+</div>

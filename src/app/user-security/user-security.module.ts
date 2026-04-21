@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { SharedModule } from '../shared/shared.module';
+import { AccountDisabledPageComponent } from './pages/account-disabled-page/account-disabled-page.component';
 import { EmailVerificationPageComponent } from './pages/email-verification-page/email-verification-page.component';
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { OauthCallbackPageComponent } from './pages/oauth-callback-page/oauth-callback-page.component';
@@ -15,8 +16,8 @@ import { UserSecurityRoutingModule } from './user-security-routing.module';
 import { CreateProfileComponent } from './pages/create-profile/create-profile.component';
 
 @NgModule({
-  declarations: [EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent,CreateProfileComponent],
-  exports: [EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent],
+  declarations: [AccountDisabledPageComponent, EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent,CreateProfileComponent],
+  exports: [AccountDisabledPageComponent, EmailVerificationPageComponent, LoginPageComponent, OauthCallbackPageComponent, RegisterPageComponent, TwoFactorPageComponent, UserListComponent, UserProfilePageComponent],
   imports: [
     CommonModule,
     LucideAngularModule,
