@@ -18,8 +18,10 @@
 
       <!-- Product Image -->
       <div *ngIf="getItemImage()" class="detail-hero-img-wrap">
-        <img [src]="getItemImage()" [alt]="item!.title" class="detail-hero-img"
-             onerror="this.style.display='none'" />
+        <a [routerLink]="['/real-estate/furniture', item!.id]">
+          <img [src]="getItemImage()" [alt]="item!.title" class="detail-hero-img"
+               onerror="this.style.display='none'" style="cursor:pointer" />
+        </a>
       </div>
 
       <div class="detail-hero-badge">
@@ -67,7 +69,7 @@
     <!-- ACTION BUTTONS -->
     <div class="det-actions">
       <button class="det-btn det-btn-cart" (click)="addToCart()">
-        &#128722; Ajouter au panier
+        Ajouter au panier
       </button>
       <button class="det-btn det-btn-offer" (click)="openOfferForm()">
         &#128176; Faire une offre
@@ -104,7 +106,7 @@
   </div>
 
   <div *ngIf="!offerSubmitted()" class="offer-form-body">
-    <p class="offer-subtitle">Proposez votre prix au vendeur &mdash; style inDriver !</p>
+    <p class="offer-subtitle">Proposez votre prix au vendeur</p>
 
     <label class="offer-label">Votre prix propos&eacute; (DT)</label>
     <input

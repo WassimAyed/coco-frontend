@@ -6,8 +6,7 @@
       <p>Browse and manage available furniture</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/real-estate/furniture/reports" class="hdr-btn hdr-btn--reports">Reports</a>
-      <a routerLink="/real-estate/furniture/notifications" class="hdr-btn hdr-btn--notif">Notifications <span *ngIf="unreadCount > 0" class="hdr-badge">{{ unreadCount }}</span></a>
+<a routerLink="/real-estate/furniture/notifications" class="hdr-btn hdr-btn--notif">Notifications <span *ngIf="unreadCount > 0" class="hdr-badge">{{ unreadCount }}</span></a>
       <a routerLink="/real-estate/furniture/cart" class="hdr-btn hdr-btn--cart">Cart <span *ngIf="cartCount > 0" class="hdr-badge">{{ cartCount }}</span></a>
       <a routerLink="/real-estate/furniture/favorites" class="hdr-btn hdr-btn--fav">Favorites</a>
       <a routerLink="/real-estate/furniture/new" class="hdr-btn hdr-btn--primary">+ Add New</a>
@@ -49,8 +48,9 @@
 
       <!-- IMAGE -->
       <div class="card-image">
-        <img [src]="optimizedImg(f)"
-          [alt]="f.title" />
+        <a [routerLink]="['/real-estate/furniture', f.id]">
+          <img [src]="optimizedImg(f)" [alt]="f.title" style="cursor:pointer" />
+        </a>
         <div *ngIf="isBoosted(f.id)" class="featured-badge">⭐ FEATURED</div>
         <span class="badge-status" [ngClass]="getStatusClass(f.status)">{{ f.status }}</span>
         <button class="btn-fav" (click)="toggleFavorite(f)" [class.active]="isFavorite(f)">

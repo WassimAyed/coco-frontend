@@ -83,6 +83,21 @@
 .btn-view { background: #f3e5f5; color: #6a1b9a; }
 .btn-delete { background: #ffebee; color: #c62828; }
 
+.notif-icon-emoji {
+  font-size: 1.6rem;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mock-notif {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
 .empty {
   text-align: center; padding: 4rem 2rem;
   background: white; border-radius: 16px;

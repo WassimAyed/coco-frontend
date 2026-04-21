@@ -101,15 +101,21 @@ export class CouponListComponent implements OnInit {
     }
     this.couponService.claimCoupon(couponId, this.userId).subscribe({
       next: () => {
-        this.claimedMessage = 'Coupon reclame avec succes!';
+        this.claimedMessage = '✅ Coupon ajouté à ta liste !';
         this.claimedMessageType = 'success';
-        setTimeout(() => this.claimedMessage = '', 3000);
+        setTimeout(() => this.claimedMessage = '', 4000);
         this.loadCoupons();
       },
       error: (err) => {
-        this.claimedMessage = err.error?.message || 'Erreur lors de la reclamation';
-        this.claimedMessageType = 'error';
-        setTimeout(() => this.claimedMessage = '', 3000);
+        const msg: string = err.error?.message || '';
+        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('déjà')) {
+          this.claimedMessage = '⚠️ Tu as déjà réclamé ce coupon';
+          this.claimedMessageType = 'warning';
+        } else {
+          this.claimedMessage = msg || 'Erreur lors de la réclamation';
+          this.claimedMessageType = 'error';
+        }
+        setTimeout(() => this.claimedMessage = '', 4000);
       }
     });
   }

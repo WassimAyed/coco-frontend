@@ -27,96 +27,14 @@
     <div class="boost-header">
       <button (click)="goBack()" class="boost-btn-back">&#8592; Retour</button>
       <div class="boost-header-text">
-        <h1 class="boost-main-title">Analyse IA : Comment booster au maximum ta visibilit&#233; en Tunisie</h1>
-        <p class="boost-main-sub" *ngIf="furniture">L'IA analyse ton annonce <strong>{{ furniture.title }}</strong> et te propose le plan le plus adapt&#233;</p>
+        <h1 class="boost-main-title">&#9889; Booster mon annonce</h1>
+        <p class="boost-main-sub" *ngIf="furniture">Choisissez une dur&#233;e pour mettre en avant <strong>{{ furniture.title }}</strong></p>
       </div>
     </div>
 
     <!-- ALREADY BOOSTED BANNER -->
     <div *ngIf="alreadyBoosted" class="already-boosted">
       &#128293; Cette annonce est d&#233;j&#224; boost&#233;e et active !
-    </div>
-
-    <!-- AI SECTION -->
-    <div class="boost-ai-section">
-      <div class="boost-ai-header">
-        <span class="boost-ai-badge">&#129302; Analyse IA</span>
-        <h2 class="boost-ai-title">Recommandations intelligentes</h2>
-      </div>
-
-      <div *ngIf="analyzing" class="boost-analyzing">
-        <div class="boost-spinner"></div>
-        <p>&#129302; L'IA analyse votre annonce...</p>
-      </div>
-
-      <div *ngIf="!analyzing && analysis" class="boost-analysis-grid">
-
-        <!-- Scores -->
-        <div class="boost-analysis-card">
-          <h3>&#128202; Scores de votre annonce</h3>
-          <div class="boost-score-item">
-            <span>Prix du march&#233;</span>
-            <div class="boost-score-bar">
-              <div class="boost-score-fill"
-                [style.width.%]="analysis.currentPriceScore"
-                [style.background]="getScoreColor(analysis.currentPriceScore)">
-              </div>
-            </div>
-            <span class="boost-score-val" [style.color]="getScoreColor(analysis.currentPriceScore)">
-              {{ analysis.currentPriceScore }}/100 &#8212; {{ getScoreLabel(analysis.currentPriceScore) }}
-            </span>
-          </div>
-          <div class="boost-score-item">
-            <span>Visibilit&#233; pr&#233;dite</span>
-            <div class="boost-score-bar">
-              <div class="boost-score-fill"
-                [style.width.%]="analysis.visibilityScore"
-                [style.background]="getScoreColor(analysis.visibilityScore)">
-              </div>
-            </div>
-            <span class="boost-score-val" [style.color]="getScoreColor(analysis.visibilityScore)">
-              {{ analysis.visibilityScore }}/100 &#8212; {{ getScoreLabel(analysis.visibilityScore) }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Suggestions -->
-        <div class="boost-analysis-card">
-          <h3>&#128161; Suggestions IA</h3>
-          <div class="boost-suggestion">
-            <span class="boost-sug-label">&#128176; Prix sugg&#233;r&#233;</span>
-            <span class="boost-sug-value">{{ analysis.suggestedPrice }} DT
-              <small *ngIf="furniture">(actuel: {{ furniture.price }} DT)</small>
-            </span>
-          </div>
-          <div class="boost-suggestion">
-            <span class="boost-sug-label">&#127991;&#65039; Cat&#233;gorie</span>
-            <span class="boost-sug-value">{{ analysis.suggestedCategory }}</span>
-          </div>
-          <div class="boost-suggestion">
-            <span class="boost-sug-label">&#128221; Titre am&#233;lior&#233;</span>
-            <span class="boost-sug-value">{{ analysis.improvedTitle }}</span>
-          </div>
-          <div class="boost-suggestion">
-            <span class="boost-sug-label">&#128196; Description</span>
-            <span class="boost-sug-value desc">{{ analysis.improvedDescription }}</span>
-          </div>
-        </div>
-
-        <!-- Recommended duration -->
-        <div class="boost-analysis-card boost-full-width">
-          <h3>&#9201;&#65039; Dur&#233;e recommand&#233;e par l'IA</h3>
-          <div class="boost-rec-duration">
-            <span class="boost-rec-days">{{ analysis.recommendedDuration }} jour(s)</span>
-            <p>{{ analysis.reasoning }}</p>
-          </div>
-        </div>
-
-      </div>
-
-      <button *ngIf="!analyzing" (click)="analyzeWithAI()" class="boost-btn-reanalyze">
-        &#128260; R&#233;analyser
-      </button>
     </div>
 
     <!-- PLAN CARDS -->
@@ -126,11 +44,10 @@
         <div *ngFor="let plan of plans; let i = index"
           class="boost-plan-card"
           [class.boost-plan-selected]="selectedDuration === plan.days"
-          [class.boost-plan-recommended]="analysis?.recommendedDuration === plan.days"
           [ngClass]="'boost-plan-color-' + (i + 1)"
           (click)="selectPlan(plan.days)">
-          <div *ngIf="analysis?.recommendedDuration === plan.days" class="boost-rec-badge">
-            &#129302; Recommand&#233; par l'IA
+          <div *ngIf="i === 1" class="boost-rec-badge">
+            &#11088; Populaire
           </div>
           <div class="boost-plan-icon">{{ plan.icon }}</div>
           <h3 class="boost-plan-label">{{ plan.label }}</h3>

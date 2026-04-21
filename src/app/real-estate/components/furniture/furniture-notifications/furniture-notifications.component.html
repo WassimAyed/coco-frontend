@@ -17,15 +17,29 @@
 
   <div *ngIf="loading" class="loading">Chargement...</div>
 
-  <div *ngIf="!loading && notifications.length > 0" class="notifications-list">
-    <div *ngFor="let n of notifications"
-      class="notification-card"
-      [class.unread]="!n.isRead">
+  <div *ngIf="!loading" class="notifications-list">
 
+    <!-- MOCK NOTIFICATIONS -->
+    <div *ngFor="let n of mockNotifications" class="notification-card mock-notif" [class.unread]="!n.isRead"
+         [style.border-left-color]="n.color">
+      <div class="notif-icon-emoji">{{ n.icon }}</div>
+      <div class="notif-body">
+        <p class="notif-message">{{ n.message }}</p>
+        <p class="notif-meta">
+          📅 {{ n.time }}
+          <span *ngIf="!n.isRead" class="badge-unread">Nouveau</span>
+        </p>
+      </div>
+      <div class="notif-actions">
+        <button *ngIf="!n.isRead" (click)="dismissMock(n.id)" class="btn-mark">Lu</button>
+      </div>
+    </div>
+
+    <!-- API NOTIFICATIONS -->
+    <div *ngFor="let n of notifications" class="notification-card" [class.unread]="!n.isRead">
       <div class="notif-icon" [ngClass]="getTypeClass(n.type)">
         <lucide-angular [img]="getTypeIcon(n.type)" [size]="20"></lucide-angular>
       </div>
-
       <div class="notif-body">
         <p class="notif-message">{{ n.message | replace:'€':' DT' | replace:'$':' DT' }}</p>
         <p class="notif-meta">
@@ -33,23 +47,18 @@
           <span *ngIf="!n.isRead" class="badge-unread">Nouveau</span>
         </p>
       </div>
-
       <div class="notif-actions">
-        <button *ngIf="!n.isRead" (click)="markAsRead(n.id)" class="btn-mark">
-          <lucide-angular [img]="Eye" [size]="14"></lucide-angular> Lu
-        </button>
+        <button *ngIf="!n.isRead" (click)="markAsRead(n.id)" class="btn-mark">Lu</button>
         <a *ngIf="n.furnitureId" [routerLink]="['/real-estate/furniture', n.furnitureId]" class="btn-view">Voir</a>
         <button (click)="delete(n.id)" class="btn-delete">
           <lucide-angular [img]="Trash2" [size]="14"></lucide-angular>
         </button>
       </div>
     </div>
-  </div>
 
-  <div *ngIf="!loading && notifications.length === 0" class="empty">
-    <div class="empty-icon">
-      <lucide-angular [img]="Bell" [size]="40" color="#ccc"></lucide-angular>
+    <div *ngIf="notifications.length === 0 && mockNotifications.length === 0" class="empty">
+      <div class="empty-icon"><lucide-angular [img]="Bell" [size]="40" color="#ccc"></lucide-angular></div>
+      <p>Aucune notification pour le moment.</p>
     </div>
-    <p>Aucune notification pour le moment.</p>
   </div>
 </div>

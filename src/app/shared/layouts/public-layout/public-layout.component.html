@@ -44,14 +44,15 @@
             </a>
             <div class="border-t border-border my-1"></div>
             <a routerLink="/coupon"
-              class="block px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-primary"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
-              🎁 Bons Plans Etudiants
+              Bons Plans Etudiants
             </a>
             <a routerLink="/coupon/my-coupons"
-              class="block pl-8 pr-4 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-primary"
+              class="block pr-4 py-1.5 text-muted-foreground hover:bg-secondary hover:text-primary"
+              style="padding-left:2.5rem;font-size:0.9em"
               (click)="closeFeaturesDropdown()">
-              └ 🎁 Mes Coupons
+              Mes Coupons
             </a>
 
           </div>
@@ -112,11 +113,11 @@
         <a routerLink="/lost-found" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
           Lost & Found Service
         </a>
-        <a routerLink="/coupon" class="block rounded-2xl px-3 py-2 font-semibold hover:bg-secondary" (click)="closeMenu()">
-          🎁 Bons Plans Etudiants
+        <a routerLink="/coupon" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Bons Plans Etudiants
         </a>
-        <a routerLink="/coupon/my-coupons" class="block rounded-2xl pl-6 pr-3 py-1.5 text-sm hover:bg-secondary" (click)="closeMenu()">
-          └ 🎁 Mes Coupons
+        <a routerLink="/coupon/my-coupons" class="block rounded-2xl py-1.5 hover:bg-secondary" style="padding-left:2.5rem;font-size:0.9em" (click)="closeMenu()">
+          Mes Coupons
         </a>
       </div>
       }

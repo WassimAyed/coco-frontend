@@ -82,12 +82,12 @@ export class FurnitureFormComponent implements OnInit {
     this.form = this.fb.group({
       title: ['', Validators.required],
       description: [''],
-      category: [this.categories[0], Validators.required],
-      condition: ['GOOD', Validators.required],
-      price: [0, [Validators.required, Validators.min(0)]],
-      quantity: [1, [Validators.required, Validators.min(0)]],
-      status: ['AVAILABLE', Validators.required],
-      sellerId: [0, [Validators.required, Validators.min(1)]],
+      category: [this.categories[0]],
+      condition: ['GOOD'],
+      price: [0, [Validators.min(0)]],
+      quantity: [1, [Validators.min(0)]],
+      status: ['AVAILABLE'],
+      sellerId: [1],
     });
   }
 
@@ -179,29 +179,31 @@ export class FurnitureFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid) {
-      this.error = 'Please fix form errors before submitting.';
+    if (!this.form.get('title')?.value) {
+      this.error = 'Le titre est obligatoire.';
       return;
     }
     this.loading = true;
+    this.error = undefined;
     const payload: Furniture = {
       ...this.form.value,
+      sellerId: this.form.value.sellerId || 1,
       imageBase64: this.imageBase64,
       imageUrl: this.cloudinaryUrl,
     };
     if (this.isEdit && this.id) {
       this.service.update(this.id, payload).subscribe({
-        next: () => this.router.navigate(['/furniture']),
+        next: () => this.router.navigate(['/real-estate/furniture']),
         error: () => {
-          this.error = 'Update failed.';
+          this.error = 'Erreur lors de la mise à jour. Vérifiez que le backend est démarré.';
           this.loading = false;
         },
       });
     } else {
       this.service.create(payload).subscribe({
-        next: () => this.router.navigate(['/furniture']),
+        next: () => this.router.navigate(['/real-estate/furniture']),
         error: () => {
-          this.error = 'Create failed.';
+          this.error = 'Erreur lors de la création. Vérifiez que le backend est démarré (port 8099).';
           this.loading = false;
         },
       });
