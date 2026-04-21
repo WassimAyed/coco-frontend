@@ -1,46 +1,73 @@
 <div class="min-h-screen bg-background">
   <section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
     <div class="section-shell space-y-6">
-      <a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
-        ← Back to events
+      <a routerLink="/event" class="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary hover:text-primary">
+        <i class="fas fa-arrow-left"></i> Back to events
       </a>
 
-      <div class="space-y-2">
-        <h1 class="text-3xl font-bold text-foreground">Événements participés</h1>
-        <p class="text-slate-500">Retrouvez les événements auxquels vous êtes inscrit.</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="space-y-3">
+          <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+            <i class="fas fa-ticket-alt"></i> Mes participations
+          </span>
+          <h1 class="text-3xl font-bold text-foreground sm:text-4xl">Événements participés</h1>
+          <p class="text-lg text-slate-500">Retrouvez les événements auxquels vous êtes inscrit.</p>
+        </div>
       </div>
 
-      <div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
-      <div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white p-6 text-sm text-slate-500 shadow-sm">
+        <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+        Loading your participations...
+      </div>
 
+      <!-- Error -->
+      <div *ngIf="errorMessage" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+        <i class="fas fa-exclamation-triangle mt-0.5 text-red-600"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Table -->
       <div class="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm" *ngIf="participatedEvents.length > 0">
         <table class="my-events-table w-full min-w-[860px] border-collapse">
           <thead>
             <tr class="bg-slate-100 text-left text-xs uppercase tracking-wide text-slate-600">
-              <th class="px-4 py-3 font-semibold">Image</th>
-              <th class="px-4 py-3 font-semibold">Title</th>
-              <th class="px-4 py-3 font-semibold">Date</th>
-              <th class="px-4 py-3 font-semibold">Location</th>
-              <th class="px-4 py-3 font-semibold">Status</th>
-              <th class="px-4 py-3 font-semibold">Actions</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-image me-2 text-slate-400"></i>Image</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-heading me-2 text-slate-400"></i>Title</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-calendar-alt me-2 text-slate-400"></i>Date</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-map-marker-alt me-2 text-slate-400"></i>Location</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-flag me-2 text-slate-400"></i>Status</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-cog me-2 text-slate-400"></i>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let event of participatedEvents" class="border-t border-border align-middle">
+            <tr *ngFor="let event of participatedEvents" class="border-t border-border align-middle transition hover:bg-slate-50">
               <td class="px-4 py-3">
                 <img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-16 w-24 rounded-lg border border-border object-cover" />
               </td>
               <td class="px-4 py-3">
                 <p class="font-semibold text-foreground">{{ event.name || 'Untitled event' }}</p>
-                <p class="text-xs text-slate-500">{{ getCategoryName(event.categoryId) }}</p>
+                <p class="mt-0.5 text-xs text-slate-500"><i class="fas fa-tag me-1"></i>{{ getCategoryName(event.categoryId) }}</p>
               </td>
-              <td class="px-4 py-3 text-sm text-slate-700">{{ formatDate(event.startDate) }}</td>
-              <td class="px-4 py-3 text-sm text-slate-700">{{ event.location || 'N/A' }}</td>
-              <td class="px-4 py-3 text-sm text-slate-700">{{ event.status || 'N/A' }}</td>
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <i class="fas fa-calendar-alt me-1 text-blue-500"></i>{{ formatDate(event.startDate) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <i class="fas fa-map-marker-alt me-1 text-red-500"></i>{{ event.location || 'N/A' }}
+              </td>
+              <td class="px-4 py-3 text-sm">
+                <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  <i class="fas fa-circle text-[6px]"></i> {{ event.status || 'N/A' }}
+                </span>
+              </td>
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
-                  <button type="button" class="btn-secondary !px-3 !py-2" (click)="openDetailModal(event)">Voir Détail</button>
-                  <a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-secondary !px-3 !py-2">Ouvrir</a>
+                  <button type="button" class="btn-secondary !px-3 !py-2 !text-xs" (click)="openDetailModal(event)">
+                    <i class="fas fa-eye me-1"></i> Voir Détail
+                  </button>
+                  <a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-primary !px-3 !py-2 !text-xs">
+                    <i class="fas fa-external-link-alt me-1"></i> Ouvrir
+                  </a>
                 </div>
               </td>
             </tr>
@@ -48,56 +75,89 @@
         </table>
       </div>
 
-      <p *ngIf="!isLoading && participatedEvents.length === 0" class="rounded-2xl border border-border bg-white p-4 text-slate-500">
-        No participated events found for your account.
-      </p>
+      <!-- Empty -->
+      <div *ngIf="!isLoading && participatedEvents.length === 0" class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white p-10 text-center">
+        <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <i class="fas fa-ticket-alt fa-2x"></i>
+        </span>
+        <p class="text-base font-semibold text-foreground">No participated events found</p>
+        <p class="text-sm text-slate-500">You haven't registered for any event yet.</p>
+      </div>
     </div>
   </section>
 
+  <!-- Detail modal -->
   <div *ngIf="detailModalEvent" class="event-edit-modal-backdrop" (click)="closeDetailModal()">
     <section class="event-detail-modal" (click)="$event.stopPropagation()">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-foreground">Détail Événement (Participant)</h2>
-        <button type="button" class="rounded-md border border-border px-3 py-1 text-sm" (click)="closeDetailModal()">Close</button>
+        <h2 class="flex items-center gap-2 text-xl font-bold text-foreground">
+          <i class="fas fa-info-circle text-primary"></i>
+          Détail Événement
+        </h2>
+        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600" (click)="closeDetailModal()" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
-      <div *ngIf="isDetailModalLoading" class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">Loading details...</div>
+      <div *ngIf="isDetailModalLoading" class="flex items-center gap-3 rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">
+        <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+        Loading details...
+      </div>
 
       <div *ngIf="!isDetailModalLoading" class="space-y-5">
         <div class="grid gap-4 md:grid-cols-[220px_1fr]">
-          <img [src]="getEventCover(detailModalEvent)" [alt]="detailModalEvent.name || 'Event'" class="h-44 w-full rounded-xl border border-border object-cover" />
+          <img [src]="getEventCover(detailModalEvent)" [alt]="detailModalEvent.name || 'Event'" class="h-44 w-full rounded-xl border border-border object-cover shadow-sm" />
           <div class="space-y-2 text-sm text-slate-700">
-            <p><strong>Title:</strong> {{ detailModalEvent.name || 'N/A' }}</p>
-            <p><strong>Start date:</strong> {{ formatDate(detailModalEvent.startDate) }}</p>
-            <p><strong>End date:</strong> {{ formatDate(detailModalEvent.endDate) }}</p>
-            <p><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</p>
-            <p><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</p>
+            <p class="flex items-start gap-2">
+              <i class="fas fa-heading mt-1 w-4 text-slate-400"></i>
+              <span><strong>Title:</strong> {{ detailModalEvent.name || 'N/A' }}</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fas fa-calendar-alt mt-1 w-4 text-blue-500"></i>
+              <span><strong>Start date:</strong> {{ formatDate(detailModalEvent.startDate) }}</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fas fa-calendar-check mt-1 w-4 text-indigo-500"></i>
+              <span><strong>End date:</strong> {{ formatDate(detailModalEvent.endDate) }}</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fas fa-map-marker-alt mt-1 w-4 text-red-500"></i>
+              <span><strong>Location:</strong> {{ detailModalEvent.location || 'N/A' }}</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fas fa-align-left mt-1 w-4 text-slate-400"></i>
+              <span><strong>Description:</strong> {{ detailModalEvent.description || 'N/A' }}</span>
+            </p>
           </div>
         </div>
 
         <div class="rounded-xl border border-border bg-slate-50 p-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-base font-semibold text-foreground">Capacity</h3>
+            <h3 class="flex items-center gap-2 text-base font-semibold text-foreground">
+              <i class="fas fa-users text-emerald-500"></i> Capacity
+            </h3>
             <span class="availability-pill" [ngClass]="getModalAvailabilityClass()">{{ getModalAvailabilityLabel() }}</span>
           </div>
           <div class="mt-3 grid gap-2 sm:grid-cols-3">
             <div class="rounded-lg border border-border bg-white px-3 py-2 text-sm">
-              <span class="text-slate-500">Max capacity</span>
+              <span class="text-xs text-slate-500">Max capacity</span>
               <p class="font-semibold text-foreground">{{ getModalMaxCapacity() }}</p>
             </div>
             <div class="rounded-lg border border-border bg-white px-3 py-2 text-sm">
-              <span class="text-slate-500">Current participants</span>
+              <span class="text-xs text-slate-500">Current participants</span>
               <p class="font-semibold text-foreground">{{ getModalParticipantsCount() }}</p>
             </div>
             <div class="rounded-lg border border-border bg-white px-3 py-2 text-sm">
-              <span class="text-slate-500">Remaining spots</span>
+              <span class="text-xs text-slate-500">Remaining spots</span>
               <p class="font-semibold text-foreground">{{ getModalRemainingSpots() }}</p>
             </div>
           </div>
         </div>
 
         <div class="rounded-xl border border-border bg-slate-50 p-4">
-          <h3 class="text-base font-semibold text-foreground">Participants</h3>
+          <h3 class="flex items-center gap-2 text-base font-semibold text-foreground">
+            <i class="fas fa-user-friends text-primary"></i> Participants
+          </h3>
           <div class="mt-3 overflow-x-auto" *ngIf="detailModalParticipants.length > 0; else noModalParticipants">
             <table class="w-full min-w-[580px] border-collapse">
               <thead>
@@ -109,8 +169,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let participant of detailModalParticipants" class="border-b border-border bg-white text-sm text-slate-700 last:border-b-0">
-                  <td class="px-3 py-2">{{ participant.fullName || 'N/A' }}</td>
+                <tr *ngFor="let participant of detailModalParticipants" class="border-b border-border bg-white text-sm text-slate-700 last:border-b-0 hover:bg-slate-50">
+                  <td class="px-3 py-2 font-medium">{{ participant.fullName || 'N/A' }}</td>
                   <td class="px-3 py-2">{{ participant.email || 'N/A' }}</td>
                   <td class="px-3 py-2">{{ participant.phone || 'N/A' }}</td>
                   <td class="px-3 py-2">{{ formatDate(participant.registrationDate) }}</td>
@@ -119,30 +179,40 @@
             </table>
           </div>
           <ng-template #noModalParticipants>
-            <p class="mt-2 text-sm text-slate-500">No participants for this event yet.</p>
+            <p class="mt-2 text-sm italic text-slate-500">No participants for this event yet.</p>
           </ng-template>
         </div>
 
         <div class="rounded-xl border border-border bg-slate-50 p-4">
-          <h3 class="text-base font-semibold text-foreground">Reactions</h3>
+          <h3 class="flex items-center gap-2 text-base font-semibold text-foreground">
+            <i class="fas fa-smile text-yellow-500"></i> Reactions
+          </h3>
           <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <div *ngFor="let reactionType of reactionTypes" class="rounded-lg border border-border bg-white px-3 py-2 text-sm">
-              <span>{{ reactionEmoji[reactionType] }} {{ reactionType }}</span>
-              <span class="float-right font-semibold">{{ getModalReactionCount(reactionType) }}</span>
+            <div *ngFor="let reactionType of reactionTypes" class="flex items-center justify-between rounded-lg border border-border bg-white px-3 py-2 text-sm">
+              <span class="flex items-center gap-2">
+                <span class="text-lg">{{ reactionEmoji[reactionType] }}</span>
+                <span class="text-slate-700">{{ reactionType }}</span>
+              </span>
+              <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ getModalReactionCount(reactionType) }}</span>
             </div>
           </div>
         </div>
 
         <div class="rounded-xl border border-border bg-slate-50 p-4">
-          <h3 class="text-base font-semibold text-foreground">Comments</h3>
+          <h3 class="flex items-center gap-2 text-base font-semibold text-foreground">
+            <i class="fas fa-comments text-primary"></i> Comments
+          </h3>
           <div class="mt-3 space-y-2" *ngIf="detailModalComments.length > 0; else noModalComments">
-            <div *ngFor="let comment of detailModalComments" class="rounded-lg border border-border bg-white px-3 py-2">
-              <p class="text-xs font-semibold text-slate-600">{{ comment.authorName }} ({{ comment.authorEmail }})</p>
+            <div *ngFor="let comment of detailModalComments" class="rounded-lg border border-border bg-white px-3 py-2 shadow-sm">
+              <p class="flex items-center gap-1 text-xs font-semibold text-slate-600">
+                <i class="fas fa-user-circle text-slate-400"></i>
+                {{ comment.authorName }} <span class="text-slate-400">({{ comment.authorEmail }})</span>
+              </p>
               <p class="mt-1 text-sm text-slate-700">{{ comment.content }}</p>
             </div>
           </div>
           <ng-template #noModalComments>
-            <p class="mt-2 text-sm text-slate-500">No comments for this event.</p>
+            <p class="mt-2 text-sm italic text-slate-500">No comments for this event.</p>
           </ng-template>
         </div>
       </div>
