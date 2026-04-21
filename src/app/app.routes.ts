@@ -6,6 +6,7 @@ import { LandingPageComponent } from './shared/pages/landing-page/landing-page.c
 import { adminGuard } from './user-security/guards/admin.guard';
 import { guestGuard } from './user-security/guards/guest.guard';
 import { profileGuard } from './user-security/guards/profile.guard';
+import { AccountDisabledPageComponent } from './user-security/pages/account-disabled-page/account-disabled-page.component';
 import { EmailVerificationPageComponent } from './user-security/pages/email-verification-page/email-verification-page.component';
 import { LoginPageComponent } from './user-security/pages/login-page/login-page.component';
 import { OauthCallbackPageComponent } from './user-security/pages/oauth-callback-page/oauth-callback-page.component';
@@ -17,6 +18,7 @@ import { CreateProfileComponent } from './user-security/pages/create-profile/cre
 
 export const routes: Routes = [
   { path: '', redirectTo: 'landing', pathMatch: 'full' },
+  { path: 'account-disabled', component: AccountDisabledPageComponent },
   { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
   { path: 'auth/register', redirectTo: 'register', pathMatch: 'full' },
 {

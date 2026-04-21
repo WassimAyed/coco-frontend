@@ -28,11 +28,14 @@ export class OauthCallbackPageComponent {
     const message = queryParams.get('message')?.trim() ?? '';
 
     if (error || message) {
-      this.errorMessage.set(message || error || 'Google login failed.');
-      this.toastService.error(
-        message || error || 'Google login failed.',
-        'Google Login Failed',
-      );
+      const detail = message || error || 'Google login failed.';
+      const lower = detail.toLowerCase();
+      if (lower.includes('disabled') || lower.includes('suspended') || lower.includes('locked')) {
+        await this.router.navigate(['/account-disabled']);
+        return;
+      }
+      this.errorMessage.set(detail);
+      this.toastService.error(detail, 'Google Login Failed');
       return;
     }
 

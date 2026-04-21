@@ -258,39 +258,14 @@
         </div>
       </div>
       } @else if (selectedModule() === 'users') {
-      <article class="rounded-2xl bg-white p-6">
-        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-foreground">User Management</h3>
-            <p class="text-sm text-slate-500">Manage all ESPRIT Life users</p>
-          </div>
-          <div class="flex gap-2">
-            <button type="button"
-              class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium">
-              <lucide-icon [img]="DownloadIcon" [size]="16"></lucide-icon>
-              Export
-            </button>
-            <button type="button"
-              class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white">
-              <lucide-icon [img]="UsersIcon" [size]="16"></lucide-icon>
-              Add User
-            </button>
-          </div>
-        </div>
-
-        <div class="mb-6 flex flex-col gap-4 sm:flex-row">
-          <div class="relative flex-1">
-            <lucide-icon [img]="SearchIcon" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-              [size]="16"></lucide-icon>
-            <input class="w-full rounded-xl border border-border py-3 pl-10 pr-4 text-sm outline-none"
-              placeholder="Search users..." />
-          </div>
-          <div class="w-full rounded-xl border border-border px-4 py-3 text-sm text-slate-500 sm:w-[180px]">Filter by
-            status</div>
-        </div>
-
-        <p class="py-12 text-center text-slate-500">User management table would be displayed here...</p>
-      </article>
+      <app-admin-user-management
+        [users]="users()"
+        [isLoading]="isLoadingUsers()"
+        [errorMessage]="usersError()"
+        [busyUserIds]="busyUserIds()"
+        (disableUser)="disableUser($event)"
+        (enableUser)="enableUser($event)"
+      />
       } @else if (selectedModule() === 'events') {
       <app-admin-events />
       } @else if (selectedModule() === 'item-reports') {
