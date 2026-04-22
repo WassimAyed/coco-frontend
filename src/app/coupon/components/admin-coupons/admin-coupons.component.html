@@ -217,12 +217,12 @@
             </button>
           </td>
           <td class="px-6 py-4 text-right">
-            <div class="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-              <button (click)="openEditForm(c)"
+            <div class="flex justify-end gap-2">
+              <button (click)="openEditForm(c)" title="Modifier"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-500 transition hover:border-blue-300 hover:text-blue-600">
                 <lucide-icon [img]="EditIcon" [size]="14"></lucide-icon>
               </button>
-              <button (click)="deleteCoupon(c.id)"
+              <button (click)="deleteCoupon(c.id)" title="Supprimer"
                 class="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-500 transition hover:border-red-300 hover:text-red-600">
                 <lucide-icon [img]="TrashIcon" [size]="14"></lucide-icon>
               </button>
