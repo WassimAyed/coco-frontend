@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { SharedModule } from '../shared/shared.module';
 import { AdminCollocationComponent } from '../collocation/components/admin-collocation/admin-collocation.component';
+import { AdminCouponsComponent } from '../coupon/components/admin-coupons/admin-coupons.component';
 import { AdminCovoiturageComponent } from '../covoiturage/components/admin-covoiturage/admin-covoiturage.component';
 import { AdminPlansComponent } from '../subs-payment/components/admin-plans/admin-plans.component';
 import { EventPaginationModule } from '../event/event-pagination.module';
@@ -40,6 +41,7 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
     AdminPlansComponent,
     AdminCovoiturageComponent,
     AdminCollocationComponent,
+    AdminCouponsComponent,
   ],
 })
 export class AdminModule {}
