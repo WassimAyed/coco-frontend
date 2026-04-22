@@ -1,5 +1,8 @@
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { LucideAngularModule, AlertTriangle, ShieldCheck, Clock, FileText, ChevronLeft, Eye, MessageSquare, CheckBadge } from 'lucide-angular';
+import { LucideAngularModule, AlertTriangle, ShieldCheck, Clock, FileText, ChevronLeft, Eye, MessageSquare, BadgeCheck } from 'lucide-angular';
 
 interface Report {
   id: number;
@@ -26,7 +29,7 @@ export class FurnitureReportsComponent implements OnInit {
   readonly BackIcon = ChevronLeft;
   readonly ViewIcon = Eye;
   readonly MsgIcon = MessageSquare;
-  readonly ResolvedIcon = CheckBadge;
+  readonly ResolvedIcon = BadgeCheck;
   reports = signal<Report[]>([]);
   loading = signal(true);
   filter = signal<string>('ALL');
@@ -54,6 +57,14 @@ export class FurnitureReportsComponent implements OnInit {
     const f = this.filter();
     if (f === 'ALL') return this.reports();
     return this.reports().filter(r => r.status === f);
+  }
+
+  pendingCount(): number {
+    return this.reports().filter(r => r.status === 'PENDING').length;
+  }
+
+  resolvedCount(): number {
+    return this.reports().filter(r => r.status === 'RESOLVED' || r.status === 'REVIEWED').length;
   }
 
   getStatusClass(status: string): string {

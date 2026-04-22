@@ -33,7 +33,7 @@
         <lucide-icon [img]="ClockIcon" [size]="20"></lucide-icon>
       </div>
       <div>
-        <div class="text-lg font-bold text-orange-700">{{ reports().filter(r => r.status === 'PENDING').length }}</div>
+        <div class="text-lg font-bold text-orange-700">{{ pendingCount() }}</div>
         <div class="text-[10px] font-bold uppercase tracking-wider text-orange-500">En attente</div>
       </div>
     </div>
@@ -42,7 +42,7 @@
         <lucide-icon [img]="ShieldIcon" [size]="20"></lucide-icon>
       </div>
       <div>
-        <div class="text-lg font-bold text-green-700">{{ reports().filter(r => r.status === 'RESOLVED' || r.status === 'REVIEWED').length }}</div>
+        <div class="text-lg font-bold text-green-700">{{ resolvedCount() }}</div>
         <div class="text-[10px] font-bold uppercase tracking-wider text-green-500">Traités</div>
       </div>
     </div>

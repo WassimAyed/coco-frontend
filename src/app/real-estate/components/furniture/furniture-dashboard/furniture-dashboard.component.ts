@@ -1,3 +1,6 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { StatsService } from '../../../services/stats.service';
 import { Stats } from '../../../models/stats.model';
 import { LucideAngularModule, LayoutDashboard, ShoppingBag, DollarSign, AlertCircle, BarChart3, TrendingUp, ChevronLeft, Briefcase, Package, Tag } from 'lucide-angular';

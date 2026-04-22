@@ -1,6 +1,14 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Furniture } from '../../../models/furniture';
 import { Offer } from '../../../models/offer.model';
-import { LucideAngularModule, DollarSign, MessageCircle, User, Clock, ChevronLeft, Sparkles, CheckCircle, XCircle, ShoppingCart } from 'lucide-angular';
+import { FurnitureService } from '../../../services/furniture.service';
+import { OfferService } from '../../../services/offer.service';
+import { UserService } from '../../../../user-security/services/user.service';
+import { LucideAngularModule, DollarSign, MessageCircle, User, Clock, ChevronLeft, Sparkles, CheckCircle, XCircle, ShoppingCart, Package } from 'lucide-angular';
 
 @Component({
   selector: 'app-furniture-offers',
@@ -19,6 +27,8 @@ export class FurnitureOffersComponent implements OnInit {
   readonly CheckIcon = CheckCircle;
   readonly XIcon = XCircle;
   readonly CartIcon = ShoppingCart;
+  readonly PackageIcon = Package;
+  readonly ChevronLeft = ChevronLeft;
   furnitureId: number = 0;
   currentFurniture?: Furniture;
   budget: number = 0;

@@ -69,12 +69,13 @@
         <div class="space-y-2">
           <label class="text-xs font-bold uppercase tracking-widest text-slate-500">État de l'objet</label>
           <div class="flex gap-2">
-            <button *ngFor="let opt of conditionOptions" type="button" 
+            <button *ngFor="let opt of conditionOptions" type="button"
                     (click)="form.get('condition')?.setValue(opt.value)"
                     class="flex-1 rounded-xl border p-3 text-center transition-all"
-                    [class.border-primary]="form.get('condition')?.value === opt.value"
-                    [class.bg-primary/5]="form.get('condition')?.value === opt.value"
-                    [class.border-slate-200]="form.get('condition')?.value !== opt.value">
+                    [ngClass]="{
+                      'border-primary bg-primary/5': form.get('condition')?.value === opt.value,
+                      'border-slate-200': form.get('condition')?.value !== opt.value
+                    }">
               <div class="text-lg">{{ opt.icon }}</div>
               <div class="text-[10px] font-bold text-slate-900">{{ opt.label }}</div>
             </button>
@@ -110,12 +111,13 @@
       <div class="space-y-2">
         <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Statut de visibilité</label>
         <div class="grid grid-cols-3 gap-3">
-          <button *ngFor="let opt of statusOptions" type="button" 
+          <button *ngFor="let opt of statusOptions" type="button"
                   (click)="form.get('status')?.setValue(opt.value)"
                   class="rounded-xl border p-4 text-center transition-all"
-                  [class.border-primary]="form.get('status')?.value === opt.value"
-                  [class.bg-primary/5]="form.get('status')?.value === opt.value"
-                  [class.border-slate-200]="form.get('status')?.value !== opt.value">
+                  [ngClass]="{
+                    'border-primary bg-primary/5': form.get('status')?.value === opt.value,
+                    'border-slate-200': form.get('status')?.value !== opt.value
+                  }">
             <div class="mb-1 text-xl">{{ opt.icon }}</div>
             <div class="text-xs font-bold text-slate-900 uppercase">{{ opt.label }}</div>
           </button>
