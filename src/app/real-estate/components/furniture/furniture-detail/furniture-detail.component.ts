@@ -7,6 +7,7 @@ import { LucideAngularModule, ShieldCheck, ShoppingCart, Zap } from 'lucide-angu
 import { FurnitureService } from '../../../services/furniture.service';
 import { CartService } from '../../../services/cart.service';
 import { CloudinaryService } from '../../../../shared/services/cloudinary.service';
+import { UserService } from '../../../../user-security/services/user.service';
 import { Furniture } from '../../../models/furniture';
 import { ProductRecommendationsComponent } from '../../../../shared/components/product-recommendations/product-recommendations.component';
 
@@ -46,6 +47,7 @@ export class FurnitureDetailComponent implements OnInit {
     private cartService: CartService,
     private cloudinary: CloudinaryService,
     private http: HttpClient,
+    private userService: UserService,
   ) {}
 
   ngOnInit(): void {
@@ -95,8 +97,17 @@ export class FurnitureDetailComponent implements OnInit {
 
   loadSellerName(sellerId?: number): void {
     if (!sellerId) { this.sellerName = 'Vendeur anonyme'; return; }
-    this.http.get<any>(`http://localhost:8090/api/users/${sellerId}`).subscribe({
-      next: (u) => { this.sellerName = u.username || u.firstName || u.name || `Vendeur #${sellerId}`; },
+    // Utilise UserService (cache + environment.apiBaseUrl)
+    this.userService.getProfileByUserId(sellerId).subscribe({
+      next: (u: any) => {
+        if (u) {
+          this.sellerName = u.firstName && u.lastName
+            ? `${u.firstName} ${u.lastName}`.trim()
+            : u.username || u.name || `Vendeur #${sellerId}`;
+        } else {
+          this.sellerName = `Vendeur #${sellerId}`;
+        }
+      },
       error: () => { this.sellerName = `Vendeur #${sellerId}`; }
     });
   }

@@ -1,23 +1,29 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { LucideAngularModule, Archive, RotateCcw, Box, CheckCircle, AlertTriangle, ChevronLeft, Search, Database } from 'lucide-angular';
 
 @Component({
   selector: 'app-furniture-archive',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LucideAngularModule],
   templateUrl: './furniture-archive.component.html',
   styleUrls: ['./furniture-archive.component.scss']
 })
 export class FurnitureArchiveComponent implements OnInit {
+  readonly ArchiveIcon = Archive;
+  readonly RestoreIcon = RotateCcw;
+  readonly BoxIcon = Box;
+  readonly SuccessIcon = CheckCircle;
+  readonly AlertIcon = AlertTriangle;
+  readonly BackIcon = ChevronLeft;
+  readonly SearchIcon = Search;
+  readonly DataIcon = Database;
   archivedItems: any[] = [];
   loading = false;
   success?: string;
   error?: string;
   archiveResult?: { message: string; archivedCount: number };
 
-  private baseUrl = 'http://localhost:8094/api/archive';
+  private baseUrl = 'http://localhost:8099/api/archive';
 
   constructor(private http: HttpClient) {}
 

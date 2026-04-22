@@ -35,16 +35,16 @@ export class FurnitureFormComponent implements OnInit {
   aiGenerating = false;
   aiError = '';
 
-  categories = ['Salon', 'Chambre', 'Cuisine', 'Bureau', 'Meuble'];
+  categories = ['LIVING_ROOM', 'BEDROOM', 'OFFICE', 'KITCHEN', 'OTHER'];
 
   // Wizard
-  steps = ['Infos', 'Détails', 'Photo', 'Récap'];
+  steps = ['Informations', 'Détails', 'Photo', 'Récapitulatif'];
   currentStep = 0;
 
   conditionOptions = [
+    { value: 'NEW', icon: '✨', label: 'Neuf', desc: 'Jamais utilisé' },
     { value: 'GOOD', icon: '✅', label: 'Bon état', desc: 'Très peu utilisé' },
-    { value: 'FAIR', icon: '⚠️', label: 'Passable', desc: 'Quelques traces' },
-    { value: 'POOR', icon: '❌', label: 'Mauvais état', desc: 'Très usé' },
+    { value: 'USED', icon: '⚠️', label: 'Usage normal', desc: 'Quelques traces' },
   ];
 
   statusOptions = [
@@ -55,8 +55,8 @@ export class FurnitureFormComponent implements OnInit {
 
   getCategoryIcon(cat: string): string {
     const icons: Record<string, string> = {
-      'Salon': '🛋️', 'Chambre': '🛏️', 'Cuisine': '🍳',
-      'Bureau': '💼', 'Meuble': '🗄️'
+      'LIVING_ROOM': '🛋️', 'BEDROOM': '🛏️', 'KITCHEN': '🍳',
+      'OFFICE': '💼', 'OTHER': '📦'
     };
     return icons[cat] || '📦';
   }
@@ -89,16 +89,19 @@ export class FurnitureFormComponent implements OnInit {
       price: [0],
       quantity: [1],
       status: ['AVAILABLE'],
-      sellerId: [1],
+      sellerId: [0], // will be patched in ngOnInit
     });
   }
 
   get currentSellerId(): number {
     const user = this.userService.currentUser();
-    return user ? Number(user.id) : 1;
+    return user ? Number(user.id) : 0;
   }
 
   ngOnInit(): void {
+    // Always set the real sellerId from the connected user
+    this.form.patchValue({ sellerId: this.currentSellerId });
+
     this.route.paramMap.subscribe((params) => {
       const idParam = params.get('id');
       if (idParam) {
@@ -172,17 +175,60 @@ export class FurnitureFormComponent implements OnInit {
     this.aiGenerating = true;
     this.aiError = '';
     const templates: Record<string, string> = {
-      'Salon': `Magnifique ${title || 'meuble de salon'} en excellent état. Idéal pour un intérieur chaleureux et moderne. Dimensions adaptées à tous les espaces. ${condition === 'GOOD' ? 'État impeccable, aucune rayure.' : 'Quelques traces d\'usure normales.'}`,
-      'Chambre': `${title || 'Meuble de chambre'} pratique et élégant. Offre un rangement optimal et s'intègre parfaitement dans votre espace nuit. ${condition === 'GOOD' ? 'Très bon état général.' : 'Usage normal, toujours fonctionnel.'}`,
-      'Cuisine': `${title || 'Équipement cuisine'} fonctionnel et robuste. Parfait pour compléter votre cuisine. Facile à entretenir. ${condition === 'GOOD' ? 'Comme neuf.' : 'En bon état de marche.'}`,
-      'Bureau': `${title || 'Meuble de bureau'} ergonomique et stylé. Boostez votre productivité avec ce meuble au design contemporain. ${condition === 'GOOD' ? 'État parfait, jamais endommagé.' : 'Légères traces d\'utilisation.'}`,
-      'Meuble': `${title || 'Meuble polyvalent'} de qualité, adapté à tous les espaces. Robuste et esthétique. ${condition === 'GOOD' ? 'Très bonne conservation.' : 'Bon état général.'}`,
+      'LIVING_ROOM': `Magnifique ${title || 'meuble de salon'} en excellent état. Idéal pour un intérieur chaleureux et moderne. Dimensions adaptées à tous les espaces. ${condition === 'GOOD' ? 'État impeccable, aucune rayure.' : 'Quelques traces d\'usure normales.'}`,
+      'BEDROOM': `${title || 'Meuble de chambre'} pratique et élégant. Offre un rangement optimal et s'intègre parfaitement dans votre espace nuit. ${condition === 'GOOD' ? 'Très bon état général.' : 'Usage normal, toujours fonctionnel.'}`,
+      'KITCHEN': `${title || 'Équipement cuisine'} fonctionnel et robuste. Parfait pour compléter votre cuisine. Facile à entretenir. ${condition === 'GOOD' ? 'Comme neuf.' : 'En bon état de marche.'}`,
+      'OFFICE': `${title || 'Meuble de bureau'} ergonomique et stylé. Boostez votre productivité avec ce meuble au design contemporain. ${condition === 'GOOD' ? 'État parfait, jamais endommagé.' : 'Légères traces d\'utilisation.'}`,
+      'OTHER': `${title || 'Article polyvalent'} de qualité, adapté à tous les espaces. Robuste et esthétique. ${condition === 'GOOD' ? 'Très bonne conservation.' : 'Bon état général.'}`,
     };
     const desc = templates[category] || `${title || 'Article'} de qualité, ${condition === 'GOOD' ? 'en excellent état' : 'en bon état'}. Idéal pour votre intérieur. N'hésitez pas à me contacter pour plus d'informations !`;
     setTimeout(() => {
       this.form.get('description')?.setValue(desc);
       this.aiGenerating = false;
     }, 1200);
+  }
+
+  // --- NOUVELLES FONCTIONNALITÉS IA ---
+
+  /** IA : Suggère une catégorie basée sur le titre */
+  suggestCategory(): void {
+    const title = this.form.get('title')?.value?.toLowerCase() || '';
+    if (!title) {
+        this.aiError = 'Entrez un titre pour que l\'IA puisse analyser.';
+        return;
+    }
+    
+    this.aiGenerating = true;
+    setTimeout(() => {
+        let suggested = 'OTHER';
+        if (title.includes('lit') || title.includes('matelas') || title.includes('chevet') || title.includes('armoire')) suggested = 'BEDROOM';
+        else if (title.includes('canapé') || title.includes('table') || title.includes('tele') || title.includes('salon')) suggested = 'LIVING_ROOM';
+        else if (title.includes('bureau') || title.includes('chaise') || title.includes('pc')) suggested = 'OFFICE';
+        else if (title.includes('frigo') || title.includes('four') || title.includes('cuisine')) suggested = 'KITCHEN';
+        
+        this.form.get('category')?.setValue(suggested);
+        this.aiGenerating = false;
+    }, 800);
+  }
+
+  /** IA : Calcule un prix suggéré basé sur la catégorie et l'état */
+  getSmartPriceSuggestion(): number {
+    const category = this.form.get('category')?.value;
+    const condition = this.form.get('condition')?.value;
+    
+    const basePrices: Record<string, number> = {
+        'LIVING_ROOM': 450, 'BEDROOM': 350, 'OFFICE': 200, 'KITCHEN': 300, 'OTHER': 100
+    };
+    
+    let price = basePrices[category] || 100;
+    if (condition === 'NEW') price *= 1.2;
+    else if (condition === 'USED') price *= 0.7;
+    
+    return Math.round(price);
+  }
+
+  applySmartPrice(): void {
+    this.form.get('price')?.setValue(this.getSmartPriceSuggestion());
   }
 
   submit(): void {
@@ -195,6 +241,8 @@ export class FurnitureFormComponent implements OnInit {
     const defaultImg = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400';
     const payload: Furniture = {
       ...this.form.value,
+      price: Number(this.form.value.price),
+      quantity: Number(this.form.value.quantity),
       sellerId: this.currentSellerId,
       imageBase64: this.imageBase64 || undefined,
       imageUrl: this.cloudinaryUrl || defaultImg,
@@ -207,7 +255,8 @@ export class FurnitureFormComponent implements OnInit {
           this.router.navigate(['/real-estate/furniture']);
         },
         error: (err) => {
-          this.error = err.error?.message || 'Erreur lors de la mise à jour. Vérifiez que le backend tourne sur le port 8099.';
+          console.error('[Furniture Create/Update Error]', err);
+          this.error = err.error?.message || err.message || 'Erreur lors de la communication avec le backend (Port 8099).';
           this.loading = false;
         },
       });
@@ -218,7 +267,8 @@ export class FurnitureFormComponent implements OnInit {
           this.router.navigate(['/real-estate/furniture']);
         },
         error: (err) => {
-          this.error = err.error?.message || 'Erreur lors de la création. Vérifiez que le backend tourne sur le port 8099.';
+          console.error('[Furniture Create Error]', err);
+          this.error = err.error?.message || err.message || 'Erreur lors de la création de l\'annonce (Port 8099).';
           this.loading = false;
         },
       });

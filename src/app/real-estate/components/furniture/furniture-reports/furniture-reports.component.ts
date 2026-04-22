@@ -1,7 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { LucideAngularModule, AlertTriangle, ShieldCheck, Clock, FileText, ChevronLeft, Eye, MessageSquare, CheckBadge } from 'lucide-angular';
 
 interface Report {
   id: number;
@@ -16,11 +14,19 @@ interface Report {
 @Component({
   selector: 'app-furniture-reports',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LucideAngularModule],
   templateUrl: './furniture-reports.component.html',
   styleUrls: ['./furniture-reports.component.scss']
 })
 export class FurnitureReportsComponent implements OnInit {
+  readonly AlertIcon = AlertTriangle;
+  readonly ShieldIcon = ShieldCheck;
+  readonly ClockIcon = Clock;
+  readonly FileIcon = FileText;
+  readonly BackIcon = ChevronLeft;
+  readonly ViewIcon = Eye;
+  readonly MsgIcon = MessageSquare;
+  readonly ResolvedIcon = CheckBadge;
   reports = signal<Report[]>([]);
   loading = signal(true);
   filter = signal<string>('ALL');
@@ -38,7 +44,7 @@ export class FurnitureReportsComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get<Report[]>('http://localhost:8094/api/reports').subscribe({
+    this.http.get<Report[]>('http://localhost:8099/api/reports').subscribe({
       next: (data) => { this.reports.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

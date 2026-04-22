@@ -1,7 +1,44 @@
 .coupon-page { max-width: 1200px; margin: 0 auto; padding: 20px; }
-.coupon-header { text-align: center; margin-bottom: 30px; }
+.coupon-header { margin-bottom: 30px; }
+.coupon-header-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
 .coupon-header h1 { font-size: 2rem; color: #1a1a2e; margin-bottom: 8px; }
 .coupon-header p { color: #666; font-size: 1.1rem; }
+.coupon-header-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.coupon-admin-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 12px;
+  background: linear-gradient(135deg, #e94560, #0f3460); color: white;
+  text-decoration: none; font-size: 0.9rem; font-weight: 600;
+  transition: opacity 0.2s; border: none; cursor: pointer;
+}
+.coupon-admin-btn:hover { opacity: 0.88; }
+.coupon-marketplace-btn:hover { border-color: #e94560; color: #e94560; }
+
+/* Subtitle Actions */
+.header-subtitle-actions {
+  margin-top: 12px;
+}
+
+.my-coupons-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #C8102E;
+  color: white !important;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(200, 16, 46, 0.2);
+  transition: all 0.2s ease;
+}
+
+.my-coupons-nav-btn:hover {
+  background: #A00D25;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(200, 16, 46, 0.3);
+}
 .alert { padding: 12px 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
 .alert.success { background: #d4edda; color: #155724; }
 .alert.error { background: #f8d7da; color: #721c24; }

@@ -1,60 +1,94 @@
-<div class="page">
-  <div class="header">
+<article class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- HEADER -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1>📦 Archivage des Articles</h1>
-      <p>{{ archivedItems.length }} article(s) archivé(s)</p>
+      <h3 class="flex items-center gap-2 text-xl font-bold text-foreground">
+        <lucide-icon [img]="ArchiveIcon" [size]="24" class="text-slate-500"></lucide-icon>
+        Gestion des Archives
+      </h3>
+      <p class="text-sm text-slate-500">Consultez et restaurez les articles archivés ou obsolètes</p>
     </div>
-    <div class="header-actions">
-      <button (click)="runArchive()" class="btn-archive" [disabled]="loading">
-        🔄 Lancer l'archivage
+    <div class="flex gap-2">
+      <a routerLink="/real-estate/furniture" 
+         class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="BackIcon" [size]="18"></lucide-icon>
+        Retour Marketplace
+      </a>
+      <button (click)="runArchive()" [disabled]="loading"
+        class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50">
+        <lucide-icon [img]="DataIcon" [size]="18"></lucide-icon>
+        Lancer Archivage Auto
       </button>
-      <a routerLink="/real-estate/furniture" class="btn-back">← Retour</a>
     </div>
   </div>
 
-  <div *ngIf="success" class="alert-success">{{ success }}</div>
-  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
-  <div *ngIf="loading" class="loading">⏳ Chargement...</div>
-
-  <!-- RÉSULTAT ARCHIVAGE -->
-  <div *ngIf="archiveResult" class="archive-result">
-    <div class="result-card">
-      <div class="result-icon">📦</div>
-      <div class="result-info">
-        <h3>Archivage terminé</h3>
-        <p>{{ archiveResult.archivedCount }} article(s) ont été archivés automatiquement</p>
+  <!-- KPI MINI CARDS -->
+  <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-6">
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm border border-slate-100">
+        <lucide-icon [img]="BoxIcon" [size]="24"></lucide-icon>
+      </div>
+      <div>
+        <div class="text-2xl font-black text-slate-900">{{ archivedItems.length }}</div>
+        <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Articles Archivés</div>
+      </div>
+    </div>
+    <div *ngIf="archiveResult" class="flex items-center gap-4 rounded-xl border border-green-100 bg-green-50 p-6">
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-green-500 shadow-sm border border-green-100">
+        <lucide-icon [img]="SuccessIcon" [size]="24"></lucide-icon>
+      </div>
+      <div>
+        <div class="text-2xl font-black text-green-700">+{{ archiveResult.archivedCount }}</div>
+        <div class="text-xs font-bold uppercase tracking-widest text-green-500">Dernier passage</div>
       </div>
     </div>
   </div>
 
-  <!-- LISTE ARCHIVÉS -->
-  <div *ngIf="!loading && archivedItems.length > 0" class="archived-list">
-    <h2>🗂 Articles archivés</h2>
-    <div class="archived-grid">
-      <div *ngFor="let item of archivedItems" class="archived-card">
-        <div class="card-image">
-          <img [src]="item.imageUrl || item.imageBase64 || 'https://via.placeholder.com/200x120?text=No+Image'"
-            [alt]="item.title" />
-          <span class="badge-archived">📦 ARCHIVÉ</span>
+  <!-- ALERTS -->
+  <div *ngIf="success" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700 animate-in fade-in slide-in-from-top-2">
+    {{ success }}
+  </div>
+  <div *ngIf="error" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+    {{ error }}
+  </div>
+
+  <!-- LOADING / EMPTY -->
+  <div *ngIf="loading" class="py-20 text-center">
+    <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-primary"></div>
+    <p class="text-sm font-medium text-slate-500">Synchronisation avec les archives en cours...</p>
+  </div>
+
+  <div *ngIf="!loading && archivedItems.length === 0" class="py-20 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+      <lucide-icon [img]="BoxIcon" [size]="32"></lucide-icon>
+    </div>
+    <h4 class="text-slate-900 font-bold mb-1">Archive vide</h4>
+    <p class="text-sm text-slate-500">Tous vos articles sont actuellement actifs dans la marketplace.</p>
+  </div>
+
+  <!-- GRID OF ARCHIVED ITEMS -->
+  <div *ngIf="!loading && archivedItems.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div *ngFor="let item of archivedItems" class="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white transition-all hover:shadow-lg">
+      <div class="aspect-video w-full bg-slate-100 p-4 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all">
+        <lucide-icon [img]="BoxIcon" [size]="48" class="text-slate-300"></lucide-icon>
+      </div>
+      <div class="p-5">
+        <div class="mb-1 flex items-center justify-between">
+          <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-500">#{{ item.id }}</span>
+          <span class="text-xs font-bold text-slate-400">{{ item.category }}</span>
         </div>
-        <div class="card-body">
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.description }}</p>
-          <div class="card-meta">
-            <span class="badge-cat">{{ item.category }}</span>
-            <span class="card-price">{{ item.price | number:'1.2-2' }} DT</span>
-          </div>
-          <button (click)="restore(item.id)" class="btn-restore">
-            🔄 Restaurer
+        <h4 class="mb-2 font-bold text-slate-900">{{ item.title }}</h4>
+        <p class="mb-4 line-clamp-2 text-xs text-slate-500">{{ item.description }}</p>
+        
+        <div class="flex items-center justify-between border-t border-slate-50 pt-4">
+          <span class="text-sm font-black text-primary">{{ item.price | number:'1.2-2' }} DT</span>
+          <button (click)="restore(item.id)"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100">
+            <lucide-icon [img]="RestoreIcon" [size]="14"></lucide-icon>
+            Restaurer
           </button>
         </div>
       </div>
     </div>
   </div>
-
-  <div *ngIf="!loading && archivedItems.length === 0" class="empty">
-    <div class="empty-icon">📭</div>
-    <p>Aucun article archivé pour le moment.</p>
-    <p class="empty-sub">Cliquez sur "Lancer l'archivage" pour archiver les articles vendus.</p>
-  </div>
-</div>
+</article>

@@ -17,4 +17,4 @@ import { CouponStatsComponent } from './components/coupon-stats/coupon-stats.com
     CouponStatsComponent
   ]
 })
-export class CouponModule {}
+export class CouponModule { }

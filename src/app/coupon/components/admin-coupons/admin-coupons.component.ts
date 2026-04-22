@@ -3,17 +3,29 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService } from '../../services/coupon.service';
 import { Coupon } from '../../models/coupon.model';
+import { LucideAngularModule, Ticket, Search, Plus, Filter, Download, Sparkles, Trash2, Edit2, RotateCw, CheckCircle, XCircle } from 'lucide-angular';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-admin-coupons',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './admin-coupons.component.html',
   styleUrls: ['./admin-coupons.component.css']
 })
 export class AdminCouponsComponent implements OnInit {
+  readonly TicketIcon = Ticket;
+  readonly SearchIcon = Search;
+  readonly PlusIcon = Plus;
+  readonly FilterIcon = Filter;
+  readonly DownloadIcon = Download;
+  readonly SparklesIcon = Sparkles;
+  readonly TrashIcon = Trash2;
+  readonly EditIcon = Edit2;
+  readonly SyncIcon = RotateCw;
+  readonly CheckIcon = CheckCircle;
+  readonly XIcon = XCircle;
   coupons: Coupon[] = [];
   filteredCoupons: Coupon[] = [];
   message = '';

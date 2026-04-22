@@ -30,8 +30,7 @@ import {
   User,
   Users,
   XCircle,
- MessageCircle,
-  Gift
+ MessageCircle
 } from 'lucide-angular';
 import { UserService } from '../../../user-security/services/user.service';
 import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
@@ -79,8 +78,7 @@ export class AdminLayoutComponent {
     { id: 'services', name: 'Services', icon: Briefcase },
     { id: 'events', name: 'Events', icon: Calendar },
     { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
-    { id: 'coupons', name: 'Coupons', icon: Gift }
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 }
   ];
 
   readonly kpiCards = [

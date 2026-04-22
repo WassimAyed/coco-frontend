@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { CouponService } from '../../services/coupon.service';
 import { Coupon } from '../../models/coupon.model';
 import { UserService } from '../../../user-security/services/user.service';
@@ -7,7 +8,7 @@ import { UserService } from '../../../user-security/services/user.service';
 @Component({
   selector: 'app-coupon-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './coupon-list.component.html',
   styleUrls: ['./coupon-list.component.css']
 })
@@ -27,6 +28,11 @@ export class CouponListComponent implements OnInit {
   get userId(): number {
     const user = this.userService.currentUser();
     return user ? Number(user.id) : 1;
+  }
+
+  get isAdmin(): boolean {
+    const role = (this.userService.currentUser()?.role || '').toLowerCase();
+    return role.includes('admin');
   }
 
   ngOnInit(): void {
@@ -63,7 +69,23 @@ export class CouponListComponent implements OnInit {
 
   loadUserCluster(): void {
     this.couponService.getUserCluster(this.userId).subscribe({
-      next: (res) => this.userCluster = res,
+      next: (res) => {
+        // Mapping des IDs de segments vers des noms explicites
+        const segments: Record<string, any> = {
+          '0': { name: 'Étudiant Éco-Responsable', desc: 'Tu privilégies les offres durables et locales.' },
+          '1': { name: 'Passionné de Tech & Ciné', desc: 'Toujours à l\'affût des dernières sorties et gadgets.' },
+          '2': { name: 'Gourmet du Campus', desc: 'Expert en bons plans restos et livraison.' },
+          '3': { name: 'Sportif & Dynamique', desc: 'Les offres fitness et transport sont pour toi.' }
+        };
+        
+        const rawId = String(res.segmentName || res);
+        const segment = segments[rawId] || { name: 'Explorateur CoCo', desc: 'Tu aimes découvrir toutes les opportunités du campus.' };
+        
+        this.userCluster = {
+          segmentName: segment.name,
+          description: segment.desc
+        };
+      },
       error: () => console.log('Clustering non disponible')
     });
   }

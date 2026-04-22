@@ -49,7 +49,6 @@ export const routes: Routes = [
       { path: 'real-estate', loadChildren: () => import('./real-estate/real-estate.module').then((m) => m.RealEstateModule) },
       { path: 'subs-payment', loadChildren: () => import('./subs-payment/subs-payment.module').then((m) => m.SubsPaymentModule) },
       { path: 'coupon', loadChildren: () => import('./coupon/coupon.module').then((m) => m.CouponModule) },
-      { path: 'coupon', loadChildren: () => import('./coupon/coupon.module').then((m) => m.CouponModule) },
       { path: 'user-dashboard', component: UserDashboardComponent },
       { path: 'user-security', loadChildren: () => import('./user-security/user-security.module').then((m) => m.UserSecurityModule) },
       { path: 'lost-found', loadChildren: () => import('./lost-found/lost-found.routes').then((m) => m.LOST_FOUND_ROUTES) }

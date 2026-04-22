@@ -1,9 +1,11 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ReportService } from '../../../services/report.service';
 import { Report } from '../../../models/report.model';
+
+import { UserService } from '../../../../user-security/services/user.service';
 
 @Component({
   selector: 'app-furniture-report',
@@ -29,21 +31,28 @@ export class FurnitureReportComponent implements OnInit {
 
   newReport: Report = {
     furnitureId: 0,
-    reporterId: 1,
+    reporterId: 0,
     reason: '',
     description: ''
   };
 
   constructor(
     private reportService: ReportService,
+    private userService: UserService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
+
+  get currentUserId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 0;
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       this.furnitureId = Number(params.get('id'));
       this.newReport.furnitureId = this.furnitureId;
+      this.newReport.reporterId = this.currentUserId;
     });
   }
 

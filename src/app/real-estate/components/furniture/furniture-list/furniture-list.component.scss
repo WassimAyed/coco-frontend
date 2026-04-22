@@ -123,6 +123,17 @@
     }
   }
 
+  &--coupon {
+    background: rgba(233, 69, 96, 0.08);
+    color: #e94560;
+    border: 1.5px solid rgba(233, 69, 96, 0.25);
+
+    &:hover {
+      background: rgba(233, 69, 96, 0.15);
+      border-color: rgba(233, 69, 96, 0.5);
+    }
+  }
+
   &--primary {
     background: linear-gradient(135deg, #8B0000, #660000);
     color: #fff;
@@ -136,6 +147,29 @@
       box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
     }
   }
+
+  &--bon-plan {
+    background: linear-gradient(135deg, #C8102E, #8B0000);
+    color: #fff !important;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 0.8rem 1.8rem;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 15px rgba(200, 16, 46, 0.4);
+    animation: pulse-red 2s infinite;
+
+    &:hover {
+      background: #C8102E;
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(200, 16, 46, 0.6);
+    }
+  }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(200, 16, 46, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(200, 16, 46, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 16, 46, 0); }
 }
 
 .hdr-badge {

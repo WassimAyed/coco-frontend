@@ -1,81 +1,178 @@
-<div class="page">
-  <div class="header">
+<article class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- HEADER -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1>💰 Offres & Recommandations</h1>
-      <p *ngIf="currentFurniture">Article : <strong>{{ currentFurniture.title }}</strong> — {{ currentFurniture.price | number:'1.2-2' }} DT</p>
+      <h3 class="flex items-center gap-2 text-xl font-bold text-foreground">
+        <lucide-icon [img]="DollarIcon" [size]="24" class="text-green-600"></lucide-icon>
+        Gestion des Offres
+      </h3>
+      <p class="text-sm text-slate-500">Gérez les négociations pour : <span class="font-bold text-slate-900">{{ currentFurniture?.title }}</span></p>
     </div>
-    <a [routerLink]="['/real-estate/furniture']" class="btn-back">← Retour</a>
-  </div>
-
-  <div *ngIf="success" class="alert-success">{{ success }}</div>
-  <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
-
-  <!-- BUDGET SEARCH -->
-  <div class="budget-section">
-    <h2>🔍 Trouver par budget</h2>
-    <p>Entrez votre budget pour voir des articles similaires</p>
-    <div class="budget-row">
-      <input type="number" [(ngModel)]="budget" placeholder="Ex: 150" min="1" class="budget-input" />
-      <button (click)="searchByBudget()" class="btn-search" [disabled]="loading">🔍 Par budget</button>
-      <button (click)="searchSimilar()" class="btn-similar" [disabled]="loading">🤖 Similaires IA</button>
+    <div class="flex gap-2">
+      <a routerLink="/real-estate/furniture" 
+         class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="BackIcon" [size]="18"></lucide-icon>
+        Retour Marketplace
+      </a>
     </div>
   </div>
 
-  <!-- RECOMMENDATIONS -->
-  <div *ngIf="recommendations.length > 0" class="recommendations">
-    <h2>✨ Articles recommandés (±30% de {{ budget | number:'1.2-2' }} DT)</h2>
-    <div class="rec-grid">
-      <div *ngFor="let r of recommendations" class="rec-card">
-        <div class="rec-image">
-          <img [src]="r.imageUrl || r.imageBase64 || 'https://via.placeholder.com/200x120?text=No+Image'" [alt]="r.title" />
-          <span class="price-diff" [class.over]="r.price > budget" [class.under]="r.price < budget">
-            {{ getPriceDiff(r.price) }}
-          </span>
+  <div class="grid gap-8 lg:grid-cols-12">
+    <!-- LEFT: OFFERS LIST -->
+    <div class="lg:col-span-8">
+      <section class="rounded-2xl border border-slate-100 bg-white p-6">
+        <div class="mb-6 flex items-center justify-between">
+          <h4 class="text-lg font-bold text-slate-900">Offres Reçues</h4>
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{{ offers.length }} offre(s)</span>
         </div>
-        <div class="rec-body">
-          <h3>{{ r.title }}</h3>
-          <p>{{ r.description }}</p>
-          <div class="rec-meta">
-            <span class="badge-cat">{{ r.category }}</span>
-            <span class="rec-price">{{ r.price | number:'1.2-2' }} DT</span>
+
+        <div *ngIf="offers.length === 0" class="py-12 text-center">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+            <lucide-icon [img]="MsgIcon" [size]="32"></lucide-icon>
           </div>
-          <div class="rec-actions">
-            <a [routerLink]="['/real-estate/furniture', r.id]" class="btn-view">👁 Voir</a>
-            <button (click)="makeOffer(r)" class="btn-offer">💰 Faire une offre</button>
+          <p class="text-sm font-medium text-slate-500">Aucune offre pour le moment.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div *ngFor="let o of offers" 
+            class="group relative rounded-2xl border border-slate-100 p-5 transition-all hover:border-primary/20 hover:shadow-md">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                <lucide-icon [img]="UserIcon" [size]="24"></lucide-icon>
+              </div>
+              
+              <div class="flex-1">
+                <div class="mb-2 flex items-center justify-between">
+                  <div>
+                    <h5 class="font-bold text-slate-900">{{ getBuyerName(o.buyerId) }}</h5>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                      <lucide-icon [img]="ClockIcon" [size]="12"></lucide-icon>
+                      {{ o.createdAt | date:'dd MMM, HH:mm' }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-lg font-black text-primary">{{ o.proposedPrice }} DT</div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400"
+                      [ngClass]="{'text-green-600': o.proposedPrice <= (currentFurniture?.price || 0)}">
+                      {{ getPriceDiff(o.proposedPrice) }}
+                    </span>
+                  </div>
+                </div>
+
+                <p class="mb-4 text-sm italic text-slate-600">"{{ o.message || 'Pas de message.' }}"</p>
+
+                <div class="flex items-center justify-between border-t border-slate-50 pt-4">
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black tracking-widest"
+                    [ngClass]="{
+                      'bg-orange-50 text-orange-600 border border-orange-100': o.status === 'PENDING',
+                      'bg-green-50 text-green-600 border border-green-100': o.status === 'ACCEPTED',
+                      'bg-red-50 text-red-600 border border-red-100': o.status === 'REJECTED'
+                    }">
+                    {{ o.status }}
+                  </span>
+
+                  <div *ngIf="o.status === 'PENDING' && currentFurniture?.sellerId === currentUserId" class="flex gap-2">
+                    <button (click)="reject(o.id)" 
+                      class="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-white text-red-500 transition hover:bg-red-50">
+                      <lucide-icon [img]="XIcon" [size]="16"></lucide-icon>
+                    </button>
+                    <button (click)="accept(o.id)" 
+                      class="flex h-8 items-center gap-2 rounded-lg bg-green-600 px-4 text-xs font-bold text-white transition hover:bg-green-700">
+                      <lucide-icon [img]="CheckIcon" [size]="14"></lucide-icon>
+                      Accepter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: NEW OFFER & RECOMMENDATIONS -->
+    <div class="lg:col-span-4 space-y-6">
+      
+      <!-- ITEM QUICK VIEW -->
+      <div *ngIf="currentFurniture" class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div class="relative aspect-video w-full bg-slate-100">
+          <div class="absolute inset-0 flex items-center justify-center text-slate-300">
+            <lucide-icon [img]="CartIcon" [size]="48"></lucide-icon>
+          </div>
+          <div class="absolute bottom-3 left-3 flex gap-2">
+            <span class="rounded bg-black/60 px-2 py-1 text-[10px] font-black text-white backdrop-blur-md">{{ currentFurniture.category }}</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <h4 class="mb-1 font-bold text-slate-900">{{ currentFurniture.title }}</h4>
+          <p class="mb-4 text-xs text-slate-500 line-clamp-2">{{ currentFurniture.description }}</p>
+          <div class="flex items-center justify-between">
+            <span class="text-lg font-black text-primary">{{ currentFurniture.price }} DT</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Prix Initial</span>
           </div>
         </div>
       </div>
+
+      <!-- NEW OFFER FORM -->
+      <section *ngIf="currentFurniture?.sellerId !== currentUserId" class="rounded-2xl border border-primary/20 bg-primary/5 p-6 ring-1 ring-primary/10">
+        <h4 class="mb-4 flex items-center gap-2 text-base font-bold text-foreground">
+          <lucide-icon [img]="SparklesIcon" [size]="18" class="text-amber-500"></lucide-icon>
+          Faire une contre-proposition
+        </h4>
+        
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Votre Prix (DT)</label>
+            <input type="number" [(ngModel)]="newOffer.proposedPrice"
+              class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-primary" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Message au vendeur</label>
+            <textarea [(ngModel)]="newOffer.message" rows="3" placeholder="Argumentez votre offre..."
+              class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"></textarea>
+          </div>
+          <button (click)="sendCustomOffer()"
+            class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition active:scale-95">
+            Envoyer l'offre
+          </button>
+        </div>
+        
+        <div *ngIf="success" class="mt-4 rounded-lg bg-green-500 p-2 text-center text-xs font-bold text-white">
+          {{ success }}
+        </div>
+        <div *ngIf="error" class="mt-4 rounded-lg bg-red-500 p-2 text-center text-xs font-bold text-white">
+          {{ error }}
+        </div>
+      </section>
+
+      <!-- RECOMMENDATIONS IA -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div class="mb-6 flex items-center justify-between">
+          <h4 class="text-sm font-bold text-slate-900">Analyse IA : Similaires</h4>
+          <button (click)="searchSimilar()" class="text-[10px] font-bold text-primary hover:underline">Rafraîchir</button>
+        </div>
+
+        <div *ngIf="loading" class="py-4 text-center">
+          <div class="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
+        </div>
+
+        <div class="space-y-4">
+          <div *ngFor="let rec of recommendations" 
+            class="flex items-center gap-3 rounded-xl border border-slate-50 p-2 transition hover:bg-slate-50 group cursor-pointer"
+            [routerLink]="['/real-estate/furniture', rec.id, 'offers']">
+            <div class="h-12 w-12 overflow-hidden rounded-lg bg-slate-100 flex items-center justify-center">
+               <lucide-icon [img]="PackageIcon" [size]="20" class="text-slate-300"></lucide-icon>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-bold text-slate-900">{{ rec.title }}</p>
+              <p class="text-[10px] font-bold text-primary">{{ rec.price }} DT</p>
+            </div>
+            <button class="flex h-6 w-6 items-center justify-center rounded bg-slate-100 group-hover:bg-primary group-hover:text-white transition-colors">
+              <lucide-icon [img]="ChevronLeft" [size]="12" class="rotate-180"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
-
-  <div *ngIf="!loading && recommendations.length === 0 && budget > 0" class="empty">
-    Aucun article trouvé dans cette fourchette de prix.
-  </div>
-
-  <!-- OFFRE PERSONNALISÉE -->
-  <div class="custom-offer">
-    <h2>📝 Faire une offre sur cet article</h2>
-    <div class="form-row">
-      <label>Prix proposé (DT)</label>
-      <input type="number" [(ngModel)]="newOffer.proposedPrice" min="1" placeholder="Ex: 120" />
-    </div>
-    <button (click)="sendCustomOffer()" class="btn-submit">💰 Envoyer l'offre</button>
-  </div>
-
-  <!-- OFFRES REÇUES -->
-  <div *ngIf="offers.length > 0" class="offers-list">
-    <h2>📋 Offres reçues ({{ offers.length }})</h2>
-    <div *ngFor="let o of offers" class="offer-card">
-      <div class="offer-header">
-        <span class="offer-price">{{ o.proposedPrice | number:'1.2-2' }} DT</span>
-        <span class="offer-badge" [ngClass]="getStatusClass(o.status)">{{ o.status }}</span>
-      </div>
-      <p>{{ o.message || 'Aucun message' }}</p>
-      <p class="offer-meta">👤 Acheteur ID: {{ o.buyerId }} | 📅 {{ o.createdAt | date:'dd/MM/yyyy' }}</p>
-      <div *ngIf="o.status === 'PENDING'" class="offer-actions">
-        <button (click)="accept(o.id)" class="btn-accept">✅ Accepter</button>
-        <button (click)="reject(o.id)" class="btn-reject">❌ Refuser</button>
-      </div>
-    </div>
-  </div>
-</div>
+</article>

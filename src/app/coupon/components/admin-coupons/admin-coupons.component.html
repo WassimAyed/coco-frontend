@@ -1,160 +1,238 @@
-<div class="admin-page">
-  <div class="admin-header">
-    <h1>⚙️ Gestion des Coupons</h1>
-    <div class="header-actions">
-      <button class="ai-btn" (click)="analyzeWithAI()">🤖 Analyse IA</button>
-      <button class="export-btn" (click)="exportPDF()">📄 Export PDF</button>
-      <button class="add-btn" (click)="openAddForm()">+ Ajouter un coupon</button>
+<article class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- HEADER -->
+  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h3 class="text-xl font-bold text-foreground">Gestion des Coupons</h3>
+      <p class="text-sm text-slate-500">Gérez les bons plans pour les étudiants de l'ESPRIT</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" (click)="analyzeWithAI()" [disabled]="aiLoading"
+        class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="SparklesIcon" [size]="18" class="text-amber-500"></lucide-icon>
+        Analyse IA
+      </button>
+      <button type="button" (click)="exportPDF()"
+        class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="DownloadIcon" [size]="18" class="text-slate-500"></lucide-icon>
+        Export PDF
+      </button>
+      <button type="button" (click)="openAddForm()"
+        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+        <lucide-icon [img]="PlusIcon" [size]="18"></lucide-icon>
+        Nouveau Coupon
+      </button>
     </div>
   </div>
 
-  <!-- STATS -->
-  <div class="admin-stats">
-    <div class="stat-card stat-total">
-      <span class="stat-num">{{ totalCount }}</span>
-      <span class="stat-label">Total</span>
-    </div>
-    <div class="stat-card stat-active">
-      <span class="stat-num">{{ activeCount }}</span>
-      <span class="stat-label">Actifs</span>
-    </div>
-    <div class="stat-card stat-inactive">
-      <span class="stat-num">{{ inactiveCount }}</span>
-      <span class="stat-label">Inactifs</span>
-    </div>
-    <div class="stat-card stat-expired">
-      <span class="stat-num">{{ expiredCount }}</span>
-      <span class="stat-label">Expirés</span>
-    </div>
-  </div>
-
-  <div *ngIf="message" class="alert" [ngClass]="messageType">{{ message }}</div>
-
-  <div *ngIf="aiLoading" class="ai-loading">🤖 Analyse en cours...</div>
-  <div *ngIf="aiAnalysis" class="ai-result">
-    <h3>🤖 Analyse IA des Coupons</h3>
-    <pre>{{ aiAnalysis }}</pre>
-    <button class="cancel-btn" (click)="aiAnalysis = ''">Fermer</button>
-  </div>
-
-  <div class="search-bar">
-    <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
-           placeholder="🔍 Rechercher par code, titre, partenaire ou categorie...">
-    <select [(ngModel)]="selectedCategoryFilter" (ngModelChange)="filterCoupons()" class="cat-filter">
-      <option value="">Toutes catégories</option>
-      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-    </select>
-  </div>
-
-  <!-- FORMULAIRE -->
-  <div *ngIf="showForm" class="form-container">
-    <h2>{{ editMode ? '✏️ Modifier le coupon' : '➕ Nouveau coupon' }}</h2>
-    <div *ngIf="formErrors.length > 0" class="validation-errors">
-      <p *ngFor="let err of formErrors">⚠️ {{ err }}</p>
-    </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Code *</label>
-        <input [(ngModel)]="form.code" placeholder="Ex: PATHE30" [disabled]="editMode"
-               [class.input-error]="submitted && form.code.length < 3">
-        <small *ngIf="submitted && form.code.length < 3" class="error-text">Min 3 caracteres</small>
+  <!-- KPI CARDS (Dashboard style) -->
+  <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+      <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+        <lucide-icon [img]="TicketIcon" [size]="24"></lucide-icon>
       </div>
-      <div class="form-group">
-        <label>Titre *</label>
-        <input [(ngModel)]="form.title" placeholder="Ex: 30% chez Pathe"
-               [class.input-error]="submitted && form.title.length < 3">
-        <small *ngIf="submitted && form.title.length < 3" class="error-text">Min 3 caracteres</small>
+      <div class="text-2xl font-bold text-slate-900">{{ totalCount }}</div>
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</div>
+    </div>
+    <div class="rounded-2xl border border-green-100 bg-green-50 p-6">
+      <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-green-600 shadow-sm">
+        <lucide-icon [img]="CheckIcon" [size]="24"></lucide-icon>
       </div>
-      <div class="form-group full">
-        <label>Description *</label>
-        <textarea [(ngModel)]="form.description" rows="2" placeholder="Description du coupon"
-                  [class.input-error]="submitted && form.description.length < 5"></textarea>
-        <small *ngIf="submitted && form.description.length < 5" class="error-text">Min 5 caracteres</small>
+      <div class="text-2xl font-bold text-slate-900">{{ activeCount }}</div>
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Actifs</div>
+    </div>
+    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+      <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm">
+        <lucide-icon [img]="SyncIcon" [size]="24"></lucide-icon>
       </div>
-      <div class="form-group">
-        <label>Type de reduction</label>
-        <select [(ngModel)]="form.discountType">
-          <option value="PERCENTAGE">Pourcentage (%)</option>
-          <option value="FIXED">Montant fixe (DT)</option>
+      <div class="text-2xl font-bold text-slate-900">{{ inactiveCount }}</div>
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Inactifs</div>
+    </div>
+    <div class="rounded-2xl border border-red-100 bg-red-50 p-6">
+      <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-red-600 shadow-sm">
+        <lucide-icon [img]="XIcon" [size]="24"></lucide-icon>
+      </div>
+      <div class="text-2xl font-bold text-slate-900">{{ expiredCount }}</div>
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Expirés</div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div *ngIf="message" class="mb-6 rounded-xl border px-4 py-3 text-sm font-medium"
+    [ngClass]="messageType === 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'">
+    {{ message }}
+  </div>
+
+  <div *ngIf="aiLoading" class="mb-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-700 animate-pulse">
+    🤖 Analyse des données en cours par l'IA...
+  </div>
+
+  <div *ngIf="aiAnalysis" class="mb-8 rounded-2xl border border-border bg-slate-50 p-6 shadow-inner">
+    <div class="mb-4 flex items-center justify-between">
+      <h4 class="flex items-center gap-2 text-base font-bold text-foreground">
+        <lucide-icon [img]="SparklesIcon" [size]="20" class="text-amber-500"></lucide-icon>
+        Recommandations Stratégiques (IA)
+      </h4>
+      <button type="button" class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50" (click)="aiAnalysis = ''">Fermer</button>
+    </div>
+    <div class="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed">{{ aiAnalysis }}</div>
+  </div>
+
+  <!-- FILTERS & SEARCH -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row">
+    <div class="relative flex-1">
+      <lucide-icon [img]="SearchIcon" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" [size]="18"></lucide-icon>
+      <input type="text" [(ngModel)]="searchTerm" (input)="filterCoupons()"
+        placeholder="Rechercher par code, partenaire, catégorie..."
+        class="w-full rounded-xl border border-border py-3 pl-10 pr-4 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-2" />
+    </div>
+    <div class="flex gap-2">
+      <div class="relative">
+        <lucide-icon [img]="FilterIcon" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" [size]="16"></lucide-icon>
+        <select [(ngModel)]="selectedCategoryFilter" (ngModelChange)="filterCoupons()"
+          class="min-w-[180px] appearance-none rounded-xl border border-border py-3 pl-10 pr-10 text-sm outline-none transition focus:border-primary">
+          <option value="">Toutes Catégories</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
         </select>
+        <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">⌄</div>
       </div>
-      <div class="form-group">
-        <label>Valeur *</label>
-        <input type="number" [(ngModel)]="form.discountValue" min="0"
-               [class.input-error]="submitted && form.discountValue <= 0">
-        <small *ngIf="submitted && form.discountValue <= 0" class="error-text">Doit etre superieur a 0</small>
+    </div>
+  </div>
+
+  <!-- FORM MODAL (Alternative design) -->
+  <div *ngIf="showForm" class="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 ring-1 ring-primary/10">
+    <div class="mb-6 flex items-center justify-between">
+      <h4 class="text-lg font-bold text-foreground">{{ editMode ? '✏️ Modifier le Coupon' : '➕ Nouveau Coupon' }}</h4>
+      <button (click)="cancelForm()" class="text-slate-400 hover:text-slate-600">✕</button>
+    </div>
+
+    <div *ngIf="formErrors.length > 0" class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+      <p *ngFor="let err of formErrors" class="text-sm font-medium text-red-600">⚠️ {{ err }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Code Coupon *</label>
+        <input [(ngModel)]="form.code" placeholder="Ex: COCO2024" [disabled]="editMode"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
       </div>
-      <div class="form-group">
-        <label>Categorie</label>
-        <select [(ngModel)]="form.category">
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Titre de l'offre *</label>
+        <input [(ngModel)]="form.title" placeholder="Ex: 20% sur les menus"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
+      </div>
+      <div class="sm:col-span-2 space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Description détaillée *</label>
+        <textarea [(ngModel)]="form.description" rows="3"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary"></textarea>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Réduction</label>
+        <div class="flex gap-2">
+          <select [(ngModel)]="form.discountType" class="rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none transition focus:border-primary flex-1">
+            <option value="PERCENTAGE">Pourcentage (%)</option>
+            <option value="FIXED">Montant (DT)</option>
+          </select>
+          <input type="number" [(ngModel)]="form.discountValue" class="w-24 rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none transition focus:border-primary" />
+        </div>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Expiration *</label>
+        <input type="datetime-local" [(ngModel)]="form.expirationDate"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Partenaire</label>
+        <input [(ngModel)]="form.partnerName" placeholder="Ex: Pathé, KFC..."
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Catégorie</label>
+        <select [(ngModel)]="form.category" class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary">
           <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Date d'expiration *</label>
-        <input type="datetime-local" [(ngModel)]="form.expirationDate"
-               [class.input-error]="submitted && !isDateValid()">
-        <small *ngIf="submitted && !form.expirationDate" class="error-text">Date requise</small>
-        <small *ngIf="submitted && form.expirationDate && !isDateValid()" class="error-text">La date doit etre dans le futur</small>
-      </div>
-      <div class="form-group">
-        <label>Max utilisations</label>
-        <input type="number" [(ngModel)]="form.maxUsage" min="1">
-      </div>
-      <div class="form-group">
-        <label>Nom du partenaire</label>
-        <input [(ngModel)]="form.partnerName" placeholder="Ex: Pathe Tunis">
-      </div>
-      <div class="form-group full">
-        <label>URL image</label>
-        <input [(ngModel)]="form.imageUrl" placeholder="https://...">
-      </div>
     </div>
-    <div class="form-actions">
-      <button class="save-btn" (click)="submitForm()">{{ editMode ? 'Modifier' : 'Creer' }}</button>
-      <button class="cancel-btn" (click)="cancelForm()">Annuler</button>
+
+    <div class="mt-8 flex items-center justify-end gap-3 border-t border-primary/10 pt-6">
+      <button (click)="cancelForm()" class="btn-cancel px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700">Oublier</button>
+      <button (click)="submitForm()"
+        class="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-opacity-90 active:scale-95">
+        <lucide-icon [img]="CheckIcon" [size]="18"></lucide-icon>
+        {{ editMode ? 'Mettre à jour' : 'Publier' }}
+      </button>
     </div>
   </div>
 
-  <div *ngIf="filteredCoupons.length === 0 && !showForm" class="empty-state">
-    Aucun coupon trouvé.
-  </div>
-
-  <!-- TABLEAU -->
-  <div class="table-container" *ngIf="filteredCoupons.length > 0">
-    <table>
+  <!-- TABLE -->
+  <div class="overflow-x-auto rounded-xl border border-slate-100">
+    <table class="w-full text-left">
       <thead>
-        <tr>
-          <th>Code</th>
-          <th>Titre</th>
-          <th>Reduction</th>
-          <th>Categorie</th>
-          <th>Usage</th>
-          <th>Statut</th>
-          <th>Expiration</th>
-          <th>Actions</th>
+        <tr class="border-b border-border bg-slate-50/50 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <th class="px-6 py-4">Coupon</th>
+          <th class="px-6 py-4">Appliqué sur</th>
+          <th class="px-6 py-4">Valeur</th>
+          <th class="px-6 py-4">Usage</th>
+          <th class="px-6 py-4">Visibilité</th>
+          <th class="px-6 py-4 text-right">Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <tr *ngFor="let c of filteredCoupons">
-          <td><strong>{{ c.code }}</strong></td>
-          <td>{{ c.title }}</td>
-          <td>{{ c.discountType === 'PERCENTAGE' ? c.discountValue + '%' : c.discountValue + ' DT' }}</td>
-          <td>{{ c.category }}</td>
-          <td>{{ c.currentUsage }}/{{ c.maxUsage }}</td>
-          <td>
-            <span class="status-badge" [ngClass]="c.isActive ? 'active' : 'inactive'"
-                  (click)="toggleStatus(c.id)">
-              {{ c.isActive ? 'Actif' : 'Inactif' }}
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngFor="let c of filteredCoupons" class="group transition-colors hover:bg-slate-50/50">
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <lucide-icon [img]="TicketIcon" [size]="20"></lucide-icon>
+              </div>
+              <div class="min-w-0">
+                <p class="font-bold text-slate-900">{{ c.code }}</p>
+                <p class="truncate text-xs text-slate-500">{{ c.partnerName || 'Sans partenaire' }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <p class="text-sm font-medium text-slate-700">{{ c.title }}</p>
+            <span class="text-[10px] font-bold uppercase tracking-tight text-slate-400">{{ c.category }}</span>
+          </td>
+          <td class="px-6 py-4">
+            <span class="text-sm font-black text-slate-900">
+              {{ c.discountType === 'PERCENTAGE' ? c.discountValue + '%' : c.discountValue + ' DT' }}
             </span>
           </td>
-          <td>{{ c.expirationDate | date:'dd/MM/yyyy' }}</td>
-          <td class="actions">
-            <button class="edit-btn" (click)="openEditForm(c)">✏️</button>
-            <button class="delete-btn" (click)="deleteCoupon(c.id)">🗑️</button>
+          <td class="px-6 py-4">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                <span>{{ c.currentUsage }} / {{ c.maxUsage }}</span>
+              </div>
+              <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+                <div class="h-full bg-primary transition-all duration-500" 
+                  [style.width.%]="(c.currentUsage / c.maxUsage) * 100"></div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <button (click)="toggleStatus(c.id)"
+              class="inline-flex rounded-full px-3 py-1 text-[10px] font-bold tracking-wider transition active:scale-90"
+              [ngClass]="c.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-500 border border-slate-200'">
+              {{ c.isActive ? 'ACTIF' : 'PAUSE' }}
+            </button>
+          </td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+              <button (click)="openEditForm(c)"
+                class="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-500 transition hover:border-blue-300 hover:text-blue-600">
+                <lucide-icon [img]="EditIcon" [size]="14"></lucide-icon>
+              </button>
+              <button (click)="deleteCoupon(c.id)"
+                class="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-slate-500 transition hover:border-red-300 hover:text-red-600">
+                <lucide-icon [img]="TrashIcon" [size]="14"></lucide-icon>
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
+    <div *ngIf="filteredCoupons.length === 0" class="py-20 text-center">
+      <p class="text-sm font-medium text-slate-400">Aucun coupon ne correspond à votre recherche.</p>
+    </div>
   </div>
-</div>
+</article>

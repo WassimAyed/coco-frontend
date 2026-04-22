@@ -24,6 +24,7 @@ export class FurnitureListComponent implements OnInit {
   unreadCount = 0;
   cartCount = 0;
   boostedIds: number[] = [];
+  sellerNames = new Map<number, string>();
   loading = false;
   error?: string;
 
@@ -97,9 +98,11 @@ export class FurnitureListComponent implements OnInit {
   }
 
   loadUnreadCount(): void {
-    this.notificationService.countUnread(1).subscribe({
-      next: (res) => this.unreadCount = res.count
-    });
+    if (this.currentUserId > 0) {
+      this.notificationService.countUnread(this.currentUserId).subscribe({
+        next: (res) => this.unreadCount = res.count
+      });
+    }
   }
 
   load(): void {
@@ -107,10 +110,12 @@ export class FurnitureListComponent implements OnInit {
     this.error = undefined;
     this.service.getAll().subscribe({
       next: (res) => {
-        this.furnitures = (res || []).map(f => ({
+        const items = res || [];
+        this.furnitures = items.map(f => ({
           ...f,
           isFavorite: this.favorites.some(fav => fav.id === f.id)
         }));
+        this.resolveSellerNames(this.furnitures);
         this.applyFilters();
         this.checkBoosts();
         this.loading = false;
@@ -120,6 +125,25 @@ export class FurnitureListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  private resolveSellerNames(items: Furniture[]): void {
+    const ids = [...new Set(items.map(i => i.sellerId))];
+    ids.forEach(id => {
+      if (!this.sellerNames.has(id)) {
+        this.userService.getProfileByUserId(id).subscribe({
+          next: (p: any) => {
+            const name = (p.firstName || p.username || 'Utilisateur ' + id);
+            this.sellerNames.set(id, name);
+          },
+          error: () => this.sellerNames.set(id, 'Utilisateur ' + id)
+        });
+      }
+    });
+  }
+
+  getSellerName(id: number): string {
+    return this.sellerNames.get(id) || 'Chargement...';
   }
 
   // ❤️ FAVORIS
@@ -181,7 +205,7 @@ export class FurnitureListComponent implements OnInit {
           <div class="info"><span class="label">Description:</span> ${f.description || 'N/A'}</div>
           <div class="info"><span class="label">Catégorie:</span> ${f.category}</div>
           <div class="info"><span class="label">Quantité disponible:</span> ${f.quantity}</div>
-          <div class="info"><span class="label">Vendeur ID:</span> ${f.sellerId}</div>
+          <div class="info"><span class="label">Vendeur:</span> ${this.getSellerName(f.sellerId)}</div>
           <div class="footer">
             Généré le ${new Date().toLocaleDateString('fr-FR')} — Furniture Marketplace CoCo
           </div>

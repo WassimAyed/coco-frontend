@@ -1,21 +1,24 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { RouterModule, ActivatedRoute } from '@angular/router';
-import { FurnitureService } from '../../../services/furniture.service';
-import { OfferService } from '../../../services/offer.service';
 import { Furniture } from '../../../models/furniture';
 import { Offer } from '../../../models/offer.model';
+import { LucideAngularModule, DollarSign, MessageCircle, User, Clock, ChevronLeft, Sparkles, CheckCircle, XCircle, ShoppingCart } from 'lucide-angular';
 
 @Component({
   selector: 'app-furniture-offers',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   templateUrl: './furniture-offers.component.html',
   styleUrls: ['./furniture-offers.component.scss']
 })
 export class FurnitureOffersComponent implements OnInit {
+  readonly DollarIcon = DollarSign;
+  readonly MsgIcon = MessageCircle;
+  readonly UserIcon = User;
+  readonly ClockIcon = Clock;
+  readonly BackIcon = ChevronLeft;
+  readonly SparklesIcon = Sparkles;
+  readonly CheckIcon = CheckCircle;
+  readonly XIcon = XCircle;
+  readonly CartIcon = ShoppingCart;
   furnitureId: number = 0;
   currentFurniture?: Furniture;
   budget: number = 0;
@@ -24,10 +27,16 @@ export class FurnitureOffersComponent implements OnInit {
   loading = false;
   success?: string;
   error?: string;
+  buyerNames = new Map<number, string>();
+
+  get currentUserId(): number {
+    const user = this.userService.currentUser();
+    return user ? Number(user.id) : 0;
+  }
 
   newOffer: Offer = {
     furnitureId: 0,
-    buyerId: 1,
+    buyerId: 0, // set from currentUserId at submit time
     proposedPrice: 0,
     message: ''
   };
@@ -35,6 +44,7 @@ export class FurnitureOffersComponent implements OnInit {
   constructor(
     private furnitureService: FurnitureService,
     private offerService: OfferService,
+    private userService: UserService,
     private route: ActivatedRoute,
     private http: HttpClient
   ) {}
@@ -43,6 +53,7 @@ export class FurnitureOffersComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       this.furnitureId = Number(params.get('id'));
       this.newOffer.furnitureId = this.furnitureId;
+      this.newOffer.buyerId = this.currentUserId;
       this.loadCurrentFurniture();
       this.loadOffers();
     });
@@ -60,8 +71,34 @@ export class FurnitureOffersComponent implements OnInit {
 
   loadOffers(): void {
     this.offerService.getByFurniture(this.furnitureId).subscribe({
-      next: (data) => this.offers = data
+      next: (data) => {
+        this.offers = data;
+        this.resolveBuyerNames(data);
+      }
     });
+  }
+
+  resolveBuyerNames(offers: Offer[]): void {
+    const ids = [...new Set(offers.map(o => o.buyerId).filter(id => !!id && !this.buyerNames.has(id)))];
+    ids.forEach(id => {
+      this.userService.getProfileByUserId(id).subscribe({
+        next: (u: any) => {
+          if (u) {
+            const name = u.firstName && u.lastName
+              ? `${u.firstName} ${u.lastName}`.trim()
+              : u.username || u.name || `Acheteur #${id}`;
+            this.buyerNames.set(id, name);
+          } else {
+            this.buyerNames.set(id, `Acheteur #${id}`);
+          }
+        },
+        error: () => this.buyerNames.set(id, `Acheteur #${id}`)
+      });
+    });
+  }
+
+  getBuyerName(buyerId: number): string {
+    return this.buyerNames.get(buyerId) || `Acheteur #${buyerId}`;
   }
 
   searchByBudget(): void {
@@ -126,7 +163,7 @@ export class FurnitureOffersComponent implements OnInit {
   makeOffer(furniture: any): void {
     const offer: Offer = {
       furnitureId: furniture.id!,
-      buyerId: 1,
+      buyerId: this.currentUserId || 0,
       proposedPrice: furniture.price,
       message: `Intéressé par: ${furniture.title}`
     };
@@ -144,6 +181,8 @@ export class FurnitureOffersComponent implements OnInit {
       this.error = 'Prix invalide.';
       return;
     }
+    // Toujours mettre à jour buyerId avec l'utilisateur connecté
+    this.newOffer.buyerId = this.currentUserId || 0;
     this.offerService.create(this.newOffer).subscribe({
       next: () => {
         this.success = '✅ Offre envoyée avec succès !';
