@@ -25,7 +25,6 @@
               (click)="closeFeaturesDropdown()">
               Collocation Service
             </a>
-
             <a routerLink="/student-services"
               class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
@@ -36,30 +35,30 @@
               (click)="closeFeaturesDropdown()">
               Covoiturage Service
             </a>
-
-              <a routerLink="/event"
-                 class="block px-4 py-2 text-sm hover:bg-secondary"
-                 (click)="closeFeaturesDropdown()">
-                Event Service
-              </a>
-
-            <a routerLink="/services/marketplace" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
+            <a routerLink="/event"
+               class="block px-4 py-2 text-sm hover:bg-secondary"
+               (click)="closeFeaturesDropdown()">
+              Event Service
+            </a>
+            <a routerLink="/real-estate/furniture" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
               Marketplace Service
-            </a>
-
-            <a routerLink="/services/realestate" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
-              (click)="closeFeaturesDropdown()">
-              Realestate Service
             </a>
             <a routerLink="/lost-found" class="block px-4 py-2 text-sm hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
               Lost & Found Service
             </a>
             <div class="border-t border-border my-1"></div>
-            <a routerLink="/subs-payment" class="block px-4 py-2 text-sm font-semibold text-red-600 hover:bg-secondary"
+            <a routerLink="/coupon"
+              class="block px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-primary"
               (click)="closeFeaturesDropdown()">
-              Plans & Pricing
+              Bons Plans Etudiants
+            </a>
+            <a routerLink="/coupon/my-coupons"
+              class="block pr-4 py-1.5 text-muted-foreground hover:bg-secondary hover:text-primary"
+              style="padding-left:2.5rem;font-size:0.9em"
+              (click)="closeFeaturesDropdown()">
+              Mes Coupons
             </a>
 
           </div>
@@ -108,16 +107,23 @@
           (click)="closeMenu()">
           Collocation Service
         </a>
+        <a routerLink="/covoiturage" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Covoiturage Service
+        </a>
+        <a routerLink="/event" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Event Service
+        </a>
+        <a routerLink="/real-estate/furniture" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Marketplace Service
+        </a>
         <a routerLink="/lost-found" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
           Lost & Found Service
         </a>
-        <a routerLink="/subs-payment" class="block rounded-2xl px-3 py-2 text-red-600 font-bold hover:bg-secondary"
-          (click)="closeMenu()">
-          💰 Plans & Tarifs
+        <a routerLink="/coupon" class="block rounded-2xl px-3 py-2 hover:bg-secondary" (click)="closeMenu()">
+          Bons Plans Etudiants
         </a>
-        <a routerLink="/subs-payment/dashboard"
-          class="block rounded-2xl px-3 py-2 text-red-600 font-bold hover:bg-secondary" (click)="closeMenu()">
-          📊 Posts Quota
+        <a routerLink="/coupon/my-coupons" class="block rounded-2xl py-1.5 hover:bg-secondary" style="padding-left:2.5rem;font-size:0.9em" (click)="closeMenu()">
+          Mes Coupons
         </a>
       </div>
       }

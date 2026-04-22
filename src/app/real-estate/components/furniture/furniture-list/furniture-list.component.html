@@ -1,0 +1,113 @@
+<div class="page">
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>Furniture Marketplace</h1>
+      <p>Browse and manage available furniture</p>
+    </div>
+    <div class="header-actions">
+<a routerLink="/real-estate/furniture/notifications" class="hdr-btn hdr-btn--notif">Notifications <span *ngIf="unreadCount > 0" class="hdr-badge">{{ unreadCount }}</span></a>
+      <a routerLink="/real-estate/furniture/cart" class="hdr-btn hdr-btn--cart">Cart <span *ngIf="cartCount > 0" class="hdr-badge">{{ cartCount }}</span></a>
+      <a routerLink="/real-estate/furniture/favorites" class="hdr-btn hdr-btn--fav">Favorites</a>
+      <a routerLink="/coupon/my-coupons" class="hdr-btn" style="background-color: #C8102E; color: white; border-color: #C8102E">🎟 Mes Coupons (IA)</a>
+      <a routerLink="/real-estate/furniture/new" class="hdr-btn hdr-btn--primary">+ Add New</a>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <input type="text" placeholder="Search by title..."
+      [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" class="search-input" />
+    <select [(ngModel)]="selectedCategory" (ngModelChange)="applyFilters()" class="filter-select">
+      <option value="">Category</option>
+      <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+    </select>
+    <select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()" class="filter-select">
+      <option value="">Status</option>
+      <option value="AVAILABLE">Available</option>
+      <option value="RESERVED">Reserved</option>
+      <option value="SOLD">Sold</option>
+    </select>
+    <select [(ngModel)]="selectedCondition" (ngModelChange)="applyFilters()" class="filter-select">
+      <option value="">Condition</option>
+      <option value="GOOD">Good</option>
+      <option value="FAIR">Fair</option>
+      <option value="POOR">Poor</option>
+    </select>
+    <input type="number" placeholder="Prix min (DT)" [(ngModel)]="minPrice" (ngModelChange)="applyFilters()" class="filter-price-input" min="0" />
+    <input type="number" placeholder="Prix max (DT)" [(ngModel)]="maxPrice" (ngModelChange)="applyFilters()" class="filter-price-input" min="0" />
+  </div>
+
+  <div *ngIf="loading" class="loading">⏳ Loading...</div>
+  <div *ngIf="error" class="error">⚠️ {{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="results-info">
+    {{ filtered.length }} article(s) trouvé(s)
+  </div>
+
+  <!-- CARDS -->
+  <div *ngIf="!loading && !error && paginatedItems.length" class="cards-grid">
+    <div *ngFor="let f of paginatedItems" class="card">
+
+      <!-- IMAGE -->
+      <div class="card-image">
+        <a [routerLink]="['/real-estate/furniture', f.id]">
+          <img [src]="optimizedImg(f)" [alt]="f.title" style="cursor:pointer" />
+        </a>
+        <div *ngIf="isBoosted(f.id)" class="featured-badge">⭐ FEATURED</div>
+        <span class="badge-status" [ngClass]="getStatusClass(f.status)">{{ f.status }}</span>
+        <button class="btn-fav" (click)="toggleFavorite(f)" [class.active]="isFavorite(f)">
+          {{ isFavorite(f) ? '❤️' : '🤍' }}
+        </button>
+      </div>
+
+      <div class="card-body">
+        <h3 class="card-title">{{ f.title }}</h3>
+        <p class="card-desc">{{ f.description }}</p>
+        <div class="card-meta">
+          <span class="badge-category">{{ f.category }}</span>
+          <span class="badge-condition" [ngClass]="getConditionClass(f.condition)">
+            <lucide-angular [img]="ShieldCheck" [size]="11" color="#8B0000" style="vertical-align:middle;margin-right:2px"></lucide-angular>
+            {{ f.condition }}
+          </span>
+          <span class="seller-name text-xs text-slate-500">👤 {{ getSellerName(f.sellerId) }}</span>
+        </div>
+        <p class="card-price">{{ f.price | number:'1.2-2' }} DT</p>
+
+        <div class="card-actions">
+          <a [routerLink]="['/real-estate/furniture', f.id]" class="btn-view">👁 View</a>
+          <a *ngIf="isOwner(f)" [routerLink]="['/real-estate/furniture/edit', f.id]" class="btn-edit">✏️ Edit</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'offers']" class="btn-offers">💰 Offres</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
+          <a [routerLink]="['/real-estate/furniture', f.id, 'reviews']" class="btn-reviews">⭐ Avis</a>
+          <button (click)="addToCart(f)" class="btn-add-cart">🛒 Ajouter</button>
+          <button *ngIf="isOwner(f)" (click)="archiveFurniture(f.id, f.title)" class="btn-archive">📦 Archiver</button>
+          <button *ngIf="isOwner(f)" (click)="deleteFurniture(f.id)" class="btn-delete">🗑 Delete</button>
+        </div>
+
+        <a [routerLink]="['/real-estate/furniture', f.id, 'boost']" class="btn-boost-cta">
+          ⚡ Booster mon annonce
+          <span class="boost-cta-sub">Analyse IA + mise en avant ⭐ FEATURED</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && !paginatedItems.length" class="empty">
+    Aucun article trouvé.
+  </div>
+
+  <!-- PAGINATION -->
+  <div *ngIf="totalPages > 1" class="pagination">
+    <button (click)="goToPage(currentPage-1)" [disabled]="currentPage===1" class="page-btn">← Prev</button>
+    <button *ngFor="let p of pageNumbers" (click)="goToPage(p)"
+      [class.active]="p === currentPage" class="page-btn">{{ p }}</button>
+    <button (click)="goToPage(currentPage+1)" [disabled]="currentPage===totalPages" class="page-btn">Next →</button>
+  </div>
+  <!-- SUCCESS TOAST -->
+  <div *ngIf="successMsg" class="cart-toast-success">{{ successMsg }}</div>
+  <!-- CART DEDUP TOAST -->
+  <div *ngIf="cartErrorVisible" class="cart-toast-error">{{ cartErrorMsg }}</div>
+  <!-- FAVORIS TOAST -->
+  <div *ngIf="favToastVisible" class="cart-toast-fav">{{ favToastMsg }}</div>
+</div>

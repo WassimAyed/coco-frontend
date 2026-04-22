@@ -1,0 +1,33 @@
+<div class="promo-bar">
+  <div class="promo-header">
+    <span class="promo-icon">🏷️</span>
+    <span class="promo-title">Avez-vous un code promo ?</span>
+  </div>
+
+  <div *ngIf="!applied()" class="promo-form">
+    <input
+      type="text"
+      [(ngModel)]="codeInput"
+      placeholder="Ex: PROMO10, FLASH20, SYRINE5..."
+      class="promo-input"
+      (keyup.enter)="apply()"
+      autocomplete="off"
+    />
+    <button (click)="apply()" class="btn-apply">Appliquer le code promo</button>
+  </div>
+
+  <p *ngIf="errorMsg()" class="promo-error">{{ errorMsg() }}</p>
+
+  <div *ngIf="applied()" class="promo-success">
+    <div class="success-header">
+      <span>✅ Code appliqué — <strong>{{ discountPct() }}% de réduction !</strong></span>
+      <button (click)="reset()" class="btn-reset" title="Retirer le code">✕</button>
+    </div>
+    <div class="price-compare">
+      <span class="original-price">{{ originalPrice() | number:'1.2-2' }} DT</span>
+      <span class="arrow">→</span>
+      <span class="final-price">{{ discountedPrice() | number:'1.2-2' }} DT</span>
+      <span class="savings-badge">Économie : {{ savings() | number:'1.2-2' }} DT</span>
+    </div>
+  </div>
+</div>

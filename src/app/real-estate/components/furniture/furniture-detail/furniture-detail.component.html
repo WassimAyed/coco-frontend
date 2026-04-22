@@ -1,0 +1,146 @@
+﻿<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/21655424245" target="_blank" class="det-wa-float">
+  <svg class="wa-logo" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  <div class="det-wa-text">
+    <span class="det-wa-label">WhatsApp Business</span>
+    <span class="det-wa-num">+216 55 424 245</span>
+  </div>
+</a>
+
+<div class="f-detail">
+  <div *ngIf="loading" class="loading-msg">Chargement...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && item" class="detail-content">
+
+    <!-- HERO SECTION -->
+    <div class="detail-hero">
+
+      <!-- Product Image -->
+      <div *ngIf="getItemImage()" class="detail-hero-img-wrap">
+        <a [routerLink]="['/real-estate/furniture', item!.id]">
+          <img [src]="getItemImage()" [alt]="item!.title" class="detail-hero-img"
+               onerror="this.style.display='none'" style="cursor:pointer" />
+        </a>
+      </div>
+
+      <div class="detail-hero-badge">
+        <span class="det-condition-chip">
+          <lucide-angular [img]="ShieldCheck" [size]="12" color="#8B0000" style="vertical-align:middle;margin-right:3px"></lucide-angular>
+          {{ item.condition }}
+        </span>
+        <span class="det-status-chip" [class.available]="item.status === 'AVAILABLE'">{{ item.status }}</span>
+      </div>
+      <h1 class="detail-hero-title">{{ item.title }}</h1>
+      <div class="det-meta-row">
+        <span class="det-cat-badge">&#128197; {{ item.category }}</span>
+        <span class="det-views-counter">&#128065; {{ viewCount }} vues</span>
+      </div>
+      <div class="det-price-big">{{ displayPrice | number:'1.0-0' }} <span class="det-price-unit">DT</span></div>
+    </div>
+
+    <!-- DETAIL INFO CARD -->
+    <div class="detail-info-card">
+      <div class="det-info-grid">
+        <div class="det-info-item">
+          <span class="det-info-label">Description</span>
+          <span class="det-info-value">{{ item.description }}</span>
+        </div>
+        <div class="det-info-item">
+          <span class="det-info-label">Etat</span>
+          <span class="det-info-value">{{ item.condition }}</span>
+        </div>
+        <div class="det-info-item">
+          <span class="det-info-label">Quantite</span>
+          <span class="det-info-value">{{ item.quantity }}</span>
+        </div>
+        <div class="det-info-item">
+          <span class="det-info-label">Vendeur</span>
+          <span class="det-info-value">{{ sellerName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CART FEEDBACK -->
+    <div *ngIf="cartError()" class="cart-feedback" [class.cart-feedback--ok]="cartError()!.startsWith('&#10003;')">
+      {{ cartError() }}
+    </div>
+
+    <!-- QUANTITY SELECTOR -->
+    <div *ngIf="item.quantity > 1" class="det-qty-row">
+      <label class="det-qty-label">Quantité :</label>
+      <input type="number" class="det-qty-input" [(ngModel)]="selectedQty"
+             [min]="1" [max]="item.quantity" />
+      <span class="det-qty-max">/ {{ item.quantity }} disponibles</span>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="det-actions">
+      <button class="det-btn det-btn-cart" (click)="addToCart()">
+        Ajouter au panier
+      </button>
+      <button class="det-btn det-btn-offer" (click)="openOfferForm()">
+        &#128176; Faire une offre
+      </button>
+      <button class="det-btn det-btn-pdf" (click)="exportToPdf()">
+        &#128196; PDF
+      </button>
+      <a routerLink="/real-estate/furniture" class="det-btn det-btn-back">&#8592; Retour</a>
+    </div>
+
+    <!-- SIMILAR ITEMS -->
+    <div *ngIf="similarItems.length > 0" class="det-similar-section">
+      <h3 class="det-similar-title">Les Tunisiens qui ont vu cet article ont aussi aimé...</h3>
+      <div class="det-similar-grid">
+        <a *ngFor="let s of similarItems" [routerLink]="['/real-estate/furniture', s.id]" class="det-sim-card">
+          <div class="det-sim-img-wrap">
+            <img [src]="getSimilarImage(s)" [alt]="s.title" class="det-sim-img"
+                 onerror="this.src='https://placehold.co/280x180/f5f5f5/999?text=No+Image'" />
+          </div>
+          <div class="det-sim-info">
+            <p class="det-sim-title">{{ s.title }}</p>
+            <p class="det-sim-price">{{ s.price | number:'1.0-0' }} DT</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- OFFER FORM OVERLAY -->
+<div class="offer-overlay" *ngIf="showOfferForm()" (click)="closeOfferForm()"></div>
+<div class="offer-modal" *ngIf="showOfferForm()">
+  <div class="offer-modal-header">
+    <h3>&#128176; Faire une offre</h3>
+    <button class="btn-close-offer" (click)="closeOfferForm()">&times;</button>
+  </div>
+
+  <div *ngIf="!offerSubmitted()" class="offer-form-body">
+    <p class="offer-subtitle">Proposez votre prix au vendeur</p>
+
+    <label class="offer-label">Votre prix propos&eacute; (DT)</label>
+    <input
+      type="number"
+      class="offer-input"
+      [ngModel]="offerPrice()"
+      (ngModelChange)="offerPrice.set($event)"
+      placeholder="Ex: 150"
+      min="1"
+    />
+
+    <div *ngIf="offerError()" class="offer-error">{{ offerError() }}</div>
+
+    <div class="offer-actions">
+      <button class="btn-submit-offer" (click)="submitOffer()">&#128640; Envoyer l'offre</button>
+      <button class="btn-cancel-offer" (click)="closeOfferForm()">&times; Annuler</button>
+    </div>
+  </div>
+
+  <div *ngIf="offerSubmitted()" class="offer-success">
+    <div class="offer-success-icon">&#127881;</div>
+    <h4>Offre envoy&eacute;e avec succ&egrave;s !</h4>
+    <p>Le vendeur recevra votre proposition et vous contactera.</p>
+    <button class="btn-close-offer-success" (click)="closeOfferForm()">Fermer</button>
+  </div>
+</div>

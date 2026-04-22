@@ -1,0 +1,224 @@
+<div class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- WIZARD PROGRESS -->
+  <div class="mb-10">
+    <div class="flex items-center justify-between">
+      <div *ngFor="let step of steps; let i = index" class="relative flex flex-col items-center flex-1">
+        <!-- LINE -->
+        <div *ngIf="i < steps.length - 1" 
+             class="absolute left-1/2 top-4 h-0.5 w-full bg-slate-100 transition-colors"
+             [class.bg-primary]="currentStep > i"></div>
+        
+        <!-- STEP CIRCLE -->
+        <button (click)="goToStep(i)" [disabled]="i > currentStep && !isEdit"
+          class="relative z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all font-bold text-sm"
+          [class.bg-primary]="currentStep === i"
+          [class.border-primary]="currentStep >= i"
+          [class.text-white]="currentStep === i"
+          [class.bg-white]="currentStep !== i"
+          [class.border-slate-200]="currentStep < i"
+          [class.text-slate-400]="currentStep < i"
+          [class.text-primary]="currentStep > i">
+          <lucide-icon *ngIf="currentStep > i" [img]="Check" [size]="18"></lucide-icon>
+          <span *ngIf="currentStep <= i">{{ i + 1 }}</span>
+        </button>
+        <span class="mt-2 text-[10px] font-black uppercase tracking-widest"
+              [class.text-primary]="currentStep === i"
+              [class.text-slate-400]="currentStep !== i">
+          {{ step }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+    
+    <!-- STEP 0: INFOS -->
+    <div *ngIf="currentStep === 0" class="space-y-6 animate-in fade-in slide-in-from-right-4">
+      <div class="space-y-2">
+        <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Titre de l'annonce</label>
+        <input type="text" formControlName="title" placeholder="Ex: Canapé scandinave 3 places"
+               class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all font-medium" />
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Description</label>
+          <button type="button" (click)="generateDescription()" [disabled]="aiGenerating"
+                  class="flex items-center gap-1.5 text-[10px] font-black text-primary hover:underline disabled:opacity-50">
+            <div *ngIf="aiGenerating" class="h-3 w-3 animate-spin rounded-full border-2 border-slate-200 border-t-primary"></div>
+            ✨ RÉDIGER AVEC L'IA
+          </button>
+        </div>
+        <textarea formControlName="description" rows="5" placeholder="Décrivez votre article en quelques lignes..."
+                  class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all text-sm leading-relaxed"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Catégorie</label>
+            <button type="button" (click)="suggestCategory()" [disabled]="aiGenerating"
+                    class="text-[10px] font-black text-primary hover:underline disabled:opacity-50">
+              ✨ SUGGÉRER VIA IA
+            </button>
+          </div>
+          <select formControlName="category" class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-primary appearance-none bg-white">
+            <option *ngFor="let cat of categories" [value]="cat">{{ getCategoryIcon(cat) }} {{ cat.replace('_', ' ') }}</option>
+          </select>
+        </div>
+        <div class="space-y-2">
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">État de l'objet</label>
+          <div class="flex gap-2">
+            <button *ngFor="let opt of conditionOptions" type="button"
+                    (click)="form.get('condition')?.setValue(opt.value)"
+                    class="flex-1 rounded-xl border p-3 text-center transition-all"
+                    [ngClass]="{
+                      'border-primary bg-primary/5': form.get('condition')?.value === opt.value,
+                      'border-slate-200': form.get('condition')?.value !== opt.value
+                    }">
+              <div class="text-lg">{{ opt.icon }}</div>
+              <div class="text-[10px] font-bold text-slate-900">{{ opt.label }}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: DÉTAILS -->
+    <div *ngIf="currentStep === 1" class="space-y-6 animate-in fade-in slide-in-from-right-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Prix (DT)</label>
+            <button type="button" (click)="applySmartPrice()"
+                    class="rounded-full bg-amber-50 px-2.5 py-0.5 text-[9px] font-black text-amber-700 transition hover:bg-amber-100">
+              🤖 IA SUGGESTION: {{ getSmartPriceSuggestion() }} DT
+            </button>
+          </div>
+          <div class="relative">
+            <input type="number" formControlName="price"
+                   class="w-full rounded-xl border border-slate-200 pl-4 pr-12 py-3 outline-none focus:border-primary font-bold text-slate-900" />
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">DT</span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Quantité disponible</label>
+          <input type="number" formControlName="quantity"
+                 class="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-primary font-bold text-slate-900" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Statut de visibilité</label>
+        <div class="grid grid-cols-3 gap-3">
+          <button *ngFor="let opt of statusOptions" type="button"
+                  (click)="form.get('status')?.setValue(opt.value)"
+                  class="rounded-xl border p-4 text-center transition-all"
+                  [ngClass]="{
+                    'border-primary bg-primary/5': form.get('status')?.value === opt.value,
+                    'border-slate-200': form.get('status')?.value !== opt.value
+                  }">
+            <div class="mb-1 text-xl">{{ opt.icon }}</div>
+            <div class="text-xs font-bold text-slate-900 uppercase">{{ opt.label }}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: PHOTO -->
+    <div *ngIf="currentStep === 2" class="space-y-6 animate-in fade-in slide-in-from-right-4">
+      <div class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center transition-colors hover:border-primary/50">
+        <div *ngIf="!imagePreview" class="space-y-4">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
+            <lucide-icon [img]="CloudUpload" [size]="32"></lucide-icon>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-900">Cliquez pour importer une image</p>
+            <p class="text-[10px] uppercase font-black tracking-widest text-slate-500 mt-1">PNG, JPG ou WEBP jusqu'à 2MB</p>
+          </div>
+          <div class="flex gap-2 justify-center">
+            <input type="file" (change)="onImageSelected($event)" accept="image/*" class="hidden" #fileInput />
+            <button type="button" (click)="fileInput.click()" class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-sm border border-slate-200">Local</button>
+            <button type="button" (click)="openCloudinaryWidget()" class="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm">Cloudinary</button>
+          </div>
+        </div>
+
+        <div *ngIf="imagePreview" class="relative group">
+          <img [src]="imagePreview" class="max-h-64 rounded-xl shadow-lg border border-white" [class.opacity-50]="uploadingToCloud" />
+          <button type="button" (click)="removeImage()" 
+                  class="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-transform hover:scale-110">
+            <lucide-icon [img]="X" [size]="16"></lucide-icon>
+          </button>
+          <div *ngIf="uploadingToCloud" class="absolute inset-0 flex items-center justify-center">
+             <div class="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: RÉCAP -->
+    <div *ngIf="currentStep === 3" class="space-y-6 animate-in fade-in slide-in-from-right-4">
+      <div class="rounded-2xl bg-slate-50 p-6 space-y-4">
+        <div class="flex gap-4">
+           <div class="h-24 w-24 shrink-0 rounded-xl bg-white border border-slate-100 overflow-hidden shadow-sm">
+              <img [src]="imagePreview || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200'" class="h-full w-full object-cover" />
+           </div>
+           <div class="flex-1">
+              <h4 class="font-bold text-slate-900">{{ form.get('title')?.value || 'Sans titre' }}</h4>
+              <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ form.get('description')?.value }}</p>
+              <div class="mt-2 flex gap-2">
+                 <span class="rounded bg-white px-2 py-0.5 text-[10px] font-black uppercase text-primary border border-primary/10">{{ form.get('category')?.value }}</span>
+                 <span class="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">{{ form.get('condition')?.value }}</span>
+              </div>
+           </div>
+        </div>
+        <div class="border-t border-slate-200 pt-4 flex items-center justify-between">
+           <div>
+              <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prix de vente</div>
+              <div class="text-xl font-black text-slate-900">{{ form.get('price')?.value }} DT</div>
+           </div>
+           <div class="text-right">
+              <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Quantité</div>
+              <div class="text-sm font-bold text-slate-600">x{{ form.get('quantity')?.value }}</div>
+           </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-amber-100 bg-amber-50 p-4 flex gap-3 items-start">
+         <div class="text-amber-500 mt-0.5">⚠️</div>
+         <p class="text-[11px] text-amber-700 leading-relaxed font-medium">
+           En publiant cette annonce, vous acceptez nos conditions d'utilisation. Votre annonce sera visible par toute la communauté ESPRIT dès validation.
+         </p>
+      </div>
+    </div>
+
+    <!-- ERROR ALERT -->
+    <div *ngIf="error" class="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-bold text-red-600">
+      {{ error }}
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="flex items-center justify-between pt-6 border-t border-slate-100">
+      <button type="button" (click)="prevStep()" *ngIf="currentStep > 0"
+              class="rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
+        Retour
+      </button>
+      <div *ngIf="currentStep === 0"></div>
+
+      <div class="flex gap-3">
+        <a routerLink="/real-estate/furniture" class="rounded-xl px-6 py-3 text-sm font-bold text-slate-400 transition hover:text-slate-600">
+          Annuler
+        </a>
+        <button type="button" (click)="nextStep()" *ngIf="currentStep < steps.length - 1"
+                class="rounded-xl bg-slate-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+          Suivant
+        </button>
+        <button type="submit" *ngIf="currentStep === steps.length - 1" [disabled]="loading"
+                class="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-primary/90 active:scale-95 disabled:opacity-50">
+          <span *ngIf="!loading">{{ isEdit ? 'Mettre à jour' : 'Publier l\'annonce' }}</span>
+          <span *ngIf="loading">Publication...</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

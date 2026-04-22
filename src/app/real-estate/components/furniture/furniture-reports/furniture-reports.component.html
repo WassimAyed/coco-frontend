@@ -1,0 +1,139 @@
+<article class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- HEADER -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h3 class="flex items-center gap-2 text-xl font-bold text-foreground">
+        <lucide-icon [img]="AlertIcon" [size]="24" class="text-red-500"></lucide-icon>
+        Modération des Signalements
+      </h3>
+      <p class="text-sm text-slate-500">Examinez les articles signalés par la communauté</p>
+    </div>
+    <div class="flex gap-2">
+      <a routerLink="/real-estate/furniture" 
+         class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="BackIcon" [size]="18"></lucide-icon>
+        Retour Marketplace
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI MINI CARDS -->
+  <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-400">
+        <lucide-icon [img]="FileIcon" [size]="20"></lucide-icon>
+      </div>
+      <div>
+        <div class="text-lg font-bold text-slate-900">{{ reports().length }}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Signalements</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 rounded-xl border border-orange-100 bg-orange-50 p-4">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-orange-500">
+        <lucide-icon [img]="ClockIcon" [size]="20"></lucide-icon>
+      </div>
+      <div>
+        <div class="text-lg font-bold text-orange-700">{{ pendingCount() }}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-orange-500">En attente</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 rounded-xl border border-green-100 bg-green-50 p-4">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-green-600">
+        <lucide-icon [img]="ShieldIcon" [size]="20"></lucide-icon>
+      </div>
+      <div>
+        <div class="text-lg font-bold text-green-700">{{ resolvedCount() }}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-green-500">Traités</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="mb-8 flex flex-wrap items-center gap-2 border-b border-slate-100 pb-6">
+    <button *ngFor="let f of filters"
+      class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all"
+      [ngClass]="filter() === f 
+        ? 'bg-primary text-white shadow-md shadow-primary/20' 
+        : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'"
+      (click)="filter.set(f)">
+      {{ f === 'ALL' ? 'Tous' : f === 'PENDING' ? 'En attente' : f === 'REVIEWED' ? 'Examinés' : 'Résolus' }}
+    </button>
+  </div>
+
+  <!-- LOADING / EMPTY -->
+  <div *ngIf="loading()" class="py-20 text-center">
+    <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    <p class="text-sm font-medium text-slate-500">Chargement des signalements...</p>
+  </div>
+
+  <div *ngIf="!loading() && filtered().length === 0" class="py-20 text-center">
+    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 text-3xl">
+      <lucide-icon [img]="FileIcon" [size]="32"></lucide-icon>
+    </div>
+    <h4 class="text-slate-900 font-bold mb-1">Aucun signalement</h4>
+    <p class="text-sm text-slate-500">Tout est en ordre pour ce statut.</p>
+  </div>
+
+  <!-- TABLE -->
+  <div *ngIf="!loading() && filtered().length > 0" class="overflow-x-auto rounded-xl border border-slate-100">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="border-b border-border bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <th class="px-6 py-4">Raison</th>
+          <th class="px-6 py-4">Détails du Signalement</th>
+          <th class="px-6 py-4">Cible</th>
+          <th class="px-6 py-4">Statut</th>
+          <th class="px-6 py-4">Date</th>
+          <th class="px-6 py-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngFor="let r of filtered()" class="group transition-colors hover:bg-slate-50/50">
+          <td class="px-6 py-5">
+            <span class="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
+              <lucide-icon [img]="AlertIcon" [size]="14"></lucide-icon>
+              {{ getReasonLabel(r.reason) }}
+            </span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="flex items-start gap-2">
+              <lucide-icon [img]="MsgIcon" [size]="16" class="mt-0.5 text-slate-300"></lucide-icon>
+              <p class="max-w-xs text-sm font-medium text-slate-600 line-clamp-2" [title]="r.description">
+                {{ r.description || '—' }}
+              </p>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <div class="flex flex-col">
+              <span class="text-xs font-bold text-slate-900">Art. #{{ r.furnitureId }}</span>
+              <span class="text-[10px] font-medium text-slate-400 uppercase tracking-tight">Vendeur ID: {{ r.userId }}</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black tracking-wider"
+              [ngClass]="{
+                'bg-orange-50 text-orange-700 border-orange-200': r.status === 'PENDING',
+                'bg-blue-50 text-blue-700 border-blue-200': r.status === 'REVIEWED',
+                'bg-green-50 text-green-700 border-green-200': r.status === 'RESOLVED'
+              }">
+              {{ r.status }}
+            </span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+              <lucide-icon [img]="ClockIcon" [size]="12"></lucide-icon>
+              {{ r.createdAt | date:'dd/MM HH:mm' }}
+            </div>
+          </td>
+          <td class="px-6 py-5 text-right">
+            <a [routerLink]="['/real-estate/furniture', r.furnitureId]" 
+               class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black text-primary border border-primary transition hover:bg-primary hover:text-white group-hover:shadow-lg group-hover:shadow-primary/20">
+              <lucide-icon [img]="ViewIcon" [size]="14"></lucide-icon>
+              Visualiser
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</article>

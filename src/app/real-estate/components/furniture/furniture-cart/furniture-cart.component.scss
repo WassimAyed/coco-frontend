@@ -1,0 +1,88 @@
+.page {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2rem;
+  h1 { font-size: 1.8rem; color: #1a237e; margin: 0; }
+}
+
+.btn-back {
+  background: #f5f5f5; color: #333;
+  padding: 0.6rem 1.2rem; border-radius: 8px;
+  text-decoration: none; font-weight: 600;
+  &:hover { background: #e0e0e0; }
+}
+
+.empty {
+  text-align: center; padding: 4rem 2rem;
+  background: white; border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+.empty p { color: #666; font-size: 1.1rem; margin-bottom: 1.5rem; }
+
+.btn-shop {
+  background: #1976d2; color: white;
+  padding: 0.8rem 2rem; border-radius: 8px;
+  text-decoration: none; font-weight: 600;
+  &:hover { background: #1565c0; }
+}
+
+.cart-items { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+
+.cart-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: white; border-radius: 12px;
+  padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.item-info h3 { margin: 0 0 0.3rem; color: #333; }
+.item-price { margin: 0; color: #666; font-size: 0.9rem; }
+
+.item-total {
+  display: flex; align-items: center; gap: 1rem;
+  strong { font-size: 1.1rem; color: #1a237e; }
+}
+
+.btn-remove {
+  background: #ffebee; color: #c62828;
+  border: none; padding: 0.4rem 0.7rem;
+  border-radius: 6px; cursor: pointer;
+  font-size: 0.9rem;
+  &:hover { background: #ffcdd2; }
+}
+
+.cart-summary {
+  background: white; border-radius: 16px;
+  padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.summary-row {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.total-price { font-size: 1.5rem; color: #1a237e; }
+
+.summary-actions { display: flex; gap: 1rem; justify-content: flex-end; }
+
+.btn-clear {
+  background: #fff3e0; color: #e65100;
+  border: none; padding: 0.8rem 1.5rem;
+  border-radius: 8px; font-weight: 600; cursor: pointer;
+  &:hover { background: #ffe0b2; }
+}
+
+.btn-checkout {
+  background: linear-gradient(135deg, #1976d2, #1a237e);
+  color: white; border: none;
+  padding: 0.8rem 2rem; border-radius: 8px;
+  font-weight: 600; font-size: 1rem; cursor: pointer;
+  &:hover { opacity: 0.9; }
+}
