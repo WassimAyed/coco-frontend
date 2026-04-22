@@ -34,6 +34,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-angular';
+import { FurnitureService } from '../../../real-estate/services/furniture.service';
 import { UserService } from '../../../user-security/services/user.service';
 import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
 import { ItemReportResponse } from '../../../lost-found/models/lost-item.model';
@@ -88,6 +89,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   };
 
   private readonly userService = inject(UserService);
+  private readonly furnitureService = inject(FurnitureService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
   private readonly toast = inject(ToastService);
   private readonly studentServicesApiService = inject(StudentServicesApiService);
@@ -180,12 +182,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
-  readonly kpiCards = [
-    { title: 'Total Users', value: '2,547', change: '+12.5%', trend: 'up', icon: Users, color: 'text-primary' },
-    { title: 'Active Listings', value: '1,234', change: '+8.2%', trend: 'up', icon: ShoppingBag, color: 'text-blue-600' },
-    { title: 'Monthly Revenue', value: '45,678 DT', change: '+23.1%', trend: 'up', icon: CreditCard, color: 'text-green-600' },
-    { title: 'Pending Approvals', value: '47', change: '-5.3%', trend: 'down', icon: Clock, color: 'text-orange-600' },
-  ];
+  readonly marketplaceCount = signal<number | null>(null);
+
+  get kpiCards() {
+    const count = this.marketplaceCount();
+    const listingsValue = count === null ? '…' : count.toLocaleString();
+    return [
+      { title: 'Total Users', value: '2,547', change: '+12.5%', trend: 'up', icon: Users, color: 'text-primary' },
+      { title: 'Active Listings', value: listingsValue, change: 'Marketplace', trend: 'up', icon: ShoppingBag, color: 'text-blue-600' },
+      { title: 'Monthly Revenue', value: '45,678 DT', change: '+23.1%', trend: 'up', icon: CreditCard, color: 'text-green-600' },
+      { title: 'Pending Approvals', value: '47', change: '-5.3%', trend: 'down', icon: Clock, color: 'text-orange-600' },
+    ];
+  }
 
   readonly pendingUsers = [
     { id: 1, name: 'Ahmed Ben Ali', email: 'ahmed.benali@esprit.tn', phone: '+21620111222', registeredDate: '2026-03-15', status: 'pending' },
@@ -243,6 +251,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     void this.loadAdminUsers();
     void this.loadAdminSignals();
     this.loadAdminServices();
+    this.loadMarketplaceCount();
 
     this.eventNotifications.connect();
     this.route.data.subscribe((data) => {
@@ -466,6 +475,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   async logout(): Promise<void> {
     this.userService.logout();
     await this.router.navigate(['/']);
+  }
+
+  private loadMarketplaceCount(): void {
+    this.furnitureService.getAll().subscribe({
+      next: (items) => this.marketplaceCount.set((items || []).length),
+      error: () => this.marketplaceCount.set(0),
+    });
   }
 
   private loadAdminServices(): void {
