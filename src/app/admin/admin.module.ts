@@ -7,6 +7,7 @@ import { AdminCollocationComponent } from '../collocation/components/admin-collo
 import { AdminCouponsComponent } from '../coupon/components/admin-coupons/admin-coupons.component';
 import { AdminCovoiturageComponent } from '../covoiturage/components/admin-covoiturage/admin-covoiturage.component';
 import { AdminPlansComponent } from '../subs-payment/components/admin-plans/admin-plans.component';
+import { FurnitureDashboardComponent } from '../real-estate/components/furniture/furniture-dashboard/furniture-dashboard.component';
 import { EventPaginationModule } from '../event/event-pagination.module';
 import { AdminEventsComponent } from './components/admin-events/admin-events.component';
 import { AdminOverviewPanelComponent } from './components/admin-overview-panel/admin-overview-panel.component';
@@ -42,6 +43,7 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
     AdminCovoiturageComponent,
     AdminCollocationComponent,
     AdminCouponsComponent,
+    FurnitureDashboardComponent,
   ],
 })
 export class AdminModule {}
