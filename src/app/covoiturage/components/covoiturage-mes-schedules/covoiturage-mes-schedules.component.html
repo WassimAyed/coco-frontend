@@ -1,0 +1,122 @@
+<main class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button class="btn btn-outline-secondary rounded-pill" (click)="goBack()">
+      <i class="fas fa-arrow-left me-1"></i> Retour
+    </button>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-danger rounded-pill" (click)="runNow()" title="Generer maintenant les trajets dus">
+        <i class="fas fa-bolt me-1"></i> Generer maintenant
+      </button>
+      <button class="btn btn-danger rounded-pill" (click)="goToCreate()">
+        <i class="fas fa-plus me-1"></i> Nouvelle programmation
+      </button>
+    </div>
+  </div>
+
+  <h3 class="fw-bold mb-4">
+    <i class="fas fa-calendar-alt text-danger me-2"></i> Mes trajets programmes
+  </h3>
+
+  <div *ngIf="loading" class="text-center text-muted py-5">
+    <div class="spinner-border text-danger"></div>
+    <div class="mt-2">Chargement...</div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="!loading && schedules.length === 0" class="text-center text-muted py-5">
+    <i class="fas fa-calendar-plus fa-3x mb-3 opacity-50"></i>
+    <p>Aucun trajet programme pour le moment.</p>
+    <button class="btn btn-danger rounded-pill" (click)="goToCreate()">
+      Creer ma premiere programmation
+    </button>
+  </div>
+
+  <div class="row g-3" *ngIf="!loading && schedules.length > 0">
+    <div class="col-md-6" *ngFor="let s of schedules">
+      <div class="card border-0 shadow-sm rounded-4 h-100" [class.opacity-75]="!s.active">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge" [class.bg-success]="s.active" [class.bg-secondary]="!s.active">
+              <i class="fas" [class.fa-play]="s.active" [class.fa-pause]="!s.active"></i>
+              {{ s.active ? 'Active' : 'En pause' }}
+            </span>
+            <span class="badge bg-danger">
+              <i class="fas fa-sync-alt me-1"></i>
+              {{ s.frequency === 'DAILY' ? 'Tous les jours' : 'Hebdomadaire' }}
+            </span>
+          </div>
+
+          <h5 class="fw-bold mb-2">
+            <i class="fas fa-map-marker-alt text-success me-1"></i>
+            {{ s.pointDepart }}
+          </h5>
+          <div class="text-muted mb-2">
+            <i class="fas fa-arrow-down text-danger mx-2"></i>
+          </div>
+          <h5 class="fw-bold mb-3">
+            <i class="fas fa-map-marker-alt text-danger me-1"></i>
+            {{ s.pointArrivee }}
+          </h5>
+
+          <div class="row g-2 small text-muted mb-3">
+            <div class="col-6">
+              <i class="fas fa-clock me-1"></i> {{ s.heureDepart }}
+            </div>
+            <div class="col-6">
+              <i class="fas fa-users me-1"></i> {{ s.nombrePlaces }} places
+            </div>
+            <div class="col-6">
+              <i class="fas fa-coins me-1"></i> {{ s.prixParPassager }} TND
+            </div>
+            <div class="col-6">
+              <i class="fas fa-road me-1"></i> {{ s.distance }} km
+            </div>
+            <div class="col-12" *ngIf="s.frequency === 'WEEKLY'">
+              <i class="fas fa-calendar-week me-1"></i> {{ formatDays(s.daysOfWeek) }}
+            </div>
+            <div class="col-12" *ngIf="s.startDate || s.endDate">
+              <i class="fas fa-calendar me-1"></i>
+              {{ s.startDate || '-' }} &rarr; {{ s.endDate || 'illimitee' }}
+            </div>
+            <div class="col-12" *ngIf="s.lastGeneratedDate">
+              <i class="fas fa-check-circle text-success me-1"></i>
+              Dernier trajet genere : {{ s.lastGeneratedDate }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm rounded-pill flex-grow-1"
+                    [class.btn-outline-warning]="s.active"
+                    [class.btn-outline-success]="!s.active"
+                    (click)="toggle(s)">
+              <i class="fas" [class.fa-pause]="s.active" [class.fa-play]="!s.active"></i>
+              {{ s.active ? 'Mettre en pause' : 'Activer' }}
+            </button>
+            <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="askDelete(s.id!)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="modal-backdrop fade show" *ngIf="showConfirmModal"></div>
+  <div class="modal fade show d-block" *ngIf="showConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-body p-4 text-center">
+          <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+          <h5 class="fw-bold mb-2">Supprimer cette programmation ?</h5>
+          <p class="text-muted">Les trajets deja publies ne seront pas supprimes.</p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-outline-secondary rounded-pill px-4" (click)="cancelDelete()">Annuler</button>
+            <button class="btn btn-danger rounded-pill px-4" (click)="confirmDelete()">Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

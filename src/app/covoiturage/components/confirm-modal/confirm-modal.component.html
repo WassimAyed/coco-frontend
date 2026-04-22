@@ -1,0 +1,25 @@
+<div *ngIf="show">
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ title }}</h5>
+          <button type="button" class="btn-close" (click)="onCancel()"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <i [ngClass]="icon" class="fa-3x mb-3"></i>
+          <p class="fs-5 mb-0">{{ message }}</p>
+        </div>
+        <div class="modal-footer border-0 justify-content-center gap-2 pt-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="onCancel()">
+            {{ cancelText }}
+          </button>
+          <button type="button" class="btn rounded-pill px-4" [ngClass]="confirmClass" (click)="onConfirm()">
+            {{ confirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

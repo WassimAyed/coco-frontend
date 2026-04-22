@@ -2,10 +2,12 @@ import { Component, inject, effect, OnInit } from '@angular/core';
 import { CollocationService } from '../../services/collocation.service';
 import { UserService } from '../../../user-security/services/user.service';
 import { UserApiService } from '../../../user-security/services/user-api.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 
 declare const bootstrap: any;
 
 @Component({
+  standalone: false,
   selector: 'app-mes-offres-requests',
   templateUrl: './mes-offres-request-colloc.component.html',
   styleUrls: ['./mes-offres-request-colloc.component.css']
@@ -17,6 +19,7 @@ export class MesOffresRequestsComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly userApiService = inject(UserApiService);
   private readonly collocationService = inject(CollocationService);
+  private readonly smartService = inject(SmartCollocationService);
 
   readonly user = this.userService.currentUser;
 
@@ -70,6 +73,22 @@ export class MesOffresRequestsComponent implements OnInit {
         this.myRequests = requests;
         this.setPage(1);
         this.loadSenderProfiles(requests);
+        
+        // Fetch AI smart rankings
+        offers.forEach(o => this.loadRankings(o.id));
+      });
+    });
+  }
+
+  loadRankings(offerId: number): void {
+    this.smartService.getApplicantRanking(offerId).subscribe(ranks => {
+      ranks.forEach(rankObj => {
+        // Find matching request and assign rank badge & score
+        const reqs = this.myRequests.filter(r => r.offer.id === offerId && r.studentId === rankObj.studentId);
+        reqs.forEach(req => {
+          req.aiRankScore = rankObj.score;
+          req.aiRankBadge = rankObj.badge;
+        });
       });
     });
   }
@@ -103,6 +122,18 @@ export class MesOffresRequestsComponent implements OnInit {
           this.senderProfiles.set(id, profile);
         }).catch(() => {
           this.senderProfiles.set(id, { firstName: 'Utilisateur', lastName: '#' + id, email: '', avatarUrl: '' });
+        });
+        
+        // Load trust score for this student ID
+        this.smartService.getTrustScore(id).subscribe(trustInfo => {
+          // Store trust score inside sender profile if exists
+          const currentProfile = this.senderProfiles.get(id);
+          if (currentProfile) {
+            currentProfile.trustScore = trustInfo.score;
+            currentProfile.trustBadge = trustInfo.category;
+            currentProfile.trustColor = trustInfo.color;
+            this.senderProfiles.set(id, currentProfile);
+          }
         });
       }
     });
@@ -207,3 +238,4 @@ closeMessageModal() {
   this.showMessageModal = false;
 }
 }
+

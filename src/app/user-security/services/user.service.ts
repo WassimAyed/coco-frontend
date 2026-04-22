@@ -262,7 +262,7 @@ export class UserService {
     }
 
     const base = environment.apiBaseUrl.replace(/\/+$/, '');
-    return this.http.get<any>(`${base}/users/${userId}`, {
+    return this.http.get<any>(`${base}/profiles/${userId}`, {
       withCredentials: environment.auth.withCredentials,
     }).pipe(
       tap((profile) => this.profileCache.set(userId, profile)),

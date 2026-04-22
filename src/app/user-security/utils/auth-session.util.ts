@@ -1,8 +1,23 @@
 import { AuthSession } from '../models/user.model';
+import { buildAuthSessionFromApiResponse } from './user-profile.util';
 
 const AUTH_SESSION_KEY = 'coco-auth-session';
 const AUTH_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const EXPIRED_COOKIE_DATE = 'Thu, 01 Jan 1970 00:00:00 GMT';
+
+interface StoredAuthSession {
+  accessToken?: string;
+  authenticatedAt?: string;
+  refreshToken?: string;
+  rememberMe?: boolean;
+}
+
+const LEGACY_STORAGE_KEYS = [
+  AUTH_SESSION_KEY,
+  'userId',
+  'ownerId',
+  'currentUser',
+];
 
 function hasDocument(): boolean {
   return typeof document !== 'undefined';
@@ -52,13 +67,36 @@ function writeCookie(name: string, value: string, maxAgeSeconds?: number): void 
 }
 
 export function loadAuthSession(): AuthSession | null {
+  clearLegacyBrowserStorage();
   const rawSession = readCookie(AUTH_SESSION_KEY);
   if (!rawSession) {
     return null;
   }
 
   try {
-    return JSON.parse(rawSession) as AuthSession;
+    const parsedValue = JSON.parse(rawSession) as AuthSession | StoredAuthSession;
+
+    if ('user' in parsedValue && parsedValue.user) {
+      return parsedValue as AuthSession;
+    }
+
+    const compactSession = parsedValue as StoredAuthSession;
+    if (!compactSession.accessToken?.trim()) {
+      clearAuthSession();
+      return null;
+    }
+
+    const restoredSession = buildAuthSessionFromApiResponse(
+      {
+        accessToken: compactSession.accessToken,
+        authenticatedAt: compactSession.authenticatedAt,
+        refreshToken: compactSession.refreshToken,
+      },
+      compactSession.rememberMe ?? true,
+      '',
+    );
+
+    return restoredSession;
   } catch {
     clearAuthSession();
     return null;
@@ -66,13 +104,37 @@ export function loadAuthSession(): AuthSession | null {
 }
 
 export function saveAuthSession(session: AuthSession, rememberMe: boolean): void {
+  clearLegacyBrowserStorage();
+  const compactSession: StoredAuthSession = {
+    accessToken: session.accessToken,
+    authenticatedAt: session.authenticatedAt,
+    refreshToken: session.refreshToken,
+    rememberMe,
+  };
+
   writeCookie(
     AUTH_SESSION_KEY,
-    JSON.stringify(session),
-    rememberMe ? AUTH_SESSION_MAX_AGE_SECONDS : undefined
+    JSON.stringify(compactSession),
+    rememberMe ? AUTH_SESSION_MAX_AGE_SECONDS : undefined,
   );
 }
 
 export function clearAuthSession(): void {
+  clearLegacyBrowserStorage();
   writeCookie(AUTH_SESSION_KEY, '', 0);
+}
+
+function clearLegacyBrowserStorage(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    for (const key of LEGACY_STORAGE_KEYS) {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore cleanup failures.
+  }
 }

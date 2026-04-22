@@ -9,14 +9,15 @@ import {
   computed
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CollocationService } from '../../services/collocation.service';
 import { CollocationOffer } from '../../models/collocationOffre.model';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
 import { UserService } from '../../../user-security/services/user.service';
 import { UserApiService } from '../../../user-security/services/user-api.service';
+import { SmartCollocationService } from '../../services/smart-collocation.service';
 
 // -------- Leaflet icon fix --------
 const iconDefault = L.icon({
@@ -30,6 +31,7 @@ L.Marker.prototype.options.icon = iconDefault;
 // ---------------------------------
 
 @Component({
+  standalone: false,
   selector: 'app-collocation-detail',
   templateUrl: './collocation-detailOffre.component.html',
   styleUrls: ['./collocation-detailOffre.component.css']
@@ -61,6 +63,7 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private collocationService: CollocationService,
     private userApiService: UserApiService,
+    private smartService: SmartCollocationService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {}
@@ -101,7 +104,12 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
         if (this.ownerId) {
           try {
             this.owner = await this.userApiService.getUserById(this.ownerId);
-            //console.log(this.owner);
+            this.smartService.getTrustScore(Number(this.ownerId)).subscribe(trustInfo => {
+              this.owner.trustScore = trustInfo.score;
+              this.owner.trustBadge = trustInfo.category;
+              this.owner.trustColor = trustInfo.color;
+              this.cdr.detectChanges();
+            });
           } catch (err) {
             console.error('Error loading owner', err);
           }
@@ -150,3 +158,4 @@ export class CollocationDetailComponent implements OnInit, OnDestroy {
     return this.currentUserId === this.ownerId;
   }
 }
+

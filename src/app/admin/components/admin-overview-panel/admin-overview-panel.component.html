@@ -1,0 +1,59 @@
+<div class="space-y-6">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+    @for (card of cards; track card.label) {
+      <article class="rounded-3xl border border-border bg-white p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold text-slate-500">{{ card.label }}</p>
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100"
+            [ngClass]="card.colorClass"
+          >
+            <lucide-icon [img]="card.icon" [size]="20"></lucide-icon>
+          </div>
+        </div>
+        <p class="mt-5 text-3xl font-black text-foreground">{{ card.value }}</p>
+      </article>
+    }
+  </div>
+
+  <article class="rounded-3xl border border-border bg-white p-6 shadow-sm">
+    <div class="mb-5">
+      <h3 class="text-xl font-black text-foreground">Latest platform users</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        Quick overview of the accounts currently available in the admin panel.
+      </p>
+    </div>
+
+    @if (recentUsers.length === 0) {
+      <p class="py-10 text-center text-slate-500">No users available yet.</p>
+    } @else {
+      <div class="space-y-3">
+        @for (user of recentUsers; track user.id) {
+          <div
+            class="flex items-center justify-between rounded-2xl border border-border p-4"
+          >
+            <div class="flex items-center gap-3">
+              <img
+                [src]="resolveAvatar(user)"
+                [alt]="user.username"
+                class="h-12 w-12 rounded-full object-cover"
+              />
+              <div>
+                <p class="font-semibold text-foreground">
+                  {{ user.username }} {{ user.lastname }}
+                </p>
+                <p class="text-sm text-slate-500">{{ user.email }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-semibold text-foreground">{{ user.role }}</p>
+              <p class="text-xs text-slate-500">
+                {{ user.twoFactorEnabled ? '2FA enabled' : '2FA disabled' }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </article>
+</div>

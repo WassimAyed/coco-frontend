@@ -39,3 +39,4 @@ export class SubsDetailComponent implements OnInit {
     return (this.quota.remaining_posts / 5 * 100) + '%';
   }
 }
+

@@ -108,6 +108,13 @@
           <h6 class="fw-bold mb-1">{{ owner.username }} {{ owner.lastname }}</h6>
           <small class="text-secondary d-block mb-3">{{ owner.email }}</small>
 
+          <div *ngIf="owner.trustBadge" class="mb-3">
+             <span class="badge text-white px-3 py-2" [style.backgroundColor]="owner.trustColor">
+               <i class="fas" [ngClass]="{'fa-shield-alt': owner.trustBadge === 'Trusted', 'fa-check': owner.trustBadge === 'Reliable', 'fa-exclamation-triangle': owner.trustBadge === 'Risky', 'fa-user': owner.trustBadge === 'New User'}"></i>
+               {{ owner.trustBadge }} ({{ owner.trustScore | number:'1.0-0' }})
+             </span>
+          </div>
+
           <!-- Action Button -->
           <button
             *ngIf="!isOwner()"

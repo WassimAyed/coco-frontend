@@ -8,6 +8,7 @@ import { environment } from '../../../../environments/environment';
 const PENDING_TWO_FACTOR_KEY = 'pendingTwoFactorLogin';
 
 @Component({
+  standalone: false,
   selector: 'app-login-page',
   templateUrl: './login-page.component.html',
 })
@@ -95,10 +96,19 @@ export class LoginPageComponent {
       await this.router.navigate([homeRoute]);
 
     } catch (error) {
-      const message = this.authError();
+      const message = this.authError() ?? '';
+      if (this.isAccountDisabledError(message)) {
+        await this.router.navigate(['/account-disabled']);
+        return;
+      }
       if (message) this.toastService.error(message, 'Login Failed');
       console.error('Login error:', error);
     }
+  }
+
+  private isAccountDisabledError(message: string): boolean {
+    const lower = message.toLowerCase();
+    return lower.includes('disabled') || lower.includes('suspended') || lower.includes('account has been');
   }
 
   // ================= GOOGLE LOGIN =================

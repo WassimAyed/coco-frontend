@@ -1,16 +1,32 @@
 <div class="min-h-screen bg-background">
 	<section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
 		<div class="section-shell space-y-6">
-			<a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
-				← Back to events
+			<a routerLink="/event" class="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary hover:text-primary">
+				<i class="fas fa-arrow-left"></i> Back to events
 			</a>
 
-			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
-			<div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
-			<div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+			<!-- Loading -->
+			<div *ngIf="isLoading" class="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white p-6 text-sm text-slate-500 shadow-sm">
+				<span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+				Loading event details...
+			</div>
+
+			<!-- Error -->
+			<div *ngIf="errorMessage" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+				<i class="fas fa-exclamation-triangle mt-0.5 text-red-600"></i>
+				<span>{{ errorMessage }}</span>
+			</div>
+
+			<!-- Success -->
+			<div *ngIf="successMessage" class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 shadow-sm">
+				<i class="fas fa-check-circle mt-0.5 text-emerald-600"></i>
+				<span>{{ successMessage }}</span>
+			</div>
 
 			<article *ngIf="event" class="rounded-2xl border border-border bg-white p-6 shadow-sm">
 				<div class="space-y-6">
+
+					<!-- Countdown -->
 					<div
 						class="countdown-banner"
 						[ngClass]="{
@@ -20,27 +36,38 @@
 						}"
 					>
 						<div class="countdown-header">
-							<span class="countdown-icon" aria-hidden="true">⏱</span>
+							<span class="countdown-icon" aria-hidden="true"><i class="fas fa-stopwatch"></i></span>
 							<span class="countdown-label">{{ countdownLabel }}</span>
 						</div>
 						<p *ngIf="countdownStatus !== 'after'" class="countdown-digits">{{ countdownValue }}</p>
 					</div>
 
-					<div class="relative overflow-hidden rounded-2xl border border-border">
+					<!-- Hero image carousel -->
+					<div class="relative overflow-hidden rounded-2xl border border-border shadow-sm">
 						<img [src]="getDisplayedImage()" [alt]="event.name || 'Event'" class="h-80 w-full object-cover lg:h-[26rem]" />
 						<div class="event-card-overlay"></div>
 						<div class="hero-info-overlay">
-							<h2 class="text-2xl font-bold text-white">{{ event.name || 'Event' }}</h2>
-							<p class="text-sm text-slate-200">{{ event.location || 'N/A' }}</p>
+							<h2 class="flex items-center gap-2 text-2xl font-bold text-white">
+								<i class="fas fa-calendar-day text-primary"></i>
+								{{ event.name || 'Event' }}
+							</h2>
+							<p class="mt-1 flex items-center gap-1 text-sm text-slate-200">
+								<i class="fas fa-map-marker-alt"></i>
+								{{ event.location || 'N/A' }}
+							</p>
 						</div>
-						<span class="absolute left-4 top-4" [ngClass]="getStatusBadgeClass(event.status)">
-							{{ event.status || 'PLANNED' }}
+						<span *ngIf="isFreeEvent(event)" class="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow" [ngClass]="getStatusBadgeClass(event)">
+							<i class="fas fa-circle text-[6px]"></i>
+							{{ getStatusLabel(event) }}
 						</span>
-						<button type="button" class="carousel-nav-btn left" (click)="previousImage()" [disabled]="getImageCount() <= 1">←</button>
-						<button type="button" class="carousel-nav-btn right" (click)="nextImage()" [disabled]="getImageCount() <= 1">→</button>
-						<div class="carousel-count">{{ getActiveImageIndex() + 1 }} / {{ getImageCount() }}</div>
+						<button type="button" class="carousel-nav-btn left" (click)="previousImage()" [disabled]="getImageCount() <= 1"><i class="fas fa-chevron-left"></i></button>
+						<button type="button" class="carousel-nav-btn right" (click)="nextImage()" [disabled]="getImageCount() <= 1"><i class="fas fa-chevron-right"></i></button>
+						<div class="carousel-count">
+							<i class="fas fa-images me-1"></i>{{ getActiveImageIndex() + 1 }} / {{ getImageCount() }}
+						</div>
 					</div>
 
+					<!-- Gallery -->
 					<div #galleryStrip class="gallery-strip" *ngIf="gallery.length > 0; else emptyGalleryTop">
 						<button
 							type="button"
@@ -53,32 +80,94 @@
 					</div>
 
 					<ng-template #emptyGalleryTop>
-						<p class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">No gallery images available.</p>
+						<p class="flex items-center gap-2 rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">
+							<i class="fas fa-image text-slate-400"></i>
+							No gallery images available.
+						</p>
 					</ng-template>
 
+					<!-- Info + Map -->
 					<div class="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-						<div class="space-y-3 text-sm text-slate-700">
-							<p><strong>Description:</strong> {{ event.description || 'N/A' }}</p>
-							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
-							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
-							<p><strong>End:</strong> {{ formatDate(event.endDate) }}</p>
-							<p><strong>Max capacity:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</p>
-							<p><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</p>
-							<p><strong>Available seats:</strong> {{ getAvailablePlaces() }}</p>
-							<p><strong>Category:</strong> {{ categoryName || 'N/A' }}</p>
+						<div class="rounded-2xl border border-border bg-slate-50 p-5">
+							<h3 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+								<i class="fas fa-info-circle text-primary"></i>
+								Event information
+							</h3>
+							<div class="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+								<p class="flex items-start gap-2">
+									<i class="fas fa-align-left mt-1 w-4 text-slate-400"></i>
+									<span><strong>Description:</strong> {{ event.description || 'N/A' }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-map-marker-alt mt-1 w-4 text-red-500"></i>
+									<span><strong>Location:</strong> {{ event.location || 'N/A' }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-building mt-1 w-4 text-indigo-500"></i>
+									<span><strong>Type:</strong> {{ event.eventType || 'N/A' }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-tag mt-1 w-4 text-pink-500"></i>
+									<span><strong>Category:</strong> {{ categoryName || 'N/A' }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-calendar-alt mt-1 w-4 text-blue-500"></i>
+									<span><strong>Start:</strong> {{ formatDate(event.startDate) }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-calendar-check mt-1 w-4 text-indigo-500"></i>
+									<span><strong>End:</strong> {{ formatDate(event.endDate) }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-users mt-1 w-4 text-emerald-500"></i>
+									<span><strong>Max capacity:</strong> {{ event.maxCapacity ?? event.capacity ?? 'N/A' }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-user-friends mt-1 w-4 text-amber-500"></i>
+									<span><strong>Participants:</strong> {{ event.currentParticipants ?? event.occupiedPlaces ?? 0 }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-chair mt-1 w-4 text-green-500"></i>
+									<span><strong>Available seats:</strong> {{ getAvailablePlaces() }}</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-temperature-high mt-1 w-4 text-orange-500"></i>
+									<span><strong>Temperature:</strong> {{ event.temperature ?? 'N/A' }} °C</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-cloud-rain mt-1 w-4 text-sky-500"></i>
+									<span><strong>Precipitation:</strong> {{ event.precipitationMm ?? 'N/A' }} mm</span>
+								</p>
+								<p class="flex items-start gap-2">
+									<i class="fas fa-wind mt-1 w-4 text-teal-500"></i>
+									<span><strong>Wind speed:</strong> {{ event.windSpeedKmh ?? 'N/A' }} km/h</span>
+								</p>
+							</div>
 						</div>
 
-						<div class="space-y-3">
+						<div class="rounded-2xl border border-border bg-slate-50 p-5">
+							<h3 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+								<i class="fas fa-map text-primary"></i>
+								Location on map
+							</h3>
 							<div #detailMapContainer class="detail-map"></div>
-							<p *ngIf="!event.latitude || !event.longitude" class="text-sm text-slate-500">Coordinates are not available for map view.</p>
-							<a *ngIf="mapOpenUrl" [href]="mapOpenUrl" target="_blank" rel="noreferrer" class="inline-flex text-sm font-medium text-primary hover:underline">
+							<p *ngIf="!event.latitude || !event.longitude" class="mt-3 flex items-center gap-2 text-sm text-slate-500">
+								<i class="fas fa-map-marker-slash"></i>
+								Coordinates are not available for map view.
+							</p>
+							<a *ngIf="mapOpenUrl" [href]="mapOpenUrl" target="_blank" rel="noreferrer" class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+								<i class="fas fa-external-link-alt"></i>
 								Open in OpenStreetMap
 							</a>
 						</div>
 					</div>
 
-					<div class="rounded-2xl border border-border bg-gray-50 p-4">
-						<h3 class="text-lg font-semibold text-foreground">Reactions</h3>
+					<!-- Reactions -->
+					<div class="rounded-2xl border border-border bg-gray-50 p-5">
+						<h3 class="mb-2 flex items-center gap-2 text-lg font-semibold text-foreground">
+							<i class="fas fa-smile text-yellow-500"></i>
+							Reactions
+						</h3>
 						<div class="mt-3 flex flex-wrap gap-2">
 							<button
 								type="button"
@@ -91,17 +180,22 @@
 								<span class="text-xs font-semibold">{{ getReactionCount(reactionType) }}</span>
 							</button>
 						</div>
-						<p class="mt-2 text-xs text-slate-500">
-							 Click once to react, click same emoji again to remove your reaction.
+						<p class="mt-3 flex items-center gap-1 text-xs text-slate-500">
+							<i class="fas fa-info-circle"></i>
+							Click once to react, click same emoji again to remove your reaction.
 						</p>
 					</div>
 
+					<!-- Rating + Participate -->
 					<div class="grid gap-6 lg:grid-cols-2">
-						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+						<div class="rounded-2xl border border-border bg-gray-50 p-5">
 							<div class="flex items-start justify-between gap-4">
 								<div>
-									<h3 class="text-lg font-semibold text-foreground">Event rating</h3>
-									<p class="mt-1 text-sm text-slate-500">Rate this event with one click. Your rating updates the backend directly.</p>
+									<h3 class="flex items-center gap-2 text-lg font-semibold text-foreground">
+										<i class="fas fa-star text-amber-500"></i>
+										Event rating
+									</h3>
+									<p class="mt-1 text-sm text-slate-500">Rate this event with one click.</p>
 								</div>
 								<div class="text-right text-sm text-slate-600">
 									<p class="font-semibold text-foreground">{{ getRatingLabel() }}</p>
@@ -117,22 +211,34 @@
 									[disabled]="isRatingSaving || !canRate()"
 									(click)="rateEvent(rating)"
 								>
-									<span class="text-base leading-none">★</span>
+									<i class="fas fa-star text-sm" [class.text-amber-500]="selectedRating !== null && rating <= selectedRating"></i>
 									<span>{{ rating }}</span>
 								</button>
 							</div>
-							<p class="mt-2 text-xs text-slate-500" *ngIf="!canRate()">Sign in to rate this event.</p>
+							<p class="mt-3 flex items-center gap-1 text-xs text-slate-500" *ngIf="!canRate()">
+								<i class="fas fa-lock"></i>
+								Sign in to rate this event.
+							</p>
 						</div>
 
-						<div class="rounded-2xl border border-border bg-gray-50 p-4">
+						<div class="rounded-2xl border border-border bg-gray-50 p-5">
 							<div class="flex items-start justify-between gap-4">
 								<div>
-									<h3 class="text-lg font-semibold text-foreground">Participate in this event</h3>
-									<p class="mt-1 text-sm text-slate-500">Register using your current account profile, without any extra fields.</p>
+									<h3 class="flex items-center gap-2 text-lg font-semibold text-foreground">
+										<i class="fas fa-ticket-alt text-primary"></i>
+										Participate
+									</h3>
+									<p class="mt-1 text-sm text-slate-500">Register with your account profile.</p>
 								</div>
 								<div class="text-right text-sm text-slate-600">
-									<p class="font-semibold text-foreground">{{ participantCount }} participant{{ participantCount === 1 ? '' : 's' }}</p>
-									<p *ngIf="hasCurrentUserParticipated()" class="text-xs text-emerald-600">You are already registered</p>
+									<p class="font-semibold text-foreground">
+										<i class="fas fa-users me-1 text-emerald-500"></i>
+										{{ participantCount }} participant{{ participantCount === 1 ? '' : 's' }}
+									</p>
+									<p *ngIf="hasCurrentUserParticipated()" class="mt-0.5 flex items-center justify-end gap-1 text-xs font-medium text-emerald-600">
+										<i class="fas fa-check-circle"></i>
+										You are already registered
+									</p>
 								</div>
 							</div>
 							<div class="mt-4 flex flex-wrap items-center gap-3">
@@ -142,18 +248,33 @@
 									[disabled]="isParticipating || !canParticipate()"
 									(click)="participateInEvent()"
 								>
-									{{ hasCurrentUserParticipated() ? 'Registered' : 'Participate in this event' }}
+									<i class="fas" [class.fa-check]="hasCurrentUserParticipated()" [class.fa-plus]="!hasCurrentUserParticipated()"></i>
+									<span class="ms-2">{{ hasCurrentUserParticipated() ? 'Registered' : 'Participate in this event' }}</span>
 								</button>
-								<p class="text-xs text-slate-500" *ngIf="!currentUserEmail">Sign in to participate in this event.</p>
+								<p class="flex items-center gap-1 text-xs text-slate-500" *ngIf="!currentUserEmail">
+									<i class="fas fa-lock"></i>
+									Sign in to participate.
+								</p>
 							</div>
-							<p *ngIf="participationErrorMessage" class="mt-3 text-sm text-red-700">{{ participationErrorMessage }}</p>
-							<p *ngIf="participationSuccessMessage" class="mt-3 text-sm text-emerald-700">{{ participationSuccessMessage }}</p>
+							<p *ngIf="participationErrorMessage" class="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+								<i class="fas fa-exclamation-triangle mt-0.5"></i>
+								<span>{{ participationErrorMessage }}</span>
+							</p>
+							<p *ngIf="participationSuccessMessage" class="mt-3 flex items-start gap-2 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">
+								<i class="fas fa-check-circle mt-0.5"></i>
+								<span>{{ participationSuccessMessage }}</span>
+							</p>
 						</div>
 					</div>
 
+					<!-- Comments + Participants -->
 					<div class="grid gap-6 lg:grid-cols-2">
-						<div class="rounded-2xl border border-border bg-gray-50 p-4">
-							<h3 class="text-lg font-semibold text-foreground">Comments ({{ commentCount }})</h3>
+						<div class="rounded-2xl border border-border bg-gray-50 p-5">
+							<h3 class="flex items-center gap-2 text-lg font-semibold text-foreground">
+								<i class="fas fa-comments text-primary"></i>
+								Comments
+								<span class="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{{ commentCount }}</span>
+							</h3>
 							<div class="mt-3 space-y-2">
 								<textarea
 									class="form-input"
@@ -161,14 +282,22 @@
 									placeholder="Write a comment..."
 									[(ngModel)]="commentDraft"
 								></textarea>
-								<button type="button" class="btn-primary !px-4 !py-2" (click)="addComment()">Post comment</button>
+								<button type="button" class="btn-primary !px-4 !py-2" (click)="addComment()">
+									<i class="fas fa-paper-plane me-2"></i> Post comment
+								</button>
 							</div>
 
 							<div class="mt-4 space-y-3" *ngIf="comments.length > 0; else emptyComments">
-								<div *ngFor="let comment of comments" class="rounded-xl border border-border bg-white p-3">
+								<div *ngFor="let comment of comments" class="rounded-xl border border-border bg-white p-3 shadow-sm">
 									<div class="flex items-center justify-between gap-2">
-										<p class="text-xs font-semibold text-slate-600">{{ comment.authorName }}</p>
-										<p class="text-xs text-slate-500">{{ formatShortDate(comment.createdAt) }}</p>
+										<p class="flex items-center gap-1 text-xs font-semibold text-slate-600">
+											<i class="fas fa-user-circle text-slate-400"></i>
+											{{ comment.authorName }}
+										</p>
+										<p class="flex items-center gap-1 text-xs text-slate-500">
+											<i class="far fa-clock"></i>
+											{{ formatShortDate(comment.createdAt) }}
+										</p>
 									</div>
 
 									<p class="mt-2 text-sm text-slate-700" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
@@ -176,52 +305,84 @@
 									<div *ngIf="editingCommentId === comment.id" class="mt-2 space-y-2">
 										<textarea class="form-input" rows="3" [(ngModel)]="editingCommentContent"></textarea>
 										<div class="flex gap-2">
-											<button type="button" class="btn-primary !px-3 !py-2" (click)="saveComment(comment)">Save</button>
-											<button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEditComment()">Cancel</button>
+											<button type="button" class="btn-primary !px-3 !py-2 !text-sm" (click)="saveComment(comment)">
+												<i class="fas fa-save me-1"></i> Save
+											</button>
+											<button type="button" class="btn-secondary !px-3 !py-2 !text-sm" (click)="cancelEditComment()">
+												<i class="fas fa-times me-1"></i> Cancel
+											</button>
 										</div>
 									</div>
 
-									<div class="mt-2 flex gap-2" *ngIf="canManageComment(comment) && editingCommentId !== comment.id">
-										<button type="button" class="btn-secondary !px-3 !py-2" (click)="startEditComment(comment)">Edit</button>
-										<button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteComment(comment.id)">Delete</button>
+									<div class="mt-3 flex gap-2" *ngIf="canManageComment(comment) && editingCommentId !== comment.id">
+										<button type="button" class="btn-secondary !px-3 !py-1.5 !text-xs" (click)="startEditComment(comment)">
+											<i class="fas fa-edit me-1"></i> Edit
+										</button>
+										<button type="button" class="btn-primary !bg-red-600 !px-3 !py-1.5 !text-xs hover:!bg-red-700" (click)="deleteComment(comment.id)">
+											<i class="fas fa-trash me-1"></i> Delete
+										</button>
 									</div>
 								</div>
 							</div>
 
 							<ng-template #emptyComments>
-								<p class="mt-4 text-sm text-slate-500">No comments yet.</p>
+								<p class="mt-4 flex items-center gap-2 text-sm italic text-slate-500">
+									<i class="fas fa-comment-slash"></i>
+									No comments yet.
+								</p>
 							</ng-template>
 						</div>
 
-						<div class="rounded-2xl border border-border bg-gray-50 p-4">
-							<h3 class="text-lg font-semibold text-foreground">Participants ({{ participantCount }})</h3>
+						<div class="rounded-2xl border border-border bg-gray-50 p-5">
+							<h3 class="flex items-center gap-2 text-lg font-semibold text-foreground">
+								<i class="fas fa-user-friends text-emerald-500"></i>
+								Participants
+								<span class="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{{ participantCount }}</span>
+							</h3>
 							<div class="mt-4 space-y-2" *ngIf="participants.length > 0; else emptyParticipants">
-								<div *ngFor="let participant of participants" class="rounded-xl border border-border bg-white p-3">
-									<p class="text-sm font-semibold text-slate-700">{{ participant.fullName }}</p>
-									<p class="text-xs text-slate-500">{{ participant.email }}</p>
-									<p class="text-xs text-slate-500" *ngIf="participant.registrationDate">{{ formatShortDate(participant.registrationDate) }}</p>
+								<div *ngFor="let participant of participants" class="flex items-start gap-3 rounded-xl border border-border bg-white p-3 shadow-sm">
+									<span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+										<i class="fas fa-user"></i>
+									</span>
+									<div class="flex-1 min-w-0">
+										<p class="truncate text-sm font-semibold text-slate-700">{{ participant.fullName }}</p>
+										<p class="truncate text-xs text-slate-500">
+											<i class="fas fa-envelope me-1"></i>{{ participant.email }}
+										</p>
+										<p class="flex items-center gap-1 text-xs text-slate-400" *ngIf="participant.registrationDate">
+											<i class="far fa-clock"></i>{{ formatShortDate(participant.registrationDate) }}
+										</p>
+									</div>
 								</div>
 							</div>
 
 							<ng-template #emptyParticipants>
-								<p class="text-sm text-slate-500">No participants yet.</p>
+								<p class="mt-4 flex items-center gap-2 text-sm italic text-slate-500">
+									<i class="fas fa-user-slash"></i>
+									No participants yet.
+								</p>
 							</ng-template>
 						</div>
 					</div>
 
-					<section *ngIf="similarEvents.length > 0" class="rounded-2xl border border-border bg-gray-50 p-4">
-						<h3 class="text-lg font-semibold text-foreground">Events similaires</h3>
+					<!-- Similar events -->
+					<section *ngIf="similarEvents.length > 0" class="rounded-2xl border border-border bg-gray-50 p-5">
+						<h3 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+							<i class="fas fa-layer-group text-primary"></i>
+							Events similaires
+						</h3>
 						<div class="similar-grid mt-4">
-								<div *ngFor="let event of similarEvents" class="event-card" [routerLink]="['/event', event.id]">
+							<div *ngFor="let event of similarEvents" class="event-card" [routerLink]="['/event', event.id]">
 								<img [src]="event.imageUrl" [alt]="event.name || 'Event similaire'" />
 								<h4>{{ event.name }}</h4>
-								<p>{{ event.location }}</p>
+								<p><i class="fas fa-map-marker-alt me-1 text-red-500"></i>{{ event.location }}</p>
 								<span class="badge">{{ event.similarityReason }}</span>
-								<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-secondary !mt-3 !inline-flex !px-3 !py-2 text-sm">See details</a>
+								<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-secondary !mt-3 !inline-flex !px-3 !py-2 text-sm">
+									<i class="fas fa-eye me-1"></i> See details
+								</a>
 							</div>
 						</div>
 					</section>
-
 
 				</div>
 			</article>

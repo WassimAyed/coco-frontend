@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'app-auth-splash-cursor',
   template: `
     <canvas
@@ -97,3 +98,4 @@ export class AuthSplashCursorComponent implements AfterViewInit, OnDestroy {
     this.cleanupWindowListeners.push(() => window.removeEventListener('blur', forwardTouchLikeLeave));
   }
 }
+

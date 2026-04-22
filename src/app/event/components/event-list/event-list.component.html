@@ -1,93 +1,175 @@
 <div class="min-h-screen bg-background">
 	<section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
 		<div class="section-shell space-y-8">
-			<div class="space-y-3">
-				<span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-					Event Service
-				</span>
-				<h1 class="text-3xl font-bold text-foreground sm:text-4xl">
-					All Events
-				</h1>
-				<p class="text-lg text-slate-500">
-					Explore upcoming events, join, and create your own.
-				</p>
+
+			<!-- Hero header -->
+			<div class="flex flex-wrap items-end justify-between gap-4">
+				<div class="space-y-3">
+					<span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+						<i class="fas fa-calendar-alt"></i> Event Service
+					</span>
+					<h1 class="text-3xl font-bold text-foreground sm:text-4xl">
+						All Events
+					</h1>
+					<p class="text-lg text-slate-500">
+						Explore upcoming events, join, and create your own.
+					</p>
+				</div>
 			</div>
 
-			<div class="grid gap-6 lg:grid-cols-1">
-				<article class="event-panel rounded-2xl border border-border bg-white p-6 shadow-sm">
-					<h2 class="mb-4 text-xl font-bold text-foreground">Quick Filters</h2>
+			<!-- Filter panel -->
+			<article class="event-panel rounded-2xl border border-border bg-white p-6 shadow-sm">
+				<div class="mb-4 flex items-center gap-2">
+					<span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+						<i class="fas fa-sliders-h"></i>
+					</span>
+					<h2 class="text-xl font-bold text-foreground">Quick Filters</h2>
+				</div>
 
-					<div class="space-y-3">
+				<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+					<!-- Search -->
+					<div class="space-y-2">
+						<label class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+							<i class="fas fa-search text-primary"></i> Search
+						</label>
 						<div class="flex gap-2">
-							<input class="form-input" type="text" placeholder="Search by name" [(ngModel)]="searchTerm" (keyup.enter)="search()" />
-							<button type="button" class="btn-secondary" (click)="search()">Search</button>
+							<input class="form-input !py-2.5 !text-sm" type="text" placeholder="Event name" [(ngModel)]="searchTerm" (keyup.enter)="search()" />
+							<button type="button" class="btn-secondary !px-3 !py-2.5" (click)="search()" title="Search">
+								<i class="fas fa-search"></i>
+							</button>
 						</div>
+					</div>
 
+					<!-- Category -->
+					<div class="space-y-2">
+						<label class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+							<i class="fas fa-tags text-primary"></i> Category
+						</label>
 						<div class="flex gap-2">
-							<select class="form-input" [(ngModel)]="selectedStatus">
-								<option value="">Status</option>
-								<option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
-							</select>
-							<button type="button" class="btn-secondary" (click)="filterByStatus()">Filter status</button>
-						</div>
-
-						<div class="flex gap-2">
-							<select class="form-input" [(ngModel)]="categoryFilterName">
-								<option value="">Category (name)</option>
+							<select class="form-input !py-2.5 !text-sm" [(ngModel)]="categoryFilterName">
+								<option value="">All categories</option>
 								<option *ngFor="let category of categories" [value]="category.name">{{ category.name }}</option>
 							</select>
-							<button type="button" class="btn-secondary" (click)="filterByCategory()">Filter category</button>
-						</div>
-
-						<div class="grid gap-2 md:grid-cols-3">
-							<input class="form-input" type="date" [(ngModel)]="dateStart" />
-							<input class="form-input" type="date" [(ngModel)]="dateEnd" />
-							<button type="button" class="btn-secondary" (click)="filterByDateRange()">GET /date-range</button>
-						</div>
-
-						
-
-						<div class="flex flex-wrap gap-2">
-							<button type="button" class="btn-primary" (click)="loadAll()">All events</button>
-							<button type="button" class="btn-secondary" (click)="loadAvailable()">Available</button>
-							<button type="button" class="btn-secondary" (click)="resetFilters()">Reset</button>
+							<button type="button" class="btn-secondary !px-3 !py-2.5" (click)="filterByCategory()" title="Filter">
+								<i class="fas fa-filter"></i>
+							</button>
 						</div>
 					</div>
-				</article>
+
+					<!-- Date range -->
+					<div class="space-y-2 md:col-span-2">
+						<label class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+							<i class="fas fa-calendar text-primary"></i> Date range
+						</label>
+						<div class="flex gap-2">
+							<input class="form-input !py-2.5 !text-sm" type="date" [(ngModel)]="dateStart" />
+							<input class="form-input !py-2.5 !text-sm" type="date" [(ngModel)]="dateEnd" />
+							<button type="button" class="btn-secondary !px-3 !py-2.5" (click)="filterByDateRange()" title="Apply dates">
+								<i class="fas fa-calendar-check"></i>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Quick actions -->
+				<div class="mt-5 flex flex-wrap gap-2">
+					<button type="button" class="btn-primary !px-4 !py-2 !text-sm" (click)="loadAll()">
+						<i class="fas fa-list me-2"></i> All events
+					</button>
+					<button type="button" class="btn-secondary !px-4 !py-2 !text-sm" (click)="loadAvailable()">
+						<i class="fas fa-check-circle me-2"></i> Available
+					</button>
+					<button type="button" class="btn-secondary !px-4 !py-2 !text-sm" (click)="resetFilters()">
+						<i class="fas fa-undo me-2"></i> Reset
+					</button>
+				</div>
+			</article>
+
+			<!-- Loading -->
+			<div *ngIf="isLoading" class="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white p-6 text-sm text-slate-500 shadow-sm">
+				<span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+				Loading events...
 			</div>
 
-			<div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
-			<div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
-			<div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+			<!-- Error -->
+			<div *ngIf="errorMessage" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+				<i class="fas fa-exclamation-triangle mt-0.5 text-red-600"></i>
+				<span>{{ errorMessage }}</span>
+			</div>
 
-			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				<article *ngFor="let event of events" class="event-card overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:shadow-md">
-					<div class="relative h-44 w-full">
-						<img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-full w-full object-cover" />
+			<!-- Success -->
+			<div *ngIf="successMessage" class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 shadow-sm">
+				<i class="fas fa-check-circle mt-0.5 text-emerald-600"></i>
+				<span>{{ successMessage }}</span>
+			</div>
+
+			<!-- Personalized banner -->
+			<div *ngIf="isPersonalizedSort" class="flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700 shadow-sm">
+				<i class="fas fa-magic text-blue-600"></i>
+				<span>Events are sorted by your behavior history.</span>
+			</div>
+
+			<!-- Events grid -->
+			<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+				<article *ngFor="let event of events" class="event-card group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+					<div class="relative h-48 w-full overflow-hidden">
+						<img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
 						<div class="event-card-overlay"></div>
-						<span class="absolute left-3 top-3" [ngClass]="getStatusBadgeClass(event.status)">
-							{{ event.status || 'PLANNED' }}
+						<span *ngIf="isFreeEvent(event)" class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow" [ngClass]="getStatusBadgeClass(event)">
+							<i class="fas fa-circle text-[6px]"></i>
+							{{ getStatusLabel(event) }}
 						</span>
 					</div>
-					<div class="p-5">
+					<div class="flex flex-1 flex-col p-5">
+						<span *ngIf="getRecommendationLabel(event)" class="mb-2 inline-flex w-fit items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+							<i class="fas fa-star text-blue-500"></i>
+							{{ getRecommendationLabel(event) }}
+						</span>
 						<h3 class="text-lg font-bold text-foreground">{{ event.name || 'Untitled event' }}</h3>
 						<p class="mt-2 line-clamp-2 text-sm text-slate-500">{{ event.description || 'No description.' }}</p>
-						<div class="mt-3 space-y-1 text-sm text-slate-600">
-							<p><strong>Location:</strong> {{ event.location || 'N/A' }}</p>
-							<p><strong>Start:</strong> {{ formatDate(event.startDate) }}</p>
-							<p><strong>End:</strong> {{ formatDate(event.endDate) }}</p>
-							<p><strong>Available seats:</strong> {{ getAvailablePlaces(event) }}</p>
+						<div class="mt-4 space-y-1.5 text-sm text-slate-600">
+							<p class="flex items-center gap-2">
+								<i class="fas fa-map-marker-alt text-red-500"></i>
+								<span class="truncate">{{ event.location || 'N/A' }}</span>
+							</p>
+							<p class="flex items-center gap-2">
+								<i class="fas fa-calendar-alt text-blue-500"></i>
+								<span>{{ formatDate(event.startDate) }}</span>
+							</p>
+							<p class="flex items-center gap-2">
+								<i class="fas fa-calendar-check text-indigo-500"></i>
+								<span>{{ formatDate(event.endDate) }}</span>
+							</p>
+							<p class="flex items-center gap-2">
+								<i class="fas fa-users text-emerald-500"></i>
+								<span><strong>{{ getAvailablePlaces(event) }}</strong> seats left</span>
+							</p>
 						</div>
-						<div class="mt-4">
-							<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-primary !px-4 !py-2">View details</a>
+						<div class="mt-auto pt-4">
+							<a *ngIf="event.id" [routerLink]="['/event', event.id]" class="btn-primary !w-full !px-4 !py-2.5 !text-sm">
+								<i class="fas fa-eye me-2"></i> View details
+							</a>
 						</div>
 					</div>
 				</article>
 			</div>
 
-			<p *ngIf="!isLoading && events.length === 0" class="rounded-2xl border border-border bg-white p-4 text-slate-500">
-				No events found.
-			</p>
+			<!-- Empty -->
+			<div *ngIf="!isLoading && events.length === 0" class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white p-10 text-center">
+				<span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+					<i class="fas fa-calendar-times fa-2x"></i>
+				</span>
+				<p class="text-base font-semibold text-foreground">No events found</p>
+				<p class="text-sm text-slate-500">Try adjusting your filters or come back later.</p>
+			</div>
+
+			<!-- Pagination -->
+			<app-pagination
+				[currentPage]="currentPage"
+				[totalPages]="totalPages"
+				(pageChange)="onPageChange($event)">
+			</app-pagination>
+
 		</div>
 	</section>
 </div>
