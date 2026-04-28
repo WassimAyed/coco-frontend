@@ -19,6 +19,7 @@ import { Furniture } from '../../../real-estate/models/furniture';
 import { ToastService } from '../../../shared/services/toast.service';
 
 type FurnitureStatusFilter = '' | 'AVAILABLE' | 'SOLD' | 'ARCHIVED';
+type FurnitureStatus = 'AVAILABLE' | 'SOLD' | 'ARCHIVED';
 
 @Component({
   selector: 'app-admin-marketplace-panel',
@@ -60,13 +61,13 @@ export class AdminMarketplacePanelComponent implements OnInit {
     condition: 'GOOD' as string,
     price: 0,
     quantity: 1,
-    status: 'AVAILABLE' as 'AVAILABLE' | 'SOLD' | 'ARCHIVED',
+    status: 'AVAILABLE' as FurnitureStatus,
     sellerId: 1,
     imageUrl: ''
   };
 
   readonly conditions: string[] = ['NEW', 'GOOD', 'FAIR', 'USED', 'POOR'];
-  readonly statuses: Array<'AVAILABLE' | 'SOLD' | 'ARCHIVED'> = ['AVAILABLE', 'SOLD', 'ARCHIVED'];
+  readonly statuses: Array<FurnitureStatus> = ['AVAILABLE', 'SOLD', 'ARCHIVED'];
 
   ngOnInit(): void {
     this.load();
