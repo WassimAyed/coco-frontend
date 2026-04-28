@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import { Client, IFrame, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Observable, Subject } from 'rxjs';
 
@@ -106,14 +106,14 @@ export class StompSocketService {
       connection.subscriptions.clear();
     };
 
-    connection.client.onStompError = (frame) => {
+    connection.client.onStompError = (frame: IFrame) => {
       console.error('[STOMP] Protocol error — removing stale connection:', frame);
       connection.state.set('error');
       connection.subscriptions.clear();
       this.connections.delete(connectionKey);
     };
 
-    connection.client.onWebSocketError = (event) => {
+    connection.client.onWebSocketError = (event: Event) => {
       console.error('[STOMP] WebSocket transport error:', event);
       connection.state.set('error');
       connection.subscriptions.clear();
