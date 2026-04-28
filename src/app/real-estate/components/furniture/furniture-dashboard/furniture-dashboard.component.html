@@ -1,0 +1,215 @@
+<article class="rounded-2xl bg-white p-6 shadow-sm">
+  <!-- HEADER -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h3 class="text-xl font-bold text-foreground">Tableau de Bord Marketplace</h3>
+      <p class="text-sm text-slate-500">Vue d'ensemble et statistiques de Campus Market Hub</p>
+    </div>
+    <div class="flex gap-2">
+      <a routerLink="/real-estate/furniture" 
+         class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition hover:bg-slate-50">
+        <lucide-icon [img]="BackIcon" [size]="18"></lucide-icon>
+        Retour Marketplace
+      </a>
+    </div>
+  </div>
+
+  <!-- LOADING / ERROR -->
+  <div *ngIf="loading" class="py-20 text-center text-slate-500">
+    <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    <p class="font-medium">Chargement des statistiques...</p>
+  </div>
+  
+  <div *ngIf="error" class="mb-8 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+    ⚠️ {{ error }}
+  </div>
+
+  <ng-container *ngIf="stats && !loading">
+    <!-- KPI CARDS (Admin style) -->
+    <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-shadow hover:shadow-md">
+        <div class="mb-4 flex items-start justify-between">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <lucide-icon [img]="PackageIcon" [size]="24"></lucide-icon>
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+            Total
+          </span>
+        </div>
+        <div class="mb-1 text-2xl font-black text-slate-900">{{ stats.totalFurniture }}</div>
+        <div class="text-sm font-medium text-slate-500">Articles listés</div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-shadow hover:shadow-md">
+        <div class="mb-4 flex items-start justify-between">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
+            <lucide-icon [img]="ShoppingBagIcon" [size]="24"></lucide-icon>
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+            Dispo
+          </span>
+        </div>
+        <div class="mb-1 text-2xl font-black text-slate-900">{{ stats.totalAvailable }}</div>
+        <div class="text-sm font-medium text-slate-500">En vente actuellement</div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-shadow hover:shadow-md">
+        <div class="mb-4 flex items-start justify-between">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+            <lucide-icon [img]="TrendingIcon" [size]="24"></lucide-icon>
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+            Actif
+          </span>
+        </div>
+        <div class="mb-1 text-2xl font-black text-slate-900">{{ stats.totalOffers }}</div>
+        <div class="text-sm font-medium text-slate-500">Offres reçues</div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100 transition-shadow hover:shadow-md">
+        <div class="mb-4 flex items-start justify-between">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
+            <lucide-icon [img]="AlertIcon" [size]="24"></lucide-icon>
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+            Alertes
+          </span>
+        </div>
+        <div class="mb-1 text-2xl font-black text-slate-900">{{ stats.totalReports }}</div>
+        <div class="text-sm font-medium text-slate-500">Signalements totaux</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID SECTION -->
+    <div class="grid gap-8 lg:grid-cols-2">
+      
+      <!-- STATUS BREAKDOWN -->
+      <article class="rounded-2xl border border-slate-100 bg-white p-8">
+        <div class="mb-6 flex items-center justify-between">
+          <h4 class="text-lg font-bold text-foreground">📈 Cycle de vie des articles</h4>
+          <lucide-icon [img]="ChartIcon" [size]="20" class="text-slate-400"></lucide-icon>
+        </div>
+        <div class="space-y-6">
+          <div class="group space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="font-bold text-slate-600 group-hover:text-green-600 transition-colors">Disponibles</span>
+              <span class="font-black text-slate-900">{{ stats.totalAvailable }}</span>
+            </div>
+            <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full bg-green-500 transition-all duration-1000 ease-out" 
+                   [style.width]="getBarWidth(stats.totalAvailable, stats.totalFurniture)"></div>
+            </div>
+          </div>
+          <div class="group space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="font-bold text-slate-600 group-hover:text-orange-500 transition-colors">Vendus</span>
+              <span class="font-black text-slate-900">{{ stats.totalSold }}</span>
+            </div>
+            <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full bg-orange-500 transition-all duration-1000 ease-out delay-100" 
+                   [style.width]="getBarWidth(stats.totalSold, stats.totalFurniture)"></div>
+            </div>
+          </div>
+          <div class="group space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="font-bold text-slate-600 group-hover:text-slate-500 transition-colors">Archivés</span>
+              <span class="font-black text-slate-900">{{ stats.totalArchived }}</span>
+            </div>
+            <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full bg-slate-400 transition-all duration-1000 ease-out delay-200" 
+                   [style.width]="getBarWidth(stats.totalArchived, stats.totalFurniture)"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- CONDITION ANALYSIS -->
+      <article class="rounded-2xl border border-slate-100 bg-white p-8">
+        <div class="mb-6 flex items-center justify-between">
+          <h4 class="text-lg font-bold text-foreground">🔧 État du Stock</h4>
+          <lucide-icon [img]="BriefcaseIcon" [size]="20" class="text-slate-400"></lucide-icon>
+        </div>
+        <div class="space-y-6">
+          <div *ngFor="let c of getConditions(); let i = index" class="group space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="font-bold text-slate-600">{{ c }}</span>
+              <span class="font-black text-slate-900">{{ stats.countByCondition[c] }}</span>
+            </div>
+            <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full bg-primary transition-all duration-1000 ease-out" 
+                   [style.width]="getBarWidth(stats.countByCondition[c], stats.totalFurniture)"
+                   [style.transition-delay]="(i * 100) + 'ms'"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- PENDING ACTIONS -->
+      <article class="rounded-2xl border border-slate-100 bg-slate-50/50 p-8 lg:col-span-2">
+        <div class="mb-8 flex items-center gap-3">
+          <lucide-icon [img]="AlertIcon" [size]="24" class="text-red-500"></lucide-icon>
+          <h4 class="text-lg font-bold text-foreground">Actions Requises Immédiates</h4>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="flex items-center gap-5 rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-3xl">💰</div>
+            <div class="flex-1">
+              <div class="text-3xl font-black text-slate-900">{{ stats.pendingOffers }}</div>
+              <div class="text-sm font-bold text-orange-600">Offres actives à traiter</div>
+            </div>
+            <a routerLink="/real-estate/furniture/offers" class="text-xs font-bold text-orange-500 hover:underline">Voir les offres</a>
+          </div>
+          <div class="flex items-center gap-5 rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-3xl">🚨</div>
+            <div class="flex-1">
+              <div class="text-3xl font-black text-slate-900">{{ stats.pendingReports }}</div>
+              <div class="text-sm font-bold text-red-600">Signalements modération</div>
+            </div>
+            <a routerLink="/real-estate/furniture/reports" class="text-xs font-bold text-red-500 hover:underline">Réviser</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- TOP PERFORMANCE -->
+      <article class="rounded-2xl border border-slate-100 bg-white p-8 lg:col-span-2">
+        <div class="mb-8 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <lucide-icon [img]="TagIcon" [size]="24" class="text-primary"></lucide-icon>
+            <h4 class="text-lg font-bold text-foreground">Articles Premium (Mises en avant)</h4>
+          </div>
+          <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Classement par prix</span>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-50">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-slate-50 bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <th class="px-6 py-4">Position</th>
+                <th class="px-6 py-4">Nom de l'article</th>
+                <th class="px-6 py-4">Catégorie</th>
+                <th class="px-6 py-4 text-right">Valeur Estimée</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <tr *ngFor="let f of stats.top5Expensive; let i = index" class="group transition-colors hover:bg-slate-50/30">
+                <td class="px-6 py-5">
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-600 group-hover:bg-primary group-hover:text-white transition-colors">
+                    #{{ i + 1 }}
+                  </span>
+                </td>
+                <td class="px-6 py-5">
+                  <div class="font-bold text-slate-900">{{ f.title }}</div>
+                </td>
+                <td class="px-6 py-5">
+                  <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold text-slate-600">{{ f.category }}</span>
+                </td>
+                <td class="px-6 py-5 text-right">
+                  <span class="font-black text-primary">{{ f.price | number:'1.2-2' }} DT</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </ng-container>
+</article>

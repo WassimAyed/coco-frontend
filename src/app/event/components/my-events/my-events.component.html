@@ -1,56 +1,78 @@
 <div class="min-h-screen bg-background">
   <section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-12 lg:py-16">
     <div class="section-shell space-y-6">
-      <a routerLink="/event" class="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2 text-sm hover:text-primary">
-        ← Back to events
+      <a routerLink="/event" class="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary hover:text-primary">
+        <i class="fas fa-arrow-left"></i> Back to events
       </a>
 
-      <div class="space-y-2">
-        <h1 class="text-3xl font-bold text-foreground">My Events</h1>
-        <p class="text-slate-500">Manage events created from your account.</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="space-y-3">
+          <span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+            <i class="fas fa-user-cog"></i> Espace createur
+          </span>
+          <h1 class="text-3xl font-bold text-foreground sm:text-4xl">My Events</h1>
+          <p class="text-lg text-slate-500">Manage events created from your account.</p>
+        </div>
+        <button type="button" class="btn-primary !px-5 !py-2.5" (click)="openCreateModal()">
+          <i class="fas fa-plus me-2"></i> Add Event
+        </button>
       </div>
 
-      <div>
-        <button type="button" class="btn-primary !px-4 !py-2" (click)="openCreateModal()">Add Event</button>
+      <div *ngIf="isLoading" class="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white p-6 text-sm text-slate-500 shadow-sm">
+        <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+        Loading your events...
       </div>
-
-      <div *ngIf="isLoading" class="rounded-2xl border border-border bg-white p-4 text-sm text-slate-500">Loading...</div>
-      <div *ngIf="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ errorMessage }}</div>
-      <div *ngIf="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ successMessage }}</div>
+      <div *ngIf="errorMessage" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+        <i class="fas fa-exclamation-triangle mt-0.5 text-red-600"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+      <div *ngIf="successMessage" class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 shadow-sm">
+        <i class="fas fa-check-circle mt-0.5 text-emerald-600"></i>
+        <span>{{ successMessage }}</span>
+      </div>
 
       <div
         *ngIf="lastSavedEvent?.predictedParticipants !== null && lastSavedEvent?.predictedParticipants !== undefined"
-        class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-700">
-        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Prédiction IA</p>
-        <p class="mt-1 text-lg font-bold text-indigo-700">
-          {{ lastSavedEvent?.predictedParticipants }} participants estimés
-        </p>
+        class="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+        <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+          <i class="fas fa-brain"></i>
+        </span>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Prediction IA</p>
+          <p class="mt-1 text-lg font-bold text-indigo-700">
+            {{ lastSavedEvent?.predictedParticipants }} participants estimes
+          </p>
+        </div>
       </div>
 
       <div class="overflow-x-auto rounded-2xl border border-border bg-white shadow-sm" *ngIf="myEvents.length > 0">
         <table class="my-events-table w-full min-w-[860px] border-collapse">
           <thead>
             <tr class="bg-slate-100 text-left text-xs uppercase tracking-wide text-slate-600">
-              <th class="px-4 py-3 font-semibold">Image</th>
-              <th class="px-4 py-3 font-semibold">Title</th>
-              <th class="px-4 py-3 font-semibold">Date</th>
-              <th class="px-4 py-3 font-semibold">Location</th>
-              <th class="px-4 py-3 font-semibold">Status</th>
-              <th class="px-4 py-3 font-semibold">Prediction</th>
-              <th class="px-4 py-3 font-semibold">Actions</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-image me-2 text-slate-400"></i>Image</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-heading me-2 text-slate-400"></i>Title</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-calendar-alt me-2 text-slate-400"></i>Date</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-map-marker-alt me-2 text-slate-400"></i>Location</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-flag me-2 text-slate-400"></i>Status</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-brain me-2 text-slate-400"></i>Prediction</th>
+              <th class="px-4 py-3 font-semibold"><i class="fas fa-cog me-2 text-slate-400"></i>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let event of myEvents" class="border-t border-border align-middle">
+            <tr *ngFor="let event of myEvents" class="border-t border-border align-middle transition hover:bg-slate-50">
               <td class="px-4 py-3">
                 <img [src]="getEventCover(event)" [alt]="event.name || 'Event'" class="h-16 w-24 rounded-lg border border-border object-cover" />
               </td>
               <td class="px-4 py-3">
                 <p class="font-semibold text-foreground">{{ event.name || 'Untitled event' }}</p>
-                <p class="text-xs text-slate-500">{{ getCategoryName(event.categoryId) }}</p>
+                <p class="mt-0.5 text-xs text-slate-500"><i class="fas fa-tag me-1"></i>{{ getCategoryName(event.categoryId) }}</p>
               </td>
-              <td class="px-4 py-3 text-sm text-slate-700">{{ formatDate(event.startDate) }}</td>
-              <td class="px-4 py-3 text-sm text-slate-700">{{ event.location || 'N/A' }}</td>
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <i class="fas fa-calendar-alt me-1 text-blue-500"></i>{{ formatDate(event.startDate) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <i class="fas fa-map-marker-alt me-1 text-red-500"></i>{{ event.location || 'N/A' }}
+              </td>
               <td class="px-4 py-3 text-sm text-slate-700">
                 <span
                   *ngIf="isFreeEvent(event)"
@@ -74,16 +96,20 @@
               </td>
               <td class="px-4 py-3">
                 <div class="flex flex-wrap gap-2">
-                  <button type="button" class="btn-secondary !px-3 !py-2" (click)="openDetailModal(event)">Voir Détail</button>
+                  <button type="button" class="btn-secondary !px-3 !py-2 !text-xs" (click)="openDetailModal(event)">
+                    <i class="fas fa-eye me-1"></i> Voir Détail
+                  </button>
                   <button
                     type="button"
-                    class="btn-secondary !px-3 !py-2 disabled:cursor-not-allowed disabled:opacity-40"
+                    class="btn-secondary !px-3 !py-2 !text-xs disabled:cursor-not-allowed disabled:opacity-40"
                     [disabled]="isRefusedStatus(event.status)"
                     title="Impossible de modifier un événement refusé"
                     (click)="startEdit(event)">
-                    Edit
+                    <i class="fas fa-edit me-1"></i> Edit
                   </button>
-                  <button type="button" class="btn-primary !bg-red-700 !px-3 !py-2" (click)="deleteEvent(event.id!)">Delete</button>
+                  <button type="button" class="btn-primary !bg-red-600 !px-3 !py-2 !text-xs hover:!bg-red-700" (click)="deleteEvent(event.id!)">
+                    <i class="fas fa-trash me-1"></i> Delete
+                  </button>
                 </div>
               </td>
             </tr>
@@ -91,17 +117,26 @@
         </table>
       </div>
 
-      <p *ngIf="!isLoading && myEvents.length === 0" class="rounded-2xl border border-border bg-white p-4 text-slate-500">
-        No events found for your account.
-      </p>
+      <div *ngIf="!isLoading && myEvents.length === 0" class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-white p-10 text-center">
+        <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <i class="fas fa-calendar-plus fa-2x"></i>
+        </span>
+        <p class="text-base font-semibold text-foreground">No events found for your account</p>
+        <p class="text-sm text-slate-500">Create your first event using the "Add Event" button above.</p>
+      </div>
     </div>
   </section>
 
   <div *ngIf="isCreateModalOpen" class="event-edit-modal-backdrop" (click)="closeCreateModal()">
     <section class="event-edit-modal" (click)="$event.stopPropagation()">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-foreground">Add Event</h2>
-        <button type="button" class="rounded-md border border-border px-3 py-1 text-sm" (click)="closeCreateModal()">Close</button>
+        <h2 class="flex items-center gap-2 text-xl font-bold text-foreground">
+          <i class="fas fa-plus-circle text-primary"></i>
+          Add Event
+        </h2>
+        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600" (click)="closeCreateModal()" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
       <div class="grid gap-3 md:grid-cols-2">
@@ -230,11 +265,14 @@
           </div>
         </div>
 
-        <div class="md:col-span-2 flex gap-2">
-          <button type="button" class="btn-primary !px-3 !py-2 disabled:cursor-not-allowed disabled:opacity-60" [disabled]="isSavingCreate" (click)="createEvent()">
-            {{ isSavingCreate ? 'Saving...' : 'Create' }}
+        <div class="md:col-span-2 flex gap-2 pt-2">
+          <button type="button" class="btn-primary !px-4 !py-2.5 disabled:cursor-not-allowed disabled:opacity-60" [disabled]="isSavingCreate" (click)="createEvent()">
+            <i class="fas" [class.fa-spinner]="isSavingCreate" [class.fa-spin]="isSavingCreate" [class.fa-check]="!isSavingCreate"></i>
+            <span class="ms-2">{{ isSavingCreate ? 'Saving...' : 'Create' }}</span>
           </button>
-          <button type="button" class="btn-secondary !px-3 !py-2" (click)="closeCreateModal()">Cancel</button>
+          <button type="button" class="btn-secondary !px-4 !py-2.5" (click)="closeCreateModal()">
+            <i class="fas fa-times me-2"></i> Cancel
+          </button>
         </div>
       </div>
     </section>
@@ -243,8 +281,13 @@
   <div *ngIf="editingEventId && editingEvent" class="event-edit-modal-backdrop" (click)="cancelEdit()">
     <section class="event-edit-modal" (click)="$event.stopPropagation()">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-foreground">Edit Event</h2>
-        <button type="button" class="rounded-md border border-border px-3 py-1 text-sm" (click)="cancelEdit()">Close</button>
+        <h2 class="flex items-center gap-2 text-xl font-bold text-foreground">
+          <i class="fas fa-edit text-primary"></i>
+          Edit Event
+        </h2>
+        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600" (click)="cancelEdit()" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
       <div class="grid gap-3 md:grid-cols-2">
@@ -354,11 +397,14 @@
           </p>
         </div>
 
-        <div class="md:col-span-2 flex gap-2">
-          <button type="button" class="btn-primary !px-3 !py-2 disabled:cursor-not-allowed disabled:opacity-60" [disabled]="isSavingEdit" (click)="saveEdit(editingEventId)">
-            {{ isSavingEdit ? 'Saving...' : 'Save' }}
+        <div class="md:col-span-2 flex gap-2 pt-2">
+          <button type="button" class="btn-primary !px-4 !py-2.5 disabled:cursor-not-allowed disabled:opacity-60" [disabled]="isSavingEdit" (click)="saveEdit(editingEventId)">
+            <i class="fas" [class.fa-spinner]="isSavingEdit" [class.fa-spin]="isSavingEdit" [class.fa-save]="!isSavingEdit"></i>
+            <span class="ms-2">{{ isSavingEdit ? 'Saving...' : 'Save' }}</span>
           </button>
-          <button type="button" class="btn-secondary !px-3 !py-2" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn-secondary !px-4 !py-2.5" (click)="cancelEdit()">
+            <i class="fas fa-times me-2"></i> Cancel
+          </button>
         </div>
 
         <div *ngIf="editingEvent?.predictedParticipants !== null && editingEvent?.predictedParticipants !== undefined" class="md:col-span-2 rounded-xl border border-indigo-200 bg-indigo-50 p-3">
@@ -403,11 +449,19 @@
   <div *ngIf="detailModalEvent" class="event-edit-modal-backdrop" (click)="closeDetailModal()">
     <section class="event-detail-modal" (click)="$event.stopPropagation()">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-foreground">Détail Événement (Owner)</h2>
-        <button type="button" class="rounded-md border border-border px-3 py-1 text-sm" (click)="closeDetailModal()">Close</button>
+        <h2 class="flex items-center gap-2 text-xl font-bold text-foreground">
+          <i class="fas fa-info-circle text-primary"></i>
+          Détail Événement (Owner)
+        </h2>
+        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600" (click)="closeDetailModal()" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
-      <div *ngIf="isDetailModalLoading" class="rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">Loading details...</div>
+      <div *ngIf="isDetailModalLoading" class="flex items-center gap-3 rounded-xl border border-border bg-slate-50 p-4 text-sm text-slate-500">
+        <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+        Loading details...
+      </div>
 
       <div *ngIf="!isDetailModalLoading" class="space-y-5">
         <div class="grid gap-4 md:grid-cols-[220px_1fr]">

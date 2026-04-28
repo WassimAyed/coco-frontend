@@ -1,0 +1,25 @@
+﻿<div class="recs-section" *ngIf="recommendations.length > 0">
+  <div class="recs-header">
+    <h3 class="recs-title">Les Tunisiens qui ont vu cet article ont aussi aimé...</h3>
+  </div>
+  <div class="recs-grid">
+    <a *ngFor="let r of recommendations" [routerLink]="['/real-estate/furniture', r.id]" class="rec-card">
+      <div class="rec-img-wrap">
+        <img [src]="optimizedImg(r.imageUrl)" [alt]="r.title" class="rec-img" loading="lazy"
+             onerror="this.style.background='#F5F5F5';this.src=''" />
+      </div>
+      <div class="rec-info">
+        <p class="rec-title">{{ r.title }}</p>
+        <div class="rec-condition">
+          <lucide-angular [img]="ShieldCheck" [size]="11" color="#8B0000" class="icon-sm"></lucide-angular>
+          {{ r.conditionLabel }}
+        </div>
+        <span class="rec-cat">
+          <lucide-angular [img]="Tag" [size]="11" class="icon-sm"></lucide-angular>
+          {{ r.category }}
+        </span>
+        <p class="rec-price">{{ r.price | number:'1.0-0' }} DT</p>
+      </div>
+    </a>
+  </div>
+</div>

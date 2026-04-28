@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Covoiturage, Reservation, Vehicule, Notation } from '../models/covoiturage.model';
+import { Covoiturage, Reservation, Vehicule, Notation, CO2Impact, CovoiturageSchedule } from '../models/covoiturage.model';
 import { UserService } from '../../user-security/services/user.service';
 
 @Injectable({
@@ -48,6 +48,44 @@ export class CovoiturageService {
 
   deleteCovoiturage(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/delete/${id}`);
+  }
+
+  getCO2Impact(id: number): Observable<CO2Impact> {
+    return this.http.get<CO2Impact>(`${this.apiUrl}/${id}/co2-impact`);
+  }
+
+  estimateCO2SavedKg(c: Covoiturage): number {
+    const occupants = Math.max(1, (c.nombrePlaces - c.placesDisponibles) + 1);
+    const co2Solo = c.distance * 7.0 / 100.0 * 2.31;
+    const saved = co2Solo - (co2Solo / occupants);
+    const total = saved * (occupants - 1);
+    return Math.round(total * 100) / 100;
+  }
+
+  // ========== SCHEDULE (covoiturage recurrent) ==========
+
+  addSchedule(schedule: CovoiturageSchedule): Observable<CovoiturageSchedule> {
+    return this.http.post<CovoiturageSchedule>(`${this.apiUrl}/schedule/add`, schedule);
+  }
+
+  updateSchedule(schedule: CovoiturageSchedule): Observable<CovoiturageSchedule> {
+    return this.http.put<CovoiturageSchedule>(`${this.apiUrl}/schedule/update`, schedule);
+  }
+
+  getSchedulesByDriver(idDriver: number): Observable<CovoiturageSchedule[]> {
+    return this.http.get<CovoiturageSchedule[]>(`${this.apiUrl}/schedule/driver/${idDriver}`);
+  }
+
+  toggleSchedule(id: number): Observable<CovoiturageSchedule> {
+    return this.http.patch<CovoiturageSchedule>(`${this.apiUrl}/schedule/${id}/toggle`, {});
+  }
+
+  deleteSchedule(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/schedule/delete/${id}`);
+  }
+
+  runSchedulesNow(): Observable<{ generated: number }> {
+    return this.http.post<{ generated: number }>(`${this.apiUrl}/schedule/run-now`, {});
   }
 
   // ========== RESERVATION ==========
@@ -173,6 +211,17 @@ export class CovoiturageService {
     consommation_moyenne?: number;
   }): Observable<any> {
     return this.http.post<any>('http://localhost:5002/api/covoiturage/predict-cost', data);
+  }
+
+  sendPriceFeedback(data: {
+    distance_km: number;
+    duree_min: number;
+    nombre_places: number;
+    prix_par_passager_user: number;
+    prix_carburant_litre?: number;
+    consommation_moyenne?: number;
+  }): Observable<any> {
+    return this.http.post<any>('http://localhost:5002/api/covoiturage/feedback', data);
   }
 
   // ========== USER ==========

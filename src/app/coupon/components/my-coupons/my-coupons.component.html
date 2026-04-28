@@ -1,0 +1,78 @@
+<div class="my-coupons-page">
+  <div class="mc-header">
+    <h1>Mes Coupons</h1>
+    <p>Retrouve tous tes bons plans réclamés</p>
+  </div>
+
+  <!-- TOAST -->
+  <div *ngIf="message" class="mc-toast">{{ message }}</div>
+
+  <!-- STATS -->
+  <div class="mc-stats">
+    <div class="mc-stat mc-stat--green">
+      <div class="mc-stat-num">{{ activeCount }}</div>
+      <div class="mc-stat-label">Actifs</div>
+    </div>
+    <div class="mc-stat mc-stat--blue">
+      <div class="mc-stat-num">{{ usedCount }}</div>
+      <div class="mc-stat-label">Utilisés</div>
+    </div>
+    <div class="mc-stat mc-stat--red">
+      <div class="mc-stat-num">{{ expiredCount }}</div>
+      <div class="mc-stat-label">Expirés</div>
+    </div>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="mc-filters">
+    <button [class.active]="activeFilter === 'ALL'" (click)="applyFilter('ALL')">Tous ({{ myCoupons.length }})</button>
+    <button [class.active]="activeFilter === 'CLAIMED'" (click)="applyFilter('CLAIMED')">Actifs ({{ activeCount }})</button>
+    <button [class.active]="activeFilter === 'USED'" (click)="applyFilter('USED')">Utilisés ({{ usedCount }})</button>
+    <button [class.active]="activeFilter === 'EXPIRED'" (click)="applyFilter('EXPIRED')">Expirés ({{ expiredCount }})</button>
+  </div>
+
+  <div *ngIf="myCoupons.length === 0" class="mc-empty">
+    <div style="font-size:3rem;margin-bottom:1rem">🎫</div>
+    <p>Tu n'as pas encore de coupons. Va dans les <a routerLink="/coupon">Bons Plans</a> pour en récupérer !</p>
+  </div>
+
+  <div class="mc-grid">
+    <div *ngFor="let uc of filteredCoupons" class="mc-card" [ngClass]="'mc-card--' + uc.status.toLowerCase()">
+
+      <!-- Image -->
+      <div class="mc-card-img">
+        <img [src]="uc.couponImageUrl || 'https://via.placeholder.com/400x160?text=Coupon'" [alt]="uc.couponTitle" />
+        <span class="mc-badge" [ngClass]="getStatusClass(uc.status)">{{ getStatusLabel(uc.status) }}</span>
+      </div>
+
+      <!-- Body -->
+      <div class="mc-card-body">
+        <div class="mc-discount">
+          {{ uc.couponDiscountType === 'PERCENTAGE' ? uc.couponDiscountValue + '%' : uc.couponDiscountValue + ' DT' }}
+        </div>
+        <h3>{{ uc.couponTitle }}</h3>
+        <p class="mc-partner">📍 {{ uc.couponPartnerName }}</p>
+        <p class="mc-desc">{{ uc.couponDescription }}</p>
+        <div class="mc-meta">
+          <span>Réclamé le {{ uc.claimedAt | date:'dd/MM/yyyy' }}</span>
+          <span *ngIf="uc.couponExpirationDate">Exp: {{ uc.couponExpirationDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+
+        <div class="mc-actions">
+          <button *ngIf="uc.status === 'CLAIMED'" class="mc-btn-use" (click)="useCoupon(uc.couponId); toggleQr(uc.id)">
+            Utiliser
+          </button>
+          <button *ngIf="uc.status === 'CLAIMED'" class="mc-btn-qr" (click)="toggleQr(uc.id)">
+            {{ showQr === uc.id ? 'Fermer QR' : 'Voir QR' }}
+          </button>
+        </div>
+
+        <!-- QR Code factice -->
+        <div *ngIf="showQr === uc.id" class="mc-qr-box">
+          <div class="mc-qr-inner">{{ uc.couponCode || ('COUPON-' + uc.couponId) }}</div>
+          <p class="mc-qr-label">Présentez ce code en caisse</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

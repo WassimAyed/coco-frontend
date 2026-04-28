@@ -1,0 +1,118 @@
+﻿<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/21655424245" target="_blank" class="boost-wa-float">
+  <svg class="wa-logo" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  <div class="boost-wa-text">
+    <span class="boost-wa-label">WhatsApp Business</span>
+    <span class="boost-wa-name">Coco Market</span>
+  </div>
+</a>
+
+<div class="boost-page">
+
+  <!-- SUCCESS SCREEN -->
+  <div *ngIf="success" class="boost-success-screen">
+    <div class="boost-success-icon">&#128640;</div>
+    <h2 class="boost-success-title">Annonce boost&#233;e !</h2>
+    <p class="boost-success-msg">
+      Votre annonce <strong>{{ furniture?.title }}</strong> est maintenant mise en avant
+      pendant <strong>{{ selectedDuration }} jour(s)</strong> !
+    </p>
+    <p class="boost-success-sub">Elle appara&#238;tra en premier avec le badge &#11088; FEATURED</p>
+    <button (click)="goBack()" class="boost-back-btn">&#8592; Retour &#224; l'annonce</button>
+  </div>
+
+  <div *ngIf="!success">
+
+    <!-- HEADER -->
+    <div class="boost-header">
+      <button (click)="goBack()" class="boost-btn-back">&#8592; Retour</button>
+      <div class="boost-header-text">
+        <h1 class="boost-main-title">&#9889; Booster mon annonce</h1>
+        <p class="boost-main-sub" *ngIf="furniture">Choisissez une dur&#233;e pour mettre en avant <strong>{{ furniture.title }}</strong></p>
+      </div>
+    </div>
+
+    <!-- ALREADY BOOSTED BANNER -->
+    <div *ngIf="alreadyBoosted" class="already-boosted">
+      &#128293; Cette annonce est d&#233;j&#224; boost&#233;e et active !
+    </div>
+
+    <!-- PLAN CARDS -->
+    <div class="boost-plans-section">
+      <h2 class="boost-plans-title">&#127919; Choisissez votre plan</h2>
+      <div class="boost-plans-grid">
+        <div *ngFor="let plan of plans; let i = index"
+          class="boost-plan-card"
+          [class.boost-plan-selected]="selectedDuration === plan.days"
+          [ngClass]="'boost-plan-color-' + (i + 1)"
+          (click)="selectPlan(plan.days)">
+          <div *ngIf="i === 1" class="boost-rec-badge">
+            &#11088; Populaire
+          </div>
+          <div class="boost-plan-icon">{{ plan.icon }}</div>
+          <h3 class="boost-plan-label">{{ plan.label }}</h3>
+          <p class="boost-plan-desc">{{ plan.desc }}</p>
+          <div class="boost-plan-price">{{ plan.price }} DT</div>
+          <div class="boost-plan-per-day">
+            {{ (plan.price / plan.days).toFixed(1) }} DT/jour
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVER LE BOOST -->
+    <div *ngIf="selectedDuration" class="boost-recap">
+      <div class="boost-recap-info">
+        <span>{{ furniture?.title }}</span>
+        <span>{{ selectedDuration }} jour(s) — {{ selectedPrice }} DT</span>
+      </div>
+      <button (click)="openPayment()" class="boost-pay-btn" [disabled]="alreadyBoosted">
+        <ng-container *ngIf="!alreadyBoosted">
+          <lucide-angular [img]="Zap" [size]="16" color="#fff"></lucide-angular>
+          ⚡ Passer au paiement
+        </ng-container>
+        <ng-container *ngIf="alreadyBoosted">
+          <lucide-angular [img]="Check" [size]="16" color="#fff"></lucide-angular>
+          Déjà boosté
+        </ng-container>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div *ngIf="showPayment" class="payment-overlay" (click)="cancelPayment()"></div>
+<div *ngIf="showPayment" class="payment-modal">
+  <div class="payment-modal-header">
+    <h3>&#128179; Passer au paiement</h3>
+    <button class="payment-close-btn" (click)="cancelPayment()">&times;</button>
+  </div>
+
+  <div *ngIf="!paying" class="payment-modal-body">
+    <div class="payment-recap-card">
+      <div class="payment-recap-row">
+        <span class="payment-recap-label">Annonce</span>
+        <span class="payment-recap-value">{{ furniture?.title }}</span>
+      </div>
+      <div class="payment-recap-row">
+        <span class="payment-recap-label">Durée</span>
+        <span class="payment-recap-value">{{ selectedDuration }} jour(s)</span>
+      </div>
+      <div class="payment-recap-row payment-recap-total">
+        <span class="payment-recap-label">Total</span>
+        <span class="payment-recap-value">{{ selectedPrice }} DT</span>
+      </div>
+    </div>
+    <p class="payment-secure-note">&#128274; Paiement sécurisé — Stripe</p>
+    <div class="payment-actions">
+      <button class="btn-confirm-pay" (click)="processPayment()">&#128640; Confirmer et payer</button>
+      <button class="btn-cancel-pay" (click)="cancelPayment()">Annuler</button>
+    </div>
+  </div>
+
+  <div *ngIf="paying" class="payment-loading">
+    <div class="payment-spinner"></div>
+    <p>Traitement du paiement...</p>
+  </div>
+</div>

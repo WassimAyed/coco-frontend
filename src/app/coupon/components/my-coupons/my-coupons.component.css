@@ -1,0 +1,59 @@
+.my-coupons-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; font-family: 'Segoe UI', sans-serif; background: #F5F5F5; min-height: 100vh; }
+
+.mc-header { text-align: center; margin-bottom: 2rem; }
+.mc-header h1 { font-size: 2rem; font-weight: 900; color: #8B0000; margin: 0 0 0.4rem; }
+.mc-header p { color: #666; font-size: 1rem; }
+
+.mc-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #E8F5E9; border: 2px solid #4CAF50; color: #1b5e20; padding: 0.85rem 1.5rem; border-radius: 10px; font-weight: 600; z-index: 9999; }
+
+/* STATS */
+.mc-stats { display: flex; gap: 1rem; margin-bottom: 2rem; justify-content: center; flex-wrap: wrap; }
+.mc-stat { flex: 1; min-width: 120px; max-width: 180px; background: white; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.mc-stat-num { font-size: 2.2rem; font-weight: 900; }
+.mc-stat-label { font-size: 0.85rem; color: #666; margin-top: 0.25rem; font-weight: 600; }
+.mc-stat--green .mc-stat-num { color: #2E7D32; }
+.mc-stat--blue .mc-stat-num { color: #1565C0; }
+.mc-stat--red .mc-stat-num { color: #8B0000; }
+
+/* FILTRES */
+.mc-filters { display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: center; }
+.mc-filters button { padding: 0.5rem 1.2rem; border-radius: 20px; border: 2px solid #ddd; background: white; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #555; transition: all 0.2s; }
+.mc-filters button:hover { border-color: #8B0000; color: #8B0000; }
+.mc-filters button.active { background: #8B0000; border-color: #8B0000; color: white; }
+
+/* GRID */
+.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+
+.mc-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 3px 14px rgba(0,0,0,0.09); transition: transform 0.2s; }
+.mc-card:hover { transform: translateY(-4px); }
+.mc-card--expired { opacity: 0.7; }
+
+.mc-card-img { position: relative; }
+.mc-card-img img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.mc-badge { position: absolute; top: 10px; left: 10px; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; }
+.status-claimed { background: #2E7D32; }
+.status-used { background: #1565C0; }
+.status-expired { background: #8B0000; }
+
+.mc-card-body { padding: 1.25rem; }
+.mc-discount { display: inline-block; background: linear-gradient(135deg, #8B0000, #c62828); color: white; font-size: 1.2rem; font-weight: 900; padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 0.75rem; }
+.mc-card-body h3 { margin: 0 0 0.35rem; font-size: 1.05rem; color: #111; font-weight: 700; }
+.mc-partner { color: #8B0000; font-size: 0.85rem; margin: 0 0 0.4rem; }
+.mc-desc { color: #666; font-size: 0.85rem; margin: 0 0 0.75rem; line-height: 1.4; }
+.mc-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: #999; margin-bottom: 0.85rem; }
+
+.mc-actions { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.mc-btn-use { flex: 1; padding: 0.55rem 1rem; background: #2E7D32; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+.mc-btn-use:hover { background: #1b5e20; }
+.mc-btn-qr { padding: 0.55rem 1rem; background: #F5F5F5; border: 2px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; color: #444; }
+.mc-btn-qr:hover { border-color: #8B0000; color: #8B0000; }
+
+/* QR factice */
+.mc-qr-box { background: #F5F5F5; border: 2px dashed #ddd; border-radius: 12px; padding: 1.25rem; text-align: center; margin-top: 0.5rem; }
+.mc-qr-inner { display: inline-block; background: white; border: 3px solid #111; padding: 1.25rem 1.5rem; font-size: 1rem; font-weight: 900; font-family: monospace; letter-spacing: 2px; border-radius: 8px; color: #111; box-shadow: inset 0 0 0 4px white, inset 0 0 0 6px #111; }
+.mc-qr-label { color: #888; font-size: 0.8rem; margin: 0.6rem 0 0; }
+
+.mc-empty { text-align: center; padding: 4rem 2rem; color: #888; background: white; border-radius: 16px; }
+.mc-empty a { color: #8B0000; font-weight: 700; }
+
+@media (max-width: 600px) { .mc-grid { grid-template-columns: 1fr; } }

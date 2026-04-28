@@ -1,0 +1,140 @@
+.page {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 2rem;
+  h1 { font-size: 1.8rem; color: #f57c00; margin: 0; }
+  p { color: #666; margin: 0.25rem 0 0; }
+}
+
+.btn-back {
+  background: #f5f5f5; color: #333; padding: 0.6rem 1.2rem;
+  border-radius: 8px; text-decoration: none; font-weight: 600;
+  &:hover { background: #e0e0e0; }
+}
+
+.alert-success { background: #e8f5e9; color: #2e7d32; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert-error { background: #ffebee; color: #c62828; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.loading { text-align: center; padding: 1rem; color: #666; }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  @media (max-width: 700px) { grid-template-columns: 1fr; }
+}
+
+.review-form {
+  background: white; border-radius: 16px;
+  padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  h2 { color: #f57c00; margin-top: 0; }
+}
+
+.stars-input {
+  margin-bottom: 1.5rem;
+  label { font-weight: 600; color: #444; display: block; margin-bottom: 0.5rem; }
+}
+
+.stars-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+.star-btn {
+  font-size: 2.5rem; cursor: pointer; color: #ddd;
+  transition: color 0.15s, transform 0.15s;
+  &.active, &.hovered { color: #ffc107; transform: scale(1.2); }
+}
+
+.rating-label { color: #888; font-size: 0.9rem; }
+
+.form-row {
+  display: flex; flex-direction: column; margin-bottom: 1rem;
+  label { font-weight: 600; color: #444; margin-bottom: 0.25rem; }
+  textarea {
+    padding: 0.6rem; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 0.95rem; font-family: inherit; resize: vertical;
+    &:focus { outline: none; border-color: #f57c00; }
+  }
+}
+
+.btn-submit {
+  background: #f57c00; color: white; border: none;
+  padding: 0.8rem 1.5rem; border-radius: 8px;
+  font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;
+  &:hover { background: #e65100; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.rating-summary {
+  background: white; border-radius: 16px;
+  padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  h2 { color: #f57c00; margin-top: 0; }
+}
+
+.avg-rating {
+  text-align: center; margin-bottom: 1.5rem;
+}
+
+.avg-number { font-size: 4rem; font-weight: 700; color: #f57c00; }
+
+.avg-stars { font-size: 1.5rem; margin: 0.5rem 0; }
+
+.avg-label { color: #888; font-size: 0.9rem; }
+
+.rating-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.rating-bar-item {
+  display: flex; align-items: center; gap: 0.75rem;
+}
+
+.star-num { font-size: 0.85rem; color: #666; min-width: 25px; }
+
+.bar-bg {
+  flex: 1; background: #f0f0f0; border-radius: 20px; height: 10px; overflow: hidden;
+}
+
+.bar-fill { height: 100%; background: #ffc107; border-radius: 20px; transition: width 0.8s; }
+
+.bar-count { font-size: 0.85rem; color: #666; min-width: 20px; }
+
+.reviews-list {
+  h2 { color: #f57c00; }
+}
+
+.review-card {
+  background: white; border-radius: 12px;
+  padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-bottom: 1rem;
+}
+
+.review-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 0.75rem;
+}
+
+.reviewer-info { display: flex; gap: 0.75rem; align-items: center; }
+
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #fff8e1; display: flex; align-items: center;
+  justify-content: center; font-size: 1.2rem;
+}
+
+.review-date { color: #999; font-size: 0.8rem; margin: 0; }
+
+.review-rating { font-size: 1.2rem; }
+
+.review-comment { color: #555; margin: 0 0 0.75rem; }
+
+.btn-delete {
+  background: #ffebee; color: #c62828; border: none;
+  padding: 0.3rem 0.8rem; border-radius: 6px;
+  font-size: 0.8rem; cursor: pointer;
+  &:hover { background: #ffcdd2; }
+}
+
+.empty { text-align: center; padding: 3rem; color: #999; font-size: 1.1rem; }

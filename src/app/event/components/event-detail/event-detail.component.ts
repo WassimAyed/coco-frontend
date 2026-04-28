@@ -14,6 +14,7 @@ import { EventRatingService } from '../../services/event-rating.service';
 import { ParticipantService } from '../../services/participant.service';
 import { ReactionService } from '../../services/reaction.service';
 import { BehaviorService } from '../../services/behavior.service';
+import { BehaviorDto } from '../../models/behavior.model';
 import { UserService } from '../../../user-security/services/user.service';
 import { loadAuthSession } from '../../../user-security/utils/auth-session.util';
 import { Observable, of } from 'rxjs';
@@ -209,6 +210,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedReaction = type;
         this.storeLocalReaction(this.eventId!, this.currentUserId!, type);
         this.loadReactionSummary(this.eventId!);
+        this.recordBehavior(type);
     });
   }
 
@@ -240,6 +242,10 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.totalRatings = response.totalRatings ?? this.totalRatings;
         this.errorMessage = '';
         this.isRatingSaving = false;
+        const stars = Math.round(this.selectedRating);
+        if (stars >= 1 && stars <= 5) {
+          this.recordBehavior(`RATE_${stars}` as BehaviorDto['actionType']);
+        }
     });
   }
 
@@ -274,7 +280,8 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       fullName: this.currentUserName || 'User',
       email: this.currentUserEmail,
       phone: normalizedPhone || undefined,
-      eventId
+      eventId,
+      userId: this.currentUserId ?? undefined
     }).pipe(
       map(() => true),
       catchError(err => {
@@ -343,6 +350,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.loadComments(this.eventId!);
         this.loadCommentCount(this.eventId!);
+        this.recordBehavior('COMMENT');
     });
   }
 
@@ -604,7 +612,7 @@ export class EventDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.recordBehavior('VIEW');
   }
 
-  private recordBehavior(actionType: 'VIEW' | 'PARTICIPATE' | 'BOOKMARK'): void {
+  private recordBehavior(actionType: BehaviorDto['actionType']): void {
     if (!this.currentUserId || !this.eventId || !this.event) {
       return;
     }

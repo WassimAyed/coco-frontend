@@ -1,0 +1,271 @@
+.coupon-page { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.coupon-header { margin-bottom: 30px; }
+.coupon-header-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+.coupon-header h1 { font-size: 2rem; color: #1a1a2e; margin-bottom: 8px; }
+.coupon-header p { color: #666; font-size: 1.1rem; }
+.coupon-header-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.coupon-admin-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 12px;
+  background: linear-gradient(135deg, #e94560, #0f3460); color: white;
+  text-decoration: none; font-size: 0.9rem; font-weight: 600;
+  transition: opacity 0.2s; border: none; cursor: pointer;
+}
+.coupon-admin-btn:hover { opacity: 0.88; }
+.coupon-marketplace-btn:hover { border-color: #e94560; color: #e94560; }
+
+/* Subtitle Actions */
+.header-subtitle-actions {
+  margin-top: 12px;
+}
+
+.my-coupons-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #C8102E;
+  color: white !important;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(200, 16, 46, 0.2);
+  transition: all 0.2s ease;
+}
+
+.my-coupons-nav-btn:hover {
+  background: #A00D25;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(200, 16, 46, 0.3);
+}
+.alert { padding: 12px 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+.alert.success { background: #d4edda; color: #155724; }
+.alert.error { background: #f8d7da; color: #721c24; }
+.category-filters { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 30px; }
+.category-filters button { padding: 8px 18px; border-radius: 25px; border: 2px solid #e0e0e0; background: white; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; }
+.category-filters button:hover { border-color: #e94560; color: #e94560; }
+.category-filters button.active { background: #e94560; color: white; border-color: #e94560; }
+.coupons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+.coupon-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s; position: relative; }
+.coupon-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+.coupon-badge { position: absolute; top: 12px; left: 12px; background: rgba(26,26,46,0.85); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; z-index: 1; }
+.coupon-image { width: 100%; height: 180px; object-fit: cover; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; }
+.coupon-content { padding: 16px; }
+.coupon-content h3 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 6px; }
+.coupon-partner { color: #e94560; font-size: 0.85rem; margin-bottom: 8px; }
+.coupon-desc { color: #666; font-size: 0.9rem; margin-bottom: 12px; line-height: 1.4; }
+.coupon-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.discount { background: #e94560; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+.expiry { color: #e94560; font-size: 0.85rem; }
+.coupon-usage { margin-bottom: 14px; }
+.usage-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.usage-fill { height: 100%; background: linear-gradient(90deg, #e94560, #ff6b6b); border-radius: 3px; }
+.coupon-usage span { font-size: 0.8rem; color: #999; }
+.claim-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e94560, #ff6b6b); color: white; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.3s; }
+.claim-btn:hover { opacity: 0.9; }
+.empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 1.2rem; }
+
+/* ML Styles */
+.cluster-banner { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; text-align: center; }
+.ml-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-align: center; margin: 8px 12px; }
+.ml-badge.top { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+.ml-badge.medium { background: #fff3cd; color: #856404; }
+.coupon-card.recommended { border: 2px solid #f5576c; box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3); }
+
+/* ========== BANNIÈRE IA HERO ========== */
+.ai-hero-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 5s ease infinite;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-hero-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-20px, 20px); }
+}
+
+.ai-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  position: relative;
+  z-index: 2;
+}
+
+.ai-hero-icon {
+  font-size: 70px;
+  flex-shrink: 0;
+}
+
+.ai-pulse {
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.6));
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.ai-hero-text {
+  flex: 1;
+  color: white;
+}
+
+.ai-hero-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  animation: shimmer 3s ease infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+}
+
+.ai-hero-text h2 {
+  font-size: 26px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.ai-segment {
+  background: rgba(255,255,255,0.25);
+  padding: 4px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.ai-hero-text p {
+  font-size: 15px;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.ai-hero-stats {
+  flex-shrink: 0;
+  text-align: center;
+  background: rgba(255,255,255,0.15);
+  padding: 15px 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.ai-stat-num {
+  font-size: 36px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.ai-stat-label {
+  font-size: 11px;
+  color: white;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 5px;
+}
+
+/* ========== BADGE TOP MATCH ========== */
+.top-match-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.5);
+  animation: badgeGlow 2s ease-in-out infinite;
+  letter-spacing: 0.5px;
+}
+
+@keyframes badgeGlow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(245, 87, 108, 0.5); }
+  50% { box-shadow: 0 4px 25px rgba(245, 87, 108, 0.9); transform: scale(1.05); }
+}
+
+.coupon-card.ai-recommended {
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #f093fb, #f5576c, #667eea) border-box;
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+  transform: translateY(-3px);
+}
+
+.coupon-card.ai-recommended:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+/* ========== TOAST RÉCLAMATION ========== */
+.claim-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: 2px solid;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  z-index: 9999;
+  animation: toastFadeIn 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.claim-toast--success { background: #E8F5E9; border-color: #4CAF50; color: #1b5e20; }
+.claim-toast--warning { background: #FFF3E0; border-color: #FF9800; color: #e65100; }
+.claim-toast--error { background: #FFEBEE; border-color: #F44336; color: #b71c1c; }
+
+@keyframes toastFadeIn {
+  from { opacity: 0; top: 60px; }
+  to { opacity: 1; top: 80px; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ai-hero-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  .ai-hero-stats {
+    width: 100%;
+  }
+}

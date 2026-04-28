@@ -1,5 +1,37 @@
-<div class="min-h-screen bg-background">
-    <!-- Profile Completion Banner -->
+<!-- Local CSS scope for the landing page : overrides any bluish tokens / bootstrap leakage -->
+<style>
+  .landing-scope {
+    --foreground: #0a0a0a;
+    --muted-foreground: #525252;
+    --border: #e5e5e5;
+    --accent: #f5f5f5;
+    --secondary: #f5f5f5;
+    --muted: #f5f5f5;
+    --background: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #0a0a0a;
+    --destructive: #991b1b;
+    --sidebar-primary: #991b1b;
+  }
+  /* Neutralise any blue bleeding from Bootstrap inside the landing container */
+  .landing-scope a { color: inherit; text-decoration: none; }
+  .landing-scope a:hover { color: inherit; }
+  .landing-scope .btn-primary,
+  .landing-scope .btn-secondary,
+  .landing-scope .btn-outline-primary,
+  .landing-scope .btn-info,
+  .landing-scope .btn-link {
+    background-color: inherit;
+    border-color: inherit;
+    color: inherit;
+  }
+  /* Kill any default blue focus/active ring from Bootstrap */
+  .landing-scope *:focus { outline-color: #991b1b !important; }
+  .landing-scope *::selection { background: #991b1b; color: #fff; }
+</style>
+
+<div class="landing-scope min-h-screen bg-white">
+  <!-- Profile Completion Banner -->
   @if (showProfileBanner()) {
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
       <div class="border-2 border-amber-500 bg-amber-50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
@@ -7,52 +39,104 @@
           <lucide-icon [img]="AlertCircleIcon" class="text-amber-600" [size]="24"></lucide-icon>
           <p class="text-amber-800 font-medium">⚠️ Your profile is incomplete. Please complete your profile to access all features.</p>
         </div>
-        <a routerLink="/create/profile" class="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white whitespace-nowrap transition hover:bg-primary/90">
+        <a routerLink="/create/profile" class="inline-flex items-center justify-center rounded-xl bg-[#991b1b] px-5 py-2.5 text-sm font-medium text-white whitespace-nowrap transition hover:bg-[#7f1717] hover:shadow-lg">
           Complete Profile
         </a>
       </div>
     </div>
   }
+
   <!-- Hero Section -->
-  <section class="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-20 lg:py-32">
-    <div class="section-shell">
+  <section class="relative overflow-hidden bg-gradient-to-b from-white via-white to-neutral-50 py-20 lg:py-32">
+    <!-- Decorative blurred orbs -->
+    <div class="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#991b1b]/10 blur-3xl" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute -right-24 top-40 h-[28rem] w-[28rem] rounded-full bg-neutral-200/50 blur-3xl" aria-hidden="true"></div>
+
+    <div class="section-shell relative">
       <div class="grid items-center gap-12 lg:grid-cols-2">
         <div class="space-y-8">
-          <span class="inline-flex rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+          <span class="inline-flex items-center gap-2 rounded-full border border-[#991b1b]/20 bg-[#991b1b]/10 px-4 py-2 text-sm font-medium text-[#991b1b] backdrop-blur-sm">
+            <span class="relative flex h-2 w-2">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#991b1b] opacity-75"></span>
+              <span class="relative inline-flex h-2 w-2 rounded-full bg-[#991b1b]"></span>
+            </span>
             Exclusively for ESPRIT Students
           </span>
-          <h1 class="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl">
-            Your Complete <span class="text-primary">Student Life</span> Platform
+          <h1 class="text-4xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
+            Your Complete <span class="relative inline-block text-[#991b1b]">
+              Student Life
+              <svg class="absolute -bottom-2 left-0 w-full text-[#991b1b]/30" viewBox="0 0 300 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M3 9C50 4 100 4 150 5C200 6 250 7 297 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span> Platform
           </h1>
-          <p class="text-xl text-slate-500">
-            Connect, collaborate, and thrive with fellow ESPRIT students. From carpooling to housing, marketplace to events - everything you need in one trusted platform.
+          <p class="text-xl leading-relaxed text-neutral-600">
+            Connect, collaborate, and thrive with fellow ESPRIT students. From carpooling to housing, marketplace to events — everything you need in one trusted platform.
           </p>
           <div class="flex flex-col gap-4 sm:flex-row">
-            <a routerLink="/register" class="group inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-base font-medium text-white sm:w-auto">
+            <a routerLink="/register" class="group inline-flex w-full items-center justify-center rounded-xl bg-[#991b1b] px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#991b1b]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#7f1717] hover:shadow-xl hover:shadow-[#991b1b]/40 sm:w-auto">
               Join ESPRIT Life
               <lucide-icon [img]="ArrowRightIcon" class="ml-2 transition-transform group-hover:translate-x-1" [size]="16"></lucide-icon>
             </a>
-            <button type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-border bg-white px-6 py-3 text-base font-medium text-foreground sm:w-auto">
+            <button type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 py-3.5 text-base font-semibold text-neutral-900 transition-all duration-300 hover:-translate-y-0.5 hover:border-neutral-900 hover:shadow-md sm:w-auto">
               Learn More
             </button>
           </div>
-          <div class="flex items-center gap-8 pt-4">
-            <div><div class="text-3xl font-bold text-foreground">2,500+</div><div class="text-sm text-slate-500">Active Students</div></div>
-            <div><div class="text-3xl font-bold text-foreground">5,000+</div><div class="text-sm text-slate-500">Successful Matches</div></div>
-            <div><div class="text-3xl font-bold text-foreground">98%</div><div class="text-sm text-slate-500">Satisfaction Rate</div></div>
+          <div class="grid grid-cols-3 gap-4 pt-4 sm:gap-8">
+            <div class="group cursor-default">
+              <div class="text-3xl font-bold text-neutral-900 transition-colors group-hover:text-[#991b1b] sm:text-4xl">2,500+</div>
+              <div class="mt-1 text-sm font-medium text-neutral-500">Active Students</div>
+            </div>
+            <div class="group cursor-default border-l border-neutral-200 pl-4 sm:pl-8">
+              <div class="text-3xl font-bold text-neutral-900 transition-colors group-hover:text-[#991b1b] sm:text-4xl">5,000+</div>
+              <div class="mt-1 text-sm font-medium text-neutral-500">Successful Matches</div>
+            </div>
+            <div class="group cursor-default border-l border-neutral-200 pl-4 sm:pl-8">
+              <div class="text-3xl font-bold text-neutral-900 transition-colors group-hover:text-[#991b1b] sm:text-4xl">98%</div>
+              <div class="mt-1 text-sm font-medium text-neutral-500">Satisfaction Rate</div>
+            </div>
           </div>
         </div>
+
         <div class="relative">
-          <div class="relative overflow-hidden rounded-2xl shadow-2xl">
-            <img src="https://images.unsplash.com/photo-1758270704524-596810e891b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwc3R1ZGVudHMlMjB1bml2ZXJzaXR5JTIwY2FtcHVzfGVufDF8fHx8MTc3Mzg0NDE1Nnww&ixlib=rb-4.1.0&q=80&w=1080" alt="ESPRIT students" class="w-full" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          <!-- Decorative ring -->
+          <div class="pointer-events-none absolute -inset-4 rounded-3xl border border-[#991b1b]/10" aria-hidden="true"></div>
+
+          <div class="relative overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5">
+            <img src="https://images.unsplash.com/photo-1758270704524-596810e891b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwc3R1ZGVudHMlMjB1bml2ZXJzaXR5JTIwY2FtcHVzfGVufDF8fHx8MTc3Mzg0NDE1Nnww&ixlib=rb-4.1.0&q=80&w=1080" alt="ESPRIT students" class="w-full transition-transform duration-700 hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+
+            <!-- Top badge -->
+            <div class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-neutral-900 shadow-lg backdrop-blur">
+              <span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
+              Live Community
+            </div>
           </div>
-          <div class="absolute -bottom-6 -right-6 hidden max-w-xs rounded-2xl bg-white p-6 shadow-xl lg:block">
+
+          <!-- Floating verified card -->
+          <div class="absolute -bottom-6 -right-6 hidden max-w-xs rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/5 transition-transform duration-500 hover:-translate-y-1 lg:block">
             <div class="flex items-center gap-3">
-              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <lucide-icon [img]="ShieldIcon" class="text-primary" [size]="24"></lucide-icon>
+              <div class="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#991b1b]/10">
+                <lucide-icon [img]="ShieldIcon" class="text-[#991b1b]" [size]="24"></lucide-icon>
+                <span class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#991b1b] text-[10px] text-white">✓</span>
               </div>
-              <div><div class="font-bold text-foreground">100% Verified</div><div class="text-sm text-slate-500">Students Only Platform</div></div>
+              <div>
+                <div class="font-bold text-neutral-900">100% Verified</div>
+                <div class="text-sm text-neutral-500">Students Only Platform</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating stat card -->
+          <div class="absolute -left-6 top-8 hidden rounded-2xl bg-white px-4 py-3 shadow-xl ring-1 ring-black/5 lg:block">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#991b1b]/10">
+                <lucide-icon [img]="UsersIcon" class="text-[#991b1b]" [size]="18"></lucide-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-neutral-900">2,500+ Students</div>
+                <div class="text-xs text-neutral-500">Online now</div>
+              </div>
             </div>
           </div>
         </div>
@@ -60,31 +144,42 @@
     </div>
   </section>
 
-
-
   <!-- Features Section -->
-  <section id="features" class="bg-white py-20 lg:py-32">
+  <section id="features" class="relative bg-white py-20 lg:py-32">
     <div class="section-shell">
       <div class="mb-16 text-center">
-        <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">All-in-One Platform</span>
-        <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">Everything Students Need</h2>
-        <p class="mx-auto max-w-3xl text-xl text-slate-500">Six powerful features designed specifically for ESPRIT student life</p>
+        <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
+          All-in-One Platform
+        </span>
+        <h2 class="mb-6 mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
+          Everything <span class="text-[#991b1b]">Students</span> Need
+        </h2>
+        <p class="mx-auto max-w-3xl text-xl text-neutral-600">Six powerful features designed specifically for ESPRIT student life</p>
       </div>
-      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        @for (feature of features; track feature.title) {
-          <article class="overflow-hidden rounded-2xl border-2 border-border bg-white transition-shadow hover:shadow-xl">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        @for (feature of features; track feature.title; let i = $index) {
+          <article class="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white transition-all duration-500 hover:-translate-y-1 hover:border-[#991b1b]/40 hover:shadow-2xl hover:shadow-[#991b1b]/10">
+            <!-- Number badge -->
+            <div class="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-neutral-900 shadow-lg backdrop-blur transition-colors group-hover:bg-[#991b1b] group-hover:text-white">
+              0{{ i + 1 }}
+            </div>
+
             <div class="relative h-48 overflow-hidden">
-              <img [src]="feature.image" [alt]="feature.title" class="h-full w-full object-cover" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div class="absolute bottom-4 left-4">
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white">
-                  <lucide-icon [img]="feature.icon" class="text-primary" [size]="24"></lucide-icon>
-                </div>
+              <img [src]="feature.image" [alt]="feature.title" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 group-hover:opacity-90"></div>
+              <div class="absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <lucide-icon [img]="feature.icon" class="text-[#991b1b]" [size]="24"></lucide-icon>
               </div>
             </div>
+
             <div class="p-6">
-              <h3 class="mb-2 text-xl font-bold text-foreground">{{ feature.title }}</h3>
-              <p class="text-slate-500">{{ feature.description }}</p>
+              <h3 class="mb-2 text-xl font-bold text-neutral-900 transition-colors group-hover:text-[#991b1b]">{{ feature.title }}</h3>
+              <p class="text-neutral-600">{{ feature.description }}</p>
+              <div class="mt-4 flex items-center gap-2 text-sm font-semibold text-[#991b1b] opacity-0 transition-all duration-500 group-hover:opacity-100">
+                Learn more
+                <lucide-icon [img]="ArrowRightIcon" class="transition-transform group-hover:translate-x-1" [size]="14"></lucide-icon>
+              </div>
             </div>
           </article>
         }
@@ -93,24 +188,32 @@
   </section>
 
   <!-- AI Features Section -->
-  <section class="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white py-20 lg:py-32">
-    <div class="absolute inset-0 opacity-5">
-      <img src="https://images.unsplash.com/photo-1768224656445-33d078c250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29yayUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzczNzc3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="AI" class="h-full w-full object-cover" />
+  <section class="relative overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-20 lg:py-32">
+    <!-- Subtle pattern overlay -->
+    <div class="pointer-events-none absolute inset-0 opacity-[0.04]">
+      <img src="https://images.unsplash.com/photo-1768224656445-33d078c250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29yayUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzczNzc3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="" class="h-full w-full object-cover" />
     </div>
+
     <div class="section-shell relative z-10">
       <div class="mb-16 text-center">
-        <span class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white">AI-Powered Intelligence</span>
-        <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">Smart Technology for Safer Connections</h2>
-        <p class="mx-auto max-w-3xl text-xl text-slate-500">Advanced AI ensures the best matches and protects you from fraud</p>
+        <span class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#991b1b] to-red-800 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#991b1b]/25">
+          <lucide-icon [img]="SparklesIcon" [size]="14"></lucide-icon>
+          AI-Powered Intelligence
+        </span>
+        <h2 class="mb-6 mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">Smart Technology for Safer Connections</h2>
+        <p class="mx-auto max-w-3xl text-xl text-neutral-600">Advanced AI ensures the best matches and protects you from fraud</p>
       </div>
-      <div class="grid gap-8 md:grid-cols-3">
+      <div class="grid gap-6 md:grid-cols-3">
         @for (feature of aiFeatures; track feature.title) {
-          <article class="rounded-2xl bg-white p-8 text-center shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl">
-            <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-              <lucide-icon [img]="feature.icon" class="text-primary" [size]="32"></lucide-icon>
+          <article class="group relative overflow-hidden rounded-2xl bg-white p-8 text-center shadow-lg ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#991b1b]/10 hover:ring-[#991b1b]/20">
+            <!-- Top accent bar -->
+            <div class="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-[#991b1b] to-red-700 transition-transform duration-500 group-hover:scale-x-100"></div>
+
+            <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#991b1b]/10 to-[#991b1b]/5 ring-1 ring-[#991b1b]/10 transition-all duration-500 group-hover:scale-110 group-hover:from-[#991b1b] group-hover:to-red-700 group-hover:ring-[#991b1b]/30">
+              <lucide-icon [img]="feature.icon" class="text-[#991b1b] transition-colors group-hover:text-white" [size]="32"></lucide-icon>
             </div>
-            <h3 class="mb-3 text-xl font-bold text-foreground">{{ feature.title }}</h3>
-            <p class="text-slate-500">{{ feature.description }}</p>
+            <h3 class="mb-3 text-xl font-bold text-neutral-900">{{ feature.title }}</h3>
+            <p class="text-neutral-600">{{ feature.description }}</p>
           </article>
         }
       </div>
@@ -118,93 +221,255 @@
   </section>
 
   <!-- How It Works Section -->
-  <section id="how-it-works" class="bg-white py-20 lg:py-32">
+  <section id="how-it-works" class="relative bg-white py-20 lg:py-32">
     <div class="section-shell">
       <div class="mb-16 text-center">
-        <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">Simple Process</span>
-        <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">How It Works</h2>
-        <p class="mx-auto max-w-3xl text-xl text-slate-500">Get started in four easy steps</p>
+        <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
+          Simple Process
+        </span>
+        <h2 class="mb-6 mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">How It Works</h2>
+        <p class="mx-auto max-w-3xl text-xl text-neutral-600">Get started in four easy steps</p>
       </div>
+
       <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         @for (step of steps; track step.number; let index = $index) {
-          <div class="relative">
+          <div class="group relative">
             <div class="flex flex-col items-center text-center">
-              <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-white">{{ step.number }}</div>
-              <h3 class="mb-3 text-xl font-bold text-foreground">{{ step.title }}</h3>
-              <p class="text-slate-500">{{ step.description }}</p>
+              <div class="relative mb-6">
+                <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#991b1b] to-red-700 text-2xl font-bold text-white shadow-lg shadow-[#991b1b]/25 transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:shadow-xl group-hover:shadow-[#991b1b]/40">
+                  {{ step.number }}
+                </div>
+                <div class="absolute -right-1 -top-1 h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-all group-hover:scale-110">
+                  <div class="flex h-full items-center justify-center text-xs font-bold text-[#991b1b]">→</div>
+                </div>
+              </div>
+              <h3 class="mb-3 text-xl font-bold text-neutral-900 transition-colors group-hover:text-[#991b1b]">{{ step.title }}</h3>
+              <p class="text-neutral-600">{{ step.description }}</p>
             </div>
             @if (index < steps.length - 1) {
-              <div class="absolute left-full top-10 -z-10 hidden h-0.5 w-full -translate-x-1/2 bg-border lg:block"></div>
+              <div class="absolute left-full top-10 -z-10 hidden h-0.5 w-full -translate-x-1/2 bg-gradient-to-r from-[#991b1b]/30 to-neutral-200 lg:block"></div>
             }
           </div>
         }
       </div>
-      <div class="mt-12 text-center">
-        <a routerLink="/register" class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-medium text-white">
+
+      <div class="mt-16 text-center">
+        <a routerLink="/register" class="group inline-flex items-center justify-center gap-2 rounded-xl bg-[#991b1b] px-6 py-3.5 font-semibold text-white shadow-lg shadow-[#991b1b]/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#7f1717] hover:shadow-xl hover:shadow-[#991b1b]/40">
           Get Started Now
-          <lucide-icon [img]="ArrowRightIcon" class="ml-2" [size]="16"></lucide-icon>
+          <lucide-icon [img]="ArrowRightIcon" class="transition-transform group-hover:translate-x-1" [size]="16"></lucide-icon>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trending Section -->
+  <section class="bg-white py-16 lg:py-24">
+    <div class="section-shell">
+      <div class="mb-12 text-center">
+        <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">🔥 Trending</span>
+        <h2 class="mb-4 mt-4 text-3xl font-bold text-foreground sm:text-4xl">Ce que font tes collègues ESPRIT</h2>
+        <p class="text-xl text-slate-500">Les services les plus utilisés cette semaine</p>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3">
+        <div class="rounded-2xl border-2 border-border p-6 text-center hover:border-primary transition-colors">
+          <div class="text-4xl mb-3">🛋️</div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Marketplace Meubles</h3>
+          <p class="text-slate-500 text-sm mb-4">+120 annonces cette semaine · Bureaux, chaises, canapés à petits prix</p>
+          <a routerLink="/real-estate/furniture" class="inline-flex items-center text-primary font-semibold text-sm hover:underline">
+            Explorer le marketplace →
+          </a>
+        </div>
+        <div class="rounded-2xl border-2 border-border p-6 text-center hover:border-primary transition-colors">
+          <div class="text-4xl mb-3">🎁</div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Bons Plans Etudiants</h3>
+          <p class="text-slate-500 text-sm mb-4">+35 coupons actifs · Resto, cinéma, transport, abonnements</p>
+          <a routerLink="/coupon" class="inline-flex items-center text-primary font-semibold text-sm hover:underline">
+            Voir les coupons →
+          </a>
+        </div>
+        <div class="rounded-2xl border-2 border-border p-6 text-center hover:border-primary transition-colors">
+          <div class="text-4xl mb-3">🚗</div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Covoiturage ESPRIT</h3>
+          <p class="text-slate-500 text-sm mb-4">+80 trajets partagés · Économise sur tes déplacements quotidiens</p>
+          <a routerLink="/services/covoiturage" class="inline-flex items-center text-primary font-semibold text-sm hover:underline">
+            Trouver un trajet →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Small Business Section -->
+  <section class="bg-gradient-to-br from-gray-900 to-gray-800 py-16 lg:py-24 text-white">
+    <div class="section-shell">
+      <div class="grid items-center gap-12 lg:grid-cols-2">
+        <div>
+          <span class="inline-flex rounded-full bg-primary/20 border border-primary/40 px-4 py-2 text-sm font-medium text-primary mb-6">Small Business</span>
+          <h2 class="text-3xl font-bold sm:text-4xl mb-6">Tu as un petit business ? Rejoins la communauté !</h2>
+          <p class="text-gray-300 text-lg mb-8">Vends tes créations, tes services ou tes produits à la communauté ESPRIT. Aucune commission, 100% entre étudiants.</p>
+          <div class="space-y-4">
+            <div class="flex items-center gap-3 text-gray-200">
+              <span class="text-2xl">✅</span>
+              <span>Publie tes annonces gratuitement</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-200">
+              <span class="text-2xl">✅</span>
+              <span>Booste ta visibilité avec la mise en avant</span>
+            </div>
+            <div class="flex items-center gap-3 text-gray-200">
+              <span class="text-2xl">✅</span>
+              <span>Reçois des offres et négocie directement</span>
+            </div>
+          </div>
+          <a routerLink="/real-estate/furniture/new" class="mt-8 inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-medium text-white hover:bg-primary/90">
+            Publier une annonce
+          </a>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+            <div class="text-3xl font-bold">0%</div>
+            <div class="text-gray-300 text-sm mt-1">Commission</div>
+          </div>
+          <div class="rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+            <div class="text-3xl font-bold">2500+</div>
+            <div class="text-gray-300 text-sm mt-1">Acheteurs potentiels</div>
+          </div>
+          <div class="rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+            <div class="text-3xl font-bold">⚡</div>
+            <div class="text-gray-300 text-sm mt-1">Boost IA disponible</div>
+          </div>
+          <div class="rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+            <div class="text-3xl font-bold">📦</div>
+            <div class="text-gray-300 text-sm mt-1">Toutes catégories</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coin Importation Section -->
+  <section class="bg-amber-50 py-16 lg:py-20">
+    <div class="section-shell">
+      <div class="text-center mb-10">
+        <span class="inline-flex rounded-full bg-amber-100 border border-amber-300 px-4 py-2 text-sm font-medium text-amber-800">🌍 Coin Importation</span>
+        <h2 class="mt-4 text-3xl font-bold text-foreground sm:text-4xl">Commandes groupées depuis l'étranger</h2>
+        <p class="mt-4 text-slate-500 text-lg max-w-2xl mx-auto">Tu veux commander depuis AliExpress, Amazon, ou Shein ? Rejoins une commande groupée et divise les frais de livraison avec d'autres étudiants ESPRIT.</p>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3 max-w-3xl mx-auto">
+        <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-amber-100">
+          <div class="text-3xl mb-3">🇨🇳</div>
+          <h3 class="font-bold text-foreground mb-1">AliExpress / Temu</h3>
+          <p class="text-slate-500 text-sm">Gadgets, accessoires, vêtements</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-amber-100">
+          <div class="text-3xl mb-3">📚</div>
+          <h3 class="font-bold text-foreground mb-1">Amazon / eBay</h3>
+          <p class="text-slate-500 text-sm">Livres, matériel informatique</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-amber-100">
+          <div class="text-3xl mb-3">👗</div>
+          <h3 class="font-bold text-foreground mb-1">Shein / Zara</h3>
+          <p class="text-slate-500 text-sm">Mode et vêtements tendance</p>
+        </div>
+      </div>
+      <div class="text-center mt-8">
+        <a routerLink="/real-estate/furniture" class="inline-flex items-center justify-center rounded-xl border-2 border-amber-400 bg-amber-400 px-6 py-3 font-medium text-white hover:bg-amber-500 transition-colors">
+          Rejoindre une commande groupée
         </a>
       </div>
     </div>
   </section>
 
   <!-- Security Section -->
-  <section class="bg-gray-50 py-20 lg:py-32">
-    <div class="section-shell">
+  <section class="relative overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100 py-20 lg:py-32">
+    <!-- Decorative blurred orb -->
+    <div class="pointer-events-none absolute -right-24 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-[#991b1b]/5 blur-3xl" aria-hidden="true"></div>
+
+    <div class="section-shell relative">
       <div class="grid items-center gap-12 lg:grid-cols-2">
         <div>
-          <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">Security First</span>
-          <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl">Your Safety is Our Priority</h2>
-          <div class="space-y-6">
-            <div class="flex gap-4">
-              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <lucide-icon [img]="LockIcon" class="text-primary" [size]="24"></lucide-icon>
+          <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm">
+            <lucide-icon [img]="ShieldIcon" class="text-[#991b1b]" [size]="14"></lucide-icon>
+            Security First
+          </span>
+          <h2 class="mb-8 mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
+            Your Safety is <span class="text-[#991b1b]">Our Priority</span>
+          </h2>
+          <div class="space-y-5">
+            <div class="group flex gap-4 rounded-xl p-4 transition-all hover:bg-white hover:shadow-md">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#991b1b]/15 to-[#991b1b]/5 ring-1 ring-[#991b1b]/10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <lucide-icon [img]="LockIcon" class="text-[#991b1b]" [size]="24"></lucide-icon>
               </div>
-              <div><h3 class="mb-2 text-lg font-bold text-foreground">JWT Authentication</h3><p class="text-slate-500">Secure token-based authentication protects your account and personal data.</p></div>
+              <div>
+                <h3 class="mb-2 text-lg font-bold text-neutral-900">JWT Authentication</h3>
+                <p class="text-neutral-600">Secure token-based authentication protects your account and personal data.</p>
+              </div>
             </div>
-            <div class="flex gap-4">
-              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <lucide-icon [img]="ShieldIcon" class="text-primary" [size]="24"></lucide-icon>
+            <div class="group flex gap-4 rounded-xl p-4 transition-all hover:bg-white hover:shadow-md">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#991b1b]/15 to-[#991b1b]/5 ring-1 ring-[#991b1b]/10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <lucide-icon [img]="ShieldIcon" class="text-[#991b1b]" [size]="24"></lucide-icon>
               </div>
-              <div><h3 class="mb-2 text-lg font-bold text-foreground">Admin Verification</h3><p class="text-slate-500">Every user is verified by our admin team to ensure students-only access.</p></div>
+              <div>
+                <h3 class="mb-2 text-lg font-bold text-neutral-900">Admin Verification</h3>
+                <p class="text-neutral-600">Every user is verified by our admin team to ensure students-only access.</p>
+              </div>
             </div>
-            <div class="flex gap-4">
-              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <lucide-icon [img]="UsersIcon" class="text-primary" [size]="24"></lucide-icon>
+            <div class="group flex gap-4 rounded-xl p-4 transition-all hover:bg-white hover:shadow-md">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#991b1b]/15 to-[#991b1b]/5 ring-1 ring-[#991b1b]/10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <lucide-icon [img]="UsersIcon" class="text-[#991b1b]" [size]="24"></lucide-icon>
               </div>
-              <div><h3 class="mb-2 text-lg font-bold text-foreground">Community Trust</h3><p class="text-slate-500">Rating system and user reviews help you make informed decisions.</p></div>
+              <div>
+                <h3 class="mb-2 text-lg font-bold text-neutral-900">Community Trust</h3>
+                <p class="text-neutral-600">Rating system and user reviews help you make informed decisions.</p>
+              </div>
             </div>
-            <div class="flex gap-4">
-              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <lucide-icon [img]="SparklesIcon" class="text-primary" [size]="24"></lucide-icon>
+            <div class="group flex gap-4 rounded-xl p-4 transition-all hover:bg-white hover:shadow-md">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#991b1b]/15 to-[#991b1b]/5 ring-1 ring-[#991b1b]/10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <lucide-icon [img]="SparklesIcon" class="text-[#991b1b]" [size]="24"></lucide-icon>
               </div>
-              <div><h3 class="mb-2 text-lg font-bold text-foreground">AI Fraud Detection</h3><p class="text-slate-500">Machine learning monitors all activities to prevent scams and fraudulent behavior.</p></div>
+              <div>
+                <h3 class="mb-2 text-lg font-bold text-neutral-900">AI Fraud Detection</h3>
+                <p class="text-neutral-600">Machine learning monitors all activities to prevent scams and fraudulent behavior.</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="relative overflow-hidden rounded-2xl shadow-2xl">
-          <img src="https://images.unsplash.com/photo-1768224656445-33d078c250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29yayUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzczNzc3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="Security" class="w-full" />
+
+        <div class="relative">
+          <!-- Decorative frame -->
+          <div class="pointer-events-none absolute -inset-4 rounded-3xl border border-[#991b1b]/10" aria-hidden="true"></div>
+
+          <div class="relative overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5">
+            <img src="https://images.unsplash.com/photo-1768224656445-33d078c250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29yayUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzczNzc3NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="Security" class="w-full transition-transform duration-700 hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-tr from-[#991b1b]/20 via-transparent to-transparent"></div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- FAQ Section -->
-  <section id="faq" class="bg-gray-50 py-20 lg:py-32">
+  <section id="faq" class="bg-neutral-50 py-20 lg:py-32">
     <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
       <div class="mb-16 text-center">
-        <span class="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">Got Questions?</span>
-        <h2 class="mb-6 mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">Frequently Asked Questions</h2>
+        <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#991b1b]"></span>
+          Got Questions?
+        </span>
+        <h2 class="mb-6 mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">Frequently Asked Questions</h2>
       </div>
-      <div class="space-y-4">
+      <div class="space-y-3">
         @for (faq of faqs; track faq.question; let index = $index) {
-          <article class="overflow-hidden rounded-2xl bg-white shadow-sm">
-            <button type="button" class="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-gray-50" (click)="toggleFaq(index)">
-              <span class="pr-8 font-bold text-foreground">{{ faq.question }}</span>
-              <lucide-icon [img]="ChevronDownIcon" class="flex-shrink-0 text-slate-500 transition-transform" [class.rotate-180]="openFaq() === index" [size]="20"></lucide-icon>
+          <article class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 transition-all duration-300 hover:shadow-md" [ngClass]="openFaq() === index ? 'ring-[#991b1b]/40' : 'ring-black/5'">
+            <button type="button" class="flex w-full items-center justify-between gap-4 p-6 text-left transition-colors hover:bg-neutral-50" (click)="toggleFaq(index)">
+              <span class="pr-4 font-bold text-neutral-900" [class.text-[#991b1b]]="openFaq() === index">{{ faq.question }}</span>
+              <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-all" [class.bg-[#991b1b]]="openFaq() === index" [class.text-white]="openFaq() === index" [class.rotate-180]="openFaq() === index">
+                <lucide-icon [img]="ChevronDownIcon" [size]="18"></lucide-icon>
+              </span>
             </button>
             @if (openFaq() === index) {
-              <div class="px-6 pb-6 text-slate-500">{{ faq.answer }}</div>
+              <div class="border-t border-neutral-100 px-6 py-5 text-neutral-600 animate-in">{{ faq.answer }}</div>
             }
           </article>
         }
@@ -213,16 +478,24 @@
   </section>
 
   <!-- CTA Section -->
-  <section class="bg-gradient-to-br from-primary to-black py-20 text-white">
-    <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-      <h2 class="mb-6 text-3xl font-bold sm:text-4xl lg:text-5xl">Ready to Transform Your Student Life?</h2>
-      <p class="mb-8 text-xl opacity-90">Join the ESPRIT Life community today and experience the easiest way to connect, share, and thrive.</p>
+  <section class="relative overflow-hidden bg-gradient-to-br from-[#991b1b] via-red-800 to-black py-20 text-white">
+    <!-- Decorative pattern -->
+    <div class="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute -bottom-24 -right-24 h-[28rem] w-[28rem] rounded-full bg-[#991b1b]/30 blur-3xl" aria-hidden="true"></div>
+
+    <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8 relative">
+      <span class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur">
+        <lucide-icon [img]="SparklesIcon" [size]="14"></lucide-icon>
+        Start Your Journey
+      </span>
+      <h2 class="mt-6 mb-6 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">Ready to Transform Your Student Life?</h2>
+      <p class="mb-10 text-xl opacity-90">Join the ESPRIT Life community today and experience the easiest way to connect, share, and thrive.</p>
       <div class="flex flex-col justify-center gap-4 sm:flex-row">
-        <a routerLink="/register" class="inline-flex w-full items-center justify-center rounded-xl bg-white px-6 py-3 font-medium text-black sm:w-auto">
+        <a routerLink="/register" class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-black shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl sm:w-auto">
           Create Your Account
-          <lucide-icon [img]="ArrowRightIcon" class="ml-2" [size]="16"></lucide-icon>
+          <lucide-icon [img]="ArrowRightIcon" class="transition-transform group-hover:translate-x-1" [size]="16"></lucide-icon>
         </a>
-        <button type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-white bg-transparent px-6 py-3 font-medium text-white transition hover:bg-white/10 sm:w-auto">
+        <button type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/20 sm:w-auto">
           Contact Support
         </button>
       </div>
@@ -230,19 +503,58 @@
   </section>
 
   <!-- Footer -->
-  <footer class="bg-black py-12 text-white">
+  <footer class="bg-black py-16 text-white">
     <div class="section-shell">
-      <div class="mb-8 grid gap-8 md:grid-cols-2 lg:grid-cols-5">
-        <div>
+      <div class="mb-10 grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+        <div class="lg:col-span-1">
           <app-logo class="mb-4"></app-logo>
-          <p class="text-sm text-gray-400">The exclusive platform for ESPRIT students to connect, collaborate, and succeed together.</p>
+          <p class="mt-4 text-sm leading-relaxed text-neutral-400">The exclusive platform for ESPRIT students to connect, collaborate, and succeed together.</p>
+          <!-- Social icons placeholder row (simple circles) -->
+          <div class="mt-6 flex gap-3">
+            <a href="#" class="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-800 text-neutral-400 transition-all hover:border-[#991b1b] hover:bg-[#991b1b] hover:text-white"><i class="fab fa-facebook-f text-sm"></i></a>
+            <a href="#" class="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-800 text-neutral-400 transition-all hover:border-[#991b1b] hover:bg-[#991b1b] hover:text-white"><i class="fab fa-instagram text-sm"></i></a>
+            <a href="#" class="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-800 text-neutral-400 transition-all hover:border-[#991b1b] hover:bg-[#991b1b] hover:text-white"><i class="fab fa-linkedin-in text-sm"></i></a>
+            <a href="#" class="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-800 text-neutral-400 transition-all hover:border-[#991b1b] hover:bg-[#991b1b] hover:text-white"><i class="fab fa-github text-sm"></i></a>
+          </div>
         </div>
-        <div><h4 class="mb-4 font-bold">Platform</h4><div class="space-y-2 text-sm text-gray-400"><div><a href="#" class="transition-colors hover:text-white">Carpooling</a></div><div><a href="#" class="transition-colors hover:text-white">Colocation</a></div><div><a href="#" class="transition-colors hover:text-white">Marketplace</a></div><div><a href="#" class="transition-colors hover:text-white">Events</a></div></div></div>
-        <div><h4 class="mb-4 font-bold">Company</h4><div class="space-y-2 text-sm text-gray-400"><div><a href="#" class="transition-colors hover:text-white">About Us</a></div><div><a href="#" class="transition-colors hover:text-white">Contact</a></div><div><a href="#" class="transition-colors hover:text-white">Privacy Policy</a></div><div><a href="#" class="transition-colors hover:text-white">Terms of Service</a></div></div></div>
-        <div><h4 class="mb-4 font-bold">Support</h4><div class="space-y-2 text-sm text-gray-400"><div><a href="#" class="transition-colors hover:text-white">Help Center</a></div><div><a href="#" class="transition-colors hover:text-white">Safety Guidelines</a></div><div><a href="#" class="transition-colors hover:text-white">Report a Problem</a></div><div><a href="#" class="transition-colors hover:text-white">FAQ</a></div></div></div>
-        <div><h4 class="mb-4 font-bold">Developers</h4><div class="space-y-2 text-sm text-gray-400"><div><a href="#" class="transition-colors hover:text-white">Design System</a></div><div><a href="#" class="transition-colors hover:text-white">API Documentation</a></div><div><a href="#" class="transition-colors hover:text-white">Component Library</a></div><div><a href="#" class="transition-colors hover:text-white">GitHub</a></div></div></div>
+        <div>
+          <h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Platform</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Carpooling</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Colocation</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Marketplace</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Events</span></a></div>
+          </div>
+        </div>
+        <div>
+          <h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Company</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>About Us</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Contact</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Privacy Policy</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Terms of Service</span></a></div>
+          </div>
+        </div>
+        <div>
+          <h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Support</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Help Center</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Safety Guidelines</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Report a Problem</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>FAQ</span></a></div>
+          </div>
+        </div>
+        <div>
+          <h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Developers</h4>
+          <div class="space-y-3 text-sm text-neutral-400">
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Design System</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>API Documentation</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>Component Library</span></a></div>
+            <div><a href="#" class="inline-flex items-center gap-1 transition-all hover:gap-2 hover:text-white"><span>GitHub</span></a></div>
+          </div>
+        </div>
       </div>
-      <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
+      <div class="border-t border-neutral-800 pt-8 text-center text-sm text-neutral-400">
         <p>&copy; 2026 ESPRIT Life. All rights reserved. Exclusively for ESPRIT Students.</p>
       </div>
     </div>
