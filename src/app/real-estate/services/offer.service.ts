@@ -5,7 +5,7 @@ import { Offer } from '../models/offer.model';
 
 @Injectable({ providedIn: 'root' })
 export class OfferService {
-  private baseUrl = 'http://localhost:8099/api/offers';
+  private baseUrl = 'http://localhost:8094/api/offers';
 
   constructor(private http: HttpClient) {}
 

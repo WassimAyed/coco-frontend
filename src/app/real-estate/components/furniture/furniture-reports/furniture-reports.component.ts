@@ -47,7 +47,7 @@ export class FurnitureReportsComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get<Report[]>('http://localhost:8099/api/reports').subscribe({
+    this.http.get<Report[]>('http://localhost:8094/api/reports').subscribe({
       next: (data) => { this.reports.set(data); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

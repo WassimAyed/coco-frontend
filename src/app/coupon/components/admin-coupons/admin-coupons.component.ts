@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService } from '../../services/coupon.service';
@@ -15,6 +15,7 @@ import autoTable from 'jspdf-autotable';
   styleUrls: ['./admin-coupons.component.css']
 })
 export class AdminCouponsComponent implements OnInit {
+  @ViewChild('couponFormRef') couponFormRef!: ElementRef;
   readonly TicketIcon = Ticket;
   readonly SearchIcon = Search;
   readonly PlusIcon = Plus;
@@ -128,11 +129,13 @@ export class AdminCouponsComponent implements OnInit {
   openAddForm(): void {
     this.resetForm(); this.showForm = true; this.editMode = false;
     this.submitted = false; this.formErrors = [];
+    setTimeout(() => this.couponFormRef?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   openEditForm(coupon: Coupon): void {
     this.editMode = true; this.editId = coupon.id; this.showForm = true;
     this.submitted = false; this.formErrors = [];
+    setTimeout(() => this.couponFormRef?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     this.form = {
       code: coupon.code, title: coupon.title, description: coupon.description,
       discountType: coupon.discountType, discountValue: coupon.discountValue,
