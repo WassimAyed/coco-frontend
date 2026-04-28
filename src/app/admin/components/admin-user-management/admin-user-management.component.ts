@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Ban, CheckCircle2, Search, ShieldCheck } from 'lucide-angular';
+import { Ban, CircleCheck, Search, ShieldCheck } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
 import { AdminUser } from '../../models/admin-user.model';
 
@@ -20,7 +20,7 @@ export class AdminUserManagementComponent {
   @Output() enableUser = new EventEmitter<number>();
 
   readonly BanIcon = Ban;
-  readonly CheckCircleIcon = CheckCircle2;
+  readonly CheckCircleIcon = CircleCheck;
   readonly SearchIcon = Search;
   readonly ShieldCheckIcon = ShieldCheck;
 

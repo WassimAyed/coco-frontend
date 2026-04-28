@@ -1,11 +1,11 @@
 import {
-  AlertTriangle,
-  BarChart3,
   Briefcase,
+  ChartBar,
   LucideIconData,
   MessageCircle,
   Settings,
   Shield,
+  TriangleAlert,
   Users,
 } from 'lucide-angular';
 
@@ -26,12 +26,12 @@ export interface AdminDashboardModule {
 }
 
 export const ADMIN_DASHBOARD_MODULES: AdminDashboardModule[] = [
-  { id: 'overview', name: 'Overview', icon: BarChart3 },
+  { id: 'overview', name: 'Overview', icon: ChartBar },
   { id: 'users', name: 'User Management', icon: Users },
-  { id: 'signals', name: 'Signals', icon: AlertTriangle },
+  { id: 'signals', name: 'Signals', icon: TriangleAlert },
   { id: 'services', name: 'Services', icon: Briefcase },
   { id: 'roles', name: 'Roles & Permissions', icon: Shield },
   { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-  { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+  { id: 'analytics', name: 'Analytics', icon: ChartBar },
   { id: 'settings', name: 'Settings', icon: Settings },
 ];

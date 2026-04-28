@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { AlertTriangle, Image as ImageIcon, Search } from 'lucide-angular';
+import { Image as ImageIcon, Search, TriangleAlert } from 'lucide-angular';
 import { AdminSignal } from '../../models/admin-signal.model';
 
 @Component({
@@ -12,7 +12,7 @@ export class AdminSignalsPanelComponent {
   @Input() isLoading = false;
   @Input() signals: AdminSignal[] = [];
 
-  readonly AlertTriangleIcon = AlertTriangle;
+  readonly AlertTriangleIcon = TriangleAlert;
   readonly ImageIcon = ImageIcon;
   readonly SearchIcon = Search;
 

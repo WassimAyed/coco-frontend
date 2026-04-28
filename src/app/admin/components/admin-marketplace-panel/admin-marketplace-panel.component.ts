@@ -2,21 +2,23 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  LucideAngularModule,
-  ShoppingBag,
-  Package,
-  CheckCircle,
   Archive,
-  Trash2,
+  CircleCheck,
+  LucideAngularModule,
+  Package,
+  PencilLine,
+  Plus,
   RefreshCw,
   Search,
-  AlertTriangle,
-  Plus,
-  Edit2,
+  ShoppingBag,
+  Trash2,
+  TriangleAlert,
 } from 'lucide-angular';
 import { FurnitureService } from '../../../real-estate/services/furniture.service';
 import { Furniture } from '../../../real-estate/models/furniture';
 import { ToastService } from '../../../shared/services/toast.service';
+
+type FurnitureStatusFilter = '' | 'AVAILABLE' | 'SOLD' | 'ARCHIVED';
 
 @Component({
   selector: 'app-admin-marketplace-panel',
@@ -30,21 +32,21 @@ export class AdminMarketplacePanelComponent implements OnInit {
 
   readonly ShoppingBagIcon = ShoppingBag;
   readonly PackageIcon = Package;
-  readonly CheckIcon = CheckCircle;
+  readonly CheckIcon = CircleCheck;
   readonly ArchiveIcon = Archive;
   readonly TrashIcon = Trash2;
   readonly RefreshIcon = RefreshCw;
   readonly SearchIcon = Search;
-  readonly AlertIcon = AlertTriangle;
+  readonly AlertIcon = TriangleAlert;
   readonly PlusIcon = Plus;
-  readonly EditIcon = Edit2;
+  readonly EditIcon = PencilLine;
 
   items: Furniture[] = [];
   filtered: Furniture[] = [];
   loading = false;
   error = '';
   searchTerm = '';
-  statusFilter: '' | 'AVAILABLE' | 'SOLD' | 'ARCHIVED' = '';
+  statusFilter: FurnitureStatusFilter = '';
   deletingId: number | null = null;
 
   showForm = false;

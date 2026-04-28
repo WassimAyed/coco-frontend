@@ -4,25 +4,25 @@ import { Location } from '@angular/common';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { AdminEventNotificationsService } from '../../services/admin-event-notifications.service';
 import {
-  AlertTriangle,
-  BarChart3,
   Bell,
   Briefcase,
   Calendar,
   Car,
-  CheckCircle,
+  ChartBar,
   ChevronDown,
+  CircleCheck,
+  CircleX,
   Clock,
   CreditCard,
   Download,
-  Edit,
+  EllipsisVertical,
   Eye,
-  Filter,
-  Home,
+  House,
+  ListFilter,
   LogOut,
   LucideIconData,
   MessageCircle,
-  MoreVertical,
+  Pencil,
   Search,
   Settings,
   Shield,
@@ -30,9 +30,9 @@ import {
   Ticket,
   TrendingDown,
   TrendingUp,
+  TriangleAlert,
   User,
   Users,
-  XCircle,
 } from 'lucide-angular';
 import { FurnitureService } from '../../../real-estate/services/furniture.service';
 import { UserService } from '../../../user-security/services/user.service';
@@ -136,10 +136,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       const list = this.eventNotifications.notifications();
       if (list.length === 0) return;
       const latest = list[0];
-      if (this.lastSeenNotifId !== latest.id) {
-        this.lastSeenNotifId = latest.id;
-        this.toast.info(`Nouvel evenement : ${latest.name}`);
-      }
+      if (this.lastSeenNotifId === latest.id) return;
+      this.lastSeenNotifId = latest.id;
+      this.toast.info(`Nouvel evenement : ${latest.name}`);
     });
   }
 
@@ -164,21 +163,21 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────────────────────
 
   readonly modules: DashboardModule[] = [
-    { id: 'overview', name: 'Overview', icon: BarChart3 },
+    { id: 'overview', name: 'Overview', icon: ChartBar },
     { id: 'users', name: 'User Management', icon: Users },
-    { id: 'item-reports', name: 'Item Reports', icon: AlertTriangle },
-    { id: 'signals', name: 'Signals', icon: AlertTriangle },
+    { id: 'item-reports', name: 'Item Reports', icon: TriangleAlert },
+    { id: 'signals', name: 'Signals', icon: TriangleAlert },
     { id: 'services', name: 'Services', icon: Briefcase },
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
     { id: 'coupons', name: 'Coupons & Rewards', icon: Ticket },
-    { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
+    { id: 'fraud', name: 'Fraud Detection', icon: TriangleAlert },
     { id: 'carpooling', name: 'Covoiturage', icon: Car },
-    { id: 'colocation', name: 'Colocation', icon: Home },
+    { id: 'colocation', name: 'Colocation', icon: House },
     { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag },
     { id: 'events', name: 'Events', icon: Calendar },
     { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'analytics', name: 'Analytics', icon: ChartBar },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
@@ -205,7 +204,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   readonly recentActivity = [
     { id: 1, user: 'Ahmed K.', action: 'Created carpooling offer', time: '5 min ago', type: 'carpooling', icon: Car },
-    { id: 2, user: 'Sarah M.', action: 'Listed apartment for colocation', time: '12 min ago', type: 'colocation', icon: Home },
+    { id: 2, user: 'Sarah M.', action: 'Listed apartment for colocation', time: '12 min ago', type: 'colocation', icon: House },
     { id: 3, user: 'Mohamed A.', action: 'Sold laptop on marketplace', time: '1 hour ago', type: 'marketplace', icon: ShoppingBag },
     { id: 4, user: 'Leila B.', action: 'Registered for event', time: '2 hours ago', type: 'event', icon: Calendar },
     { id: 5, user: 'Youssef T.', action: 'Subscribed to premium', time: '3 hours ago', type: 'subscription', icon: CreditCard },
@@ -223,16 +222,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   readonly TrendingUpIcon = TrendingUp;
   readonly TrendingDownIcon = TrendingDown;
   readonly ClockIcon = Clock;
-  readonly FilterIcon = Filter;
-  readonly CheckCircleIcon = CheckCircle;
-  readonly XCircleIcon = XCircle;
-  readonly AlertTriangleIcon = AlertTriangle;
+  readonly FilterIcon = ListFilter;
+  readonly CheckCircleIcon = CircleCheck;
+  readonly XCircleIcon = CircleX;
+  readonly AlertTriangleIcon = TriangleAlert;
   readonly EyeIcon = Eye;
   readonly DownloadIcon = Download;
   readonly UsersIcon = Users;
-  readonly MoreVerticalIcon = MoreVertical;
+  readonly MoreVerticalIcon = EllipsisVertical;
   readonly UserIcon = User;
-  readonly EditIcon = Edit;
+  readonly EditIcon = Pencil;
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
@@ -469,7 +468,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────────────────────
 
   get selectedModuleName(): string { return this.modules.find((m) => m.id === this.selectedModule())?.name ?? 'Dashboard'; }
-  get selectedModuleIcon(): LucideIconData { return this.modules.find((m) => m.id === this.selectedModule())?.icon ?? BarChart3; }
+  get selectedModuleIcon(): LucideIconData { return this.modules.find((m) => m.id === this.selectedModule())?.icon ?? ChartBar; }
   get mobileModules(): DashboardModule[] { return this.modules.slice(0, 5); }
 
   async logout(): Promise<void> {

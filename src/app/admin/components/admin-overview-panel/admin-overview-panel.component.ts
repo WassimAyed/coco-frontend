@@ -1,9 +1,9 @@
 import { Component, Input } from '@angular/core';
 import {
-  AlertTriangle,
   Briefcase,
   LucideIconData,
   ShieldCheck,
+  TriangleAlert,
   Users,
 } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
@@ -49,7 +49,7 @@ export class AdminOverviewPanelComponent {
       },
       {
         colorClass: 'text-amber-600',
-        icon: AlertTriangle,
+        icon: TriangleAlert,
         label: 'Signals reported',
         value: `${this.signals.length}`,
       },
