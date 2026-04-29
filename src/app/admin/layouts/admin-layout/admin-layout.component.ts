@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { AdminEventNotificationsService } from '../../services/admin-event-notifications.service';
 import {
@@ -20,6 +21,7 @@ import {
   House,
   ListFilter,
   LogOut,
+  LucideAngularModule,
   LucideIconData,
   MessageCircle,
   Pencil,
@@ -48,6 +50,17 @@ import { AdminSignal } from '../../models/admin-signal.model';
 import { AdminUser } from '../../models/admin-user.model';
 import { AdminSignalApiService } from '../../services/admin-signal-api.service';
 import { AdminUserApiService } from '../../services/admin-user-api.service';
+import { SharedModule } from '../../../shared/shared.module';
+import { AdminEventsComponent } from '../../components/admin-events/admin-events.component';
+import { AdminMarketplacePanelComponent } from '../../components/admin-marketplace-panel/admin-marketplace-panel.component';
+import { AdminOverviewPanelComponent } from '../../components/admin-overview-panel/admin-overview-panel.component';
+import { AdminServicesPanelComponent } from '../../components/admin-services-panel/admin-services-panel.component';
+import { AdminSignalsPanelComponent } from '../../components/admin-signals-panel/admin-signals-panel.component';
+import { AdminUserManagementComponent } from '../../components/admin-user-management/admin-user-management.component';
+import { AdminCollocationComponent } from '../../../collocation/components/admin-collocation/admin-collocation.component';
+import { AdminCouponsComponent } from '../../../coupon/components/admin-coupons/admin-coupons.component';
+import { AdminCovoiturageComponent } from '../../../covoiturage/components/admin-covoiturage/admin-covoiturage.component';
+import { AdminPlansComponent } from '../../../subs-payment/components/admin-plans/admin-plans.component';
 
 interface UserProfileDto {
   firstName?: string;
@@ -74,9 +87,25 @@ interface PendingEvent {
 }
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    SharedModule,
+    AdminEventsComponent,
+    AdminMarketplacePanelComponent,
+    AdminOverviewPanelComponent,
+    AdminServicesPanelComponent,
+    AdminSignalsPanelComponent,
+    AdminUserManagementComponent,
+    AdminCollocationComponent,
+    AdminCouponsComponent,
+    AdminCovoiturageComponent,
+    AdminPlansComponent,
+  ]
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);

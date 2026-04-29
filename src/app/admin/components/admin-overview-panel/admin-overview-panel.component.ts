@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   Briefcase,
+  LucideAngularModule,
   LucideIconData,
   ShieldCheck,
   TriangleAlert,
@@ -19,9 +21,10 @@ interface OverviewCard {
 }
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-overview-panel',
   templateUrl: './admin-overview-panel.component.html',
+  imports: [CommonModule, LucideAngularModule],
 })
 export class AdminOverviewPanelComponent {
   @Input() services: StudentService[] = [];

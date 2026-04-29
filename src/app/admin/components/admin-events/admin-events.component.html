@@ -485,7 +485,7 @@
 
       <div class="md:col-span-2 rounded-xl border border-border bg-slate-50 p-3">
         <p class="text-sm font-medium text-slate-700">Main Image</p>
-        <img *ngIf="editExistingMainImageUrl" [src]="editExistingMainImageUrl" alt="Current main image" class="mt-2 h-40 w-full rounded-lg border border-border object-cover" />
+        <img *ngIf="editExistingMainImageUrl" [src]="editExistingMainImageUrl" alt="Current main" class="mt-2 h-40 w-full rounded-lg border border-border object-cover" />
         <p *ngIf="!editExistingMainImageUrl" class="mt-2 text-xs text-slate-500">No existing main image available.</p>
         <input class="form-input mt-2" type="file" accept="image/*" (change)="onEditMainImageSelected($event)" />
         <p class="mt-2 text-xs text-slate-500" *ngIf="editMainImageFile">Selected: {{ editMainImageFile.name }}</p>

@@ -1,14 +1,16 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Ban, CircleCheck, Search, ShieldCheck } from 'lucide-angular';
+import { CommonModule } from '@angular/common';
+import { Ban, CircleCheck, Search, ShieldCheck, LucideAngularModule } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
 import { AdminUser } from '../../models/admin-user.model';
 
 type UserStatusFilter = 'all' | 'active' | 'disabled' | 'admin';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-user-management',
   templateUrl: './admin-user-management.component.html',
+  imports: [CommonModule, LucideAngularModule]
 })
 export class AdminUserManagementComponent {
   @Input() busyUserIds: number[] = [];

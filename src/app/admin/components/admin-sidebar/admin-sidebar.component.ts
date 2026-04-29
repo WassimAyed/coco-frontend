@@ -1,14 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LogOut, Settings } from 'lucide-angular';
+import { CommonModule } from '@angular/common';
+import { LogOut, LucideAngularModule, Settings } from 'lucide-angular';
 import {
   AdminDashboardModule,
   AdminDashboardModuleId,
 } from '../../data/admin-dashboard.data';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-sidebar',
   templateUrl: './admin-sidebar.component.html',
+  imports: [CommonModule, LucideAngularModule, SharedModule],
 })
 export class AdminSidebarComponent {
   @Input({ required: true }) modules: AdminDashboardModule[] = [];
