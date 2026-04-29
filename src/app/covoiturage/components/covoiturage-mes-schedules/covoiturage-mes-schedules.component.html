@@ -4,9 +4,7 @@
       <i class="fas fa-arrow-left me-1"></i> Retour
     </button>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-danger rounded-pill" (click)="runNow()" title="Generer maintenant les trajets dus">
-        <i class="fas fa-bolt me-1"></i> Generer maintenant
-      </button>
+      
       <button class="btn btn-danger rounded-pill" (click)="goToCreate()">
         <i class="fas fa-plus me-1"></i> Nouvelle programmation
       </button>
@@ -93,7 +91,10 @@
               <i class="fas" [class.fa-pause]="s.active" [class.fa-play]="!s.active"></i>
               {{ s.active ? 'Mettre en pause' : 'Activer' }}
             </button>
-            <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="askDelete(s.id!)">
+            <button class="btn btn-sm btn-outline-primary rounded-pill" (click)="goToEdit(s.id!)" title="Modifier">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="askDelete(s.id!)" title="Supprimer">
               <i class="fas fa-trash"></i>
             </button>
           </div>

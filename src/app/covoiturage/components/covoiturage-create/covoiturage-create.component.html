@@ -27,19 +27,26 @@
               <!-- Depart avec Google Places Autocomplete -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
-                <input #departInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <input #departInput type="text" class="form-control"
+                       [class.is-invalid]="fieldErrors['pointDepart'] || fieldErrors['points']"
+                       placeholder="Rechercher un lieu..." required>
                 <small *ngIf="covoiturage.lattitudeDepart" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointDepart }}
                 </small>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['pointDepart']">{{ fieldErrors['pointDepart'] }}</div>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['points'] && !fieldErrors['pointDepart']">{{ fieldErrors['points'] }}</div>
               </div>
 
               <!-- Arrivee avec Google Places Autocomplete -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
-                <input #arriveeInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <input #arriveeInput type="text" class="form-control"
+                       [class.is-invalid]="fieldErrors['pointArrivee']"
+                       placeholder="Rechercher un lieu..." required>
                 <small *ngIf="covoiturage.latitudeArrivee" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ covoiturage.pointArrivee }}
                 </small>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['pointArrivee']">{{ fieldErrors['pointArrivee'] }}</div>
               </div>
 
               <!-- Google Map -->
@@ -62,17 +69,26 @@
               <!-- Date -->
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de depart *</label>
-                <input type="datetime-local" class="form-control" [(ngModel)]="covoiturage.dateDepart" name="dateDepart" required>
+                <input type="datetime-local" class="form-control"
+                       [class.is-invalid]="fieldErrors['dateDepart']"
+                       [(ngModel)]="covoiturage.dateDepart" name="dateDepart" required>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['dateDepart']">{{ fieldErrors['dateDepart'] }}</div>
               </div>
               <!-- Nombre de places -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Nombre de places</label>
-                <input type="number" class="form-control" [(ngModel)]="covoiturage.nombrePlaces" name="nombrePlaces" min="1" (change)="onNombrePlacesChange()">
+                <label class="form-label fw-bold">Nombre de places *</label>
+                <input type="number" class="form-control"
+                       [class.is-invalid]="fieldErrors['nombrePlaces']"
+                       [(ngModel)]="covoiturage.nombrePlaces" name="nombrePlaces" min="1" max="4" (change)="onNombrePlacesChange()">
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['nombrePlaces']">{{ fieldErrors['nombrePlaces'] }}</div>
               </div>
               <!-- Prix -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Prix par passager (TND)</label>
-                <input type="number" class="form-control" [(ngModel)]="covoiturage.prixParPassager" name="prixParPassager" min="0" step="0.5">
+                <label class="form-label fw-bold">Prix par passager (TND) *</label>
+                <input type="number" class="form-control"
+                       [class.is-invalid]="fieldErrors['prixParPassager']"
+                       [(ngModel)]="covoiturage.prixParPassager" name="prixParPassager" min="0" max="1000" step="0.5">
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['prixParPassager']">{{ fieldErrors['prixParPassager'] }}</div>
               </div>
 
               <!-- ========== SUGGESTION IA ========== -->
@@ -119,6 +135,7 @@
               <!-- ========== VEHICULE SECTION ========== -->
               <div class="col-md-12">
                 <label class="form-label fw-bold"><i class="fas fa-car me-1"></i> Vehicule *</label>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['vehicleId']">{{ fieldErrors['vehicleId'] }}</div>
 
                 <!-- Pas de vehicule -->
                 <div *ngIf="vehicules.length === 0" class="border border-dashed rounded-4 p-4 text-center bg-light">
@@ -205,27 +222,42 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label fw-bold">Marque *</label>
-              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.marque" name="vMarque" required placeholder="Ex: Peugeot">
+              <input type="text" class="form-control"
+                     [class.is-invalid]="vehiculeFieldErrors['marque']"
+                     [(ngModel)]="vehiculeForm.marque" name="vMarque" required maxlength="50" placeholder="Ex: Peugeot">
+              <div class="invalid-feedback d-block" *ngIf="vehiculeFieldErrors['marque']">{{ vehiculeFieldErrors['marque'] }}</div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-bold">Immatriculation *</label>
-              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.immatriculation" name="vImmat" required placeholder="Ex: 123 TU 4567">
+              <input type="text" class="form-control"
+                     [class.is-invalid]="vehiculeFieldErrors['immatriculation']"
+                     [(ngModel)]="vehiculeForm.immatriculation" name="vImmat" required maxlength="20" placeholder="Ex: 123 TU 4567">
+              <div class="invalid-feedback d-block" *ngIf="vehiculeFieldErrors['immatriculation']">{{ vehiculeFieldErrors['immatriculation'] }}</div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-bold">Couleur *</label>
-              <input type="text" class="form-control" [(ngModel)]="vehiculeForm.couleur" name="vCouleur" required placeholder="Ex: Noir">
+              <input type="text" class="form-control"
+                     [class.is-invalid]="vehiculeFieldErrors['couleur']"
+                     [(ngModel)]="vehiculeForm.couleur" name="vCouleur" required maxlength="30" placeholder="Ex: Noir">
+              <div class="invalid-feedback d-block" *ngIf="vehiculeFieldErrors['couleur']">{{ vehiculeFieldErrors['couleur'] }}</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-bold">Capacite (places)</label>
-              <input type="number" class="form-control" [(ngModel)]="vehiculeForm.capacite" name="vCapacite" min="1" max="50">
+              <label class="form-label fw-bold">Capacite (places) *</label>
+              <input type="number" class="form-control"
+                     [class.is-invalid]="vehiculeFieldErrors['capacite']"
+                     [(ngModel)]="vehiculeForm.capacite" name="vCapacite" min="1" max="7" required>
+              <div class="invalid-feedback d-block" *ngIf="vehiculeFieldErrors['capacite']">{{ vehiculeFieldErrors['capacite'] }}</div>
             </div>
             <div class="col-md-12">
               <label class="form-label fw-bold"><i class="fas fa-camera me-1"></i> Image du vehicule</label>
-              <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)">
+              <input type="file" class="form-control"
+                     [class.is-invalid]="vehiculeFieldErrors['image']"
+                     accept="image/*" (change)="onImageSelected($event)">
               <div *ngIf="imagePreview" class="mt-2 text-center">
                 <img [src]="imagePreview" alt="Preview" class="rounded-3 shadow-sm" style="max-height:150px;max-width:100%;object-fit:cover;">
               </div>
               <small class="text-muted">Formats acceptes : JPG, PNG, GIF (max 5 MB)</small>
+              <div class="invalid-feedback d-block" *ngIf="vehiculeFieldErrors['image']">{{ vehiculeFieldErrors['image'] }}</div>
             </div>
           </div>
 

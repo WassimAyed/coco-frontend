@@ -350,33 +350,11 @@ export class CovoiturageDetailComponent implements OnInit {
   // ========== TRAJETS SIMILAIRES ==========
 
   loadSimilarCovoiturages(current: Covoiturage): void {
-    this.covoiturageService.getAllCovoiturages().subscribe({
-      next: (all) => {
-        const depart = (current.pointDepart || '').trim().toLowerCase();
-        const arrivee = (current.pointArrivee || '').trim().toLowerCase();
-
-        const now = Date.now();
-        const scored = (all || [])
-          .filter((c) => c.id !== current.id && c.placesDisponibles > 0 && !!c.dateDepart && new Date(c.dateDepart).getTime() > now)
-          .map((c) => {
-            const cDep = (c.pointDepart || '').trim().toLowerCase();
-            const cArr = (c.pointArrivee || '').trim().toLowerCase();
-            let score = 0;
-            if (cDep === depart && cArr === arrivee) score = 3;
-            else if (cDep === depart || cArr === arrivee) score = 2;
-            else if (cDep.includes(depart) || cArr.includes(arrivee) || depart.includes(cDep) || arrivee.includes(cArr)) score = 1;
-            return { c, score };
-          })
-          .filter((x) => x.score > 0)
-          .sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return new Date(a.c.dateDepart).getTime() - new Date(b.c.dateDepart).getTime();
-          })
-          .slice(0, 4)
-          .map((x) => x.c);
-
-        this.similarCovoiturages = scored;
-        this.loadSimilarDriverNames(scored);
+    if (!current.id) return;
+    this.covoiturageService.getSimilarCovoiturages(current.id, 4).subscribe({
+      next: (similar) => {
+        this.similarCovoiturages = similar || [];
+        this.loadSimilarDriverNames(this.similarCovoiturages);
       },
       error: (err) => console.error('Erreur chargement trajets similaires', err)
     });

@@ -33,6 +33,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
 
   vehicules: Vehicule[] = [];
   error = '';
+  fieldErrors: Record<string, string> = {};
   currentUserId: number = 0;
 
   // ML prediction
@@ -47,6 +48,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   showVehiculeModal = false;
   vehiculeForm: Vehicule = this.emptyVehicule();
   vehiculeError = '';
+  vehiculeFieldErrors: Record<string, string> = {};
   vehiculeLoading = false;
   isEditMode = false;
   selectedImageFile: File | null = null;
@@ -212,19 +214,41 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
 
   submit(): void {
     this.error = '';
+    this.fieldErrors = {};
 
-    if (!this.covoiturage.pointDepart || !this.covoiturage.pointArrivee || !this.covoiturage.dateDepart) {
-      this.error = 'Veuillez remplir tous les champs obligatoires.';
-      return;
+    const errors: Record<string, string> = {};
+
+    if (!this.covoiturage.pointDepart?.trim()) {
+      errors['pointDepart'] = 'Le point de depart est obligatoire.';
     }
-
+    if (!this.covoiturage.pointArrivee?.trim()) {
+      errors['pointArrivee'] = 'Le point d\'arrivee est obligatoire.';
+    }
     if (!this.covoiturage.lattitudeDepart || !this.covoiturage.latitudeArrivee) {
-      this.error = 'Veuillez selectionner les points de depart et d\'arrivee depuis les suggestions.';
-      return;
+      errors['points'] = 'Veuillez selectionner les points depuis les suggestions.';
+    }
+    if (!this.covoiturage.dateDepart) {
+      errors['dateDepart'] = 'La date de depart est obligatoire.';
+    } else if (new Date(this.covoiturage.dateDepart) <= new Date()) {
+      errors['dateDepart'] = 'La date de depart doit etre dans le futur.';
+    }
+    if (!this.covoiturage.nombrePlaces || this.covoiturage.nombrePlaces < 1) {
+      errors['nombrePlaces'] = 'Le nombre de places doit etre au minimum 1.';
+    } else if (this.covoiturage.nombrePlaces > 4) {
+      errors['nombrePlaces'] = 'Le nombre de places ne peut pas depasser 4.';
+    }
+    if (this.covoiturage.prixParPassager == null || this.covoiturage.prixParPassager < 0) {
+      errors['prixParPassager'] = 'Le prix doit etre positif ou nul.';
+    } else if (this.covoiturage.prixParPassager > 1000) {
+      errors['prixParPassager'] = 'Le prix est trop eleve.';
+    }
+    if (!this.covoiturage.vehicleId || this.covoiturage.vehicleId === 0) {
+      errors['vehicleId'] = 'Veuillez ajouter ou selectionner un vehicule.';
     }
 
-    if (!this.covoiturage.vehicleId || this.covoiturage.vehicleId === 0) {
-      this.error = 'Veuillez ajouter ou selectionner un vehicule.';
+    if (Object.keys(errors).length > 0) {
+      this.fieldErrors = errors;
+      this.error = 'Veuillez corriger les erreurs ci-dessous.';
       return;
     }
 
@@ -236,7 +260,13 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
         this.router.navigate(['/covoiturage/list']);
       },
       error: (err) => {
-        this.error = 'Erreur lors de la creation du trajet.';
+        const body = err?.error;
+        if (body?.errors && typeof body.errors === 'object') {
+          this.fieldErrors = body.errors;
+          this.error = body.message || 'Donnees invalides.';
+        } else {
+          this.error = body?.message || 'Erreur lors de la creation du trajet.';
+        }
         console.error(err);
       }
     });
@@ -320,6 +350,7 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
   closeVehiculeModal(): void {
     this.showVehiculeModal = false;
     this.vehiculeError = '';
+    this.vehiculeFieldErrors = {};
     this.selectedImageFile = null;
     this.imagePreview = null;
   }
@@ -338,15 +369,52 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
 
   submitVehicule(): void {
     this.vehiculeError = '';
+    this.vehiculeFieldErrors = {};
 
-    if (!this.vehiculeForm.marque || !this.vehiculeForm.immatriculation || !this.vehiculeForm.couleur) {
-      this.vehiculeError = 'Veuillez remplir tous les champs obligatoires.';
+    const errors: Record<string, string> = {};
+    const marque = (this.vehiculeForm.marque || '').trim();
+    const immat = (this.vehiculeForm.immatriculation || '').trim();
+    const couleur = (this.vehiculeForm.couleur || '').trim();
+
+    if (!marque) errors['marque'] = 'La marque est obligatoire.';
+    else if (marque.length < 2 || marque.length > 50) errors['marque'] = 'La marque doit contenir entre 2 et 50 caracteres.';
+
+    if (!immat) errors['immatriculation'] = 'L\'immatriculation est obligatoire.';
+    else if (!/^[A-Za-z0-9 -]{3,20}$/.test(immat)) errors['immatriculation'] = 'L\'immatriculation contient des caracteres invalides.';
+
+    if (!couleur) errors['couleur'] = 'La couleur est obligatoire.';
+    else if (couleur.length < 2 || couleur.length > 30) errors['couleur'] = 'La couleur doit contenir entre 2 et 30 caracteres.';
+
+    if (!this.vehiculeForm.capacite || this.vehiculeForm.capacite < 1) errors['capacite'] = 'La capacite doit etre au minimum 1.';
+    else if (this.vehiculeForm.capacite > 7) errors['capacite'] = 'La capacite ne peut pas depasser 7.';
+
+    if (this.selectedImageFile) {
+      const max = 5 * 1024 * 1024;
+      if (this.selectedImageFile.size > max) errors['image'] = 'L\'image ne doit pas depasser 5 MB.';
+      else if (!/^image\//.test(this.selectedImageFile.type)) errors['image'] = 'Le fichier doit etre une image.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      this.vehiculeFieldErrors = errors;
+      this.vehiculeError = 'Veuillez corriger les erreurs ci-dessous.';
       return;
     }
 
     this.vehiculeLoading = true;
 
     const imageFile = this.selectedImageFile || undefined;
+
+    const handleError = (err: any, fallback: string) => {
+      const body = err?.error;
+      if (body?.errors && typeof body.errors === 'object') {
+        this.vehiculeFieldErrors = body.errors;
+        this.vehiculeError = body.message || 'Donnees invalides.';
+      } else {
+        this.vehiculeError = body?.message || fallback;
+      }
+      this.vehiculeLoading = false;
+      console.error(err);
+    };
 
     if (this.isEditMode) {
       this.covoiturageService.updateVehicule(this.vehiculeForm, imageFile).subscribe({
@@ -355,25 +423,17 @@ export class CovoiturageCreateComponent implements OnInit, AfterViewInit, OnDest
           this.closeVehiculeModal();
           this.loadVehicules();
         },
-        error: (err) => {
-          this.vehiculeError = 'Erreur lors de la modification.';
-          this.vehiculeLoading = false;
-          console.error(err);
-        }
+        error: (err) => handleError(err, 'Erreur lors de la modification.')
       });
     } else {
       this.vehiculeForm.idUtilisateur = this.currentUserId;
       this.covoiturageService.addVehicule(this.vehiculeForm, imageFile).subscribe({
-        next: (created) => {
+        next: () => {
           this.vehiculeLoading = false;
           this.closeVehiculeModal();
           this.loadVehicules();
         },
-        error: (err) => {
-          this.vehiculeError = 'Erreur lors de l\'ajout.';
-          this.vehiculeLoading = false;
-          console.error(err);
-        }
+        error: (err) => handleError(err, 'Erreur lors de l\'ajout.')
       });
     }
   }

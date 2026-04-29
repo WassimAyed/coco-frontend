@@ -98,6 +98,10 @@ export class CovoiturageMesSchedulesComponent implements OnInit {
     this.router.navigate(['/covoiturage/schedule/create']);
   }
 
+  goToEdit(id: number): void {
+    this.router.navigate(['/covoiturage/schedule/edit', id]);
+  }
+
   goBack(): void {
     this.router.navigate(['/covoiturage/list']);
   }
