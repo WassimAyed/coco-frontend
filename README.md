@@ -1,27 +1,137 @@
-# CocoFrontend
+# CoCo Frontend – Angular Application (FR/EN)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+## Table of Contents / Sommaire
+- [Français](#francais)
+	- [Objectif](#fr-objectif)
+	- [Stack](#fr-stack)
+	- [Prérequis](#fr-prerequis)
+	- [Installation & lancement](#fr-installation-lancement)
+	- [Scripts](#fr-scripts)
+	- [Environnement](#fr-environnement)
+	- [Intégration backend](#fr-integration-backend)
+	- [Dépannage rapide](#fr-depannage-rapide)
+- [English](#english)
+	- [Purpose](#en-purpose)
+	- [Stack](#en-stack)
+	- [Requirements](#en-requirements)
+	- [Setup & run](#en-setup-run)
+	- [Scripts](#en-scripts)
+	- [Environment](#en-environment)
+	- [Backend integration](#en-backend-integration)
+	- [Quick troubleshooting](#en-quick-troubleshooting)
 
-## Development server
+<a id="francais"></a>
+## 🇫🇷 Français
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+<a id="fr-objectif"></a>
+### 1) Objectif
+Le frontend CoCo fournit une interface unifiée pour les modules métiers (authentification, Lost&Found, collocation, paiements, événements, etc.).
 
-## Code scaffolding
+<a id="fr-stack"></a>
+### 2) Stack
+- Angular 18
+- TypeScript
+- Bootstrap 5 + Tailwind CSS
+- RxJS
+- STOMP/SockJS (temps réel)
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+<a id="fr-prerequis"></a>
+### 3) Prérequis
+- Node.js 18+
+- npm
 
-## Build
+<a id="fr-installation-lancement"></a>
+### 4) Installation & lancement
+Dans `frontendCoCo_DevDynamos/`:
+- `npm install`
+- `npm start`
+- app disponible sur `http://localhost:4200`
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+<a id="fr-scripts"></a>
+### 5) Scripts
+- `npm start` → dev server
+- `npm run build` → build production
+- `npm run watch` → build watch
+- `npm test` → tests unitaires (Karma/Jasmine)
 
-## Running unit tests
+<a id="fr-environnement"></a>
+### 6) Environnement
+Fichier principal: `src/environments/environment.ts`
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Endpoints configurés:
+- Auth/User Security: `http://localhost:8090/`
+- API Gateway: `http://localhost:9092/...`
+- Student Services: `http://localhost:8095` (à confirmer selon backend)
 
-## Running end-to-end tests
+⚠️ Production: déplacer les secrets (ex: clés API) hors du code source.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+<a id="fr-integration-backend"></a>
+### 7) Intégration backend
+Le frontend passe principalement par l’API Gateway et les endpoints sécurité.
+Pour un run full-stack local: `./run-all.sh` à la racine du projet parent.
 
-## Further help
+<a id="fr-depannage-rapide"></a>
+### 8) Dépannage rapide
+- CORS: vérifier config gateway/backend
+- API down: vérifier services et ports
+- build cassé: réinstaller dépendances
+- websocket KO: vérifier URL STOMP/SockJS
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+---
+
+<a id="english"></a>
+## 🇬🇧 English
+
+<a id="en-purpose"></a>
+### 1) Purpose
+The CoCo frontend provides a unified UI for business modules (authentication, Lost&Found, colocation, payments, events, etc.).
+
+<a id="en-stack"></a>
+### 2) Stack
+- Angular 18
+- TypeScript
+- Bootstrap 5 + Tailwind CSS
+- RxJS
+- STOMP/SockJS (real-time)
+
+<a id="en-requirements"></a>
+### 3) Requirements
+- Node.js 18+
+- npm
+
+<a id="en-setup-run"></a>
+### 4) Setup & run
+Inside `frontendCoCo_DevDynamos/`:
+- `npm install`
+- `npm start`
+- app at `http://localhost:4200`
+
+<a id="en-scripts"></a>
+### 5) Scripts
+- `npm start` → dev server
+- `npm run build` → production build
+- `npm run watch` → watch build
+- `npm test` → unit tests (Karma/Jasmine)
+
+<a id="en-environment"></a>
+### 6) Environment
+Main file: `src/environments/environment.ts`
+
+Configured endpoints:
+- Auth/User Security: `http://localhost:8090/`
+- API Gateway: `http://localhost:9092/...`
+- Student Services: `http://localhost:8095` (confirm with current backend setup)
+
+⚠️ Production: move secrets (e.g., API keys) out of source code.
+
+<a id="en-backend-integration"></a>
+### 7) Backend integration
+The frontend mainly communicates through API Gateway and security endpoints.
+For full local stack startup: run `./run-all.sh` from the parent root.
+
+<a id="en-quick-troubleshooting"></a>
+### 8) Quick troubleshooting
+- CORS issues: check gateway/backend CORS config
+- API unreachable: verify service status and ports
+- broken build: reinstall dependencies
+- websocket issues: validate STOMP/SockJS URLs
