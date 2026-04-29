@@ -8,7 +8,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { ImagePlus, Save, Settings2 } from 'lucide-angular';
 import { ToastService } from '../../../shared/services/toast.service';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
@@ -23,9 +25,10 @@ import { ProfileImageUploadService } from '../../../user-security/services/profi
 import { UserService } from '../../../user-security/services/user.service';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-settings-panel',
   templateUrl: './admin-settings-panel.component.html',
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
 })
 export class AdminSettingsPanelComponent implements OnChanges, OnDestroy {
   private readonly authApiService = inject(AuthApiService);

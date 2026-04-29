@@ -66,15 +66,22 @@
     🤖 Analyse des données en cours par l'IA...
   </div>
 
-  <div *ngIf="aiAnalysis" class="mb-8 rounded-2xl border border-border bg-slate-50 p-6 shadow-inner">
+  <div *ngIf="aiAnalysis" class="mb-8 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-inner">
     <div class="mb-4 flex items-center justify-between">
-      <h4 class="flex items-center gap-2 text-base font-bold text-foreground">
-        <lucide-icon [img]="SparklesIcon" [size]="20" class="text-amber-500"></lucide-icon>
-        Recommandations Stratégiques (IA)
-      </h4>
-      <button type="button" class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50" (click)="aiAnalysis = ''">Fermer</button>
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+          <lucide-icon [img]="SparklesIcon" [size]="22" class="text-amber-600"></lucide-icon>
+        </div>
+        <div>
+          <h4 class="text-base font-bold text-slate-900">Recommandations Stratégiques IA</h4>
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-amber-600">Analyse intelligente de vos données</p>
+        </div>
+      </div>
+      <button type="button" class="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50 border border-slate-200" (click)="aiAnalysis = ''">✕ Fermer</button>
     </div>
-    <div class="prose prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed">{{ aiAnalysis }}</div>
+    <div class="rounded-xl bg-white/70 p-5 backdrop-blur-sm border border-amber-100">
+      <p class="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{{ aiAnalysis }}</p>
+    </div>
   </div>
 
   <!-- FILTERS & SEARCH -->
@@ -98,8 +105,8 @@
     </div>
   </div>
 
-  <!-- FORM MODAL (Alternative design) -->
-  <div *ngIf="showForm" class="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 ring-1 ring-primary/10">
+  <!-- FORM MODAL -->
+  <div *ngIf="showForm" #couponFormRef class="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 ring-1 ring-primary/10">
     <div class="mb-6 flex items-center justify-between">
       <h4 class="text-lg font-bold text-foreground">{{ editMode ? '✏️ Modifier le Coupon' : '➕ Nouveau Coupon' }}</h4>
       <button (click)="cancelForm()" class="text-slate-400 hover:text-slate-600">✕</button>
@@ -150,6 +157,16 @@
         <select [(ngModel)]="form.category" class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary">
           <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
         </select>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Utilisations max</label>
+        <input type="number" [(ngModel)]="form.maxUsage" min="1"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
+      </div>
+      <div class="sm:col-span-2 space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">URL Image (optionnel)</label>
+        <input [(ngModel)]="form.imageUrl" placeholder="https://..."
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary" />
       </div>
     </div>
 

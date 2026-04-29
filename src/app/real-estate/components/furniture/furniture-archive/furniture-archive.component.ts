@@ -26,7 +26,7 @@ export class FurnitureArchiveComponent implements OnInit {
   error?: string;
   archiveResult?: { message: string; archivedCount: number };
 
-  private baseUrl = 'http://localhost:8099/api/archive';
+  private baseUrl = 'http://localhost:8094/api/archive';
 
   constructor(private http: HttpClient) {}
 

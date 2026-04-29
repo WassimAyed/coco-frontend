@@ -4,11 +4,88 @@
       <h3 class="text-xl font-bold text-foreground">Marketplace - Campus Market Hub</h3>
       <p class="text-sm text-slate-500">Modération et supervision des articles publiés</p>
     </div>
-    <button type="button" (click)="load()" [disabled]="loading"
-      class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60">
-      <lucide-icon [img]="RefreshIcon" [size]="18" [ngClass]="loading ? 'animate-spin' : ''"></lucide-icon>
-      Rafraîchir
-    </button>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" (click)="openAddForm()"
+        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
+        <lucide-icon [img]="PlusIcon" [size]="18"></lucide-icon>
+        Ajouter un article
+      </button>
+      <button type="button" (click)="load()" [disabled]="loading"
+        class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60">
+        <lucide-icon [img]="RefreshIcon" [size]="18" [ngClass]="loading ? 'animate-spin' : ''"></lucide-icon>
+        Rafraîchir
+      </button>
+    </div>
+  </div>
+
+  <!-- FORM ADD/EDIT -->
+  <div *ngIf="showForm" class="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 ring-1 ring-emerald-100">
+    <div class="mb-5 flex items-center justify-between">
+      <h4 class="text-lg font-bold text-slate-900">{{ editMode ? '✏️ Modifier l\'article' : '➕ Nouvel article' }}</h4>
+      <button (click)="cancelForm()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+    </div>
+    <div *ngIf="formError" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      ⚠️ {{ formError }}
+    </div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Titre *</label>
+        <input [(ngModel)]="form.title" placeholder="Ex: Table en bois"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Catégorie *</label>
+        <input [(ngModel)]="form.category" placeholder="Ex: Mobilier, Électronique..."
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+      <div class="sm:col-span-2 space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Description *</label>
+        <textarea [(ngModel)]="form.description" rows="3" placeholder="Décris l'article..."
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500"></textarea>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">État</label>
+        <select [(ngModel)]="form.condition"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500">
+          <option *ngFor="let c of conditions" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Statut</label>
+        <select [(ngModel)]="form.status"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500">
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Prix (DT) *</label>
+        <input type="number" [(ngModel)]="form.price" min="0"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Quantité</label>
+        <input type="number" [(ngModel)]="form.quantity" min="1"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Seller ID</label>
+        <input type="number" [(ngModel)]="form.sellerId" min="0"
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">URL Image (optionnel)</label>
+        <input [(ngModel)]="form.imageUrl" placeholder="https://..."
+          class="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500" />
+      </div>
+    </div>
+    <div class="mt-6 flex items-center justify-end gap-3 border-t border-emerald-200 pt-5">
+      <button (click)="cancelForm()" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700">Annuler</button>
+      <button (click)="submitForm()"
+        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-7 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-emerald-700 active:scale-95">
+        <lucide-icon [img]="CheckIcon" [size]="18"></lucide-icon>
+        {{ editMode ? 'Mettre à jour' : 'Publier' }}
+      </button>
+    </div>
   </div>
 
   <!-- KPI CARDS -->
@@ -126,10 +203,16 @@
             </span>
           </td>
           <td class="px-6 py-4 text-right">
-            <button (click)="remove(it)" [disabled]="deletingId === it.id" title="Supprimer"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white disabled:opacity-50">
-              <lucide-icon [img]="TrashIcon" [size]="14"></lucide-icon>
-            </button>
+            <div class="flex justify-end gap-2">
+              <button (click)="openEditForm(it)" title="Modifier"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-600 hover:text-white active:scale-90">
+                <lucide-icon [img]="EditIcon" [size]="14"></lucide-icon>
+              </button>
+              <button (click)="remove(it)" [disabled]="deletingId === it.id" title="Supprimer"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white disabled:opacity-50">
+                <lucide-icon [img]="TrashIcon" [size]="14"></lucide-icon>
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>

@@ -1,18 +1,20 @@
 import { Component, Input } from '@angular/core';
-import { AlertTriangle, Image as ImageIcon, Search } from 'lucide-angular';
+import { CommonModule } from '@angular/common';
+import { Image as ImageIcon, LucideAngularModule, Search, TriangleAlert } from 'lucide-angular';
 import { AdminSignal } from '../../models/admin-signal.model';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-signals-panel',
   templateUrl: './admin-signals-panel.component.html',
+  imports: [CommonModule, LucideAngularModule],
 })
 export class AdminSignalsPanelComponent {
   @Input() errorMessage: string | null = null;
   @Input() isLoading = false;
   @Input() signals: AdminSignal[] = [];
 
-  readonly AlertTriangleIcon = AlertTriangle;
+  readonly AlertTriangleIcon = TriangleAlert;
   readonly ImageIcon = ImageIcon;
   readonly SearchIcon = Search;
 

@@ -1,6 +1,10 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
+import { EventPaginationModule } from '../../../event/event-pagination.module';
 import maplibregl from 'maplibre-gl';
 
 import { forkJoin, map, Observable, of } from 'rxjs';
@@ -44,10 +48,11 @@ interface CreatorRow {
 }
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-events',
   templateUrl: './admin-events.component.html',
-  styleUrl: './admin-events.component.css'
+  styleUrl: './admin-events.component.css',
+  imports: [CommonModule, FormsModule, LucideAngularModule, EventPaginationModule],
 })
 export class AdminEventsComponent implements OnInit, OnDestroy {
   events: EventDto[] = [];
@@ -106,7 +111,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   detailModalParticipants: ParticipantDto[] = [];
   stats: StatsDTO | null = null;
   searchName = '';
-  selectedStatus: EventStatus | '' = '';
+  selectedStatus: EventStatus | string = '';
   selectedCategory: number | '' = '';
   dateFrom = '';
   dateTo = '';
@@ -338,7 +343,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   }
 
   deleteEvent(eventId: number): void {
-    if (!window.confirm('Delete this event?')) {
+    if (!globalThis.confirm('Delete this event?')) {
       return;
     }
 
@@ -739,7 +744,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
   }
 
   deleteCategory(categoryId: number): void {
-    if (!window.confirm('Delete this category?')) {
+    if (!globalThis.confirm('Delete this category?')) {
       return;
     }
 
@@ -1079,7 +1084,9 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.createMarker) {
+    if (this.createMarker) {
+      this.createMarker.setLngLat([lng, lat]);
+    } else {
       this.createMarker = new maplibregl.Marker({ draggable: true })
         .setLngLat([lng, lat])
         .addTo(this.createMap);
@@ -1091,8 +1098,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
         }
         this.setCreateCoordinatesFromMap(markerPosition.lat, markerPosition.lng, false);
       });
-    } else {
-      this.createMarker.setLngLat([lng, lat]);
     }
 
     this.createMap.easeTo({ center: [lng, lat], zoom: 12, duration: 0 });
@@ -1158,7 +1163,9 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.editMarker) {
+    if (this.editMarker) {
+      this.editMarker.setLngLat([lng, lat]);
+    } else {
       this.editMarker = new maplibregl.Marker({ draggable: true })
         .setLngLat([lng, lat])
         .addTo(this.editMap);
@@ -1170,8 +1177,6 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
         }
         this.setEditCoordinatesFromMap(markerPosition.lat, markerPosition.lng, false);
       });
-    } else {
-      this.editMarker.setLngLat([lng, lat]);
     }
 
     this.editMap.easeTo({ center: [lng, lat], zoom: 12, duration: 0 });
@@ -1237,12 +1242,12 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
     const lat = Number(latitude);
     const lng = Number(longitude);
 
-    if (!this.detailMarker) {
+    if (this.detailMarker) {
+      this.detailMarker.setLngLat([lng, lat]);
+    } else {
       this.detailMarker = new maplibregl.Marker({ color: '#1d4ed8' })
         .setLngLat([lng, lat])
         .addTo(this.detailMap);
-    } else {
-      this.detailMarker.setLngLat([lng, lat]);
     }
 
     this.detailMap.easeTo({ center: [lng, lat], zoom: 13, duration: 250 });
@@ -1443,7 +1448,7 @@ export class AdminEventsComponent implements OnInit, OnDestroy {
 
   private cleanString(value?: string): string | undefined {
     const trimmed = value?.trim();
-    return trimmed ? trimmed : undefined;
+    return trimmed || undefined;
   }
 
   private refreshDateTimeConstraints(): void {

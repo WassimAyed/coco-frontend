@@ -1,12 +1,15 @@
 import { Component, Input } from '@angular/core';
-import { Bell, ChevronDown } from 'lucide-angular';
+import { CommonModule } from '@angular/common';
+import { Bell, ChevronDown, LucideAngularModule } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
 import { UserProfile } from '../../../user-security/models/user.model';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-topbar',
   templateUrl: './admin-topbar.component.html',
+  imports: [CommonModule, LucideAngularModule, SharedModule],
 })
 export class AdminTopbarComponent {
   @Input() adminUser: UserProfile | null = null;

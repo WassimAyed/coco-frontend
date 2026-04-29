@@ -10,8 +10,8 @@ import { environment } from '../../../environments/environment';
 export class CouponService {
   // Utilise un port dédié pour le service coupon (8099)
   // distinct du gateway utilisateur (environment.apiBaseUrl = 8090)
-  private readonly couponBaseUrl = 'http://localhost:8099/api/coupons';
-  private readonly userCouponBaseUrl = 'http://localhost:8099/api/user-coupons';
+  private readonly couponBaseUrl = 'http://localhost:8094/api/coupons';
+  private readonly userCouponBaseUrl = 'http://localhost:8094/api/user-coupons';
   private readonly opts = { withCredentials: false };
 
   constructor(private http: HttpClient) {}

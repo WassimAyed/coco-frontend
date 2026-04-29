@@ -44,12 +44,20 @@ export class CouponListComponent implements OnInit {
       next: (data) => {
         this.coupons = data;
         this.filteredCoupons = data;
+        if (!this.userCluster) {
+          this.userCluster = { segmentName: 'Explorateur CoCo', description: 'Tu aimes découvrir toutes les opportunités du campus.' };
+        }
         if (this.userId) {
           this.loadRecommendations();
           this.loadUserCluster();
         }
       },
-      error: () => console.error('Error loading coupons')
+      error: () => {
+        console.error('Error loading coupons');
+        if (!this.userCluster) {
+          this.userCluster = { segmentName: 'Explorateur CoCo', description: 'Tu aimes découvrir toutes les opportunités du campus.' };
+        }
+      }
     });
   }
 
@@ -116,7 +124,7 @@ export class CouponListComponent implements OnInit {
 
   claimCoupon(couponId: number): void {
     if (!this.userId) {
-      this.claimedMessage = 'Veuillez vous connecter pour reclamer un coupon';
+      this.claimedMessage = '🔒 Connecte-toi pour réclamer un coupon';
       this.claimedMessageType = 'error';
       setTimeout(() => this.claimedMessage = '', 3000);
       return;
@@ -129,12 +137,25 @@ export class CouponListComponent implements OnInit {
         this.loadCoupons();
       },
       error: (err) => {
-        const msg: string = err.error?.message || '';
-        if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('déjà')) {
+        const msg: string = err.error?.message || err.error?.error || '';
+        const status: number = err.status;
+        if (status === 0) {
+          this.claimedMessage = '⚠️ Service indisponible. Réessaie plus tard.';
+          this.claimedMessageType = 'error';
+        } else if (status === 401 || status === 403) {
+          this.claimedMessage = '🔒 Connecte-toi pour réclamer un coupon.';
+          this.claimedMessageType = 'error';
+        } else if (status === 409 || msg.toLowerCase().includes('already') || msg.toLowerCase().includes('déjà')) {
           this.claimedMessage = '⚠️ Tu as déjà réclamé ce coupon';
           this.claimedMessageType = 'warning';
+        } else if (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('expiré')) {
+          this.claimedMessage = '⏰ Ce coupon a expiré.';
+          this.claimedMessageType = 'error';
+        } else if (msg.toLowerCase().includes('max') || msg.toLowerCase().includes('limite')) {
+          this.claimedMessage = '🚫 Ce coupon a atteint son quota maximum.';
+          this.claimedMessageType = 'error';
         } else {
-          this.claimedMessage = msg || 'Erreur lors de la réclamation';
+          this.claimedMessage = msg || '❌ Erreur lors de la réclamation. Réessaie.';
           this.claimedMessageType = 'error';
         }
         setTimeout(() => this.claimedMessage = '', 4000);
