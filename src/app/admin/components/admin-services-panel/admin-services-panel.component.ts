@@ -1,13 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import {
   ServiceModerationStatus,
   StudentService,
 } from '../../../student-services/models/student-service.model';
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-services-panel',
   templateUrl: './admin-services-panel.component.html',
+  imports: [CommonModule, FormsModule, LucideAngularModule],
 })
 export class AdminServicesPanelComponent {
   @Input() currentFilter: ServiceModerationStatus | 'all' = 'all';

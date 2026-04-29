@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { CovoiturageSchedule, Vehicule } from '../../models/covoiturage.model';
@@ -48,7 +48,10 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
   vehicules: Vehicule[] = [];
   currentUserId = 0;
   error = '';
+  fieldErrors: Record<string, string> = {};
   submitting = false;
+  editMode = false;
+  editId: number | null = null;
 
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
   @ViewChild('departInput', { static: false }) departInput!: ElementRef;
@@ -60,6 +63,7 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
   constructor(
     private covoiturageService: CovoiturageService,
     private router: Router,
+    private route: ActivatedRoute,
     private ngZone: NgZone,
     private googleMapsLoader: GoogleMapsLoaderService
   ) {}
@@ -67,13 +71,42 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
   ngOnInit(): void {
     this.currentUserId = this.covoiturageService.getCurrentUserId();
     this.schedule.idDriver = this.currentUserId;
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.editMode = true;
+      this.editId = Number(idParam);
+    }
+
     this.covoiturageService.getVehiculesByUtilisateur(this.currentUserId).subscribe({
       next: (data) => {
         this.vehicules = data;
-        if (data.length > 0) this.schedule.vehicleId = data[0].id!;
+        if (!this.editMode && data.length > 0) this.schedule.vehicleId = data[0].id!;
       },
       error: (err) => console.error('Erreur chargement vehicules', err)
     });
+
+    if (this.editMode && this.editId) {
+      this.covoiturageService.getScheduleById(this.editId).subscribe({
+        next: (data) => {
+          this.schedule = { ...data };
+          if (this.schedule.daysOfWeek) {
+            this.selectedDays = new Set(this.schedule.daysOfWeek.split(',').map(d => d.trim()));
+          }
+          if (this.departInput?.nativeElement) {
+            this.departInput.nativeElement.value = this.schedule.pointDepart || '';
+          }
+          if (this.arriveeInput?.nativeElement) {
+            this.arriveeInput.nativeElement.value = this.schedule.pointArrivee || '';
+          }
+          this.calculateRouteIfReady();
+        },
+        error: (err) => {
+          console.error('Erreur chargement programmation', err);
+          this.error = 'Impossible de charger la programmation.';
+        }
+      });
+    }
   }
 
   ngAfterViewInit(): void {
@@ -121,9 +154,20 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
         this.calculateRouteIfReady();
       });
     });
+
+    if (this.editMode) {
+      if (this.departInput?.nativeElement && this.schedule.pointDepart) {
+        this.departInput.nativeElement.value = this.schedule.pointDepart;
+      }
+      if (this.arriveeInput?.nativeElement && this.schedule.pointArrivee) {
+        this.arriveeInput.nativeElement.value = this.schedule.pointArrivee;
+      }
+      this.calculateRouteIfReady();
+    }
   }
 
   private calculateRouteIfReady(): void {
+    if (!this.directionsService || !this.directionsRenderer) return;
     if (!this.schedule.lattitudeDepart || !this.schedule.latitudeArrivee) return;
     const request = {
       origin: { lat: this.schedule.lattitudeDepart, lng: this.schedule.longitudeDepart },
@@ -153,25 +197,52 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
 
   submit(): void {
     this.error = '';
+    this.fieldErrors = {};
 
-    if (!this.schedule.pointDepart || !this.schedule.pointArrivee) {
-      this.error = 'Veuillez remplir les points de depart et d\'arrivee.';
-      return;
-    }
+    const errors: Record<string, string> = {};
+
+    if (!this.schedule.pointDepart?.trim()) errors['pointDepart'] = 'Le point de depart est obligatoire.';
+    if (!this.schedule.pointArrivee?.trim()) errors['pointArrivee'] = 'Le point d\'arrivee est obligatoire.';
     if (!this.schedule.lattitudeDepart || !this.schedule.latitudeArrivee) {
-      this.error = 'Veuillez selectionner les points depuis les suggestions.';
-      return;
+      errors['points'] = 'Veuillez selectionner les points depuis les suggestions.';
     }
+
     if (!this.schedule.vehicleId || this.schedule.vehicleId === 0) {
-      this.error = 'Veuillez selectionner un vehicule.';
-      return;
+      errors['vehicleId'] = 'Veuillez selectionner un vehicule.';
     }
+
+    if (!this.schedule.nombrePlaces || this.schedule.nombrePlaces < 1) {
+      errors['nombrePlaces'] = 'Le nombre de places doit etre au minimum 1.';
+    } else if (this.schedule.nombrePlaces > 4) {
+      errors['nombrePlaces'] = 'Le nombre de places ne peut pas depasser 4.';
+    }
+
+    if (this.schedule.prixParPassager == null || this.schedule.prixParPassager < 0) {
+      errors['prixParPassager'] = 'Le prix doit etre positif ou nul.';
+    } else if (this.schedule.prixParPassager > 1000) {
+      errors['prixParPassager'] = 'Le prix est trop eleve.';
+    }
+
+    if (!this.schedule.frequency) {
+      errors['frequency'] = 'La frequence est obligatoire.';
+    }
+
     if (!this.schedule.heureDepart) {
-      this.error = 'Veuillez indiquer l\'heure de depart.';
-      return;
+      errors['heureDepart'] = 'L\'heure de depart est obligatoire.';
     }
+
     if (this.schedule.frequency === 'WEEKLY' && this.selectedDays.size === 0) {
-      this.error = 'Veuillez selectionner au moins un jour de la semaine.';
+      errors['daysOfWeek'] = 'Veuillez selectionner au moins un jour de la semaine.';
+    }
+
+    if (this.schedule.startDate && this.schedule.endDate &&
+        new Date(this.schedule.endDate) < new Date(this.schedule.startDate)) {
+      errors['endDate'] = 'La date de fin doit etre apres la date de debut.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      this.fieldErrors = errors;
+      this.error = 'Veuillez corriger les erreurs ci-dessous.';
       return;
     }
 
@@ -180,14 +251,26 @@ export class CovoiturageScheduleCreateComponent implements OnInit, AfterViewInit
       : '';
 
     this.submitting = true;
-    this.covoiturageService.addSchedule(this.schedule).subscribe({
+    const request$ = this.editMode
+      ? this.covoiturageService.updateSchedule(this.schedule)
+      : this.covoiturageService.addSchedule(this.schedule);
+
+    request$.subscribe({
       next: () => {
         this.submitting = false;
         this.router.navigate(['/covoiturage/mes-schedules']);
       },
       error: (err) => {
         this.submitting = false;
-        this.error = 'Erreur lors de la creation de la programmation.';
+        const body = err?.error;
+        if (body?.errors && typeof body.errors === 'object') {
+          this.fieldErrors = body.errors;
+          this.error = body.message || 'Donnees invalides.';
+        } else {
+          this.error = body?.message || (this.editMode
+            ? 'Erreur lors de la modification de la programmation.'
+            : 'Erreur lors de la creation de la programmation.');
+        }
         console.error(err);
       }
     });

@@ -54,6 +54,14 @@ export class CovoiturageService {
     return this.http.get<CO2Impact>(`${this.apiUrl}/${id}/co2-impact`);
   }
 
+  getSimilarCovoiturages(id: number, limit: number = 4): Observable<Covoiturage[]> {
+    return this.http.get<Covoiturage[]>(`${this.apiUrl}/${id}/similar?limit=${limit}`);
+  }
+
+  getAdminStats(): Observable<{ totalTrajets: number; conducteursActifs: number; placesDisponibles: number }> {
+    return this.http.get<{ totalTrajets: number; conducteursActifs: number; placesDisponibles: number }>(`${this.apiUrl}/admin/stats`);
+  }
+
   estimateCO2SavedKg(c: Covoiturage): number {
     const occupants = Math.max(1, (c.nombrePlaces - c.placesDisponibles) + 1);
     const co2Solo = c.distance * 7.0 / 100.0 * 2.31;
@@ -74,6 +82,10 @@ export class CovoiturageService {
 
   getSchedulesByDriver(idDriver: number): Observable<CovoiturageSchedule[]> {
     return this.http.get<CovoiturageSchedule[]>(`${this.apiUrl}/schedule/driver/${idDriver}`);
+  }
+
+  getScheduleById(id: number): Observable<CovoiturageSchedule> {
+    return this.http.get<CovoiturageSchedule>(`${this.apiUrl}/schedule/${id}`);
   }
 
   toggleSchedule(id: number): Observable<CovoiturageSchedule> {

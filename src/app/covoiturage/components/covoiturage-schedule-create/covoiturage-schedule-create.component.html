@@ -8,10 +8,11 @@
       <div class="card border-0 shadow rounded-4">
         <div class="card-body p-4">
           <h3 class="fw-bold mb-1">
-            <i class="fas fa-calendar-alt text-danger me-2"></i> Programmer un trajet recurrent
+            <i class="fas fa-calendar-alt text-danger me-2"></i>
+            {{ editMode ? 'Modifier la programmation' : 'Programmer un trajet recurrent' }}
           </h3>
           <p class="text-muted mb-4">
-            Votre trajet sera publie automatiquement selon la frequence choisie.
+            {{ editMode ? 'Mettez a jour les informations de votre programmation.' : 'Votre trajet sera publie automatiquement selon la frequence choisie.' }}
           </p>
 
           <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
@@ -22,19 +23,26 @@
               <!-- Depart -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-success me-1"></i> Point de depart *</label>
-                <input #departInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <input #departInput type="text" class="form-control"
+                       [class.is-invalid]="fieldErrors['pointDepart'] || fieldErrors['points']"
+                       placeholder="Rechercher un lieu..." required>
                 <small *ngIf="schedule.lattitudeDepart" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ schedule.pointDepart }}
                 </small>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['pointDepart']">{{ fieldErrors['pointDepart'] }}</div>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['points'] && !fieldErrors['pointDepart']">{{ fieldErrors['points'] }}</div>
               </div>
 
               <!-- Arrivee -->
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> Point d'arrivee *</label>
-                <input #arriveeInput type="text" class="form-control" placeholder="Rechercher un lieu..." required>
+                <input #arriveeInput type="text" class="form-control"
+                       [class.is-invalid]="fieldErrors['pointArrivee']"
+                       placeholder="Rechercher un lieu..." required>
                 <small *ngIf="schedule.latitudeArrivee" class="text-success">
                   <i class="fas fa-check-circle me-1"></i> {{ schedule.pointArrivee }}
                 </small>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['pointArrivee']">{{ fieldErrors['pointArrivee'] }}</div>
               </div>
 
               <!-- Map -->
@@ -54,23 +62,32 @@
 
               <!-- Places / Prix -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">Nombre de places</label>
-                <input type="number" class="form-control" [(ngModel)]="schedule.nombrePlaces" name="nombrePlaces" min="1">
+                <label class="form-label fw-bold">Nombre de places *</label>
+                <input type="number" class="form-control"
+                       [class.is-invalid]="fieldErrors['nombrePlaces']"
+                       [(ngModel)]="schedule.nombrePlaces" name="nombrePlaces" min="1" max="4" required>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['nombrePlaces']">{{ fieldErrors['nombrePlaces'] }}</div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold">Prix par passager (TND)</label>
-                <input type="number" class="form-control" [(ngModel)]="schedule.prixParPassager" name="prixParPassager" min="0" step="0.5">
+                <label class="form-label fw-bold">Prix par passager (TND) *</label>
+                <input type="number" class="form-control"
+                       [class.is-invalid]="fieldErrors['prixParPassager']"
+                       [(ngModel)]="schedule.prixParPassager" name="prixParPassager" min="0" max="1000" step="0.5">
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['prixParPassager']">{{ fieldErrors['prixParPassager'] }}</div>
               </div>
 
               <!-- Vehicule -->
               <div class="col-md-12">
                 <label class="form-label fw-bold">Vehicule *</label>
-                <select class="form-select" [(ngModel)]="schedule.vehicleId" name="vehicleId" required>
+                <select class="form-select"
+                        [class.is-invalid]="fieldErrors['vehicleId']"
+                        [(ngModel)]="schedule.vehicleId" name="vehicleId" required>
                   <option [ngValue]="0" disabled>-- Choisir un vehicule --</option>
                   <option *ngFor="let v of vehicules" [ngValue]="v.id">
                     {{ v.marque }} - {{ v.immatriculation }} ({{ v.couleur }})
                   </option>
                 </select>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['vehicleId']">{{ fieldErrors['vehicleId'] }}</div>
               </div>
 
               <!-- ========== RECURRENCE ========== -->
@@ -81,15 +98,21 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-bold">Frequence *</label>
-                <select class="form-select" [(ngModel)]="schedule.frequency" name="frequency">
+                <select class="form-select"
+                        [class.is-invalid]="fieldErrors['frequency']"
+                        [(ngModel)]="schedule.frequency" name="frequency" required>
                   <option value="DAILY">Tous les jours</option>
                   <option value="WEEKLY">Certains jours de la semaine</option>
                 </select>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['frequency']">{{ fieldErrors['frequency'] }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-bold"><i class="fas fa-clock me-1"></i> Heure de depart *</label>
-                <input type="time" class="form-control" [(ngModel)]="schedule.heureDepart" name="heureDepart" required>
+                <input type="time" class="form-control"
+                       [class.is-invalid]="fieldErrors['heureDepart']"
+                       [(ngModel)]="schedule.heureDepart" name="heureDepart" required>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['heureDepart']">{{ fieldErrors['heureDepart'] }}</div>
               </div>
 
               <div class="col-md-12" *ngIf="schedule.frequency === 'WEEKLY'">
@@ -104,15 +127,22 @@
                     {{ d.label }}
                   </button>
                 </div>
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['daysOfWeek']">{{ fieldErrors['daysOfWeek'] }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de debut</label>
-                <input type="date" class="form-control" [(ngModel)]="schedule.startDate" name="startDate">
+                <input type="date" class="form-control"
+                       [class.is-invalid]="fieldErrors['startDate']"
+                       [(ngModel)]="schedule.startDate" name="startDate">
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['startDate']">{{ fieldErrors['startDate'] }}</div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">Date de fin <span class="text-muted small">(optionnel)</span></label>
-                <input type="date" class="form-control" [(ngModel)]="schedule.endDate" name="endDate">
+                <input type="date" class="form-control"
+                       [class.is-invalid]="fieldErrors['endDate']"
+                       [(ngModel)]="schedule.endDate" name="endDate">
+                <div class="invalid-feedback d-block" *ngIf="fieldErrors['endDate']">{{ fieldErrors['endDate'] }}</div>
               </div>
 
               <div class="col-md-12">
@@ -128,7 +158,7 @@
               <div class="col-md-12 mt-4">
                 <button type="submit" class="btn btn-danger rounded-pill px-4" [disabled]="submitting">
                   <i class="fas fa-calendar-check me-1"></i>
-                  {{ submitting ? 'Enregistrement...' : 'Programmer le trajet' }}
+                  {{ submitting ? 'Enregistrement...' : (editMode ? 'Enregistrer les modifications' : 'Programmer le trajet') }}
                 </button>
               </div>
             </div>

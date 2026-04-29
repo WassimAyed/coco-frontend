@@ -1,38 +1,42 @@
 import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { AdminEventNotificationsService } from '../../services/admin-event-notifications.service';
 import {
-  AlertTriangle,
-  BarChart3,
   Bell,
   Briefcase,
   Calendar,
   Car,
-  CheckCircle,
+  ChartBar,
   ChevronDown,
+  CircleCheck,
+  CircleX,
   Clock,
   CreditCard,
   Download,
-  Edit,
+  EllipsisVertical,
   Eye,
-  Filter,
-  Home,
+  House,
+  ListFilter,
   LogOut,
+  LucideAngularModule,
   LucideIconData,
   MessageCircle,
-  MoreVertical,
+  Pencil,
   Search,
   Settings,
   Shield,
   ShoppingBag,
+  Ticket,
   TrendingDown,
   TrendingUp,
+  TriangleAlert,
   User,
   Users,
-  XCircle,
 } from 'lucide-angular';
+import { FurnitureService } from '../../../real-estate/services/furniture.service';
 import { UserService } from '../../../user-security/services/user.service';
 import { LostAndFoundService } from '../../../lost-found/services/lost-found.service';
 import { ItemReportResponse } from '../../../lost-found/models/lost-item.model';
@@ -46,6 +50,17 @@ import { AdminSignal } from '../../models/admin-signal.model';
 import { AdminUser } from '../../models/admin-user.model';
 import { AdminSignalApiService } from '../../services/admin-signal-api.service';
 import { AdminUserApiService } from '../../services/admin-user-api.service';
+import { SharedModule } from '../../../shared/shared.module';
+import { AdminEventsComponent } from '../../components/admin-events/admin-events.component';
+import { AdminMarketplacePanelComponent } from '../../components/admin-marketplace-panel/admin-marketplace-panel.component';
+import { AdminOverviewPanelComponent } from '../../components/admin-overview-panel/admin-overview-panel.component';
+import { AdminServicesPanelComponent } from '../../components/admin-services-panel/admin-services-panel.component';
+import { AdminSignalsPanelComponent } from '../../components/admin-signals-panel/admin-signals-panel.component';
+import { AdminUserManagementComponent } from '../../components/admin-user-management/admin-user-management.component';
+import { AdminCollocationComponent } from '../../../collocation/components/admin-collocation/admin-collocation.component';
+import { AdminCouponsComponent } from '../../../coupon/components/admin-coupons/admin-coupons.component';
+import { AdminCovoiturageComponent } from '../../../covoiturage/components/admin-covoiturage/admin-covoiturage.component';
+import { AdminPlansComponent } from '../../../subs-payment/components/admin-plans/admin-plans.component';
 
 interface UserProfileDto {
   firstName?: string;
@@ -72,9 +87,25 @@ interface PendingEvent {
 }
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    SharedModule,
+    AdminEventsComponent,
+    AdminMarketplacePanelComponent,
+    AdminOverviewPanelComponent,
+    AdminServicesPanelComponent,
+    AdminSignalsPanelComponent,
+    AdminUserManagementComponent,
+    AdminCollocationComponent,
+    AdminCouponsComponent,
+    AdminCovoiturageComponent,
+    AdminPlansComponent,
+  ]
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
@@ -87,6 +118,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   };
 
   private readonly userService = inject(UserService);
+  private readonly furnitureService = inject(FurnitureService);
   private readonly lostAndFoundService = inject(LostAndFoundService);
   private readonly toast = inject(ToastService);
   private readonly studentServicesApiService = inject(StudentServicesApiService);
@@ -133,10 +165,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       const list = this.eventNotifications.notifications();
       if (list.length === 0) return;
       const latest = list[0];
-      if (this.lastSeenNotifId !== latest.id) {
-        this.lastSeenNotifId = latest.id;
-        this.toast.info(`Nouvel evenement : ${latest.name}`);
-      }
+      if (this.lastSeenNotifId === latest.id) return;
+      this.lastSeenNotifId = latest.id;
+      this.toast.info(`Nouvel evenement : ${latest.name}`);
     });
   }
 
@@ -161,29 +192,36 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────────────────────
 
   readonly modules: DashboardModule[] = [
-    { id: 'overview', name: 'Overview', icon: BarChart3 },
+    { id: 'overview', name: 'Overview', icon: ChartBar },
     { id: 'users', name: 'User Management', icon: Users },
-    { id: 'item-reports', name: 'Item Reports', icon: AlertTriangle },
-    { id: 'signals', name: 'Signals', icon: AlertTriangle },
+    { id: 'item-reports', name: 'Item Reports', icon: TriangleAlert },
+    { id: 'signals', name: 'Signals', icon: TriangleAlert },
     { id: 'services', name: 'Services', icon: Briefcase },
     { id: 'roles', name: 'Roles & Permissions', icon: Shield },
     { id: 'subscriptions', name: 'Subscriptions', icon: CreditCard },
-    { id: 'fraud', name: 'Fraud Detection', icon: AlertTriangle },
+    { id: 'coupons', name: 'Coupons & Rewards', icon: Ticket },
+    { id: 'fraud', name: 'Fraud Detection', icon: TriangleAlert },
     { id: 'carpooling', name: 'Covoiturage', icon: Car },
-    { id: 'colocation', name: 'Colocation', icon: Home },
+    { id: 'colocation', name: 'Colocation', icon: House },
     { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag },
     { id: 'events', name: 'Events', icon: Calendar },
     { id: 'chat', name: 'Chat Moderation', icon: MessageCircle },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'analytics', name: 'Analytics', icon: ChartBar },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
-  readonly kpiCards = [
-    { title: 'Total Users', value: '2,547', change: '+12.5%', trend: 'up', icon: Users, color: 'text-primary' },
-    { title: 'Active Listings', value: '1,234', change: '+8.2%', trend: 'up', icon: ShoppingBag, color: 'text-blue-600' },
-    { title: 'Monthly Revenue', value: '45,678 DT', change: '+23.1%', trend: 'up', icon: CreditCard, color: 'text-green-600' },
-    { title: 'Pending Approvals', value: '47', change: '-5.3%', trend: 'down', icon: Clock, color: 'text-orange-600' },
-  ];
+  readonly marketplaceCount = signal<number | null>(null);
+
+  get kpiCards() {
+    const count = this.marketplaceCount();
+    const listingsValue = count === null ? '…' : count.toLocaleString();
+    return [
+      { title: 'Total Users', value: '2,547', change: '+12.5%', trend: 'up', icon: Users, color: 'text-primary' },
+      { title: 'Active Listings', value: listingsValue, change: 'Marketplace', trend: 'up', icon: ShoppingBag, color: 'text-blue-600' },
+      { title: 'Monthly Revenue', value: '45,678 DT', change: '+23.1%', trend: 'up', icon: CreditCard, color: 'text-green-600' },
+      { title: 'Pending Approvals', value: '47', change: '-5.3%', trend: 'down', icon: Clock, color: 'text-orange-600' },
+    ];
+  }
 
   readonly pendingUsers = [
     { id: 1, name: 'Ahmed Ben Ali', email: 'ahmed.benali@esprit.tn', phone: '+21620111222', registeredDate: '2026-03-15', status: 'pending' },
@@ -195,7 +233,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   readonly recentActivity = [
     { id: 1, user: 'Ahmed K.', action: 'Created carpooling offer', time: '5 min ago', type: 'carpooling', icon: Car },
-    { id: 2, user: 'Sarah M.', action: 'Listed apartment for colocation', time: '12 min ago', type: 'colocation', icon: Home },
+    { id: 2, user: 'Sarah M.', action: 'Listed apartment for colocation', time: '12 min ago', type: 'colocation', icon: House },
     { id: 3, user: 'Mohamed A.', action: 'Sold laptop on marketplace', time: '1 hour ago', type: 'marketplace', icon: ShoppingBag },
     { id: 4, user: 'Leila B.', action: 'Registered for event', time: '2 hours ago', type: 'event', icon: Calendar },
     { id: 5, user: 'Youssef T.', action: 'Subscribed to premium', time: '3 hours ago', type: 'subscription', icon: CreditCard },
@@ -213,16 +251,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   readonly TrendingUpIcon = TrendingUp;
   readonly TrendingDownIcon = TrendingDown;
   readonly ClockIcon = Clock;
-  readonly FilterIcon = Filter;
-  readonly CheckCircleIcon = CheckCircle;
-  readonly XCircleIcon = XCircle;
-  readonly AlertTriangleIcon = AlertTriangle;
+  readonly FilterIcon = ListFilter;
+  readonly CheckCircleIcon = CircleCheck;
+  readonly XCircleIcon = CircleX;
+  readonly AlertTriangleIcon = TriangleAlert;
   readonly EyeIcon = Eye;
   readonly DownloadIcon = Download;
   readonly UsersIcon = Users;
-  readonly MoreVerticalIcon = MoreVertical;
+  readonly MoreVerticalIcon = EllipsisVertical;
   readonly UserIcon = User;
-  readonly EditIcon = Edit;
+  readonly EditIcon = Pencil;
   readonly SettingsIcon = Settings;
   readonly LogOutIcon = LogOut;
 
@@ -241,6 +279,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     void this.loadAdminUsers();
     void this.loadAdminSignals();
     this.loadAdminServices();
+    this.loadMarketplaceCount();
 
     this.eventNotifications.connect();
     this.route.data.subscribe((data) => {
@@ -458,12 +497,19 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   // ──────────────────────────────────────────────────────────────────────────
 
   get selectedModuleName(): string { return this.modules.find((m) => m.id === this.selectedModule())?.name ?? 'Dashboard'; }
-  get selectedModuleIcon(): LucideIconData { return this.modules.find((m) => m.id === this.selectedModule())?.icon ?? BarChart3; }
+  get selectedModuleIcon(): LucideIconData { return this.modules.find((m) => m.id === this.selectedModule())?.icon ?? ChartBar; }
   get mobileModules(): DashboardModule[] { return this.modules.slice(0, 5); }
 
   async logout(): Promise<void> {
     this.userService.logout();
     await this.router.navigate(['/']);
+  }
+
+  private loadMarketplaceCount(): void {
+    this.furnitureService.getAll().subscribe({
+      next: (items) => this.marketplaceCount.set((items || []).length),
+      error: () => this.marketplaceCount.set(0),
+    });
   }
 
   private loadAdminServices(): void {

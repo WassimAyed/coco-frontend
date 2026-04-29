@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class FurnitureService {
-  private baseUrl = 'http://localhost:8099/api/furniture';
+  private baseUrl = 'http://localhost:8094/api/furniture';
   private readonly opts = { withCredentials: false };
 
   constructor(private http: HttpClient) {}

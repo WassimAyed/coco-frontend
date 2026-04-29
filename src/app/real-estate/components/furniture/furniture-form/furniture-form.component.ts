@@ -49,8 +49,8 @@ export class FurnitureFormComponent implements OnInit {
 
   statusOptions = [
     { value: 'AVAILABLE', icon: '🟢', label: 'Disponible' },
-    { value: 'RESERVED',  icon: '🟡', label: 'Réservé' },
     { value: 'SOLD',      icon: '🔴', label: 'Vendu' },
+    { value: 'ARCHIVED',  icon: '🗂️', label: 'Archivé' },
   ];
 
   getCategoryIcon(cat: string): string {

@@ -1,9 +1,11 @@
 import { Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
-  AlertTriangle,
   Briefcase,
+  LucideAngularModule,
   LucideIconData,
   ShieldCheck,
+  TriangleAlert,
   Users,
 } from 'lucide-angular';
 import { createAvatarDataUrl } from '../../../shared/utils/avatar.util';
@@ -19,9 +21,10 @@ interface OverviewCard {
 }
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: 'app-admin-overview-panel',
   templateUrl: './admin-overview-panel.component.html',
+  imports: [CommonModule, LucideAngularModule],
 })
 export class AdminOverviewPanelComponent {
   @Input() services: StudentService[] = [];
@@ -49,7 +52,7 @@ export class AdminOverviewPanelComponent {
       },
       {
         colorClass: 'text-amber-600',
-        icon: AlertTriangle,
+        icon: TriangleAlert,
         label: 'Signals reported',
         value: `${this.signals.length}`,
       },

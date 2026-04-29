@@ -5,7 +5,7 @@ import { Boost } from '../models/boost.model';
 
 @Injectable({ providedIn: 'root' })
 export class BoostService {
-  private baseUrl = 'http://localhost:8099/api/boosts';
+  private baseUrl = 'http://localhost:8094/api/boosts';
 
   constructor(private http: HttpClient) {}
 

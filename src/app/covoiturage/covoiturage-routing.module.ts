@@ -18,6 +18,7 @@ const routes: Routes = [
   { path: 'mes-reservations', component: CovoiturageMesReservationsComponent },
   { path: 'gestion-reservations', component: CovoiturageGestionReservationsComponent },
   { path: 'schedule/create', component: CovoiturageScheduleCreateComponent },
+  { path: 'schedule/edit/:id', component: CovoiturageScheduleCreateComponent },
   { path: 'mes-schedules', component: CovoiturageMesSchedulesComponent }
 ];
 

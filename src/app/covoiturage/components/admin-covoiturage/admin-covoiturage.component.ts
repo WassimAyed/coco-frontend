@@ -5,11 +5,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Car, Users, DollarSign, MapPin, Search, Trash2, Edit, Eye, X, CheckCircle, XCircle, Clock, AlertTriangle, Calendar, Route, User as UserIcon } from 'lucide-angular';
 import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { CovoiturageService } from '../../services/covoiturage.service';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { Covoiturage, Reservation } from '../../models/covoiturage.model';
 import { ToastService } from '../../../shared/services/toast.service';
-import { UserService } from '../../../user-security/services/user.service';
+import { environment } from '../../../../environments/environment';
 
 declare var google: any;
 
@@ -37,7 +39,7 @@ declare var google: any;
           </div>
           <div>
             <span class="stat-label">Total trajets</span>
-            <strong class="stat-value">{{ covoiturages.length }}</strong>
+            <strong class="stat-value">{{ adminStats?.totalTrajets ?? covoiturages.length }}</strong>
           </div>
         </article>
         <article class="stat-card">
@@ -46,7 +48,7 @@ declare var google: any;
           </div>
           <div>
             <span class="stat-label">Conducteurs actifs</span>
-            <strong class="stat-value">{{ uniqueDriversCount }}</strong>
+            <strong class="stat-value">{{ adminStats?.conducteursActifs ?? uniqueDriversCount }}</strong>
           </div>
         </article>
         <article class="stat-card">
@@ -55,7 +57,7 @@ declare var google: any;
           </div>
           <div>
             <span class="stat-label">Places disponibles</span>
-            <strong class="stat-value">{{ totalSeatsAvailable }}</strong>
+            <strong class="stat-value">{{ adminStats?.placesDisponibles ?? totalSeatsAvailable }}</strong>
           </div>
         </article>
         <article class="stat-card">
@@ -560,7 +562,7 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
   private readonly toast = inject(ToastService);
   private readonly mapsLoader = inject(GoogleMapsLoaderService);
   private readonly ngZone = inject(NgZone);
-  private readonly userService = inject(UserService);
+  private readonly http = inject(HttpClient);
 
   readonly CarIcon = Car;
   readonly UsersIcon = Users;
@@ -623,8 +625,17 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
   driverNames = new Map<number, string>();
   passengerNames = new Map<number, string>();
 
+  adminStats: { totalTrajets: number; conducteursActifs: number; placesDisponibles: number } | null = null;
+
   ngOnInit(): void {
     this.loadAll();
+  }
+
+  loadAdminStats(): void {
+    this.service.getAdminStats().subscribe({
+      next: (stats) => this.adminStats = stats,
+      error: (err) => console.error('Erreur chargement stats admin', err)
+    });
   }
 
   ngAfterViewInit(): void {
@@ -649,6 +660,7 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
         this.covoiturages = data || [];
         this.loading = false;
         this.preloadDriverNames(this.covoiturages.map((c) => c.idDriver));
+        this.loadAdminStats();
         setTimeout(() => this.renderCharts(), 0);
       },
       error: (err) => {
@@ -901,14 +913,21 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     return this.passengerNames.get(id) || 'Chargement…';
   }
 
+  private fetchUser(id: number) {
+    const base = environment.apiBaseUrl.replace(/\/+$/, '');
+    return this.http.get<any>(`${base}/users/${id}`, {
+      withCredentials: environment.auth.withCredentials,
+    }).pipe(catchError(() => of(null)));
+  }
+
   private preloadDriverNames(ids: number[]): void {
     const unique = [...new Set(ids.filter((id) => !!id && !this.driverNames.has(id)))];
     if (unique.length === 0) return;
 
-    forkJoin(unique.map((id) => this.userService.getProfileByUserId(id))).subscribe((profiles) => {
-      profiles.forEach((profile: any, index: number) => {
+    forkJoin(unique.map((id) => this.fetchUser(id))).subscribe((users) => {
+      users.forEach((user: any, index: number) => {
         const id = unique[index];
-        this.driverNames.set(id, this.formatName(profile, id));
+        this.driverNames.set(id, this.formatName(user, id));
       });
     });
   }
@@ -917,20 +936,20 @@ export class AdminCovoiturageComponent implements OnInit, AfterViewInit, OnDestr
     const unique = [...new Set(ids.filter((id) => !!id && !this.passengerNames.has(id)))];
     if (unique.length === 0) return;
 
-    forkJoin(unique.map((id) => this.userService.getProfileByUserId(id))).subscribe((profiles) => {
-      profiles.forEach((profile: any, index: number) => {
+    forkJoin(unique.map((id) => this.fetchUser(id))).subscribe((users) => {
+      users.forEach((user: any, index: number) => {
         const id = unique[index];
-        this.passengerNames.set(id, this.formatName(profile, id));
+        this.passengerNames.set(id, this.formatName(user, id));
       });
     });
   }
 
-  private formatName(profile: any, fallbackId: number): string {
-    if (!profile) return `User #${fallbackId}`;
-    const first = profile.firstName || '';
-    const last = profile.lastName || profile.lastname || '';
+  private formatName(user: any, fallbackId: number): string {
+    if (!user) return `User #${fallbackId}`;
+    const first = user.firstName || user.firstname || user.username || '';
+    const last = user.lastName || user.lastname || '';
     const full = `${first} ${last}`.trim();
-    return full || profile.username || `User #${fallbackId}`;
+    return full || `User #${fallbackId}`;
   }
 
   get filteredCovoiturages(): Covoiturage[] {

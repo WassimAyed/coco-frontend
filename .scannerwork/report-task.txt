@@ -1,0 +1,7 @@
+organization=syrinea
+projectKey=syrinea_coco-frontend
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.86323
+dashboardUrl=https://sonarcloud.io/dashboard?id=syrinea_coco-frontend
+ceTaskId=AZ3V9OojQH48oVIWstSk
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZ3V9OojQH48oVIWstSk

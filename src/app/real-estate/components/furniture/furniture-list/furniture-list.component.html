@@ -77,8 +77,7 @@
         <div class="card-actions">
           <a [routerLink]="['/real-estate/furniture', f.id]" class="btn-view">👁 View</a>
           <a *ngIf="isOwner(f)" [routerLink]="['/real-estate/furniture/edit', f.id]" class="btn-edit">✏️ Edit</a>
-          <a [routerLink]="['/real-estate/furniture', f.id, 'offers']" class="btn-offers">💰 Offres</a>
-          <a [routerLink]="['/real-estate/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
+<a [routerLink]="['/real-estate/furniture', f.id, 'report']" class="btn-report">🚨 Signaler</a>
           <a [routerLink]="['/real-estate/furniture', f.id, 'reviews']" class="btn-reviews">⭐ Avis</a>
           <button (click)="addToCart(f)" class="btn-add-cart">🛒 Ajouter</button>
           <button *ngIf="isOwner(f)" (click)="archiveFurniture(f.id, f.title)" class="btn-archive">📦 Archiver</button>
