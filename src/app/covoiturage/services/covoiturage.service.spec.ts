@@ -14,6 +14,6 @@ describe('CovoiturageService', () => {
   });
 
   it('should be created', () => {
-    expect(service).toBeTruthy();
+    expect(service).toBeTruthy(); // simplement: le service existe ?
   });
 });

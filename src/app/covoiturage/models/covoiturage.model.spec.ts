@@ -18,6 +18,6 @@ describe('Covoiturage', () => {
       latitudeArrivee: 0,
       longitudeArrivee: 0
     };
-    expect(covoiturage).toBeTruthy();
+    expect(covoiturage).toBeTruthy();// l'interface est respectée ?
   });
 });

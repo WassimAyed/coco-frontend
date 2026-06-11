@@ -24,6 +24,6 @@ describe('CovoiturageDetailComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(component).toBeTruthy();// le composant peut etre instancie ?
   });
 });
