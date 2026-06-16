@@ -9,7 +9,8 @@ import { UserService } from '../../user-security/services/user.service';
 })
 export class CovoiturageService {
 
-  private apiUrl = 'http://localhost:9092/api/covoiturage';
+  // URL relative : nginx proxy /api vers api-gateway:9092 (qui route vers le covoiturageService via Eureka).
+  private apiUrl = '/api/covoiturage';
   private readonly userService = inject(UserService);
 
   constructor(private http: HttpClient) {}
@@ -188,7 +189,7 @@ export class CovoiturageService {
   }
 
   getVehiculeImageUrl(filename: string): string {
-    return `http://localhost:9092/api/covoiturage/imagesVehicules/${filename}`;
+    return `/api/covoiturage/imagesVehicules/${filename}`;
   }
 
   // ========== NOTATION ==========
@@ -239,6 +240,6 @@ export class CovoiturageService {
   // ========== USER ==========
 
   getUserById(id: number): Observable<{ id: number; username: string; email: string; imageUrl: string }> {
-    return this.http.get<{ id: number; username: string; email: string; imageUrl: string }>(`http://localhost:8090/users/${id}`);
+    return this.http.get<{ id: number; username: string; email: string; imageUrl: string }>(`/users/${id}`);
   }
 }
