@@ -30,12 +30,30 @@ jobs:
         id: meta
         run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Build & Push frontend
+      # 1) Build de l'image SANS push, chargée en local pour que Trivy la scanne.
+      - name: Build frontend (local, pas encore de push)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          load: true
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:latest
             ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:${{ github.sha }}
+
+      # 2) Scan de sécurité Trivy (CVE de l'image).
+      #    exit-code '0' = signale sans bloquer (mets '1' pour BLOQUER le pipeline si CVE).
+      - name: Scan de sécurité Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      # 3) Push vers GHCR seulement si le scan est passé.
+      - name: Push frontend vers GHCR
+        run: |
+          docker push ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:latest
+          docker push ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:${{ github.sha }}
