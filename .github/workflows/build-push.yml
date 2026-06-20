@@ -57,3 +57,32 @@ jobs:
         run: |
           docker push ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:latest
           docker push ghcr.io/${{ steps.meta.outputs.owner }}/coco-frontend:${{ github.sha }}
+
+  # =====================================================================
+  #  ÉTAGE CD (Continuous Deployment) — vrai GitOps
+  #  Après le build/push, on écrit le tag (= SHA du commit) dans coco-gitops.
+  #  ArgoCD voit le changement Git et synchronise le cluster automatiquement.
+  # =====================================================================
+  update-gitops:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo GitOps
+        uses: actions/checkout@v4
+        with:
+          repository: WassimAyed/coco-gitops
+          ref: main
+          token: ${{ secrets.GITOPS_TOKEN }}   # token avec droit d'écriture sur coco-gitops
+
+      - name: Mettre à jour le tag du frontend (= SHA du commit)
+        run: |
+          TAG=${{ github.sha }}
+          yq -i ".frontend.tag = \"$TAG\"" coco/values.yaml
+
+      - name: Commit & push vers coco-gitops
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add coco/values.yaml
+          git commit -m "CD: déploiement frontend ${{ github.sha }}" || echo "Aucun changement à committer"
+          git push
